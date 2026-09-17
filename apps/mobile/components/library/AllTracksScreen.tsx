@@ -40,6 +40,7 @@ import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { getRandomSongs, getSongs } from "@/services/backend/lists";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
+import { createSearchMatcher, toSearchHaystack } from "@/services/searchText";
 import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import useQueue, { MAX_QUEUE_TRACKS, type QueueSource } from "@/stores/queue";
@@ -161,25 +162,33 @@ export default function AllTracksScreen() {
     offlineSortFields,
     DEFAULT_SONG_SORT,
   ) as SongSortType;
+  const offlineTrackHaystacks = useMemo(
+    () =>
+      (offlineTracks ?? []).map((track) => ({
+        track,
+        haystack: toSearchHaystack([track.title, track.artist, track.album]),
+      })),
+    [offlineTracks],
+  );
   const songs = useMemo(() => {
     if (!offlineFallbackActive || !offlineTracks) return serverSongs;
     if (isSearching) {
       // A plain substring filter rather than a fuzzy index: offline this list is
       // the whole synced library, and building an index over it would run on
-      // the JS thread (same trade-off as the albums browse).
-      const needle = debouncedQuery.toLowerCase();
-      return offlineTracks.filter(
-        (track) =>
-          (track.title ?? "").toLowerCase().includes(needle) ||
-          (track.artist ?? "").toLowerCase().includes(needle) ||
-          (track.album ?? "").toLowerCase().includes(needle),
-      );
+      // the JS thread (same trade-off as the albums browse). The haystacks are
+      // normalised once per list above so a keystroke only pays for the match.
+      const matches = createSearchMatcher(debouncedQuery);
+      if (!matches) return offlineTracks;
+      return offlineTrackHaystacks
+        .filter(({ haystack }) => matches(haystack))
+        .map(({ track }) => track);
     }
     return sortItems(offlineTracks, offlineSort, SONG_SORT_SPECS);
   }, [
     offlineFallbackActive,
     serverSongs,
     offlineTracks,
+    offlineTrackHaystacks,
     isSearching,
     debouncedQuery,
     offlineSort,

@@ -1,4 +1,4 @@
-import { type Href, Link } from "expo-router";
+import { type Href, Link, router } from "expo-router";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
 import Clock from "lucide-react-native/dist/esm/icons/clock.mjs";
 import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
@@ -14,6 +14,8 @@ import { HStack } from "@/components/ui/hstack";
 import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { useIsCurrentTrack } from "@/hooks/player";
+import { playAlbumFromSong } from "@/services/playSongInAlbum";
 import type { RecentSearch } from "@/stores/recentSearches";
 import { artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
@@ -43,6 +45,7 @@ export default function RecentSearchListItem({
   handleDeletePress: (id: string) => void;
 }) {
   const [gray400] = Uniwind.getCSSVariable(["--color-gray-400"]) as string[];
+  const isCurrentTrack = useIsCurrentTrack(recentSearch.id);
   const url = useMemo<Href>(() => {
     if (recentSearch.type === "query") {
       return `/search-results?query=${encodeURIComponent(recentSearch.title)}`;
@@ -62,52 +65,72 @@ export default function RecentSearchListItem({
     return "/";
   }, [recentSearch]);
 
+  // A recent song plays like a fresh search hit does; without a resolvable
+  // album there's no full track to build a queue from, so open the album.
+  const handleSongPress = async () => {
+    if (await playAlbumFromSong(recentSearch.id, recentSearch.albumId)) return;
+    if (recentSearch.albumId) router.navigate(url);
+  };
+
+  const row = (
+    <FadeOutScaleDown
+      onPress={recentSearch.type === "song" ? handleSongPress : undefined}
+    >
+      <HStack className="items-center justify-between mb-4">
+        <HStack className="items-center flex-1">
+          {recentSearch.coverArt ? (
+            <Image
+              source={{ uri: artworkUrl(recentSearch.coverArt) }}
+              className="w-16 h-16 rounded-md aspect-square"
+              alt="Recent search cover"
+            />
+          ) : (
+            <Box
+              className={cn(
+                "w-16 h-16 aspect-square rounded-md bg-primary-600 items-center justify-center",
+                {
+                  "rounded-full":
+                    recentSearch.type === "query" ||
+                    recentSearch.type === "artist",
+                },
+              )}
+            >
+              <RecentSearchListItemIcon type={recentSearch.type} />
+            </Box>
+          )}
+          <VStack className="mx-4 flex-1">
+            <Heading
+              className={cn("text-white font-normal", {
+                "text-emerald-500":
+                  recentSearch.type === "song" && isCurrentTrack,
+              })}
+              numberOfLines={1}
+            >
+              {recentSearch.title}
+            </Heading>
+            {recentSearch.type !== "query" && (
+              <Text className="text-primary-100 capitalize" numberOfLines={1}>
+                {recentSearch.type}
+              </Text>
+            )}
+            {recentSearch.artist && (
+              <Text className="text-primary-100" numberOfLines={1}>
+                {recentSearch.artist}
+              </Text>
+            )}
+          </VStack>
+        </HStack>
+        <FadeOutScaleDown onPress={() => handleDeletePress(recentSearch.id)}>
+          <X size={24} color={gray400} />
+        </FadeOutScaleDown>
+      </HStack>
+    </FadeOutScaleDown>
+  );
+
+  if (recentSearch.type === "song") return row;
   return (
     <Link href={url} asChild>
-      <FadeOutScaleDown>
-        <HStack className="items-center justify-between mb-4">
-          <HStack className="items-center flex-1">
-            {recentSearch.coverArt ? (
-              <Image
-                source={{ uri: artworkUrl(recentSearch.coverArt) }}
-                className="w-16 h-16 rounded-md aspect-square"
-                alt="Recent search cover"
-              />
-            ) : (
-              <Box
-                className={cn(
-                  "w-16 h-16 aspect-square rounded-md bg-primary-600 items-center justify-center",
-                  {
-                    "rounded-full":
-                      recentSearch.type === "query" ||
-                      recentSearch.type === "artist",
-                  },
-                )}
-              >
-                <RecentSearchListItemIcon type={recentSearch.type} />
-              </Box>
-            )}
-            <VStack className="mx-4 flex-1">
-              <Heading className="text-white font-normal" numberOfLines={1}>
-                {recentSearch.title}
-              </Heading>
-              {recentSearch.type !== "query" && (
-                <Text className="text-primary-100 capitalize" numberOfLines={1}>
-                  {recentSearch.type}
-                </Text>
-              )}
-              {recentSearch.artist && (
-                <Text className="text-primary-100" numberOfLines={1}>
-                  {recentSearch.artist}
-                </Text>
-              )}
-            </VStack>
-          </HStack>
-          <FadeOutScaleDown onPress={() => handleDeletePress(recentSearch.id)}>
-            <X size={24} color={gray400} />
-          </FadeOutScaleDown>
-        </HStack>
-      </FadeOutScaleDown>
+      {row}
     </Link>
   );
 }

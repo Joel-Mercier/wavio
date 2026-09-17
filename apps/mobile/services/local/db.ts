@@ -5,6 +5,7 @@ import {
 } from "expo-sqlite";
 import { getAuthScope } from "@/config/authScope";
 import { localTrackId } from "@/services/local/keys";
+import { searchVariants } from "@/services/searchText";
 import { currentAuthScope } from "@/stores/auth";
 import { logError } from "@/utils/log";
 
@@ -17,7 +18,7 @@ import { logError } from "@/utils/log";
 // never mixes one account's local library into another's. The handle follows the
 // active scope automatically (see `getLocalLibraryDb`).
 
-const SCHEMA_VERSION = 6;
+const SCHEMA_VERSION = 8;
 
 const currentScope = currentAuthScope;
 
@@ -230,6 +231,20 @@ export async function deleteLocalLibraryDb(
 // Columns map onto the OpenSubsonic `Child` shape (see queries.ts) so the rest
 // of the app stays protocol-agnostic. `*_key` columns hold normalized grouping
 // keys (indexed) so album/artist rollups don't pay a per-row normalize cost.
+// `normalized` carries the extra spellings from `searchVariants` (punctuation
+// and accents folded away, kana romanised, one word at a time) so a query like
+// `big`, `haed` or `yorushika` hits "B.I.G." / "Hæd" / "ヨルシカ"; the raw
+// columns keep matching the original text. FTS5 tables can't be ALTERed, so a
+// change here needs a rebuild in `migrate`.
+const TRACKS_FTS_SCHEMA = `CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts USING fts5(
+  id UNINDEXED,
+  title,
+  artist,
+  album,
+  album_artist,
+  normalized
+);`;
+
 const SCHEMA_V1 = `
 CREATE TABLE IF NOT EXISTS tracks (
   id            TEXT PRIMARY KEY NOT NULL,
@@ -276,13 +291,7 @@ CREATE TABLE IF NOT EXISTS tracks (
 -- blocks run on every open, so a CREATE here and a DROP there would rebuild and
 -- discard the whole index every time the database is opened.
 
-CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts USING fts5(
-  id UNINDEXED,
-  title,
-  artist,
-  album,
-  album_artist
-);
+${TRACKS_FTS_SCHEMA}
 `;
 
 // User-created playlists live on-device too (the local backend has no server to
@@ -683,7 +692,16 @@ async function migrate(db: SQLiteDatabase): Promise<void> {
   // `user_version` gates *non-idempotent* migrations (column drops/renames, data
   // backfills) that can't simply be re-run. PRAGMA can't be parameterized;
   // SCHEMA_VERSION is a literal.
-  await db.withExclusiveTransactionAsync(async (txn) => {
+  //
+  // A plain transaction on this connection, not `withExclusiveTransactionAsync`:
+  // that one runs on a throwaway second connection it closes afterwards, and
+  // expo-sqlite's close first finalizes every statement `sqlite3_next_stmt`
+  // reports — including the ones FTS5 owns internally once `tracks_fts` has
+  // been touched — so `sqlite3_close` then frees them a second time and the
+  // process aborts (`Scudo ERROR: corrupted chunk header`, after a successful
+  // COMMIT). This connection is private until `openHandle` resolves and is
+  // never closed, so it has neither the contention nor the crash.
+  await db.withTransactionAsync(async () => {
     if (version > 0 && version < 3) {
       // v3: local ids moved from percent-encoded to hex payloads (decode-safe
       // for expo-router params — see services/local/keys.ts). Re-key existing
@@ -691,19 +709,19 @@ async function migrate(db: SQLiteDatabase): Promise<void> {
       // the FTS shadow table and any playlist memberships, so the index and
       // playlists survive the change without a rescan. (Album/artist ids are
       // derived at read time, so nothing stored needs migrating for them.)
-      const rows = await txn.getAllAsync<{ id: string; uri: string }>(
+      const rows = await db.getAllAsync<{ id: string; uri: string }>(
         "SELECT id, uri FROM tracks",
       );
       for (const r of rows) {
         const next = localTrackId(r.uri);
         if (next === r.id) continue;
-        await txn.runAsync("UPDATE tracks SET id = ? WHERE id = ?", next, r.id);
-        await txn.runAsync(
+        await db.runAsync("UPDATE tracks SET id = ? WHERE id = ?", next, r.id);
+        await db.runAsync(
           "UPDATE tracks_fts SET id = ? WHERE id = ?",
           next,
           r.id,
         );
-        await txn.runAsync(
+        await db.runAsync(
           "UPDATE playlist_tracks SET track_id = ? WHERE track_id = ?",
           next,
           r.id,
@@ -715,7 +733,7 @@ async function migrate(db: SQLiteDatabase): Promise<void> {
       // set-based statement rather than a row loop — this runs over the whole
       // library, and on a big index the difference is seconds. Tracks written
       // after this carry the columns from the start (see indexer.writeTrack).
-      await txn.execAsync(`
+      await db.execAsync(`
         UPDATE tracks SET
           resolved_album_key = COALESCE(
             (SELECT o.album_key FROM track_tag_overrides o
@@ -728,8 +746,42 @@ async function migrate(db: SQLiteDatabase): Promise<void> {
             artist_key
           )`);
     }
-    await txn.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION}`);
+    if (version > 0 && version < 8) {
+      // v7: the FTS table gained the `normalized` column; v8: that column also
+      // carries the romaji of kana words. Both are a rebuild, since FTS5 has no
+      // ALTER and the extra spellings only exist in JS.
+      await rebuildTracksFts(db);
+    }
+    await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION}`);
   });
+}
+
+// Rebuild the FTS table from `tracks_resolved` — the view already applies tag
+// overrides, so no file has to be re-read. A row loop rather than a set-based
+// INSERT…SELECT because the variants need Unicode normalisation (and kana
+// romanisation) SQLite doesn't have.
+async function rebuildTracksFts(db: SQLiteDatabase): Promise<void> {
+  await db.execAsync("DROP TABLE IF EXISTS tracks_fts");
+  await db.execAsync(TRACKS_FTS_SCHEMA);
+  const rows = await db.getAllAsync<{
+    id: string;
+    title: string | null;
+    artist: string | null;
+    album: string | null;
+    album_artist: string | null;
+  }>("SELECT id, title, artist, album, album_artist FROM tracks_resolved");
+  for (const r of rows) {
+    await db.runAsync(
+      `INSERT INTO tracks_fts (id, title, artist, album, album_artist, normalized)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      r.id,
+      r.title,
+      r.artist,
+      r.album,
+      r.album_artist,
+      searchVariants([r.title, r.artist, r.album, r.album_artist]),
+    );
+  }
 }
 
 // Shape of a `playlists` row as stored. Read queries adapt this to `Playlist`.

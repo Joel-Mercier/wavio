@@ -3,7 +3,7 @@ import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
@@ -18,6 +18,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { useSearch3 } from "@/hooks/backend/useSearching";
+import useDebounce from "@/hooks/useDebounce";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
@@ -47,8 +48,16 @@ export default function RecentSearchesScreen() {
     },
   });
   const query = useSelector(form.store, (state) => state.values.query);
+  // Same 150 ms trailing debounce as the library screens: the type-ahead used
+  // to fire a search3 per keystroke, and on Jellyfin each one is up to six
+  // requests once the punctuation fallback kicks in.
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const debounce = useDebounce(150);
+  useEffect(() => {
+    debounce(() => setDebouncedQuery(query));
+  }, [query, debounce]);
   const musicFolderId = useCurrentMusicFolderId();
-  const { data, isLoading, error } = useSearch3(query, {
+  const { data, isLoading, error } = useSearch3(debouncedQuery, {
     albumCount: 12,
     albumOffset: 0,
     songCount: 12,

@@ -1,3 +1,4 @@
+import { searchVariants } from "@/services/searchText";
 import {
   type AlbumTagMatchRow,
   type AlbumTagMatchStatus,
@@ -106,13 +107,14 @@ async function refreshFtsRow(
   if (!row) return;
   await db.runAsync("DELETE FROM tracks_fts WHERE id = ?", trackId);
   await db.runAsync(
-    `INSERT INTO tracks_fts (id, title, artist, album, album_artist)
-     VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO tracks_fts (id, title, artist, album, album_artist, normalized)
+     VALUES (?, ?, ?, ?, ?, ?)`,
     row.id,
     row.title,
     row.artist,
     row.album,
     row.album_artist,
+    searchVariants([row.title, row.artist, row.album, row.album_artist]),
   );
 }
 

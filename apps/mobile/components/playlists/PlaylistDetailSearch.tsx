@@ -1,7 +1,7 @@
 import { FlashList } from "@shopify/flash-list";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import Fuse, { type FuseResult } from "fuse.js";
+import type { FuseResult } from "fuse.js";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useCallback, useMemo } from "react";
@@ -22,6 +22,7 @@ import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { useTrackSort } from "@/hooks/useTrackSort";
 import type { Child } from "@/services/openSubsonic/types";
+import { createSearchIndex } from "@/services/searchIndex";
 import usePlaylists from "@/stores/playlists";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
@@ -81,14 +82,7 @@ export default function PlaylistDetailSearch() {
       return result;
     }
 
-    const options = {
-      includeScore: true,
-      ignoreDiacritics: true,
-      keys: ["title"],
-    };
-    const fuse = new Fuse<Child>(newData, options);
-    const result = fuse.search(query);
-    return result;
+    return createSearchIndex(newData, ["title"]).search(query);
   }, [playlistData, activeSort, query, id, getPlaylistTrackOrder]);
 
   const trackList = useMemo(() => data?.map((r) => r.item), [data]);

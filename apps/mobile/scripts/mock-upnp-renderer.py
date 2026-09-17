@@ -261,6 +261,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
+        log("HTTP", f"GET {self.path} from {self.client_address[0]}")
         if self.path.rstrip("/") in ("/description.xml", "/description"):
             self._send(200, self.server.description.encode())
         else:
@@ -353,7 +354,7 @@ class Server(socketserver.ThreadingMixIn, http.server.HTTPServer):
                 action,
                 f"<Track>1</Track><TrackDuration>{hms(r.duration)}</TrackDuration>"
                 f"<TrackMetaData>{r.metadata}</TrackMetaData>"
-                f"<TrackURI>{r.uri}</TrackURI>"
+                f"<TrackURI>{'' if args.no_track_uri else r.uri}</TrackURI>"
                 f"<RelTime>{hms(r.position())}</RelTime><AbsTime>{hms(r.position())}</AbsTime>"
                 "<RelCount>2147483647</RelCount><AbsCount>2147483647</AbsCount>",
             )
@@ -502,6 +503,7 @@ def main():
     p.add_argument("--name", default="Wavio Mock Renderer", help="friendlyName shown in the app")
     p.add_argument("--port", type=int, default=8060, help="HTTP port (default 8060)")
     p.add_argument("--bind", default=None, help="LAN address to advertise (default: auto)")
+    p.add_argument("--udn", default=None, help="fixed UDN, so a restart looks like the same device (default: random)")
     p.add_argument("--duration", type=float, default=0, help="override track length, seconds")
     p.add_argument("-v", "--verbose", action="store_true", help="print every SOAP envelope")
 
@@ -510,6 +512,7 @@ def main():
     q.add_argument("--reject-didl", action="store_true", help="refuse any SetAVTransportURI carrying metadata")
     q.add_argument("--reject-mime", metavar="MIME", help="refuse this MIME, e.g. audio/flac")
     q.add_argument("--stop-early", type=float, default=0, metavar="SEC", help="report STOPPED this early")
+    q.add_argument("--no-track-uri", action="store_true", help="never report TrackURI in GetPositionInfo")
     q.add_argument("--flaky-discovery", action="store_true", help="answer only every other M-SEARCH")
     q.add_argument("--duplicate-names", action="store_true", help="send two SSDP replies per search")
     q.add_argument("--sonos-member", metavar="URL", help="refuse playback, point at this coordinator's description")
@@ -517,7 +520,7 @@ def main():
     args = p.parse_args()
     args.bind = args.bind or lan_ip()
 
-    udn = str(uuid.uuid4())
+    udn = args.udn or str(uuid.uuid4())
     base = f"http://{args.bind}:{args.port}"
     location = f"{base}/description.xml"
     sonos = bool(args.sonos_member)
@@ -535,7 +538,9 @@ def main():
     threading.Thread(target=ssdp_responder, args=(args, location, udn, stop), daemon=True).start()
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
-    quirks = [n for n in ("autoplay", "reject_didl", "flaky_discovery", "duplicate_names") if getattr(args, n)]
+    quirks = [
+        n for n in ("autoplay", "reject_didl", "flaky_discovery", "duplicate_names", "no_track_uri") if getattr(args, n)
+    ]
     if args.reject_mime:
         quirks.append(f"reject_mime={args.reject_mime}")
     if args.stop_early:

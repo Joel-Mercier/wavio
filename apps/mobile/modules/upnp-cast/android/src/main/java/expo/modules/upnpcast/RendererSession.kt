@@ -28,7 +28,13 @@ class RendererSession(
   private val renderingControl: String? =
     initialDescription.controlUrl(Services.RENDERING_CONTROL)
 
-  data class State(val playbackState: String, val positionMs: Long, val durationMs: Long)
+  data class State(
+    val playbackState: String,
+    val positionMs: Long,
+    val durationMs: Long,
+    /** What the renderer says it is holding — empty when it does not report one. */
+    val trackUri: String
+  )
 
   /**
    * Hands a track over and, unless told otherwise, starts it.
@@ -144,7 +150,8 @@ class RendererSession(
     return State(
       playbackState = playbackState,
       positionMs = Didl.parseDuration(Soap.argument(position.body, "RelTime")),
-      durationMs = Didl.parseDuration(Soap.argument(position.body, "TrackDuration"))
+      durationMs = Didl.parseDuration(Soap.argument(position.body, "TrackDuration")),
+      trackUri = Soap.argument(position.body, "TrackURI") ?: ""
     )
   }
 

@@ -2,6 +2,22 @@ import { useQuery } from "@tanstack/react-query";
 import { useOfflineSearch3 } from "@/hooks/offline";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { search, search2, search3 } from "@/services/backend/searching";
+import { withKanaFallback } from "@/services/kanaSearchFallback";
+
+// The interactive searches retry an empty first page with the kana / romaji
+// forms of the query. Applied here rather than in services/backend so the bulk
+// callers (services/libraryMatch matches ~50 external tracks and misses as a
+// matter of course) don't fan out on every miss.
+const search2WithKana = withKanaFallback(
+  search2,
+  (envelope) => envelope.searchResult2,
+  (envelope, searchResult2) => ({ ...envelope, searchResult2 }),
+);
+const search3WithKana = withKanaFallback(
+  search3,
+  (envelope) => envelope.searchResult3,
+  (envelope, searchResult3) => ({ ...envelope, searchResult3 }),
+);
 
 export const useSearch = (params: {
   artist?: string;
@@ -35,7 +51,7 @@ export const useSearch2 = (
   return useQuery({
     queryKey: ["search2", query, params],
     queryFn: () => {
-      return search2(query, params);
+      return search2WithKana(query, params);
     },
   });
 };
@@ -65,7 +81,7 @@ export const useSearch3 = (
   const serverQuery = useQuery({
     queryKey: ["search3", query, params],
     queryFn: () => {
-      return search3(query, params);
+      return search3WithKana(query, params);
     },
     enabled: enabled && query.length > 0 && isOnline,
   });

@@ -3,6 +3,7 @@ import { type AudioMetadata, getAudioMetadata } from "@/modules/audio-metadata";
 import { reportBreadcrumb, reportError } from "@/services/errorReporting";
 import { activeFileSource } from "@/services/fileSource";
 import type { FileSource, RemoteEntry } from "@/services/fileSource/types";
+import { searchVariants } from "@/services/searchText";
 import { requestHeadersForUrl } from "@/services/serverHeaders";
 import { logError } from "@/utils/log";
 import {
@@ -1010,14 +1011,20 @@ async function writeTrack(
     $indexed_at: row.indexed_at,
   });
   await db.runAsync(
-    `INSERT INTO tracks_fts (id, title, artist, album, album_artist)
-     VALUES ($id, $title, $artist, $album, $album_artist)`,
+    `INSERT INTO tracks_fts (id, title, artist, album, album_artist, normalized)
+     VALUES ($id, $title, $artist, $album, $album_artist, $normalized)`,
     {
       $id: row.id,
       $title: row.title,
       $artist: row.artist,
       $album: row.album,
       $album_artist: row.album_artist,
+      $normalized: searchVariants([
+        row.title,
+        row.artist,
+        row.album,
+        row.album_artist,
+      ]),
     },
   );
 }

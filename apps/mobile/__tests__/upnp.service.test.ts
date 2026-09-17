@@ -26,7 +26,7 @@ type NativeState = {
 
 let mockStateListener: ((state: NativeState) => void) | null = null;
 const mockNative = {
-  search: jest.fn(async () => []),
+  search: jest.fn(async (): Promise<unknown[]> => []),
   connect: jest.fn(async () => true),
   load: jest.fn(async () => true),
   play: jest.fn(async () => true),
@@ -35,6 +35,8 @@ const mockNative = {
   setVolume: jest.fn(async () => true),
   getVolume: jest.fn(async () => 30),
   disconnect: jest.fn(async () => true),
+  describe: jest.fn(async () => null as unknown),
+  probe: jest.fn(async () => null as unknown),
   addListener: jest.fn((_event: string, cb: (s: NativeState) => void) => {
     mockStateListener = cb;
     return {
@@ -60,11 +62,30 @@ jest.mock("@/services/backend/streaming", () => ({
 
 jest.mock("@/services/errorReporting", () => ({ reportError: jest.fn() }));
 
+const localPlayer = { playing: true };
+const mockTakeOverFromRemote = jest.fn();
 jest.mock("@/services/player", () => ({
   getCurrentTime: () => 0,
-  isPlaying: () => true,
+  isPlaying: () => localPlayer.playing,
   pause: jest.fn(),
-  takeOverFromRemote: jest.fn(),
+  takeOverFromRemote: (...args: unknown[]) => mockTakeOverFromRemote(...args),
+}));
+
+jest.mock("@/stores/auth", () => ({
+  useAuthBase: { getState: () => ({ serverType: "navidrome" }) },
+  currentAuthScope: () => "scope",
+  registerLogoutHandler: jest.fn(),
+}));
+
+const mockJukebox = { active: false };
+jest.mock("@/stores/jukebox", () => ({
+  __esModule: true,
+  default: { getState: () => mockJukebox },
+}));
+
+const mockCapabilities = { remoteStreamableUrl: true };
+jest.mock("@/services/backend/capabilities", () => ({
+  getCapabilities: () => mockCapabilities,
 }));
 
 const mockStreamingFormat = { value: "raw" as string };
@@ -80,10 +101,16 @@ jest.mock("@/stores/app", () => ({
 
 // Stand-in for the real resolver (covered in network.test.ts): "same" and Wi-Fi
 // fall through to the Wi-Fi format, cellular takes the cellular pick.
-const netState = { isCellular: false };
+const netState = { isCellular: false, type: "wifi" };
+const mockConnectionListeners = new Set<(type: string) => void>();
 jest.mock("@/services/network", () => ({
   getEffectiveStreamingFormat: (format: string, cellularFormat: string) =>
     netState.isCellular && cellularFormat !== "same" ? cellularFormat : format,
+  getConnectionType: () => netState.type,
+  subscribeConnectionType: (cb: (type: string) => void) => {
+    mockConnectionListeners.add(cb);
+    return () => mockConnectionListeners.delete(cb);
+  },
 }));
 
 type Track = { id: string; duration?: number; suffix?: string };
@@ -109,13 +136,22 @@ jest.mock("@/stores/queue", () => ({
 }));
 
 import { activeRemoteTarget } from "@/services/playback/remoteTarget";
-import { castMime, upnpConnect, upnpDisconnect } from "@/services/upnp";
+import {
+  castMime,
+  initUpnpOnLaunch,
+  reattach,
+  takeOverLocally,
+  upnpConnect,
+  upnpDisconnect,
+  upnpRelease,
+} from "@/services/upnp";
 import { useUpnpBase } from "@/stores/upnp";
 
 const device = {
   id: "uuid-1",
   name: "Kitchen",
   address: "192.168.1.50",
+  location: "http://192.168.1.50:1400/xml/device_description.xml",
   isTV: false,
   verified: true,
 };
@@ -155,6 +191,8 @@ beforeEach(async () => {
   mockNative.setVolume.mockResolvedValue(true);
   mockNative.getVolume.mockResolvedValue(30);
   mockNative.disconnect.mockResolvedValue(true);
+  mockNative.describe.mockResolvedValue(null);
+  mockNative.probe.mockResolvedValue(null);
   mockNative.addListener.mockImplementation(
     (_event: string, cb: (s: NativeState) => void) => {
       mockStateListener = cb;
@@ -167,14 +205,50 @@ beforeEach(async () => {
   );
   mockStateListener = null;
   mockStreamingFormat.value = "raw";
+  localPlayer.playing = true;
+  mockJukebox.active = false;
+  mockCapabilities.remoteStreamableUrl = true;
+  netState.type = "wifi";
+  mockConnectionListeners.clear();
   useUpnpBase.getState().__reset();
 });
 
 afterEach(async () => {
   if (useUpnpBase.getState().connected) await upnpDisconnect();
+  // A prompt raised but never answered would otherwise leak its probe into
+  // the next test.
+  await upnpRelease();
 });
 
 describe("upnp session", () => {
+  it("remembers the renderer and the track it was given", async () => {
+    await connect();
+    const session = useUpnpBase.getState().session;
+    expect(session).toMatchObject({
+      deviceId: "uuid-1",
+      deviceName: "Kitchen",
+      location: device.location,
+      trackId: "t1",
+    });
+    expect(session?.trackUrl).toContain("/rest/stream?id=t1");
+  });
+
+  it("forgets the session on disconnect", async () => {
+    await connect();
+    await upnpDisconnect();
+    expect(useUpnpBase.getState().session).toBeNull();
+    expect(mockTakeOverFromRemote).toHaveBeenCalled();
+  });
+
+  it("release stops the renderer without moving playback to this device", async () => {
+    await connect();
+    await upnpRelease();
+    expect(mockNative.disconnect).toHaveBeenCalled();
+    expect(useUpnpBase.getState().connected).toBe(false);
+    expect(useUpnpBase.getState().session).toBeNull();
+    expect(mockTakeOverFromRemote).not.toHaveBeenCalled();
+  });
+
   it("connects, loads the current track and marks the store connected", async () => {
     await connect();
     expect(mockNative.connect).toHaveBeenCalledWith("uuid-1");
@@ -311,6 +385,273 @@ describe("remote target", () => {
     expect(
       activeRemoteTarget()?.readSnapshot().currentTime,
     ).toBeLessThanOrEqual(100);
+  });
+});
+
+describe("resuming after a restart", () => {
+  const savedSession = {
+    deviceId: "uuid-1",
+    deviceName: "Kitchen",
+    address: "192.168.1.50",
+    location: device.location,
+    trackId: "t1",
+    trackUrl: "http://server/rest/stream?id=t1&u=x&t=y&s=z",
+  };
+  const probe = (playbackState: string, trackUri = savedSession.trackUrl) => ({
+    playbackState,
+    positionMs: 42_000,
+    durationMs: 100_000,
+    trackUri,
+  });
+
+  beforeEach(() => {
+    mockQueueState.queue = [TRACK, { id: "t2", duration: 100 }];
+    mockQueueState.currentIndex = 0;
+    localPlayer.playing = false;
+    useUpnpBase.getState().setSession(savedSession);
+    mockNative.describe.mockResolvedValue(device);
+  });
+
+  const expectDropped = () => {
+    expect(useUpnpBase.getState().pendingResume).toBe(false);
+    expect(useUpnpBase.getState().session).toBeNull();
+    expect(mockNative.connect).not.toHaveBeenCalled();
+    expect(mockNative.disconnect).not.toHaveBeenCalled();
+  };
+
+  it("prompts when the renderer is still playing our track", async () => {
+    mockNative.probe.mockResolvedValue(probe("PLAYING"));
+    await initUpnpOnLaunch();
+    expect(useUpnpBase.getState().pendingResume).toBe(true);
+    expect(useUpnpBase.getState().connected).toBe(false);
+    expect(mockNative.describe).toHaveBeenCalledWith("uuid-1", device.location);
+    expect(mockNative.search).not.toHaveBeenCalled();
+  });
+
+  it("prompts when the renderer holds our track paused, as a swipe-away leaves it", async () => {
+    mockNative.probe.mockResolvedValue(probe("PAUSED_PLAYBACK"));
+    await initUpnpOnLaunch();
+    expect(useUpnpBase.getState().pendingResume).toBe(true);
+  });
+
+  it("falls back to the duration when the renderer does not report what it holds", async () => {
+    mockNative.probe.mockResolvedValue(probe("PLAYING", ""));
+    await initUpnpOnLaunch();
+    expect(useUpnpBase.getState().pendingResume).toBe(true);
+  });
+
+  it("drops the session when a renderer reporting no URI holds something of another length", async () => {
+    mockNative.probe.mockResolvedValue({
+      ...probe("PLAYING", ""),
+      durationMs: 245_000,
+    });
+    await initUpnpOnLaunch();
+    expectDropped();
+  });
+
+  it("drops the session when a renderer reports neither URI nor duration", async () => {
+    mockNative.probe.mockResolvedValue({
+      ...probe("PLAYING", ""),
+      durationMs: 0,
+    });
+    await initUpnpOnLaunch();
+    expectDropped();
+  });
+
+  it("matches the URI even when the renderer hands it back escaped", async () => {
+    mockNative.probe.mockResolvedValue(
+      probe(
+        "PLAYING",
+        " http://server/rest/stream?id=t1&amp;u=x&amp;t=y&amp;s=z ",
+      ),
+    );
+    await initUpnpOnLaunch();
+    expect(useUpnpBase.getState().pendingResume).toBe(true);
+  });
+
+  it("drops a renderer that has moved on to something else without touching it", async () => {
+    mockNative.probe.mockResolvedValue(
+      probe("PLAYING", "http://elsewhere/other.mp3"),
+    );
+    await initUpnpOnLaunch();
+    expectDropped();
+  });
+
+  it("drops an idle renderer: the track ended and there is nothing to resume", async () => {
+    mockNative.probe.mockResolvedValue(probe("STOPPED"));
+    await initUpnpOnLaunch();
+    expectDropped();
+  });
+
+  it("drops the session when the renderer cannot be found", async () => {
+    mockNative.describe.mockResolvedValue(null);
+    await initUpnpOnLaunch();
+    expect(mockNative.search).toHaveBeenCalled();
+    expectDropped();
+  });
+
+  it("finds a renderer by UDN through a search when its address changed", async () => {
+    mockNative.describe.mockResolvedValue(null);
+    mockNative.search.mockResolvedValue([
+      { ...device, address: "192.168.1.77" },
+    ]);
+    mockNative.probe.mockResolvedValue(probe("PLAYING"));
+    await initUpnpOnLaunch();
+    expect(useUpnpBase.getState().pendingResume).toBe(true);
+  });
+
+  it("does not search for a renderer that never gave a UDN", async () => {
+    useUpnpBase.getState().setSession({
+      ...savedSession,
+      deviceId: savedSession.address,
+    });
+    mockNative.describe.mockResolvedValue(null);
+    await initUpnpOnLaunch();
+    expect(mockNative.search).not.toHaveBeenCalled();
+    expectDropped();
+  });
+
+  it("drops the session off Wi-Fi", async () => {
+    netState.type = "cellular";
+    mockNative.probe.mockResolvedValue(probe("PLAYING"));
+    await initUpnpOnLaunch();
+    expect(mockNative.describe).not.toHaveBeenCalled();
+    expectDropped();
+  });
+
+  it("waits for the network to be known before deciding", async () => {
+    netState.type = "unknown";
+    mockNative.probe.mockResolvedValue(probe("PLAYING"));
+    const launch = initUpnpOnLaunch();
+    await Promise.resolve();
+    expect(mockNative.describe).not.toHaveBeenCalled();
+    for (const cb of mockConnectionListeners) cb("wifi");
+    await launch;
+    expect(useUpnpBase.getState().pendingResume).toBe(true);
+  });
+
+  it("does not prompt when the session was replaced while the network was being asked", async () => {
+    netState.type = "unknown";
+    mockNative.probe.mockResolvedValue(probe("PLAYING"));
+    const launch = initUpnpOnLaunch();
+    await Promise.resolve();
+    useUpnpBase.getState().setSession(null);
+    for (const cb of mockConnectionListeners) cb("wifi");
+    await launch;
+    expect(useUpnpBase.getState().pendingResume).toBe(false);
+    expect(useUpnpBase.getState().session).toBeNull();
+    await reattach();
+    expect(mockNative.connect).not.toHaveBeenCalled();
+  });
+
+  it("leaves another scope's session alone when the check ends in a drop", async () => {
+    netState.type = "unknown";
+    mockNative.describe.mockResolvedValue(null);
+    const otherScopes = { ...savedSession, deviceId: "uuid-9", trackId: "t9" };
+    const launch = initUpnpOnLaunch();
+    await Promise.resolve();
+    useUpnpBase.getState().setSession(otherScopes);
+    for (const cb of mockConnectionListeners) cb("wifi");
+    await launch;
+    expect(useUpnpBase.getState().pendingResume).toBe(false);
+    expect(useUpnpBase.getState().session).toBe(otherScopes);
+  });
+
+  it("release withdraws a pending resume prompt", async () => {
+    mockNative.probe.mockResolvedValue(probe("PLAYING"));
+    await initUpnpOnLaunch();
+    expect(useUpnpBase.getState().pendingResume).toBe(true);
+    await upnpRelease();
+    expect(useUpnpBase.getState().pendingResume).toBe(false);
+    expect(useUpnpBase.getState().session).toBeNull();
+    await reattach();
+    expect(mockNative.connect).not.toHaveBeenCalled();
+  });
+
+  it("drops the session when the queue no longer sits on the track it held", async () => {
+    mockQueueState.currentIndex = 1;
+    mockNative.probe.mockResolvedValue(probe("PLAYING"));
+    await initUpnpOnLaunch();
+    expect(mockNative.describe).not.toHaveBeenCalled();
+    expectDropped();
+  });
+
+  it("stands down while a jukebox session is active", async () => {
+    mockJukebox.active = true;
+    await initUpnpOnLaunch();
+    expectDropped();
+  });
+
+  it("stands down on a server that cannot stream to a renderer", async () => {
+    mockCapabilities.remoteStreamableUrl = false;
+    await initUpnpOnLaunch();
+    expectDropped();
+  });
+
+  it("does not prompt when the user has already started playing here", async () => {
+    mockNative.probe.mockResolvedValue(probe("PLAYING"));
+    localPlayer.playing = true;
+    await initUpnpOnLaunch();
+    expectDropped();
+  });
+
+  it("resume takes the renderer back from where it is, without reloading the track", async () => {
+    mockNative.probe.mockResolvedValue(probe("PLAYING"));
+    await initUpnpOnLaunch();
+    await reattach();
+    expect(mockNative.connect).toHaveBeenCalledWith("uuid-1");
+    expect(mockNative.load).not.toHaveBeenCalled();
+    expect(useUpnpBase.getState().connected).toBe(true);
+    expect(useUpnpBase.getState().session?.trackId).toBe("t1");
+    const target = activeRemoteTarget();
+    expect(target?.id).toBe("upnp");
+    expect(target?.isPlaying()).toBe(true);
+    expect(target?.getCurrentTime()).toBe(42);
+  });
+
+  it("resume seeds the end-of-track inference so the track's ending still advances", async () => {
+    mockNative.probe.mockResolvedValue(probe("PLAYING"));
+    await initUpnpOnLaunch();
+    await reattach();
+    push("STOPPED", 96, 100);
+    expect(mockQueueState.next).toHaveBeenCalled();
+  });
+
+  it("resume of a paused renderer reports it paused", async () => {
+    mockNative.probe.mockResolvedValue(probe("PAUSED_PLAYBACK"));
+    await initUpnpOnLaunch();
+    await reattach();
+    expect(activeRemoteTarget()?.isPlaying()).toBe(false);
+    push("STOPPED", 96, 100);
+    expect(mockQueueState.next).not.toHaveBeenCalled();
+  });
+
+  it("play here stops the renderer and continues locally from its position", async () => {
+    mockNative.probe.mockResolvedValue(probe("PLAYING"));
+    await initUpnpOnLaunch();
+    await takeOverLocally();
+    expect(mockNative.connect).toHaveBeenCalledWith("uuid-1");
+    expect(mockNative.disconnect).toHaveBeenCalled();
+    expect(useUpnpBase.getState().connected).toBe(false);
+    expect(useUpnpBase.getState().session).toBeNull();
+    expect(mockTakeOverFromRemote).toHaveBeenCalledWith(42, true);
+  });
+
+  it("play here on a paused renderer stays paused on this device", async () => {
+    mockNative.probe.mockResolvedValue(probe("PAUSED_PLAYBACK"));
+    await initUpnpOnLaunch();
+    await takeOverLocally();
+    expect(mockTakeOverFromRemote).toHaveBeenCalledWith(42, false);
+  });
+
+  it("falls back to this device when the renderer refuses the reconnection", async () => {
+    mockNative.probe.mockResolvedValue(probe("PLAYING"));
+    await initUpnpOnLaunch();
+    mockNative.connect.mockResolvedValue(false);
+    await reattach();
+    expect(useUpnpBase.getState().connected).toBe(false);
+    expect(useUpnpBase.getState().session).toBeNull();
+    expect(mockTakeOverFromRemote).toHaveBeenCalledWith(42, true);
   });
 });
 

@@ -2,7 +2,6 @@ import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
-import Fuse from "fuse.js";
 import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
@@ -48,6 +47,7 @@ import {
 } from "@/hooks/offline";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
+import { createSearchIndex } from "@/services/searchIndex";
 import useApp from "@/stores/app";
 import type { OfflineTrack } from "@/stores/offline";
 import { niceBytes } from "@/utils/fileSize";
@@ -130,12 +130,9 @@ export default function OfflineDownloadsDetail() {
     if (query.length === 0) {
       return sorted;
     }
-    const fuse = new Fuse<OfflineTrack>(sorted, {
-      includeScore: true,
-      ignoreDiacritics: true,
-      keys: ["title", "artist", "album"],
-    });
-    return fuse.search(query).map((result) => result.item);
+    return createSearchIndex(sorted, ["title", "artist", "album"])
+      .search(query)
+      .map((result) => result.item);
   }, [downloadedTracksList, activeSort, query]);
 
   // A changed sort/query reorders the list; snap back to the top so the new

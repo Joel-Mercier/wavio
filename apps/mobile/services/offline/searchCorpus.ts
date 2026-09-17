@@ -1,5 +1,4 @@
 import type { QueryClient } from "@tanstack/react-query";
-import Fuse from "fuse.js";
 import {
   collectionArtistCredits,
   offlineTrackToChild,
@@ -16,6 +15,7 @@ import type {
   SearchResult3,
   Starred2,
 } from "@/services/openSubsonic/types";
+import { createSearchIndex, type SearchIndex } from "@/services/searchIndex";
 import type { OfflineCollection, OfflineTrack } from "@/stores/offline";
 
 // Offline search corpus + index. When the app is effectively offline the server
@@ -31,9 +31,9 @@ export type OfflineSearchCorpus = {
 };
 
 export type OfflineSearchIndex = {
-  songs: Fuse<Child>;
-  albums: Fuse<AlbumID3>;
-  artists: Fuse<ArtistID3>;
+  songs: SearchIndex<Child>;
+  albums: SearchIndex<AlbumID3>;
+  artists: SearchIndex<ArtistID3>;
 };
 
 type OfflineSearchParams = {
@@ -196,27 +196,13 @@ export function buildOfflineSearchCorpus(
   };
 }
 
-// The default threshold (0.6) is too fuzzy for a multi-key corpus; 0.4 keeps
-// matches relevant while still tolerating typos/partials.
-const FUSE_OPTIONS = {
-  includeScore: true,
-  ignoreDiacritics: true,
-  threshold: 0.4,
-} as const;
-
 export function createOfflineSearchIndex(
   corpus: OfflineSearchCorpus,
 ): OfflineSearchIndex {
   return {
-    songs: new Fuse(corpus.songs, {
-      ...FUSE_OPTIONS,
-      keys: ["title", "artist", "album"],
-    }),
-    albums: new Fuse(corpus.albums, {
-      ...FUSE_OPTIONS,
-      keys: ["name", "artist"],
-    }),
-    artists: new Fuse(corpus.artists, { ...FUSE_OPTIONS, keys: ["name"] }),
+    songs: createSearchIndex(corpus.songs, ["title", "artist", "album"]),
+    albums: createSearchIndex(corpus.albums, ["name", "artist"]),
+    artists: createSearchIndex(corpus.artists, ["name"]),
   };
 }
 
@@ -231,17 +217,8 @@ export function searchOfflineIndex(
   const artistCount = params.artistCount ?? 20;
   const songCount = params.songCount ?? 20;
   return {
-    album: index.albums
-      .search(query)
-      .slice(0, albumCount)
-      .map((r) => r.item),
-    artist: index.artists
-      .search(query)
-      .slice(0, artistCount)
-      .map((r) => r.item),
-    song: index.songs
-      .search(query)
-      .slice(0, songCount)
-      .map((r) => r.item),
+    album: index.albums.search(query, albumCount).map((r) => r.item),
+    artist: index.artists.search(query, artistCount).map((r) => r.item),
+    song: index.songs.search(query, songCount).map((r) => r.item),
   };
 }

@@ -691,7 +691,12 @@ export default function LibraryScreen() {
           }}
           extraData={{ layout, gridColumns }}
           ListEmptyComponent={() =>
-            isLoading ? null : <EmptyDisplay offline={!isOnline} />
+            isLoading ? null : (
+              <EmptyDisplay
+                offline={!isOnline}
+                hint={isOnline ? t("app.library.emptyHint") : undefined}
+              />
+            )
           }
           contentContainerStyle={{
             // Grid cells add their own 8px (px-2) each side; drop the container
