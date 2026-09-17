@@ -81,8 +81,10 @@
 				"allTracks": "Todas las canciones",
 				"allAlbumsSubtitle": "Álbumes",
 				"allArtistsSubtitle": "Artistas",
+				"emptyHint": "Your library only shows what you've favorited (albums, artists, podcasts, radio stations), your playlists and your downloads. Tap the heart on something and it will appear here.",
 				"search": {
-					"inputPlaceholder": "Busca en tu biblioteca"
+					"inputPlaceholder": "Busca en tu biblioteca",
+					"emptyHint": "This only searches your library: favorited albums, artists, radio stations and your playlists. To search your whole collection, including songs, use the Search tab."
 				}
 			},
 			"create": {
