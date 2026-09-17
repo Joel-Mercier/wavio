@@ -39,6 +39,57 @@ const NON_DECOMPOSABLE_RE = new RegExp(
 const NOT_WORD_CHAR = /[^\p{L}\p{M}\p{N}\s]/gu;
 const WHITESPACE = /\s+/g;
 
+// Hiragana, katakana and half-width katakana. Kanji is deliberately absent:
+// a kanji name has no deterministic reading, so nothing below can help it.
+const KANA = /[぀-ヿｦ-ﾟ]/;
+
+export function hasKana(text: string): boolean {
+  return KANA.test(text);
+}
+
+// This module is on the cold-start graph (services/local/db.ts and the backend
+// dispatch both import it), so wanakana is required on the first kana word
+// rather than at module load — a Latin-only library never pays for it. Same
+// arrangement as pinyin-pro in services/pinyinIndex.ts.
+let wanakana: typeof import("wanakana") | undefined;
+
+export function getWanakana() {
+  if (!wanakana) {
+    wanakana = require("wanakana") as typeof import("wanakana");
+  }
+  return wanakana;
+}
+
+// wanakana romanises トウキョウ as `toukyou`; people type `tokyo`, `toukyou` or
+// `tōkyō` (the macron folds to `tokyo` through NFKD above). Emitting the
+// collapsed spelling beside the literal one lets any of them hit.
+function collapseLongVowels(romaji: string): string {
+  return romaji
+    .replace(/ou|oo/g, "o")
+    .replace(/uu/g, "u")
+    .replace(/aa/g, "a")
+    .replace(/ii/g, "i")
+    .replace(/ee/g, "e");
+}
+
+// Romaji spellings of a word containing kana, in the same normalised form as
+// everything else here, minus any that equal the normalised word itself. Kanji
+// inside the word is left as-is (`ずっと真夜中でいいのに。` → `zutto真夜中deiinoni`),
+// which prefix and fuzzy matchers still handle. Empty for a word without kana.
+export function romajiSpellings(word: string): string[] {
+  if (!hasKana(word)) return [];
+  const normalizedWord = normalizeSearchText(word);
+  // NFKC folds half-width katakana to full-width, which wanakana can read.
+  const romaji = normalizeSearchText(
+    getWanakana().toRomaji(word.normalize("NFKC")),
+  );
+  const spellings = new Set<string>();
+  for (const spelling of [romaji, collapseLongVowels(romaji)]) {
+    if (spelling && spelling !== normalizedWord) spellings.add(spelling);
+  }
+  return [...spellings];
+}
+
 export function normalizeSearchText(value: string): string {
   const decomposed = canNormalize
     ? value.normalize("NFKD").replace(COMBINING_MARKS, "")
@@ -52,9 +103,19 @@ export function normalizeSearchText(value: string): string {
   return canNormalize ? stripped.normalize("NFC") : stripped;
 }
 
+// Kana words are *replaced* by their romaji, on the query and on the indexed
+// side alike (Fuse runs this same tokenizer at index time), so `yorushika`,
+// `よるしか` and `ヨルシカ` all meet as `yorushika`. Replaced rather than added:
+// an AND matcher would otherwise still demand the kana token, and hiragana
+// never equals katakana.
 export function searchTokens(value: string): string[] {
   const normalized = normalizeSearchText(value);
-  return normalized ? normalized.split(" ") : [];
+  if (!normalized) return [];
+  return normalized.split(" ").flatMap((token) => {
+    if (!hasKana(token)) return [token];
+    const romaji = romajiSpellings(token);
+    return romaji.length ? romaji : [token];
+  });
 }
 
 // A query made only of punctuation ("!!!", "+/-") normalises to nothing; match
@@ -73,7 +134,10 @@ export function toSearchHaystack(values: HaystackInput): SearchHaystack {
   const raw = (Array.isArray(values) ? values : [values]).filter(
     (v): v is string => typeof v === "string" && v.length > 0,
   );
-  return { raw, normalized: raw.map(normalizeSearchText).join(" ") };
+  return {
+    raw,
+    normalized: raw.map((v) => searchTokens(v).join(" ")).join(" "),
+  };
 }
 
 export type SearchMatcher = (haystack: SearchHaystack) => boolean;
@@ -111,9 +175,10 @@ export function alphanumericRuns(query: string): string[] {
 }
 
 // Extra searchable spellings for a full-text index over the given fields: the
-// normalised form of every word that differs from the word itself, deduped
-// and space-joined (Navidrome's `NormalizeForFTS`). Stored beside the raw
-// columns so `big` finds "B.I.G." and `haed` finds "Hæd" while the raw columns
+// normalised form of every word that differs from the word itself, plus the
+// romaji of every kana word, deduped and space-joined (Navidrome's
+// `NormalizeForFTS`). Stored beside the raw columns so `big` finds "B.I.G.",
+// `haed` finds "Hæd" and `yorushika` finds "ヨルシカ" while the raw columns
 // keep matching the original spelling.
 export function searchVariants(
   values: Array<string | undefined | null>,
@@ -125,6 +190,7 @@ export function searchVariants(
       if (!word) continue;
       const variant = normalizeSearchText(word);
       if (variant && variant !== word.toLowerCase()) seen.add(variant);
+      for (const romaji of romajiSpellings(word)) seen.add(romaji);
     }
   }
   return [...seen].join(" ");

@@ -1,9 +1,5 @@
 import Fuse, { type FuseResult, type IFuseOptions } from "fuse.js";
-import {
-  isLiteralQuery,
-  normalizeSearchText,
-  searchTokens,
-} from "@/services/searchText";
+import { isLiteralQuery, searchTokens } from "@/services/searchText";
 
 // One Fuse configuration for every in-app search over music metadata, so the
 // library, playlist, favourites, downloads and offline searches all answer a
@@ -14,16 +10,20 @@ import {
 // perfect score instead of paying for the missing ", the" as edit distance.
 //
 // Field values are normalised through `getFn` at index time and the query
-// through `tokenize`, so both sides see the same text. Fuse's own
-// `ignoreDiacritics` is left off: `normalizeSearchText` already folds accents
-// and Fuse's wider `\p{M}` strip would also erase Japanese dakuten.
+// through `tokenize`, so both sides see the same text — including kana words,
+// which `searchTokens` replaces by their romaji on both sides. (The tokenizer
+// alone isn't enough: Fuse only uses it for term frequencies and still matches
+// each query term against the field text, so the romaji has to be in the
+// text.) Fuse's own `ignoreDiacritics` is left off: `normalizeSearchText`
+// already folds accents and Fuse's wider `\p{M}` strip would also erase
+// Japanese dakuten.
 
 // ≤3-char words must match exactly; longer ones tolerate one typo. The 0.4
 // used before let "big" fuzz onto "sigur".
 const THRESHOLD = 0.3;
 
 function normalizeValue(value: unknown): unknown {
-  if (typeof value === "string") return normalizeSearchText(value);
+  if (typeof value === "string") return searchTokens(value).join(" ");
   if (Array.isArray(value)) return value.map(normalizeValue);
   return value;
 }

@@ -10,6 +10,9 @@ const artists = [
   { id: "7", name: "Big Poppa" },
   { id: "8", name: "!!!" },
   { id: "9", name: "高中正義" },
+  { id: "10", name: "ヨルシカ" },
+  { id: "11", name: "あいみょん" },
+  { id: "12", name: "トウキョウ事変" },
 ];
 
 const names = (query: string, limit?: number) =>
@@ -30,6 +33,13 @@ describe("createSearchIndex", () => {
     ["ac/dc", "AC/DC"],
     ["sigur ros", "Sigur Rós"],
     ["高中", "高中正義"],
+    ["yorushika", "ヨルシカ"],
+    ["よるしか", "ヨルシカ"],
+    ["ヨルシカ", "ヨルシカ"],
+    ["aimyon", "あいみょん"],
+    ["tokyo", "トウキョウ事変"],
+    ["toukyou", "トウキョウ事変"],
+    ["tōkyō", "トウキョウ事変"],
   ])("%p finds %p first", (query, expected) => {
     expect(names(query)[0]).toBe(expected);
   });
@@ -48,6 +58,7 @@ describe("createSearchIndex", () => {
 
   it("does not fuzz short words onto unrelated names", () => {
     expect(names("big")).not.toContain("Sigur Rós");
+    expect(names("tokyo")).toEqual(["トウキョウ事変"]);
   });
 
   it("still tolerates a typo in longer words", () => {

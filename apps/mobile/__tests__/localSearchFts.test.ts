@@ -22,6 +22,13 @@ describe("toFtsQuery", () => {
     expect(toFtsQuery("Tyler")).toBe('"Tyler"*');
   });
 
+  it("offers the romaji of a kana word beside the kana itself", () => {
+    expect(toFtsQuery("ヨルシカ")).toBe('("ヨルシカ"* OR "yorushika"*)');
+    expect(toFtsQuery("トウキョウ live")).toBe(
+      '("トウキョウ"* OR "toukyou"* OR "tokyo"*) AND "live"*',
+    );
+  });
+
   it("strips FTS operators and ignores blank input", () => {
     expect(toFtsQuery('  "big" (poppa)* ')).toBe('"big"* AND "poppa"*');
     expect(toFtsQuery("   ")).toBeNull();
@@ -43,5 +50,11 @@ describe("searchVariants", () => {
 
   it("is empty when nothing needs a variant", () => {
     expect(searchVariants(["Take On Me", "Queen"])).toBe("");
+  });
+
+  it("adds the romaji of kana words", () => {
+    expect(searchVariants(["ヨルシカ", "トウキョウ", "高中正義"])).toBe(
+      "yorushika toukyou tokyo",
+    );
   });
 });

@@ -20,7 +20,7 @@ type FakeDb = {
   runAsync: jest.Mock;
   getAllAsync: jest.Mock;
   getFirstAsync: jest.Mock;
-  withExclusiveTransactionAsync: jest.Mock;
+  withTransactionAsync: jest.Mock;
 };
 
 const opened: FakeDb[] = [];
@@ -46,7 +46,7 @@ const makeDb = (name: string): FakeDb => {
       { name: "resolved_artist_key" },
     ]),
     getFirstAsync: jest.fn(async () => ({ user_version: 6 })),
-    withExclusiveTransactionAsync: jest.fn(async () => {}),
+    withTransactionAsync: jest.fn(async () => {}),
   };
   return db;
 };

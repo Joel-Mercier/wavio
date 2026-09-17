@@ -3,6 +3,7 @@ import {
   isLiteralQuery,
   matchesAllTokens,
   normalizeSearchText,
+  romajiSpellings,
   searchTokens,
 } from "@/services/searchText";
 
@@ -42,6 +43,34 @@ describe("searchTokens", () => {
 
   it("is empty for a punctuation-only query", () => {
     expect(searchTokens("+/-")).toEqual([]);
+  });
+
+  it("replaces a kana word by its romaji, whichever script it is in", () => {
+    expect(searchTokens("ヨルシカ")).toEqual(["yorushika"]);
+    expect(searchTokens("よるしか")).toEqual(["yorushika"]);
+    expect(searchTokens("ヨルシカ live")).toEqual(["yorushika", "live"]);
+  });
+
+  it("emits the collapsed long-vowel spelling beside the literal one", () => {
+    expect(searchTokens("トウキョウ")).toEqual(["toukyou", "tokyo"]);
+  });
+
+  it("leaves kanji alone", () => {
+    expect(searchTokens("高中正義")).toEqual(["高中正義"]);
+  });
+});
+
+describe("romajiSpellings", () => {
+  it.each([
+    ["ヨルシカ", ["yorushika"]],
+    ["あいみょん", ["aimyon"]],
+    ["トウキョウ", ["toukyou", "tokyo"]],
+    ["しんいち", ["shinichi"]],
+    ["ｱｲ", ["ai"]],
+    ["高中正義", []],
+    ["Tyler", []],
+  ])("%p → %p", (word, expected) => {
+    expect(romajiSpellings(word)).toEqual(expected);
   });
 });
 
@@ -85,6 +114,13 @@ describe("matchesAllTokens", () => {
   it("matches a punctuation-only query literally", () => {
     expect(matchesAllTokens("!!!", "!!!")).toBe(true);
     expect(matchesAllTokens("Chk Chk Chk", "!!!")).toBe(false);
+  });
+
+  it("meets kana and romaji in romaji, on either side", () => {
+    expect(matchesAllTokens("ヨルシカ", "yorushika")).toBe(true);
+    expect(matchesAllTokens("ヨルシカ", "よるしか")).toBe(true);
+    expect(matchesAllTokens("Yorushika", "ヨルシカ")).toBe(true);
+    expect(matchesAllTokens("東京事変", "toukyou")).toBe(false);
   });
 
   it("never matches an empty query", () => {
