@@ -512,7 +512,6 @@ export default function LoginScreen() {
         bottomOffset={24}
         contentContainerStyle={{
           flexGrow: 1,
-          justifyContent: "center",
           paddingTop: insets.top + 24,
           paddingBottom: insets.bottom + 24,
           paddingLeft: insets.left,
