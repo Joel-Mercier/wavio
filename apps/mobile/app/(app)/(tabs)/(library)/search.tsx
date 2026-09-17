@@ -358,7 +358,7 @@ export default function LibrarySearchScreen() {
               return null;
             }
             if (!debouncedQuery) return null;
-            return <EmptyDisplay />;
+            return <EmptyDisplay hint={t("app.library.search.emptyHint")} />;
           }}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
