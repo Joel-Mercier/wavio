@@ -141,6 +141,12 @@ type DraggableListProps<T> = Omit<
 > & {
   data: T[];
   itemHeight: number;
+  // Height of the chrome overlaying the bottom of the list (tab bar, floating
+  // player, floating submit button). The list itself runs underneath it, so
+  // the auto-scroll edge, the drag clamp and the reachable end of the content
+  // are all measured from above it. Pass the same value as the content's
+  // `paddingBottom`.
+  bottomInset?: number;
   onSort?: (fromIndex: number, toIndex: number) => void;
   renderItem: (
     item: T,
@@ -162,6 +168,7 @@ const renderGestureScrollView = (props: ScrollViewProps) => (
 function DraggableList<T>({
   data,
   itemHeight,
+  bottomInset = 0,
   onSort,
   renderItem,
   drawDistance,
@@ -183,6 +190,7 @@ function DraggableList<T>({
   const itemHeightValue = useSharedValue(itemHeight);
   const maxIndex = useSharedValue(Math.max(0, data.length - 1));
   const layoutHeight = useSharedValue(0);
+  const bottomInsetValue = useSharedValue(bottomInset);
   // The header scrolls with the rows, so every touch/offset below has to be
   // converted into row space by taking its height back out.
   const headerHeight = useSharedValue(0);
@@ -198,6 +206,10 @@ function DraggableList<T>({
   useEffect(() => {
     itemHeightValue.value = itemHeight;
   }, [itemHeight, itemHeightValue]);
+
+  useEffect(() => {
+    bottomInsetValue.value = bottomInset;
+  }, [bottomInset, bottomInsetValue]);
 
   // Rows are fixed-height by contract, so the list can skip measuring them and
   // its positions match the arithmetic every touch conversion below relies on.
@@ -311,7 +323,8 @@ function DraggableList<T>({
       const maxOffset = Math.max(
         0,
         headerHeight.value +
-          itemHeightValue.value * (maxIndex.value + 1) -
+          itemHeightValue.value * (maxIndex.value + 1) +
+          bottomInsetValue.value -
           layoutHeight.value,
       );
       const next = Math.min(
@@ -339,6 +352,7 @@ function DraggableList<T>({
       itemHeightValue,
       maxIndex,
       layoutHeight,
+      bottomInsetValue,
       headerHeight,
       insertIndex,
       dragPosition,
@@ -413,7 +427,7 @@ function DraggableList<T>({
           if (activeIndex.value >= 0 || layoutHeight.value <= 0) return;
           const half = itemHeightValue.value / 2;
           const y = Math.min(
-            layoutHeight.value - half,
+            layoutHeight.value - bottomInsetValue.value - half,
             Math.max(half, event.y),
           );
           touchStartX.value = event.x;
@@ -433,7 +447,7 @@ function DraggableList<T>({
           if (isDropping.value) return;
           const half = itemHeightValue.value / 2;
           const y = Math.min(
-            layoutHeight.value - half,
+            layoutHeight.value - bottomInsetValue.value - half,
             Math.max(half, event.y),
           );
           dragPosition.value = y;
@@ -449,7 +463,11 @@ function DraggableList<T>({
 
           // Measured on the raw touch so the speed keeps rising as the finger
           // pushes past the edge, and drops to zero the moment it eases out.
-          const below = event.y - (layoutHeight.value - AUTO_SCROLL_THRESHOLD);
+          const below =
+            event.y -
+            (layoutHeight.value -
+              bottomInsetValue.value -
+              AUTO_SCROLL_THRESHOLD);
           const above = AUTO_SCROLL_THRESHOLD - event.y;
           if (below > 0) {
             autoScrollVelocity.value = autoScrollStep(below);
@@ -473,6 +491,7 @@ function DraggableList<T>({
         itemHeightValue,
         maxIndex,
         layoutHeight,
+        bottomInsetValue,
         headerHeight,
         scrollOffset,
         scrollTarget,
@@ -517,7 +536,7 @@ function DraggableList<T>({
           activeIndex.value = index;
           insertIndex.value = index;
           dragPosition.value = Math.min(
-            layoutHeight.value - half,
+            layoutHeight.value - bottomInsetValue.value - half,
             Math.max(half, event.y),
           );
           // The long press itself cancels once the finger travels past
@@ -533,6 +552,7 @@ function DraggableList<T>({
         itemHeightValue,
         maxIndex,
         layoutHeight,
+        bottomInsetValue,
         headerHeight,
         scrollOffset,
         scrollTarget,

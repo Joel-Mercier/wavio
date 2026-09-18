@@ -10,6 +10,9 @@ import { Uniwind } from "uniwind";
 import * as z from "zod";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import FloatingSubmitButton, {
+  FLOATING_SUBMIT_BUTTON_SPACE,
+} from "@/components/FloatingSubmitButton";
 import FieldError, {
   handleFieldBlur,
   showFieldError,
@@ -38,7 +41,6 @@ import useApp from "@/stores/app";
 import { artworkUrl } from "@/utils/artwork";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
-import { cn } from "@/utils/tailwind";
 import { TOAST_DURATION } from "@/utils/toastDuration";
 
 const editPlaylistSchema = z.object({
@@ -136,24 +138,7 @@ export default function EditPlaylistScreen() {
           >
             {t("app.editPlaylist.title")}
           </Heading>
-          <Box className="flex-1 items-end">
-            <FadeOutScaleDown
-              onPress={form.handleSubmit}
-              disabled={!isDirty || doUpdatePlaylist.isPending}
-            >
-              {doUpdatePlaylist.isPending ? (
-                <Spinner color={emerald500} />
-              ) : (
-                <Text
-                  className={cn("text-emerald-500 font-bold text-lg", {
-                    "opacity-50": !isDirty,
-                  })}
-                >
-                  {t("app.shared.save")}
-                </Text>
-              )}
-            </FadeOutScaleDown>
-          </Box>
+          <Box className="flex-1" />
         </HStack>
       </Box>
       {error && <ErrorDisplay error={error as Error} />}
@@ -168,7 +153,10 @@ export default function EditPlaylistScreen() {
           contentContainerStyle={{
             paddingHorizontal: 24,
             paddingTop: 24,
-            paddingBottom: screenBottomPadding + (isWideLayout ? 48 : 0),
+            paddingBottom:
+              screenBottomPadding +
+              FLOATING_SUBMIT_BUTTON_SPACE +
+              (isWideLayout ? 48 : 0),
           }}
           showsVerticalScrollIndicator={false}
         >
@@ -262,6 +250,12 @@ export default function EditPlaylistScreen() {
           </form.Field>
         </KeyboardAwareScrollView>
       )}
+      <FloatingSubmitButton
+        label={t("app.shared.save")}
+        onPress={form.handleSubmit}
+        disabled={!isDirty}
+        isPending={doUpdatePlaylist.isPending}
+      />
     </Box>
   );
 }

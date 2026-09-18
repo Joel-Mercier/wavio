@@ -9,6 +9,9 @@ import { Uniwind } from "uniwind";
 import DraggableList from "@/components/DraggableList";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import FloatingSubmitButton, {
+  FLOATING_SUBMIT_BUTTON_SPACE,
+} from "@/components/FloatingSubmitButton";
 import PlaylistEditSongListItem, {
   PLAYLIST_EDIT_ITEM_HEIGHT,
 } from "@/components/playlists/PlaylistEditSongListItem";
@@ -16,8 +19,6 @@ import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { Spinner } from "@/components/ui/spinner";
-import { Text } from "@/components/ui/text";
 import {
   Toast,
   ToastDescription,
@@ -33,7 +34,6 @@ import { loadingData } from "@/utils/loadingData";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
 import { orderPlaylistEntries } from "@/utils/playlistOrder";
-import { cn } from "@/utils/tailwind";
 import { TOAST_DURATION } from "@/utils/toastDuration";
 
 // The rows carry a uid assigned once when the order is seeded: a positional key
@@ -42,10 +42,7 @@ import { TOAST_DURATION } from "@/utils/toastDuration";
 type OrderedEntry = { uid: string; entry: Child };
 
 export default function ReorderPlaylistScreen() {
-  const [white, emerald500] = Uniwind.getCSSVariable([
-    "--color-white",
-    "--color-emerald-500",
-  ]) as string[];
+  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [order, setOrder] = useState<OrderedEntry[]>([]);
@@ -174,6 +171,7 @@ export default function ReorderPlaylistScreen() {
   }, [order, initialOrder]);
 
   const canSave = hasOrderChanged || removedItems.size > 0;
+  const bottomInset = screenBottomPadding + FLOATING_SUBMIT_BUTTON_SPACE;
 
   return (
     <Box className="h-full flex-1">
@@ -196,24 +194,7 @@ export default function ReorderPlaylistScreen() {
           >
             {t("app.editPlaylist.title")}
           </Heading>
-          <Box className="flex-1 items-end">
-            <FadeOutScaleDown
-              onPress={form.handleSubmit}
-              disabled={!canSave || doUpdatePlaylist.isPending}
-            >
-              {doUpdatePlaylist.isPending ? (
-                <Spinner color={emerald500} />
-              ) : (
-                <Text
-                  className={cn("text-emerald-500 font-bold text-lg", {
-                    "opacity-75": !canSave,
-                  })}
-                >
-                  {t("app.shared.save")}
-                </Text>
-              )}
-            </FadeOutScaleDown>
-          </Box>
+          <Box className="flex-1" />
         </HStack>
       </Box>
       {error && <ErrorDisplay error={error as Error} />}
@@ -231,12 +212,17 @@ export default function ReorderPlaylistScreen() {
           renderItem={renderItem}
           itemHeight={PLAYLIST_EDIT_ITEM_HEIGHT}
           onSort={handleListSort}
+          bottomInset={bottomInset}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingBottom: screenBottomPadding,
-          }}
+          contentContainerStyle={{ paddingBottom: bottomInset }}
         />
       )}
+      <FloatingSubmitButton
+        label={t("app.shared.save")}
+        onPress={form.handleSubmit}
+        disabled={!canSave}
+        isPending={doUpdatePlaylist.isPending}
+      />
     </Box>
   );
 }

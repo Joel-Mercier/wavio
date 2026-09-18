@@ -10,6 +10,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import * as z from "zod";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import FloatingSubmitButton, {
+  FLOATING_SUBMIT_BUTTON_SPACE,
+} from "@/components/FloatingSubmitButton";
 import FieldError, {
   handleFieldBlur,
   showFieldError,
@@ -21,7 +24,6 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputSlot } from "@/components/ui/input";
 import { Pressable } from "@/components/ui/pressable";
-import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/text";
 import {
@@ -44,7 +46,6 @@ import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import useAuth from "@/stores/auth";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
-import { cn } from "@/utils/tailwind";
 import { TOAST_DURATION } from "@/utils/toastDuration";
 
 const ROLE_FIELDS = [
@@ -338,24 +339,7 @@ export default function EditProfileScreen() {
           >
             {t("app.editProfile.title")}
           </Heading>
-          <Box className="flex-1 items-end">
-            <FadeOutScaleDown
-              onPress={form.handleSubmit}
-              disabled={!isDirty || isSubmitting}
-            >
-              {isSubmitting ? (
-                <Spinner color={emerald500} />
-              ) : (
-                <Text
-                  className={cn("text-emerald-500 font-bold text-lg", {
-                    "opacity-50": !isDirty,
-                  })}
-                >
-                  {t("app.shared.save")}
-                </Text>
-              )}
-            </FadeOutScaleDown>
-          </Box>
+          <Box className="flex-1" />
         </HStack>
       </Box>
       <KeyboardAwareScrollView
@@ -363,7 +347,7 @@ export default function EditProfileScreen() {
         contentContainerStyle={{
           paddingHorizontal: 24,
           paddingTop: 8,
-          paddingBottom: screenBottomPadding,
+          paddingBottom: screenBottomPadding + FLOATING_SUBMIT_BUTTON_SPACE,
         }}
         showsVerticalScrollIndicator={false}
       >
@@ -614,6 +598,12 @@ export default function EditProfileScreen() {
           </>
         )}
       </KeyboardAwareScrollView>
+      <FloatingSubmitButton
+        label={t("app.shared.save")}
+        onPress={form.handleSubmit}
+        disabled={!isDirty}
+        isPending={isSubmitting}
+      />
     </Box>
   );
 }

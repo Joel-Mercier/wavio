@@ -554,6 +554,7 @@ export default function QueueDetail() {
               keyExtractor={(item) => item.uid}
               itemHeight={QUEUE_EDIT_ITEM_HEIGHT}
               onSort={handleListSort}
+              bottomInset={screenBottomPadding}
               ListHeaderComponent={editHeader}
               contentContainerStyle={{
                 paddingBottom: screenBottomPadding,
