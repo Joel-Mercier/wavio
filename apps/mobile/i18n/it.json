@@ -1820,6 +1820,7 @@
 					"setRating": "Vota {{rating}}/5",
 					"playlistEdit": "Modifica i dettagli della playlist",
 					"playlistDelete": "Elimina playlist",
+					"scrobble": "Report play",
 					"playlistAddSongs_one": "Aggiungi il brano \" {{count}} \" alla playlist",
 					"playlistAddSongs_other": "Aggiungi i brani di {{count}} alla playlist",
 					"playlistRemoveSongs_one": "Rimuovi il brano \" {{count}} \" dalla playlist",
