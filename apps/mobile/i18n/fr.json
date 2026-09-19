@@ -1820,6 +1820,7 @@
 					"setRating": "Noter {{rating}}/5",
 					"playlistEdit": "Modifier les détails de la playlist",
 					"playlistDelete": "Supprimer la playlist",
+					"scrobble": "Enregistrer l'écoute",
 					"playlistAddSongs_one": "Ajouter {{count}} titre à la playlist",
 					"playlistAddSongs_other": "Ajouter {{count}} titres à la playlist",
 					"playlistRemoveSongs_one": "Retirer {{count}} titre de la playlist",

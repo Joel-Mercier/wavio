@@ -1820,6 +1820,7 @@
 					"setRating": "Mit {{rating}}/5 bewerten",
 					"playlistEdit": "Playlist-Details bearbeiten",
 					"playlistDelete": "Playlist löschen",
+					"scrobble": "Report play",
 					"playlistAddSongs_one": "{{count}} Titel zur Playlist hinzufügen",
 					"playlistAddSongs_other": "{{count}} Titel zur Playlist hinzufügen",
 					"playlistRemoveSongs_one": "{{count}} Titel aus der Playlist entfernen",

@@ -1773,6 +1773,7 @@
 					"setRating": "评分 {{rating}}/5",
 					"playlistEdit": "编辑播放列表信息",
 					"playlistDelete": "删除播放列表",
+					"scrobble": "Report play",
 					"playlistAddSongs_other": "添加 {{count}} 首歌曲到播放列表",
 					"playlistRemoveSongs_other": "从播放列表移除 {{count}} 首歌曲"
 				},

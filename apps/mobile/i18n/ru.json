@@ -1914,6 +1914,7 @@
 					"setRating": "Оценить на {{rating}}/5",
 					"playlistEdit": "Изменить сведения о плейлисте",
 					"playlistDelete": "Удалить плейлист",
+					"scrobble": "Report play",
 					"playlistAddSongs_one": "Добавить {{count}} трек в плейлист",
 					"playlistAddSongs_few": "Добавить {{count}} трека в плейлист",
 					"playlistAddSongs_many": "Добавить {{count}} треков в плейлист",
