@@ -1820,6 +1820,7 @@
 					"setRating": "Valora « {{rating}}» /5",
 					"playlistEdit": "Editar los detalles de la lista de reproducción",
 					"playlistDelete": "Eliminar lista de reproducción",
+					"scrobble": "Report play",
 					"playlistAddSongs_one": "Añadir la canción « {{count}} » a la lista de reproducción",
 					"playlistAddSongs_other": "Añadir canciones de « {{count}} » a la lista de reproducción",
 					"playlistRemoveSongs_one": "Eliminar la canción « {{count}} » de la lista de reproducción",
