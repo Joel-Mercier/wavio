@@ -51,6 +51,10 @@ jest.mock("@/services/backend/mediaAnnotation", () => ({
   star: jest.fn(),
   unstar: jest.fn(),
   setRating: jest.fn(),
+  scrobble: jest.fn(),
+}));
+jest.mock("@/services/playCountQueries", () => ({
+  invalidatePlayCountQueries: jest.fn(),
 }));
 jest.mock("@/services/backend/playlists", () => ({
   getPlaylist: jest.fn(),
@@ -58,7 +62,12 @@ jest.mock("@/services/backend/playlists", () => ({
   deletePlaylist: jest.fn(),
 }));
 
-import { setRating, star, unstar } from "@/services/backend/mediaAnnotation";
+import {
+  scrobble,
+  setRating,
+  star,
+  unstar,
+} from "@/services/backend/mediaAnnotation";
 import {
   deletePlaylist,
   getPlaylist,
@@ -71,6 +80,7 @@ import {
   stopOfflineMutationReplay,
   subscribeDrainResult,
 } from "@/services/offlineMutations/replay";
+import { invalidatePlayCountQueries } from "@/services/playCountQueries";
 import useLibrarySync from "@/stores/librarySync";
 import useOfflineMutations, {
   type OfflineAction,
@@ -81,6 +91,8 @@ import { invalidateKeys } from "@/utils/invalidateKeys";
 const starMock = star as jest.Mock;
 const unstarMock = unstar as jest.Mock;
 const setRatingMock = setRating as jest.Mock;
+const scrobbleMock = scrobble as jest.Mock;
+const invalidatePlayCountQueriesMock = invalidatePlayCountQueries as jest.Mock;
 const getPlaylistMock = getPlaylist as jest.Mock;
 const updatePlaylistMock = updatePlaylist as jest.Mock;
 const deletePlaylistMock = deletePlaylist as jest.Mock;
@@ -120,6 +132,7 @@ beforeEach(() => {
   starMock.mockResolvedValue({});
   unstarMock.mockResolvedValue({});
   setRatingMock.mockResolvedValue({});
+  scrobbleMock.mockResolvedValue({});
   getPlaylistMock.mockResolvedValue({ playlist: { entry: [] } });
   updatePlaylistMock.mockResolvedValue({});
   deletePlaylistMock.mockResolvedValue({});
@@ -213,6 +226,51 @@ describe("drainOfflineMutations - execution", () => {
     expect(queue()).toHaveLength(0);
     expect(results).toHaveLength(0);
     expect(reportErrorMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("drainOfflineMutations - scrobbles", () => {
+  test("replays a scrobble as a submission with its original time", async () => {
+    setQueue([seed({ type: "scrobble", id: "s1", time: 1_700_000_000_000 })]);
+    await drain();
+    expect(scrobbleMock).toHaveBeenCalledWith("s1", {
+      submission: true,
+      time: 1_700_000_000_000,
+    });
+    expect(queue()).toHaveLength(0);
+    expect(invalidatePlayCountQueriesMock).toHaveBeenCalledTimes(1);
+    expect(invalidateKeysMock).not.toHaveBeenCalled();
+  });
+
+  test("a track the server no longer knows is dropped silently", async () => {
+    // A play is bookkeeping the user never asked for: no Sentry report, no
+    // "change couldn't be synced" toast, and no starred/rating/playlist
+    // refetch — only the play-count queries reconcile.
+    const onDrainResult = jest.fn();
+    const unsubscribe = subscribeDrainResult(onDrainResult);
+    setQueue([
+      seed({ type: "scrobble", id: "gone", time: 1 }),
+      seed({ type: "scrobble", id: "s2", time: 2 }),
+    ]);
+    scrobbleMock.mockImplementation((id: string) =>
+      id === "gone" ? Promise.reject({ code: 70 }) : Promise.resolve({}),
+    );
+    await drain();
+    unsubscribe();
+    expect(queue()).toHaveLength(0);
+    expect(reportErrorMock).not.toHaveBeenCalled();
+    expect(onDrainResult).not.toHaveBeenCalled();
+    expect(invalidateKeysMock).not.toHaveBeenCalled();
+    expect(invalidatePlayCountQueriesMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("a network error leaves the scrobble pending", async () => {
+    setQueue([seed({ type: "scrobble", id: "s1", time: 1 })]);
+    scrobbleMock.mockRejectedValue({ isNetworkError: true });
+    await drain();
+    expect(queue()).toHaveLength(1);
+    expect(queue()[0].status).toBe("pending");
+    expect(invalidatePlayCountQueriesMock).not.toHaveBeenCalled();
   });
 });
 

@@ -24,7 +24,10 @@ export type OfflineAction =
       comment?: string;
       isPublic?: boolean;
     }
-  | { type: "playlistDelete"; playlistId: string };
+  | { type: "playlistDelete"; playlistId: string }
+  // `time` is when the track started (epoch ms), replayed as the Subsonic
+  // `time` param so the server records the play when it actually happened.
+  | { type: "scrobble"; id: string; time: number };
 
 export type QueuedMutation = {
   id: string;
@@ -37,6 +40,10 @@ export type QueuedMutation = {
 
 export const playlistIdOf = (action: OfflineAction): string | undefined =>
   "playlistId" in action ? action.playlistId : undefined;
+
+// Scrobbles are events rather than deltas, so nothing merges them away; this
+// bound keeps a long offline stretch from growing the persisted blob forever.
+export const MAX_QUEUED_SCROBBLES = 1000;
 
 const sameStarTarget = (a: StarTarget, b: StarTarget) =>
   a.kind === b.kind && a.id === b.id;
@@ -205,6 +212,21 @@ export function applyEnqueue(
       const next = queue.filter(
         (item) => playlistIdOf(item.action) !== action.playlistId,
       );
+      return [...next, makeItem(action)];
+    }
+    case "scrobble": {
+      const scrobbleCount = queue.filter(
+        (item) => item.action.type === "scrobble",
+      ).length;
+      let excess = scrobbleCount + 1 - MAX_QUEUED_SCROBBLES;
+      const next =
+        excess > 0
+          ? queue.filter((item) => {
+              if (item.action.type !== "scrobble" || excess <= 0) return true;
+              excess--;
+              return false;
+            })
+          : queue;
       return [...next, makeItem(action)];
     }
   }

@@ -214,6 +214,7 @@ function collectIds(): Set<string> {
         add(action.target.id);
         break;
       case "setRating":
+      case "scrobble":
         add(action.id);
         break;
       case "playlistAddSongs":
@@ -462,6 +463,7 @@ function applyRemap(remap: Remap): void {
             },
           };
         case "setRating":
+        case "scrobble":
           return { ...mutation, action: { ...action, id: remap(action.id) } };
         case "playlistAddSongs":
         case "playlistRemoveSongs":

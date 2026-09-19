@@ -37,6 +37,10 @@ jest.mock("@/stores/lastFm", () => ({
   __esModule: true,
   default: { persist: { rehydrate: mockRehydrate("lastFm") } },
 }));
+jest.mock("@/stores/offlineMutations", () => ({
+  __esModule: true,
+  default: { persist: { rehydrate: mockRehydrate("offlineMutations") } },
+}));
 
 const mockInitScrobbler = jest.fn(() => {
   mockOrder.push("scrobblerInit");
@@ -50,6 +54,13 @@ const mockInitLastFmScrobbler = jest.fn(() => {
 });
 jest.mock("@/services/lastFm/scrobbler", () => ({
   initLastFmScrobbler: mockInitLastFmScrobbler,
+}));
+
+const mockInitOfflineMutationReplay = jest.fn(() => {
+  mockOrder.push("offlineMutationReplayInit");
+});
+jest.mock("@/services/offlineMutations/replay", () => ({
+  initOfflineMutationReplay: mockInitOfflineMutationReplay,
 }));
 
 let mockIsAuthenticated = true;
@@ -106,6 +117,8 @@ describe("hydratePlaybackStores", () => {
       "lastFmScrobblerInit",
       "listenBrainz",
       "offline",
+      "offlineMutationReplayInit",
+      "offlineMutations",
       "queue",
       "recentPlays",
       "scrobblerInit",
@@ -122,6 +135,9 @@ describe("hydratePlaybackStores", () => {
     );
     expect(mockOrder.indexOf("scrobblerInit")).toBeGreaterThan(
       mockOrder.indexOf("listenBrainz"),
+    );
+    expect(mockOrder.indexOf("offlineMutationReplayInit")).toBeGreaterThan(
+      mockOrder.indexOf("offlineMutations"),
     );
   });
 

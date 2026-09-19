@@ -7,11 +7,16 @@ import {
 } from "expo-audio";
 import { File } from "expo-file-system";
 import { queryClient } from "@/config/queryClient";
+import { isIndexBacked } from "@/services/backend/dispatch";
 import { scrobble } from "@/services/backend/mediaAnnotation";
 import { isNetworkShareType } from "@/services/backend/serverTraits";
 import { streamUrl, trackTranscodeInfo } from "@/services/backend/streaming";
 import { fetchEndlessExtension } from "@/services/endlessRadio";
-import { reportBreadcrumb, reportError } from "@/services/errorReporting";
+import {
+  isNetworkNoise,
+  reportBreadcrumb,
+  reportError,
+} from "@/services/errorReporting";
 import {
   enqueueScrobble as enqueueLastFmScrobble,
   submitNowPlaying as submitNowPlayingToLastFm,
@@ -35,6 +40,8 @@ import {
   USER_AGENT,
 } from "@/services/network";
 import { downloadedFileIsReadable } from "@/services/offline/downloadDestination";
+import { enqueueOfflineMutation } from "@/services/offlineMutations/enqueue";
+import { drainOfflineMutations } from "@/services/offlineMutations/replay";
 import type {
   AlbumID3,
   AlbumList2,
@@ -55,6 +62,7 @@ import {
   reportStarting,
   reportStopped,
 } from "@/services/playbackReport";
+import { invalidatePlayCountQueries } from "@/services/playCountQueries";
 import { stopPlayQueueSync } from "@/services/playQueueSync";
 import {
   clearPodcastProgress,
@@ -150,11 +158,13 @@ export function getActivePlayer(): AudioPlayer {
 
 let nowPlayingScrobbledId: string | null = null;
 let submittedScrobbleId: string | null = null;
-// playbackReport path only: the track id whose early classic scrobble the server
-// *confirmed*. Used to set ignoreScrobble on the final "stopped" report so the
-// server doesn't double-count — but only when the early scrobble actually landed,
-// so a failed one falls back to the server's own stopped-count instead of losing
-// the play.
+// playbackReport path only: the track id whose early classic scrobble is in
+// flight, landed, or queued for replay. Used to set ignoreScrobble on the final
+// "stopped" report so the server doesn't double-count. Set when the scrobble is
+// *sent*, not when it resolves: a request can take up to the axios timeout to
+// settle, and a track that ends before then would otherwise be counted on
+// "stopped" and again when the queued scrobble is replayed. Cleared only if the
+// server answered and refused, so that play falls back to the stopped-count.
 let earlyScrobbledId: string | null = null;
 let scrobbleStartedAt: number | null = null;
 // ListenBrainz and Last.fm submit on their own schedule (half the track / 4
@@ -307,6 +317,43 @@ function notePlayCounted(track: QueueTrack) {
   usePlayHistory.getState().recordPlay(track);
 }
 
+type ServerScrobbleOutcome = "landed" | "queued" | "refused";
+
+// Sends the counted play to the server, or parks it in the offline queue when
+// the server can't be reached so it is replayed with its original `time` once
+// it can. A scrobble failure is invisible to the user, so unlike a star the
+// queue is the only way the play survives — hence a request that dies on the
+// wire is queued too, not just one attempted while known-offline. A server
+// that answered and refused is not queued: replaying it would only be refused
+// again.
+//
+// An index-backed library (local, SMB, WebDAV) records the play in the
+// on-device SQLite index, which never needs the share to be reachable — so it
+// is written straight away rather than parked, or the local "recent"/"frequent"
+// lists would lag for the whole stretch the share is out of reach.
+async function submitServerScrobble(
+  id: string,
+  time: number,
+): Promise<ServerScrobbleOutcome> {
+  const park = (): ServerScrobbleOutcome => {
+    enqueueOfflineMutation(queryClient, { type: "scrobble", id, time });
+    return "queued";
+  };
+  const needsServer = !isIndexBacked();
+  if (needsServer && !getIsEffectivelyOnline()) return park();
+  try {
+    await scrobble(id, { submission: true, time });
+    return "landed";
+  } catch (error) {
+    if (!needsServer || !isNetworkNoise(error)) return "refused";
+    const outcome = park();
+    // The replay loop only wakes on an offline→online edge; an item queued while
+    // nominally online would otherwise wait for the next one.
+    void drainOfflineMutations();
+    return outcome;
+  }
+}
+
 // Count a play — and reorder the server's "recently played" — this many seconds
 // into playback, rather than at the classic Last.fm halfway/4-min mark, so the
 // server (and other clients / the widget) reflect it almost immediately. A quick
@@ -367,16 +414,21 @@ function maybeSubmitScrobble(status: AudioStatus) {
     ) {
       const id = current.id;
       submittedScrobbleId = id;
+      earlyScrobbledId = id;
       notePlayCounted(current);
-      scrobble(id, {
-        submission: true,
-        time: scrobbleStartedAt ?? Date.now(),
-      })
-        .then(() => {
-          earlyScrobbledId = id;
-          scheduleRecentlyPlayedRefresh();
-        })
-        .catch(() => {});
+      // A queued play is ours to count too: it reaches the server on replay, so
+      // the final "stopped" must still carry ignoreScrobble or connectivity
+      // returning mid-track would count it twice. The current-track guard keeps
+      // a late refusal from clearing the marker of whatever plays next.
+      void submitServerScrobble(id, scrobbleStartedAt ?? Date.now()).then(
+        (outcome) => {
+          if (outcome === "refused") {
+            if (nowPlayingScrobbledId === id) earlyScrobbledId = null;
+            return;
+          }
+          if (outcome === "landed") scheduleRecentlyPlayedRefresh();
+        },
+      );
     }
     return;
   }
@@ -386,20 +438,21 @@ function maybeSubmitScrobble(status: AudioStatus) {
   if (position < COUNT_PLAY_AFTER_SECONDS) return;
   submittedScrobbleId = current.id;
   notePlayCounted(current);
-  scrobble(current.id, {
-    submission: true,
-    time: scrobbleStartedAt ?? Date.now(),
-  }).catch(() => {});
-  scheduleRecentlyPlayedRefresh();
+  void submitServerScrobble(current.id, scrobbleStartedAt ?? Date.now()).then(
+    (outcome) => {
+      if (outcome === "landed") scheduleRecentlyPlayedRefresh();
+    },
+  );
 }
 
 function resetScrobbleState() {
-  // If the server confirmed our early count for this track (playbackReport path),
-  // tell it to ignore the scrobble on "stopped" so the play isn't counted twice.
+  // If our early count for this track (playbackReport path) was sent and not
+  // refused, tell the server to ignore the scrobble on "stopped" so the play
+  // isn't counted twice.
   const countedThisTrackEarly =
     earlyScrobbledId != null && earlyScrobbledId === nowPlayingScrobbledId;
   // When we didn't count early, a finished playbackReport track may have been
-  // counted by the server's own stopped-threshold (short tracks, or a failed
+  // counted by the server's own stopped-threshold (short tracks, or a refused
   // early scrobble) — refresh to reconcile. If we already counted early we
   // hoisted + refreshed back then, so skip the redundant refetch here.
   if (
@@ -420,36 +473,17 @@ function resetScrobbleState() {
   lastFmSubmittedId = null;
 }
 
-// A counted play bumps Navidrome's play_date/play_count, which reorders the
-// server-side "recent"/"frequent" album lists and the "most played tracks" list.
-// Those back both the Home carousels and the home-screen widget's recent strip,
-// so nudge React Query to refetch them — reconciling the optimistic track bump in
+// A counted play reorders the server-side "recent"/"frequent" lists, so nudge
+// React Query to refetch them — reconciling the optimistic track bump in
 // bumpMostPlayedTracks with server truth (new entrants, exact counts). Debounced
-// so a burst of skips coalesces into one refetch, and
-// `refetchType: "all"` so the widget's observer-less cache entry refetches too
-// (the default "active" would skip it) — that refetch drives the widget's cache
-// subscription in services/widget.ts.
+// so a burst of skips coalesces into one refetch; the refetch drives the
+// widget's cache subscription in services/widget.ts.
 let recentlyPlayedRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 function scheduleRecentlyPlayedRefresh() {
   if (recentlyPlayedRefreshTimer) return;
   recentlyPlayedRefreshTimer = setTimeout(() => {
     recentlyPlayedRefreshTimer = null;
-    queryClient.invalidateQueries({
-      refetchType: "all",
-      predicate: (query) => {
-        const [name, params] = query.queryKey as [
-          string,
-          { type?: string } | undefined,
-        ];
-        if (name === "mostPlayedSongs" || name === "mostPlayedSongs:infinite") {
-          return true;
-        }
-        if (name !== "albumList2" && name !== "albumList2:infinite") {
-          return false;
-        }
-        return params?.type === "recent" || params?.type === "frequent";
-      },
-    });
+    void invalidatePlayCountQueries(queryClient);
   }, 1_500);
 }
 
@@ -1290,11 +1324,12 @@ function handlePlaybackStatus(status: AudioStatus) {
     ) {
       submittedScrobbleId = previousId;
       notePlayCounted(previous);
-      scrobble(previousId, {
-        submission: true,
-        time: scrobbleStartedAt ?? Date.now(),
-      }).catch(() => {});
-      scheduleRecentlyPlayedRefresh();
+      void submitServerScrobble(
+        previousId,
+        scrobbleStartedAt ?? Date.now(),
+      ).then((outcome) => {
+        if (outcome === "landed") scheduleRecentlyPlayedRefresh();
+      });
     }
     // Rescue for a stream that never reported a duration: nothing could clear
     // the halfway threshold while it played, but it has now finished, so how

@@ -1,5 +1,5 @@
 import { LegendList } from "@legendapp/list/react-native";
-import { useQueryClient } from "@tanstack/react-query";
+import { type QueryClient, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
 import RefreshCw from "lucide-react-native/dist/esm/icons/refresh-cw.mjs";
@@ -30,6 +30,7 @@ import {
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { drainOfflineMutations } from "@/services/offlineMutations/replay";
+import { invalidatePlayCountQueries } from "@/services/playCountQueries";
 import useApp from "@/stores/app";
 import useOfflineMutations, {
   type OfflineAction,
@@ -42,14 +43,31 @@ const PLAYLIST_AFFECTED_KEYS = [["playlist"], ["playlists"]] as const;
 
 // A discarded change leaves its optimistic cache patch behind; mark the
 // affected queries stale so the next (online) refetch restores server truth.
+// A scrobble's patch (the play hoisted into the "recent" lists) is matched by
+// predicate rather than by key, hence the separate pass.
 const keysForAction = (action: OfflineAction) => {
   switch (action.type) {
     case "star":
       return STARRED_AFFECTED_KEYS;
     case "setRating":
       return RATING_AFFECTED_KEYS;
+    case "scrobble":
+      return [];
     default:
       return PLAYLIST_AFFECTED_KEYS;
+  }
+};
+
+const invalidateForDiscarded = (
+  queryClient: QueryClient,
+  actions: OfflineAction[],
+) => {
+  void invalidateKeys(
+    queryClient,
+    actions.flatMap((action) => keysForAction(action)),
+  );
+  if (actions.some((action) => action.type === "scrobble")) {
+    void invalidatePlayCountQueries(queryClient);
   }
 };
 
@@ -79,17 +97,14 @@ export default function PendingChangesDetail() {
     setShowClearConfirm(false);
     const actions = queue.map((item) => item.action);
     useOfflineMutations.getState().clear();
-    invalidateKeys(
-      queryClient,
-      actions.flatMap((action) => keysForAction(action)),
-    );
+    invalidateForDiscarded(queryClient, actions);
   };
 
   const handleRemovePress = (id: string) => {
     const item = queue.find((entry) => entry.id === id);
     if (!item) return;
     useOfflineMutations.getState().remove([id]);
-    invalidateKeys(queryClient, keysForAction(item.action));
+    invalidateForDiscarded(queryClient, [item.action]);
   };
 
   const handleSyncNowPress = () => {

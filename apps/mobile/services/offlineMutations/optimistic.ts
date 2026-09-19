@@ -409,6 +409,10 @@ export function applyOptimistic(
     case "playlistDelete":
       applyPlaylistDelete(queryClient, action.playlistId);
       break;
+    case "scrobble":
+      // The player already hoisted the album / bumped the play count locally
+      // when it counted the play (notePlayCounted); nothing left to patch.
+      break;
   }
 }
 

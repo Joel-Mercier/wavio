@@ -55,6 +55,8 @@ const labelForAction = (
           action.id,
         ])?.album?.name
       );
+    case "scrobble":
+      return findChildInCaches(queryClient, action.id)?.title;
     case "playlistAddSongs":
     case "playlistRemoveSongs":
     case "playlistEdit":

@@ -5,6 +5,7 @@ import HeartCrack from "lucide-react-native/dist/esm/icons/heart-crack.mjs";
 import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
 import ListX from "lucide-react-native/dist/esm/icons/list-x.mjs";
 import Pencil from "lucide-react-native/dist/esm/icons/pencil.mjs";
+import Play from "lucide-react-native/dist/esm/icons/play.mjs";
 import Star from "lucide-react-native/dist/esm/icons/star.mjs";
 import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
 import { useTranslation } from "react-i18next";
@@ -36,6 +37,8 @@ const actionIcon = (action: OfflineAction) => {
       return Pencil;
     case "playlistDelete":
       return Trash;
+    case "scrobble":
+      return Play;
   }
 };
 
@@ -74,6 +77,8 @@ export default function PendingChangeItem({
         return t("app.pendingChanges.actions.playlistEdit");
       case "playlistDelete":
         return t("app.pendingChanges.actions.playlistDelete");
+      case "scrobble":
+        return t("app.pendingChanges.actions.scrobble");
     }
   })();
 

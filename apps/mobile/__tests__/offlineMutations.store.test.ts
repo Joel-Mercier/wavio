@@ -25,6 +25,7 @@ jest.mock("@/stores/auth", () => ({
 
 import useOfflineMutations, {
   applyEnqueue,
+  MAX_QUEUED_SCROBBLES,
   type OfflineAction,
   playlistIdOf,
   type QueuedMutation,
@@ -287,6 +288,49 @@ describe("applyEnqueue - playlist delete", () => {
       { type: "playlistDelete", playlistId: "p1" },
     ]);
     expect(queue).toHaveLength(3);
+  });
+});
+
+describe("applyEnqueue - scrobble", () => {
+  const scrobble = (id: string, time: number): OfflineAction => ({
+    type: "scrobble",
+    id,
+    time,
+  });
+
+  test("scrobbles never merge, even for the same track", () => {
+    const queue = enqueueAll([
+      scrobble("s1", 1_000),
+      scrobble("s2", 2_000),
+      scrobble("s1", 3_000),
+    ]);
+    expect(queue.map((item) => item.action)).toEqual([
+      scrobble("s1", 1_000),
+      scrobble("s2", 2_000),
+      scrobble("s1", 3_000),
+    ]);
+  });
+
+  test("a playlist delete leaves scrobbles alone", () => {
+    const queue = enqueueAll([
+      scrobble("s1", 1_000),
+      { type: "playlistDelete", playlistId: "p1" },
+    ]);
+    expect(queue).toHaveLength(2);
+  });
+
+  test("the cap drops the oldest scrobble and nothing else", () => {
+    const seeded = enqueueAll([
+      starSong("fav", true),
+      ...Array.from({ length: MAX_QUEUED_SCROBBLES }, (_, i) =>
+        scrobble(`s${i}`, i),
+      ),
+    ]);
+    const queue = applyEnqueue(seeded, scrobble("newest", 9_999), makeItem);
+    expect(queue).toHaveLength(MAX_QUEUED_SCROBBLES + 1);
+    expect(queue[0].action).toEqual(starSong("fav", true));
+    expect(queue[1].action).toEqual(scrobble("s1", 1));
+    expect(queue[queue.length - 1].action).toEqual(scrobble("newest", 9_999));
   });
 });
 

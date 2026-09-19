@@ -72,6 +72,8 @@ export function probeCandidates(): string[] {
     const action = mutation.action;
     if (action.type === "star" && action.target.kind === "song") {
       consider(action.target.id);
+    } else if (action.type === "scrobble") {
+      consider(action.id);
     } else if (
       action.type === "playlistAddSongs" ||
       action.type === "playlistRemoveSongs"

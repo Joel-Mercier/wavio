@@ -1827,7 +1827,8 @@
 					"playlistRemoveSongs_one": "Remove {{count}} song from playlist",
 					"playlistRemoveSongs_other": "Remove {{count}} songs from playlist",
 					"playlistEdit": "Edit playlist details",
-					"playlistDelete": "Delete playlist"
+					"playlistDelete": "Delete playlist",
+					"scrobble": "Report play"
 				}
 			},
 			"queue": {

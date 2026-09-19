@@ -6,12 +6,14 @@ import i18n, {
 } from "@/config/i18n";
 import { initLastFmScrobbler } from "@/services/lastFm/scrobbler";
 import { initListenBrainzScrobbler } from "@/services/listenBrainz/scrobbler";
+import { initOfflineMutationReplay } from "@/services/offlineMutations/replay";
 import { runStorageScopeMigration } from "@/services/storageScopeMigration";
 import useApp from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import useLastFm from "@/stores/lastFm";
 import useListenBrainz from "@/stores/listenBrainz";
 import useOffline from "@/stores/offline";
+import useOfflineMutations from "@/stores/offlineMutations";
 import useQueue from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 
@@ -77,6 +79,12 @@ export function hydratePlaybackStores(): Promise<void> {
     }),
     Promise.resolve(useLastFm.persist.rehydrate()).then(() => {
       initLastFmScrobbler();
+    }),
+    // Server scrobbles made while unreachable land in this queue, and a persist
+    // store writes through on every set: enqueuing into an unhydrated store
+    // would overwrite whatever the last session left pending.
+    Promise.resolve(useOfflineMutations.persist.rehydrate()).then(() => {
+      initOfflineMutationReplay();
     }),
   ]).then(() => undefined);
   return scopedHydration;

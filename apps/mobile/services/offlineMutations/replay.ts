@@ -4,7 +4,12 @@ import {
   RATING_AFFECTED_KEYS,
   STARRED_AFFECTED_KEYS,
 } from "@/hooks/backend/useMediaAnnotation";
-import { setRating, star, unstar } from "@/services/backend/mediaAnnotation";
+import {
+  scrobble,
+  setRating,
+  star,
+  unstar,
+} from "@/services/backend/mediaAnnotation";
 import {
   deletePlaylist,
   getPlaylist,
@@ -18,6 +23,7 @@ import {
 } from "@/services/network";
 import { isNotFoundError } from "@/services/notFound";
 import { revertQueueMirror } from "@/services/offlineMutations/optimistic";
+import { invalidatePlayCountQueries } from "@/services/playCountQueries";
 import { useAuthBase } from "@/stores/auth";
 import { isIdMigrationFrozen } from "@/stores/librarySync";
 import useOfflineMutations, {
@@ -171,6 +177,10 @@ async function executeAction(item: QueuedMutation): Promise<void> {
       forgetDeletedPlaylist(action.playlistId);
       return;
     }
+    case "scrobble": {
+      await scrobble(action.id, { submission: true, time: action.time });
+      return;
+    }
   }
 }
 
@@ -196,8 +206,20 @@ export async function drainOfflineMutations(): Promise<void> {
   const gen = generation;
   clearBackoffTimer();
   const attempted = new Set<string>();
-  const processed = { star: false, rating: false, playlist: false };
+  const processed = {
+    star: false,
+    rating: false,
+    playlist: false,
+    scrobble: false,
+  };
+  // Dropped scrobbles are not counted: a play is bookkeeping the user never
+  // asked for, so telling them a "change couldn't be synced" would only send
+  // them looking for something they didn't do — and its optimistic patch lives
+  // in the play-count queries, not the starred/rating/playlist ones.
   let dropped = 0;
+  const noteDropped = (item: QueuedMutation) => {
+    if (item.action.type !== "scrobble") dropped++;
+  };
   try {
     while (getIsEffectivelyOnline()) {
       if (gen !== generation) return;
@@ -230,7 +252,7 @@ export async function drainOfflineMutations(): Promise<void> {
             useOfflineMutations.getState().remove([item.id]);
             revertQueueMirror(item.action);
           }
-          dropped++;
+          noteDropped(item);
           if (!isNotFoundError(error)) {
             reportError(error, {
               area: "api",
@@ -242,7 +264,7 @@ export async function drainOfflineMutations(): Promise<void> {
         } else if (item.retryCount + 1 >= MAX_ATTEMPTS) {
           useOfflineMutations.getState().remove([item.id]);
           revertQueueMirror(item.action);
-          dropped++;
+          noteDropped(item);
           reportError(error, {
             area: "api",
             backend: reportBackend(),
@@ -260,6 +282,9 @@ export async function drainOfflineMutations(): Promise<void> {
           break;
         case "setRating":
           processed.rating = true;
+          break;
+        case "scrobble":
+          processed.scrobble = true;
           break;
         default:
           processed.playlist = true;
@@ -280,6 +305,7 @@ export async function drainOfflineMutations(): Promise<void> {
   if (keys.length > 0) {
     invalidateKeys(queryClient, keys);
   }
+  if (processed.scrobble) void invalidatePlayCountQueries(queryClient);
   if (dropped > 0) notifyDrainResult({ dropped });
   if (useOfflineMutations.getState().queue.length > 0) scheduleBackoff();
   if (drainRequested) {
