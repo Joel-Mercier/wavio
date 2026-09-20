@@ -40,6 +40,7 @@ import { useIsOnline } from "@/hooks/useIsOnline";
 import { useKeepScreenAwake } from "@/hooks/useKeepScreenAwake";
 import { togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
+import useCast from "@/stores/cast";
 import useJukebox from "@/stores/jukebox";
 import useUpnp from "@/stores/upnp";
 import { logError } from "@/utils/log";
@@ -72,7 +73,8 @@ export default function LyricsScreen() {
   const [shareUrl, setShareUrl] = useState("");
   const jukeboxActive = useJukebox((s) => s.active);
   const upnpConnected = useUpnp((s) => s.connected);
-  const playingRemotely = jukeboxActive || upnpConnected;
+  const casting = useCast((s) => s.active);
+  const playingRemotely = jukeboxActive || upnpConnected || casting;
   const hasOutputs = capabilities.jukebox || capabilities.remoteStreamableUrl;
   const isPlaying = useIsPlaying();
   const lyricsKeepScreenOn = useApp((s) => s.lyricsKeepScreenOn);

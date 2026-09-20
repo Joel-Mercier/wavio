@@ -12,20 +12,23 @@ import usePlaybackNotice, {
 // component turns it into a toast. See stores/playbackNotice.ts.
 const NOTICE_KEY: Record<PlaybackNoticeCode, string> = {
   PLAYBACK_SOURCE_UNAVAILABLE: "app.player.notices.sourceUnavailable",
+  REMOTE_TRACK_REFUSED: "app.player.notices.remoteTrackRefused",
+  REMOTE_LOST: "app.player.notices.remoteLost",
 };
 
 export default function PlaybackNoticeToast() {
   const { t } = useTranslation();
   const { showErrorToast } = useSettingsToast();
   const notice = usePlaybackNotice((s) => s.notice);
+  const params = usePlaybackNotice((s) => s.params);
 
   useEffect(() => {
     if (!notice) return;
-    showErrorToast(t(NOTICE_KEY[notice]));
+    showErrorToast(t(NOTICE_KEY[notice], params ?? undefined));
     // Clearing is what makes this fire once — `showErrorToast` is rebuilt every
     // render, so the effect re-runs freely and the guard above is what stops it.
     usePlaybackNotice.getState().clear();
-  }, [notice, t, showErrorToast]);
+  }, [notice, params, t, showErrorToast]);
 
   return null;
 }

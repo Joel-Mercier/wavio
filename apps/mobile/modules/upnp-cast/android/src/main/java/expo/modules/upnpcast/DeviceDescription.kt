@@ -110,9 +110,8 @@ class DeviceDescription private constructor(
           event = parser.next()
         }
       } catch (_: Exception) {
-        // A description we cannot parse is a device we cannot drive, but it is not
-        // proof the device is unusable — the caller keeps it as unverified rather
-        // than hiding it.
+        // A description we cannot parse is a device we cannot drive: there is
+        // nowhere to send a command without it.
         return null
       }
 

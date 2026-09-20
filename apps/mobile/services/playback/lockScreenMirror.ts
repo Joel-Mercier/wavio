@@ -14,6 +14,11 @@ import useQueue from "@/stores/queue";
 // track changes. Matches the cadence services/carAuto/session.ts uses to keep
 // Android Auto's timeline moving.
 const PUSH_INTERVAL_MS = 1000;
+// On a cold start straight into a session handed back by its SDK (a Chromecast
+// still playing after the app was killed), the claim lands before the playback
+// service is bound and is dropped on the floor; the native side is a no-op once
+// set, so it is simply said again while the service comes up.
+const RECLAIM_DELAYS_MS = [1500, 4000];
 
 /**
  * Keeps the OS media controls in sync with playback that is happening somewhere
@@ -32,6 +37,12 @@ export function startLockScreenMirror() {
   let pulse: ReturnType<typeof setInterval> | null = null;
   let remoteActive = false;
   let lastTrackId: string | null = null;
+  let reclaims: ReturnType<typeof setTimeout>[] = [];
+
+  const cancelReclaims = () => {
+    for (const timer of reclaims) clearTimeout(timer);
+    reclaims = [];
+  };
 
   const pushState = () => {
     if (!remoteActive) return;
@@ -39,13 +50,18 @@ export function startLockScreenMirror() {
     // that cache while the app is backgrounded (its ticker only runs for mounted
     // progress subscribers), so the pulse would republish a stale position with a
     // fresh timestamp and the notification's seek bar would creep then snap back.
-    const snap = activeRemoteTarget()?.readSnapshot() ?? getPlaybackSnapshot();
+    const target = activeRemoteTarget();
+    const snap = target?.readSnapshot() ?? getPlaybackSnapshot();
     try {
       getActivePlayer().updateRemotePlayback(
         snap.playing,
         Math.round((snap.currentTime ?? 0) * 1000),
         Math.round((snap.duration ?? 0) * 1000),
       );
+      // Rides on the same pulse: the session claims the hardware volume keys
+      // for the remote and needs the remote's volume to step from.
+      const volume = target?.getVolume?.();
+      if (volume != null) getActivePlayer().setRemoteVolume(volume);
     } catch {
       // The controls are a nicety; never let them break playback.
     }
@@ -65,6 +81,18 @@ export function startLockScreenMirror() {
     } catch {
       // Same as above.
     }
+    cancelReclaims();
+    if (!current) return;
+    reclaims = RECLAIM_DELAYS_MS.map((delay) =>
+      setTimeout(() => {
+        if (!remoteActive || lastTrackId !== current.id) return;
+        try {
+          getActivePlayer().setRemotePlayback(true);
+        } catch {
+          // Same as above.
+        }
+      }, delay),
+    );
   };
 
   const syncTarget = () => {
@@ -77,6 +105,7 @@ export function startLockScreenMirror() {
       if (!pulse) pulse = setInterval(pushState, PUSH_INTERVAL_MS);
       return;
     }
+    cancelReclaims();
     try {
       getActivePlayer().setRemotePlayback(false);
     } catch {

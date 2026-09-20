@@ -1,8 +1,15 @@
 diff --git a/android/src/main/java/expo/modules/audio/AudioModule.kt b/android/src/main/java/expo/modules/audio/AudioModule.kt
-index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..f31b6c1acc0075cf98c9eb94c1d2f4a7587f29be 100644
+index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..99376fad0c081f7f9956d1c8e38198eadc542278 100644
 --- a/android/src/main/java/expo/modules/audio/AudioModule.kt
 +++ b/android/src/main/java/expo/modules/audio/AudioModule.kt
-@@ -49,7 +49,19 @@ class AudioModule : Module() {
+@@ -43,13 +43,26 @@ import kotlinx.coroutines.runBlocking
+ import okhttp3.OkHttpClient
+ import java.io.File
+ import java.util.concurrent.ConcurrentHashMap
++import kotlin.math.roundToInt
+ 
+ @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+ class AudioModule : Module() {
    private lateinit var audioManager: AudioManager
    private val context: Context
      get() = appContext.reactContext ?: throw Exceptions.ReactContextLost()
@@ -23,7 +30,7 @@ index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..f31b6c1acc0075cf98c9eb94c1d2f4a7
  
    private val players = ConcurrentHashMap<String, AudioPlayer>()
    private val recorders = ConcurrentHashMap<String, AudioRecorder>()
-@@ -148,11 +160,11 @@ class AudioModule : Module() {
+@@ -148,11 +161,11 @@ class AudioModule : Module() {
      val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
        val requestType = interruptionMode?.let {
          if (it == InterruptionMode.DO_NOT_MIX) {
@@ -37,7 +44,7 @@ index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..f31b6c1acc0075cf98c9eb94c1d2f4a7
        audioFocusRequest = AudioFocusRequest.Builder(requestType).run {
          setAudioAttributes(
            AudioAttributes.Builder()
-@@ -169,7 +181,7 @@ class AudioModule : Module() {
+@@ -169,7 +182,7 @@ class AudioModule : Module() {
      } else {
        @Suppress("DEPRECATION")
        val requestType = if (interruptionMode == InterruptionMode.DO_NOT_MIX) {
@@ -46,7 +53,7 @@ index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..f31b6c1acc0075cf98c9eb94c1d2f4a7
        } else {
          AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
        }
-@@ -464,6 +476,12 @@ class AudioModule : Module() {
+@@ -464,6 +477,12 @@ class AudioModule : Module() {
          ref.setVolume(volume)
        }
  
@@ -59,7 +66,7 @@ index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..f31b6c1acc0075cf98c9eb94c1d2f4a7
        Function("play") { player: AudioPlayer ->
          if (!audioEnabled) {
            Log.e(TAG, "Audio has been disabled. Re-enable to start playing")
-@@ -525,6 +543,16 @@ class AudioModule : Module() {
+@@ -525,6 +544,20 @@ class AudioModule : Module() {
          }
        }
  
@@ -73,14 +80,18 @@ index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..f31b6c1acc0075cf98c9eb94c1d2f4a7
 +        ref.updateRemotePlayback(playing, positionMs.toLong(), durationMs.toLong())
 +      }
 +
++      Function("setRemoteVolume") { ref: AudioPlayer, volume: Double ->
++        ref.setRemoteVolume((volume * 100).roundToInt().coerceIn(0, 100))
++      }
++
        Function("setAudioSamplingEnabled") { player: AudioPlayer, enabled: Boolean ->
          runOnMain {
            player.setSamplingEnabled(enabled)
 diff --git a/android/src/main/java/expo/modules/audio/AudioPlayer.kt b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
-index c76a9fd2a53743a691782e0f67d0d71401df58f6..e815f13a9d9bb5e3b5e9b2acaf000a1cc46ec8c4 100644
+index c76a9fd2a53743a691782e0f67d0d71401df58f6..65acf35fdd5d3d0fa41d93e4e433605046379bda 100644
 --- a/android/src/main/java/expo/modules/audio/AudioPlayer.kt
 +++ b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
-@@ -24,6 +24,11 @@ import java.lang.ref.WeakReference
+@@ -24,6 +24,12 @@ import java.lang.ref.WeakReference
  
  private const val PLAYBACK_STATUS_UPDATE = "playbackStatusUpdate"
  private const val AUDIO_SAMPLE_UPDATE = "audioSampleUpdate"
@@ -89,10 +100,11 @@ index c76a9fd2a53743a691782e0f67d0d71401df58f6..e815f13a9d9bb5e3b5e9b2acaf000a1c
 +private const val REMOTE_PLAY = "remotePlay"
 +private const val REMOTE_PAUSE = "remotePause"
 +private const val REMOTE_SEEK = "remoteSeek"
++private const val REMOTE_VOLUME = "remoteVolume"
  private const val SEEK_JUMP_INTERVAL_MS: Long = 10_000
  
  @UnstableApi
-@@ -37,6 +42,8 @@ class AudioPlayer(
+@@ -37,6 +43,8 @@ class AudioPlayer(
    player = ExoPlayer.Builder(context)
      .setLooper(context.mainLooper)
      .setAudioAttributes(AudioAttributes.DEFAULT, false)
@@ -101,7 +113,7 @@ index c76a9fd2a53743a691782e0f67d0d71401df58f6..e815f13a9d9bb5e3b5e9b2acaf000a1c
      .setSeekForwardIncrementMs(SEEK_JUMP_INTERVAL_MS)
      .setSeekBackIncrementMs(SEEK_JUMP_INTERVAL_MS)
      .apply {
-@@ -97,6 +104,38 @@ class AudioPlayer(
+@@ -97,6 +105,49 @@ class AudioPlayer(
      startUpdating()
    }
  
@@ -127,6 +139,13 @@ index c76a9fd2a53743a691782e0f67d0d71401df58f6..e815f13a9d9bb5e3b5e9b2acaf000a1c
 +    emit(REMOTE_SEEK, positionMs.toDouble())
 +  }
 +
++  // The hardware volume keys (and any media controller's volume slider) while a
++  // remote device owns playback: the session reports a remote volume, so the OS
++  // routes them here instead of to this device's stream. 0..1.
++  fun emitRemoteVolume(volume: Double) {
++    emit(REMOTE_VOLUME, volume)
++  }
++
 +  fun setRemotePlayback(active: Boolean) {
 +    serviceConnection.playbackServiceBinder?.service?.setRemotePlaybackActive(active)
 +  }
@@ -135,6 +154,10 @@ index c76a9fd2a53743a691782e0f67d0d71401df58f6..e815f13a9d9bb5e3b5e9b2acaf000a1c
 +    serviceConnection.playbackServiceBinder
 +      ?.service
 +      ?.updateRemotePlaybackState(playing, positionMs, durationMs)
++  }
++
++  fun setRemoteVolume(volumePercent: Int) {
++    serviceConnection.playbackServiceBinder?.service?.updateRemoteVolume(volumePercent)
 +  }
 +
    fun setActiveForLockScreen(active: Boolean, metadata: Metadata? = null, options: AudioLockScreenOptions? = null) {
@@ -187,10 +210,10 @@ index 86880d92fd5b6413e8596e1b2b8ae28f2981addd..771404a6488ac9bd2607f62a51687381
  
  enum class InterruptionMode(val value: String) : Enumerable {
 diff --git a/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt b/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
-index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0dc32e87cd 100644
+index 196a5d57f887c2667a88543bd2f6a80044a044f2..88c8239c8abbaecff27b3d1ec174ed8b22ed77b7 100644
 --- a/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 +++ b/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
-@@ -6,36 +6,45 @@ import android.app.NotificationManager
+@@ -6,36 +6,46 @@ import android.app.NotificationManager
  import android.app.PendingIntent
  import android.content.Context
  import android.content.Intent
@@ -208,6 +231,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
  import androidx.core.app.NotificationCompat
 +import androidx.core.content.ContextCompat
 +import androidx.media3.common.C
++import androidx.media3.common.DeviceInfo
  import androidx.media3.common.ForwardingPlayer
 +import androidx.media3.common.MediaItem
  import androidx.media3.common.Player
@@ -239,7 +263,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
  
  @OptIn(UnstableApi::class)
  class AudioControlsService : MediaSessionService() {
-@@ -43,6 +52,12 @@ class AudioControlsService : MediaSessionService() {
+@@ -43,6 +53,15 @@ class AudioControlsService : MediaSessionService() {
    private val binder = AudioPlaybackServiceBinder(this)
    private var mediaSession: MediaSession? = null
    private var sessionMetadataPlayer: MetadataInjectingPlayer? = null
@@ -249,10 +273,13 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
 +  // be re-applied afterwards rather than lost. See RemotePlaybackPlayer.
 +  @Volatile private var remotePlaybackActive = false
 +  @Volatile private var remotePlayer: RemotePlaybackPlayer? = null
++  // The remote device's own volume, 0..100, as last pushed from JS; carried
++  // across session rebuilds so a fresh RemotePlaybackPlayer starts from it.
++  @Volatile private var remoteVolume = 100
    private var currentMetadata: Metadata? = null
    private var currentPlayer: AudioPlayer? = null
    private var currentOptions: AudioLockScreenOptions? = null
-@@ -50,6 +65,14 @@ class AudioControlsService : MediaSessionService() {
+@@ -50,6 +69,14 @@ class AudioControlsService : MediaSessionService() {
    private var currentArtworkUrl: URL? = null
    private var currentArtwork: Bitmap? = null
    private var artworkLoadJob: Job? = null
@@ -267,7 +294,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
    private val notificationId: Int
      get() = currentPlayer?.hashCode() ?: CHANNEL_ID.hashCode()
  
-@@ -69,37 +92,68 @@ class AudioControlsService : MediaSessionService() {
+@@ -69,37 +96,68 @@ class AudioControlsService : MediaSessionService() {
      val currentPlayerRef = currentPlayer?.ref
      val context = appContext
      if (currentPlayerRef == null || context == null) {
@@ -347,7 +374,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
          startForeground(
            notificationId,
-@@ -109,12 +163,58 @@ class AudioControlsService : MediaSessionService() {
+@@ -109,12 +167,58 @@ class AudioControlsService : MediaSessionService() {
        } else {
          startForeground(notificationId, notification)
        }
@@ -410,7 +437,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
    }
  
    private fun buildPlaceholderNotification(): Notification =
-@@ -173,6 +273,7 @@ class AudioControlsService : MediaSessionService() {
+@@ -173,6 +277,7 @@ class AudioControlsService : MediaSessionService() {
  
    private fun buildNotification(): Notification? {
      val session = mediaSession ?: return null
@@ -418,7 +445,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
  
      val builder = NotificationCompat.Builder(this, CHANNEL_ID)
        .setSmallIcon(androidx.media3.session.R.drawable.media3_icon_circular_play)
-@@ -192,6 +293,18 @@ class AudioControlsService : MediaSessionService() {
+@@ -192,6 +297,18 @@ class AudioControlsService : MediaSessionService() {
        val compactViewIndices = mutableListOf<Int>()
        var currentIndex = 0
  
@@ -437,7 +464,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
        if (currentOptions?.showSeekBackward == true) {
          builder.addAction(
            NotificationCompat.Action(
-@@ -227,6 +340,18 @@ class AudioControlsService : MediaSessionService() {
+@@ -227,6 +344,18 @@ class AudioControlsService : MediaSessionService() {
            )
          )
          compactViewIndices.add(currentIndex)
@@ -456,7 +483,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
        }
  
        style.setShowActionsInCompactView(*compactViewIndices.toIntArray())
-@@ -240,14 +365,38 @@ class AudioControlsService : MediaSessionService() {
+@@ -240,14 +369,38 @@ class AudioControlsService : MediaSessionService() {
      val session = mediaSession ?: return
      val mediaButtons = mutableListOf<CommandButton>()
  
@@ -497,7 +524,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
            .build()
        )
      }
-@@ -263,17 +412,25 @@ class AudioControlsService : MediaSessionService() {
+@@ -263,17 +416,25 @@ class AudioControlsService : MediaSessionService() {
      )
  
      // Add seek forward button if enabled
@@ -525,7 +552,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
      session.setCustomLayout(mediaButtons)
      session.setMediaButtonPreferences(mediaButtons)
    }
-@@ -295,42 +452,109 @@ class AudioControlsService : MediaSessionService() {
+@@ -295,42 +456,109 @@ class AudioControlsService : MediaSessionService() {
      val notification = buildNotification() ?: return
  
      if (startInForeground) {
@@ -660,7 +687,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
        }
      }
    }
-@@ -362,8 +586,8 @@ class AudioControlsService : MediaSessionService() {
+@@ -362,8 +590,8 @@ class AudioControlsService : MediaSessionService() {
      player?.isActiveForLockScreen = true
  
      if (player != null) {
@@ -671,7 +698,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
  
        appContext?.mainQueue?.launch {
          val context = appContext?.reactContext ?: return@launch
-@@ -371,7 +595,12 @@ class AudioControlsService : MediaSessionService() {
+@@ -371,7 +599,12 @@ class AudioControlsService : MediaSessionService() {
            updateMetadata(metadata)
          }
          val session = MediaSession.Builder(context, sessionPlayer)
@@ -685,7 +712,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
            .build()
  
          // Replace the basic media session with a session connected to our playback service.
-@@ -388,6 +617,8 @@ class AudioControlsService : MediaSessionService() {
+@@ -388,6 +621,8 @@ class AudioControlsService : MediaSessionService() {
  
          addPlayerListener(player)
  
@@ -694,7 +721,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
          // Initial update now that session exists
          postOrStartForegroundNotification(startInForeground = false)
        }
-@@ -397,7 +628,17 @@ class AudioControlsService : MediaSessionService() {
+@@ -397,7 +632,17 @@ class AudioControlsService : MediaSessionService() {
    }
  
    private fun updateMetadataInternal(player: AudioPlayer, metadata: Metadata?) {
@@ -713,7 +740,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
        return
      }
      currentMetadata = metadata
-@@ -412,14 +653,19 @@ class AudioControlsService : MediaSessionService() {
+@@ -412,14 +657,19 @@ class AudioControlsService : MediaSessionService() {
  
    private fun clearSessionInternal() {
      currentPlayer?.isActiveForLockScreen = false
@@ -737,7 +764,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
    }
  
    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
-@@ -440,19 +686,25 @@ class AudioControlsService : MediaSessionService() {
+@@ -440,19 +690,25 @@ class AudioControlsService : MediaSessionService() {
      metadata: Metadata?,
      options: AudioLockScreenOptions?
    ) {
@@ -766,7 +793,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
            .build()
  
          player.mediaSession.release()
-@@ -462,7 +714,9 @@ class AudioControlsService : MediaSessionService() {
+@@ -462,7 +718,9 @@ class AudioControlsService : MediaSessionService() {
          mediaSession = session
          sessionMetadataPlayer = sessionPlayer
  
@@ -777,7 +804,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
          postOrStartForegroundNotification(startInForeground = false)
        }
  
-@@ -482,6 +736,84 @@ class AudioControlsService : MediaSessionService() {
+@@ -482,6 +740,91 @@ class AudioControlsService : MediaSessionService() {
      clearSessionInternal()
    }
  
@@ -823,6 +850,11 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
 +    }
 +  }
 +
++  fun updateRemoteVolume(volumePercent: Int) {
++    remoteVolume = volumePercent
++    appContext?.mainQueue?.launch { remotePlayer?.applyVolume(volumePercent) }
++  }
++
 +  // Bring the session's player in line with remotePlaybackActive. Idempotent, so
 +  // it can be re-run after any session rebuild. Main thread only.
 +  private fun applyRemotePlaybackToSession() {
@@ -833,7 +865,9 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
 +      val remote = RemotePlaybackPlayer(
 +        onPlay = { player.emitRemotePlay() },
 +        onPause = { player.emitRemotePause() },
-+        onSeek = { positionMs -> player.emitRemoteSeek(positionMs) }
++        onSeek = { positionMs -> player.emitRemoteSeek(positionMs) },
++        onSetVolume = { percent -> player.emitRemoteVolume(percent / 100.0) },
++        initialVolume = remoteVolume
 +      )
 +      remotePlayer = remote
 +      installSessionPlayer(
@@ -862,7 +896,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
    private fun loadArtworkFromUrl(url: URL, callback: (Bitmap?) -> Unit) {
      if (url != currentArtworkUrl) {
        currentArtworkUrl = url
-@@ -516,9 +848,9 @@ class AudioControlsService : MediaSessionService() {
+@@ -516,9 +859,9 @@ class AudioControlsService : MediaSessionService() {
      artworkLoadJob?.cancel()
      artworkLoadJob = null
      scope.cancel()
@@ -875,7 +909,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
      currentPlayer = null
      currentMetadata = null
      currentOptions = null
-@@ -530,6 +862,10 @@ class AudioControlsService : MediaSessionService() {
+@@ -530,6 +873,10 @@ class AudioControlsService : MediaSessionService() {
    private fun addPlayerListener(player: AudioPlayer) {
      val listener = object : Player.Listener {
        override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -886,7 +920,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
          updateSessionCustomLayout(isPlaying)
          postOrStartForegroundNotification(startInForeground = false)
        }
-@@ -542,10 +878,13 @@ class AudioControlsService : MediaSessionService() {
+@@ -542,10 +889,13 @@ class AudioControlsService : MediaSessionService() {
      player.ref.addListener(listener)
    }
  
@@ -901,7 +935,7 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
        playbackListener = null
      }
    }
-@@ -558,7 +897,150 @@ class AudioControlsService : MediaSessionService() {
+@@ -558,7 +908,212 @@ class AudioControlsService : MediaSessionService() {
  
      const val ACTION_SEEK_FORWARD = "expo.modules.audio.action.SEEK_FORWARD"
      const val ACTION_SEEK_BACKWARD = "expo.modules.audio.action.SEEK_BACKWARD"
@@ -931,10 +965,18 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
 +internal class RemotePlaybackPlayer(
 +  private val onPlay: () -> Unit,
 +  private val onPause: () -> Unit,
-+  private val onSeek: (positionMs: Long) -> Unit
++  private val onSeek: (positionMs: Long) -> Unit,
++  private val onSetVolume: (volumePercent: Int) -> Unit,
++  initialVolume: Int
 +) : SimpleBasePlayer(Looper.getMainLooper()) {
 +
 +  @Volatile private var playing: Boolean = false
++  // The remote device's volume as a percentage. Reporting it as a remote
++  // DeviceInfo is what makes the session claim the hardware volume keys: the
++  // OS then adjusts this instead of the phone's media stream, and the change
++  // goes back to JS to be sent to the device.
++  @Volatile private var volume: Int = initialVolume.coerceIn(0, 100)
++  @Volatile private var volumeBeforeMute: Int = -1
 +  @Volatile private var positionMs: Long = 0L
 +  @Volatile private var positionUpdatedAt: Long = System.currentTimeMillis()
 +  @Volatile private var durationMs: Long = 0L
@@ -970,6 +1012,14 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
 +  private fun isJump(posMs: Long): Boolean =
 +    Math.abs(posMs.coerceAtLeast(0L) - currentPositionMs()) > POSITION_JUMP_TOLERANCE_MS
 +
++  fun applyVolume(volumePercent: Int) = runOnMain {
++    val next = volumePercent.coerceIn(0, 100)
++    if (next == volume) return@runOnMain
++    volume = next
++    if (next > 0) volumeBeforeMute = -1
++    invalidateState()
++  }
++
 +  fun applyState(isPlaying: Boolean, posMs: Long, durMs: Long) = runOnMain {
 +    if (isJump(posMs)) pendingDiscontinuityMs = posMs.coerceAtLeast(0L)
 +    playing = isPlaying
@@ -1003,6 +1053,9 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
 +      .add(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
 +      .add(Player.COMMAND_GET_CURRENT_MEDIA_ITEM)
 +      .add(Player.COMMAND_GET_METADATA)
++      .add(Player.COMMAND_GET_DEVICE_VOLUME)
++      .add(Player.COMMAND_SET_DEVICE_VOLUME_WITH_FLAGS)
++      .add(Player.COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS)
 +      // COMMAND_GET_TIMELINE is deliberately absent, and COMMAND_SEEK_TO_NEXT /
 +      // PREVIOUS are added by the forwarding wrapper in AudioControlsService —
 +      // see the notes on resolveSessionPlayer for both.
@@ -1010,6 +1063,9 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
 +
 +    val state = State.Builder()
 +      .setAvailableCommands(commands)
++      .setDeviceInfo(REMOTE_DEVICE)
++      .setDeviceVolume(volume)
++      .setIsDeviceMuted(volume == 0)
 +      .setPlayWhenReady(playing, Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST)
 +      .setPlaybackState(Player.STATE_READY)
 +      .setPlaylist(ImmutableList.of(item))
@@ -1047,9 +1103,49 @@ index 196a5d57f887c2667a88543bd2f6a80044a044f2..31c307baf4bfadd6cf6673ea4d338a0d
 +    return Futures.immediateVoidFuture()
 +  }
 +
++  override fun handleSetDeviceVolume(deviceVolume: Int, flags: Int): ListenableFuture<*> {
++    changeVolume(deviceVolume)
++    return Futures.immediateVoidFuture()
++  }
++
++  override fun handleIncreaseDeviceVolume(flags: Int): ListenableFuture<*> {
++    changeVolume(volume + VOLUME_STEP)
++    return Futures.immediateVoidFuture()
++  }
++
++  override fun handleDecreaseDeviceVolume(flags: Int): ListenableFuture<*> {
++    changeVolume(volume - VOLUME_STEP)
++    return Futures.immediateVoidFuture()
++  }
++
++  override fun handleSetDeviceMuted(muted: Boolean, flags: Int): ListenableFuture<*> {
++    if (muted) {
++      if (volume > 0) volumeBeforeMute = volume
++      changeVolume(0)
++    } else if (volume == 0) {
++      changeVolume(if (volumeBeforeMute > 0) volumeBeforeMute else VOLUME_STEP)
++    }
++    return Futures.immediateVoidFuture()
++  }
++
++  // The field is updated here so the very next getState() already reflects the
++  // press — the base class re-reads it once the returned future completes; the
++  // device itself is told through JS.
++  private fun changeVolume(target: Int) {
++    val next = target.coerceIn(0, 100)
++    volume = next
++    onSetVolume(next)
++  }
++
 +  private companion object {
 +    const val REMOTE_ITEM_UID = "expo-audio-remote-playback"
 +    const val POSITION_JUMP_TOLERANCE_MS = 1000L
++    // One hardware key press. Chromecast and most renderers step in fifteenths
++    // or twentieths; this keeps a full sweep to about as many presses.
++    const val VOLUME_STEP = 5
++    val REMOTE_DEVICE: DeviceInfo = DeviceInfo.Builder(DeviceInfo.PLAYBACK_TYPE_REMOTE)
++      .setMaxVolume(100)
++      .build()
 +  }
 +}
 diff --git a/android/src/main/java/expo/modules/audio/service/AudioMediaSessionCallback.kt b/android/src/main/java/expo/modules/audio/service/AudioMediaSessionCallback.kt
@@ -1303,7 +1399,7 @@ index cfd92ad0ff5765254c4e6db974fe44bce34aad06..daef7384bcd7090cc200dd65d3812fc6
  //# sourceMappingURL=AudioConstants.d.ts.map
 \ No newline at end of file
 diff --git a/build/AudioModule.types.d.ts b/build/AudioModule.types.d.ts
-index f3ae4ee4044d86032cd5c6dbcfee6f905d1ce99f..65155dffc72c3458e55e807330c62f58555f377b 100644
+index f3ae4ee4044d86032cd5c6dbcfee6f905d1ce99f..b74d3a521295a75ce35a3fcbe5037b4dac07351b 100644
 --- a/build/AudioModule.types.d.ts
 +++ b/build/AudioModule.types.d.ts
 @@ -92,6 +92,11 @@ export declare class AudioPlayer extends SharedObject<AudioEvents> {
@@ -1318,7 +1414,7 @@ index f3ae4ee4044d86032cd5c6dbcfee6f905d1ce99f..65155dffc72c3458e55e807330c62f58
      /**
       * The current playback rate of the audio. It accepts different values depending on the platform:
       * - **Android**: `0.1` to `2.0`
-@@ -178,6 +183,16 @@ export declare class AudioPlayer extends SharedObject<AudioEvents> {
+@@ -178,6 +183,23 @@ export declare class AudioPlayer extends SharedObject<AudioEvents> {
       * @param metadata The metadata to display (title, artist, album, artwork).
       */
      updateLockScreenMetadata(metadata: AudioMetadata): void;
@@ -1332,10 +1428,17 @@ index f3ae4ee4044d86032cd5c6dbcfee6f905d1ce99f..65155dffc72c3458e55e807330c62f58
 +     * controls. No-op unless `setRemotePlayback(true)` was called.
 +     */
 +    updateRemotePlayback(playing: boolean, positionMs: number, durationMs: number): void;
++    /**
++     * Android. Push the remote device's own volume (0..1) to the OS media
++     * controls, which then claim the hardware volume keys for it and report
++     * every press through `remoteVolume`. No-op unless `setRemotePlayback(true)`
++     * was called; iOS and web ignore it.
++     */
++    setRemoteVolume(volume: number): void;
      /**
       * Removes this player from lock screen controls if it's currently active.
       * This will clear the lock screen's now playing info.
-@@ -222,6 +237,16 @@ export type AudioEvents = {
+@@ -222,6 +244,18 @@ export type AudioEvents = {
      playbackStatusUpdate(status: AudioStatus): void;
      /** Fired when audio sampling is enabled and new sample data is available. */
      audioSampleUpdate(data: AudioSample): void;
@@ -1349,40 +1452,44 @@ index f3ae4ee4044d86032cd5c6dbcfee6f905d1ce99f..65155dffc72c3458e55e807330c62f58
 +    remotePause(): void;
 +    /** Fired when the user scrubs the lock screen / notification seek bar while a remote device owns playback. */
 +    remoteSeek(positionMs: number): void;
++    /** Android. Fired when the hardware volume keys (or a media controller) set the remote device's volume, 0..1. */
++    remoteVolume(volume: number): void;
  };
  export declare class AudioRecorder extends SharedObject<RecordingEvents> {
      /**
 diff --git a/build/AudioPlayer.web.d.ts b/build/AudioPlayer.web.d.ts
-index 1a788415d3825e229822a539009425e6edede127..ea2ebbb2c4641f11a88a35eaa9dfcb6c47e76496 100644
+index 1a788415d3825e229822a539009425e6edede127..469bd190aa2b9bd0ee2a9494a60587af1c140f92 100644
 --- a/build/AudioPlayer.web.d.ts
 +++ b/build/AudioPlayer.web.d.ts
-@@ -46,6 +46,8 @@ export declare class AudioPlayerWeb extends globalThis.expo.SharedObject<AudioEv
+@@ -46,6 +46,9 @@ export declare class AudioPlayerWeb extends globalThis.expo.SharedObject<AudioEv
      setActiveForLockScreen(active: boolean, metadata?: AudioMetadata, options?: AudioLockScreenOptions): void;
      updateLockScreenMetadata(metadata: AudioMetadata): void;
      clearLockScreenControls(): void;
 +    setRemotePlayback(_active: boolean): void;
 +    updateRemotePlayback(_playing: boolean, _positionMs: number, _durationMs: number): void;
++    setRemoteVolume(_volume: number): void;
      _isCrossOrigin(): boolean;
      _createMediaElement(): HTMLAudioElement;
  }
 diff --git a/build/AudioPlayer.web.js b/build/AudioPlayer.web.js
-index 89bc87297090c5003d7ca2036e66b2dedf61e7b4..8f6ed9debaefc744d2eab771d91b24b101af7bd7 100644
+index 89bc87297090c5003d7ca2036e66b2dedf61e7b4..8859dfa2c3b2e15fef823e6ddb867cb7250ad993 100644
 --- a/build/AudioPlayer.web.js
 +++ b/build/AudioPlayer.web.js
-@@ -230,6 +230,8 @@ export class AudioPlayerWeb extends globalThis.expo.SharedObject {
+@@ -230,6 +230,9 @@ export class AudioPlayerWeb extends globalThis.expo.SharedObject {
      clearLockScreenControls() {
          mediaSessionController.clear(this);
      }
 +    setRemotePlayback(_active) { }
 +    updateRemotePlayback(_playing, _positionMs, _durationMs) { }
++    setRemoteVolume(_volume) { }
      _isCrossOrigin() {
          try {
              return new URL(this.media.src).origin !== window.location.origin;
 diff --git a/ios/AudioModule.swift b/ios/AudioModule.swift
-index d26560627c2dfa97370440ad28304617f3f9f0f7..931f8fcb197fab749a0cc694680592291f65e946 100644
+index d26560627c2dfa97370440ad28304617f3f9f0f7..f6254e45895e07a8211ed1172ba586ff164c6013 100644
 --- a/ios/AudioModule.swift
 +++ b/ios/AudioModule.swift
-@@ -273,10 +273,23 @@ public class AudioModule: Module {
+@@ -273,10 +273,27 @@ public class AudioModule: Module {
          if player.isActiveForLockScreen {
            player.metadata = nil
            player.isActiveForLockScreen = false
@@ -1402,6 +1509,10 @@ index d26560627c2dfa97370440ad28304617f3f9f0f7..931f8fcb197fab749a0cc69468059229
 +          duration: durationMs / 1000
 +        )
 +      }
++
++      // iOS routes the hardware volume keys to the system volume only; the
++      // remote device's volume stays in the app's own controls.
++      Function("setRemoteVolume") { (_: AudioPlayer, _: Double) in }
 +
        AsyncFunction("seekTo") { (player: AudioPlayer, seconds: Double, toleranceMillisBefore: Double?, toleranceMillisAfter: Double?) in
          await player.seekTo(
@@ -1656,7 +1767,7 @@ index dcc0452f7cae66b1bfaf77ed211416b092965bd9..779223ba2550809e621f4006c193beb2
 +  showSkipNext?: boolean;
  };
 diff --git a/src/AudioModule.types.ts b/src/AudioModule.types.ts
-index 7e7537173d067fecef767a03dc0f1860c8aca7ac..033ebd2da8c90d62b91e94fcf843be706b782a31 100644
+index 7e7537173d067fecef767a03dc0f1860c8aca7ac..c3033e300af1d726252e912d42521fb714365e21 100644
 --- a/src/AudioModule.types.ts
 +++ b/src/AudioModule.types.ts
 @@ -127,6 +127,12 @@ export declare class AudioPlayer extends SharedObject<AudioEvents> {
@@ -1672,7 +1783,7 @@ index 7e7537173d067fecef767a03dc0f1860c8aca7ac..033ebd2da8c90d62b91e94fcf843be70
    /**
     * The current playback rate of the audio. It accepts different values depending on the platform:
     * - **Android**: `0.1` to `2.0`
-@@ -231,6 +237,19 @@ export declare class AudioPlayer extends SharedObject<AudioEvents> {
+@@ -231,6 +237,26 @@ export declare class AudioPlayer extends SharedObject<AudioEvents> {
     * @param metadata The metadata to display (title, artist, album, artwork).
     */
    updateLockScreenMetadata(metadata: AudioMetadata): void;
@@ -1689,10 +1800,17 @@ index 7e7537173d067fecef767a03dc0f1860c8aca7ac..033ebd2da8c90d62b91e94fcf843be70
 +   * controls. No-op unless `setRemotePlayback(true)` was called.
 +   */
 +  updateRemotePlayback(playing: boolean, positionMs: number, durationMs: number): void;
++  /**
++   * Android. Push the remote device's own volume (0..1) to the OS media
++   * controls, which then claim the hardware volume keys for it and report
++   * every press through `remoteVolume`. No-op unless `setRemotePlayback(true)`
++   * was called; iOS and web ignore it.
++   */
++  setRemoteVolume(volume: number): void;
  
    /**
     * Removes this player from lock screen controls if it's currently active.
-@@ -280,6 +299,16 @@ export type AudioEvents = {
+@@ -280,6 +306,18 @@ export type AudioEvents = {
    playbackStatusUpdate(status: AudioStatus): void;
    /** Fired when audio sampling is enabled and new sample data is available. */
    audioSampleUpdate(data: AudioSample): void;
@@ -1706,14 +1824,16 @@ index 7e7537173d067fecef767a03dc0f1860c8aca7ac..033ebd2da8c90d62b91e94fcf843be70
 +  remotePause(): void;
 +  /** Fired when the user scrubs the lock screen / notification seek bar while a remote device owns playback. */
 +  remoteSeek(positionMs: number): void;
++  /** Android. Fired when the hardware volume keys (or a media controller) set the remote device's volume, 0..1. */
++  remoteVolume(volume: number): void;
  };
  
  export declare class AudioRecorder extends SharedObject<RecordingEvents> {
 diff --git a/src/AudioPlayer.web.ts b/src/AudioPlayer.web.ts
-index 61db2df8bbb2723eca7415a10860bfdff791574e..c0c0b6d2d2dd29a041a707e3545dc36048dda606 100644
+index 61db2df8bbb2723eca7415a10860bfdff791574e..13a0478336cc916b89d6d4fc30adf9d081bc3982 100644
 --- a/src/AudioPlayer.web.ts
 +++ b/src/AudioPlayer.web.ts
-@@ -312,6 +312,16 @@ export class AudioPlayerWeb
+@@ -312,6 +312,18 @@ export class AudioPlayerWeb
      mediaSessionController.clear(this);
    }
  
@@ -1726,6 +1846,8 @@ index 61db2df8bbb2723eca7415a10860bfdff791574e..c0c0b6d2d2dd29a041a707e3545dc360
 +    _positionMs: number,
 +    _durationMs: number
 +  ): void {}
++
++  setRemoteVolume(_volume: number): void {}
 +
    _isCrossOrigin(): boolean {
      try {

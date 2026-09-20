@@ -29,7 +29,10 @@
         "backgroundColor": "#000000"
       },
       "package": "com.jmercier.wavio",
-      "permissions": ["android.permission.WAKE_LOCK"],
+      "permissions": [
+        "android.permission.WAKE_LOCK",
+        "android.permission.CHANGE_WIFI_MULTICAST_STATE"
+      ],
       "blockedPermissions": ["android.permission.SYSTEM_ALERT_WINDOW"]
     },
     "web": {
@@ -91,6 +94,7 @@
           "enforceContast": false
         }
       ],
+      "./plugins/withCastOptions",
       "react-native-google-cast",
       "./plugins/withAndroidAuto",
       "./plugins/withWidgets",

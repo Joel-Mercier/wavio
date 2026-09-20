@@ -7,6 +7,7 @@
 // no UI at all. Leaving registration to whichever screen happens to import the
 // service would strand an active session in that case: nothing would claim
 // playback and the local engine would answer transport commands instead.
+import "@/services/cast";
 import "@/services/jukebox";
 import "@/services/upnp";
 

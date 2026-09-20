@@ -47,6 +47,7 @@ import { useTrackArtwork } from "@/hooks/useTrackArtwork";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
 import type { PodcastSeries } from "@/services/taddyPodcasts/types";
 import useApp from "@/stores/app";
+import useCast from "@/stores/cast";
 import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
 import useQueue from "@/stores/queue";
@@ -92,7 +93,8 @@ export default function FloatingPlayer() {
   const capabilities = useCapabilities();
   const jukeboxActive = useJukebox((s) => s.active);
   const upnpConnected = useUpnp((s) => s.connected);
-  const playingRemotely = jukeboxActive || upnpConnected;
+  const casting = useCast((s) => s.active);
+  const playingRemotely = jukeboxActive || upnpConnected || casting;
   // The sheet is worth opening when there is any output to pick between, not
   // only when the server happens to have a jukebox.
   const hasOutputs = capabilities.jukebox || capabilities.remoteStreamableUrl;

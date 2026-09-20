@@ -1,27 +1,36 @@
+import { AppState } from "react-native";
 import type { PlaybackSnapshot } from "@/hooks/player/playbackSnapshot";
 import Native, { type UpnpDevice, type UpnpState } from "@/modules/upnp-cast";
 import { getCapabilities } from "@/services/backend/capabilities";
 import { streamUrl } from "@/services/backend/streaming";
 import { reportError } from "@/services/errorReporting";
+import { getConnectionType, subscribeConnectionType } from "@/services/network";
+import { castMime } from "@/services/playback/castMime";
 import {
-  getConnectionType,
-  getEffectiveStreamingFormat,
-  subscribeConnectionType,
-} from "@/services/network";
+  advanceAfterTrackEnd as advanceQueueAfterTrackEnd,
+  consumeAutomaticAdvance,
+  handleRemoteLoadFailure,
+  noteRemoteLoadSucceeded,
+  noticeRemoteLost,
+  resetRemoteAdvance,
+} from "@/services/playback/remoteAdvance";
 import { registerRemoteTarget } from "@/services/playback/remoteTarget";
+import { sameStreamUri } from "@/services/playback/streamUri";
 import {
   getCurrentTime as getLocalTime,
   isPlaying as isLocalPlaying,
   pause as pauseLocal,
   takeOverFromRemote,
 } from "@/services/player";
-import { useAppBase } from "@/stores/app";
 import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
 import useJukebox from "@/stores/jukebox";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import useUpnp, { type UpnpPersistedSession, useUpnpBase } from "@/stores/upnp";
 
-const SEARCH_TIMEOUT_MS = 5000;
+// Long enough for the slow ones — a TV waking up takes several seconds to
+// answer — without costing anything visible: devices are listed as they
+// answer, not when the search ends.
+const SEARCH_TIMEOUT_MS = 8000;
 // Restart-vs-previous threshold, matching the local player's.
 const RESTART_BEFORE_SECONDS = 3;
 // How long the launch check waits for NetInfo to say which network we are on.
@@ -29,51 +38,9 @@ const NETWORK_SETTLE_TIMEOUT_MS = 10_000;
 
 export const isUpnpConnected = (): boolean => useUpnpBase.getState().connected;
 
-// ── What the renderer is told the track is ───────────────────────────────────
-
-const MIME_BY_SUFFIX: Record<string, string> = {
-  mp3: "audio/mpeg",
-  flac: "audio/flac",
-  ogg: "audio/ogg",
-  oga: "audio/ogg",
-  opus: "audio/ogg",
-  m4a: "audio/mp4",
-  mp4: "audio/mp4",
-  aac: "audio/mp4",
-  alac: "audio/mp4",
-  wav: "audio/wav",
-  wma: "audio/x-ms-wma",
-  aif: "audio/aiff",
-  aiff: "audio/aiff",
-  ape: "audio/x-monkeys-audio",
-  wv: "audio/x-wavpack",
-};
-
-/**
- * The MIME type to declare for a track.
- *
- * A renderer decides whether it can play something from what it is told, and our
- * stream URLs carry no file extension to guess from. What actually arrives is the
- * transcode target when one is configured, and the source file's own format
- * otherwise — not the source format in both cases, which is the mistake that makes
- * a speaker refuse a track the server was about to send it as MP3. The target has
- * to be resolved for the current network, like the stream URL itself is, or a
- * cellular-only format is streamed while the renderer is told the Wi-Fi one.
- *
- * Anything unrecognised is still audio, and saying so beats letting it be guessed.
- */
-export function castMime(track: QueueTrack): string {
-  const { streamingFormat, cellularStreamingFormat } = useAppBase.getState();
-  const effective = getEffectiveStreamingFormat(
-    streamingFormat,
-    cellularStreamingFormat,
-  );
-  const format =
-    effective && effective !== "raw"
-      ? effective
-      : (track.suffix as string | undefined);
-  return MIME_BY_SUFFIX[(format ?? "").toLowerCase()] ?? "audio/mpeg";
-}
+// The MIME resolution lives with the other remote targets now; kept exported
+// from here for the callers that learned it under this name.
+export { castMime };
 
 // ── The end-of-track state machine ───────────────────────────────────────────
 
@@ -93,6 +60,25 @@ let wasPlaying = false;
 // PAUSED is ours and not an ending.
 let pausedByUs = false;
 let finishedFired = false;
+let errorFired = false;
+
+// Numbers every load, and is what a poll's report is checked against: the native
+// side stamps each report with the load whose track the renderer held when it was
+// taken, and a report about a track we have since replaced is dropped here rather
+// than mistaken for the new one ending. Bumped before the load is even sent, so
+// the check holds while the handover is still in flight.
+let currentGeneration = 0;
+// The URI the renderer was last handed. A renderer that reports what it holds
+// is only believed about *our* track when the two agree.
+let loadedTrackUri = "";
+// Transport commands in flight. Their outcome is applied optimistically, and a
+// poll that could contradict them can only have been taken before they landed,
+// so reports are ignored until they resolve.
+let pendingCommands = 0;
+// Where to seek once the renderer plays again, for the ones that have no Pause
+// and were stopped instead (losing their position), and for a track parked
+// paused at an offset.
+let resumeAtSec: number | null = null;
 
 // Interpolation base for the 1 Hz poll, so the seek bar and synced lyrics move at
 // screen rate instead of stepping once a second.
@@ -110,6 +96,13 @@ function rebase(position: number) {
   baseAt = Date.now();
 }
 
+function interpolatedPosition(): number {
+  const elapsed = wasPlaying ? (Date.now() - baseAt) / 1000 : 0;
+  let position = basePosition + elapsed;
+  if (lastDurationSec > 0) position = Math.min(position, lastDurationSec);
+  return position;
+}
+
 function resetPlaybackState(positionSec: number, duration: number) {
   lastPositionSec = positionSec;
   lastDurationSec = duration;
@@ -117,46 +110,82 @@ function resetPlaybackState(positionSec: number, duration: number) {
   wasPlaying = false;
   pausedByUs = false;
   finishedFired = false;
+  errorFired = false;
+  resumeAtSec = null;
   rebase(positionSec);
 }
 
 let stateSubscription: { remove: () => void } | undefined;
+let lostSubscription: { remove: () => void } | undefined;
 
 function onNativeState(state: UpnpState) {
   if (!isUpnpConnected()) return;
+  if ((state.generation ?? 0) !== currentGeneration) return;
+  if (pendingCommands > 0) return;
   const position = (state.positionMs ?? 0) / 1000;
   const duration = (state.durationMs ?? 0) / 1000;
   if (position > 0) lastPositionSec = position;
   if (duration > 0) lastDurationSec = duration;
 
+  // A renderer that says what it holds is only believed about our track when it
+  // names it. Between tracks some go on reporting the previous one for a poll
+  // or two, and that one ending is old news.
+  const aboutOurTrack =
+    !state.trackUri ||
+    !loadedTrackUri ||
+    sameStreamUri(state.trackUri, loadedTrackUri);
+
+  if (
+    state.transportStatus?.toUpperCase() === "ERROR_OCCURRED" &&
+    !errorFired &&
+    !loading
+  ) {
+    errorFired = true;
+    wasPlaying = false;
+    onRendererError();
+    notifyChange();
+    return;
+  }
+
   switch (state.playbackState) {
     case "PLAYING":
+      if (!aboutOurTrack) break;
       loading = false;
       wasPlaying = true;
       pausedByUs = false;
       finishedFired = false;
+      // Whatever we meant to seek back to, the renderer is playing from where it
+      // is now; a resume left pending here would make every later seek wait for
+      // a Play that is not coming.
+      resumeAtSec = null;
       rebase(position);
       break;
     case "TRANSITIONING":
       break;
     case "PAUSED_PLAYBACK":
     case "PAUSED_RECORDING":
+      if (!aboutOurTrack) break;
+      loading = false;
       wasPlaying = false;
-      rebase(position);
+      // Parked at the top with a resume pending (a handover made while paused):
+      // the seek bar shows where playback will pick up, not the renderer's zero.
+      rebase(resumeAtSec ?? position);
       break;
     case "STOPPED":
     case "NO_MEDIA_PRESENT":
-      if (
-        !finishedFired &&
-        !loading &&
-        wasPlaying &&
-        !pausedByUs &&
-        nearEnd()
-      ) {
+      if (!aboutOurTrack || loading || !wasPlaying || pausedByUs) break;
+      if (!finishedFired && nearEnd()) {
         finishedFired = true;
         wasPlaying = false;
         advanceAfterTrackEnd();
+        break;
       }
+      // Stopped from the renderer's own remote, mid-track. Not an ending, and
+      // not playing either: hold where it was, and since a stopped renderer
+      // starts over from the top, put it back there on the next Play.
+      wasPlaying = false;
+      resumeAtSec = lastPositionSec;
+      rebase(lastPositionSec);
       break;
     default:
       break;
@@ -181,33 +210,29 @@ function nearEnd(): boolean {
   return lastPositionSec >= lastDurationSec - window;
 }
 
-/**
- * Move to whatever should play next.
- *
- * Repeat-one needs handling here rather than through the queue: `next()`
- * deliberately keeps the same index, so the track-change subscription never fires
- * and the renderer would simply sit silent at the end of the song.
- */
 function advanceAfterTrackEnd() {
-  const state = useQueue.getState();
-  if (state.repeatMode === "one") {
-    const current = state.getCurrent();
-    if (current) void loadOnRenderer(current, true, 0);
-    return;
-  }
-  const atTail =
-    state.currentIndex == null ||
-    (state.repeatMode === "off" &&
-      !state.removePlayed &&
-      state.currentIndex >= state.queue.length - 1);
-  if (atTail) {
-    // End of the queue with nothing to repeat: stop the renderer but leave the
-    // track loaded, so the player keeps its title, artist and cover the way it
-    // does when local playback runs out.
-    void Native?.pause();
-    return;
-  }
-  state.next();
+  advanceQueueAfterTrackEnd({
+    reload: (track) => {
+      void loadOnRenderer(track, true, 0, { automatic: true });
+    },
+    stop: () => {
+      pausedByUs = true;
+      void Native?.pause();
+    },
+  });
+}
+
+// The renderer choked on the stream mid-track (or reported the failure only
+// after the handover looked fine). Nobody pressed anything, so it is treated as
+// an automatic advance that failed: the next track gets one try.
+function onRendererError() {
+  const current = useQueue.getState().getCurrent();
+  if (!current) return;
+  handleRemoteLoadFailure({
+    automatic: true,
+    deviceName: useUpnpBase.getState().deviceName ?? "",
+    track: current,
+  });
 }
 
 // ── Loading tracks ───────────────────────────────────────────────────────────
@@ -219,21 +244,36 @@ function advanceAfterTrackEnd() {
  * download resolves to a `file://` URI that exists only on this phone. The
  * capability flag keeps UPnP off the output list for a local server entirely; this
  * is the backstop for a single unreachable track on a server that is otherwise fine.
+ *
+ * A refusal is reported to the listener and the queue stays where it is (see
+ * `handleRemoteLoadFailure`); a load overtaken by a newer one before it reached the
+ * renderer is neither a success nor a failure, and says nothing.
  */
 async function loadOnRenderer(
   track: QueueTrack,
   autoplay: boolean,
   startSeconds: number,
+  options: { automatic?: boolean } = {},
 ): Promise<boolean> {
   if (!Native || !isUpnpConnected()) return false;
+  const deviceName = useUpnpBase.getState().deviceName ?? "";
   // Radio and podcasts carry their own absolute URL; everything else is built
   // from the server, deliberately ignoring any downloaded copy.
   const url = (track.streamUrl as string | undefined) ?? streamUrl(track.id);
-  if (!url || url.startsWith("file://")) return false;
+  if (!url || url.startsWith("file://")) {
+    handleRemoteLoadFailure({
+      automatic: options.automatic ?? false,
+      deviceName,
+      track,
+    });
+    return false;
+  }
 
+  const generation = ++currentGeneration;
   resetPlaybackState(startSeconds, track.duration ?? 0);
+  notifyChange();
   try {
-    const ok = await Native.load(
+    const result = await Native.load(
       url,
       {
         mime: castMime(track),
@@ -248,17 +288,53 @@ async function loadOnRenderer(
         durationSec: track.duration,
       },
       autoplay,
+      autoplay ? Math.round(startSeconds * 1000) : 0,
+      generation,
     );
-    if (!ok) {
+    // A newer load has been asked for meanwhile; whatever this one did on the
+    // renderer, the other is in charge of the story from here.
+    if (generation !== currentGeneration || !isUpnpConnected()) return false;
+    if (!result.ok) {
+      if (result.reason === "superseded") return false;
       loading = false;
+      wasPlaying = false;
+      // A renderer that did not answer at all has refused nothing. The poll
+      // loop reports it lost if it stays silent; blaming the track meanwhile
+      // sends the listener looking for a problem that is not there.
+      if (result.reason !== "unreachable") {
+        handleRemoteLoadFailure({
+          automatic: options.automatic ?? false,
+          deviceName,
+          track,
+        });
+      }
+      notifyChange();
       return false;
     }
+    loading = false;
+    loadedTrackUri = url;
+    if (autoplay) {
+      wasPlaying = true;
+      rebase(startSeconds);
+    } else {
+      pausedByUs = true;
+      if (startSeconds > 0) resumeAtSec = startSeconds;
+    }
+    noteRemoteLoadSucceeded();
     rememberTrack(track.id, url);
-    if (startSeconds > 0) await Native.seek(startSeconds * 1000);
+    notifyChange();
     return true;
   } catch (error) {
+    if (generation !== currentGeneration) return false;
     loading = false;
+    wasPlaying = false;
     reportError(error, { area: "player", endpoint: "upnp.load" });
+    handleRemoteLoadFailure({
+      automatic: options.automatic ?? false,
+      deviceName,
+      track,
+    });
+    notifyChange();
     return false;
   }
 }
@@ -279,18 +355,31 @@ function subscribeQueue() {
     const id = current?.id ?? null;
     if (id === lastPushedTrackId) return;
     lastPushedTrackId = id;
+    const automatic = consumeAutomaticAdvance();
     if (!current) {
+      pausedByUs = true;
       void Native?.pause();
       return;
     }
-    void loadOnRenderer(current, true, 0);
+    void loadOnRenderer(current, true, 0, { automatic });
   });
 }
 
 // ── Session ──────────────────────────────────────────────────────────────────
 
+// Every renderer the native side finds — mid-search, or announcing itself while
+// the picker is open — lands in the list the moment its description is in.
+let deviceSubscription: { remove: () => void } | undefined;
+function listenForDevices() {
+  if (deviceSubscription || !Native) return;
+  deviceSubscription = Native.addListener("device", (device) => {
+    useUpnpBase.getState().mergeDevices([device]);
+  });
+}
+
 export async function upnpSearch(): Promise<void> {
   if (!Native || useUpnpBase.getState().scanning) return;
+  listenForDevices();
   const store = useUpnpBase.getState();
   store.setScanning(true);
   try {
@@ -303,6 +392,74 @@ export async function upnpSearch(): Promise<void> {
   } finally {
     useUpnpBase.getState().setScanning(false);
   }
+}
+
+/**
+ * Everything the output picker needs while it is open: every renderer already
+ * known — listed from an earlier scan, or played to before — is asked for its
+ * description directly (one request each, no multicast to lose), then the
+ * network is searched, and announcements are listened for until
+ * `upnpStopDiscovery`. Meant to run the moment the picker is asked to open, so
+ * it never shows a finished, empty search it has not run yet.
+ */
+export function upnpStartDiscovery(): void {
+  if (!Native) return;
+  listenForDevices();
+  seedActiveRenderer();
+  void Native.startListening().catch((error) => {
+    reportError(error, { area: "player", endpoint: "upnp.listen" });
+  });
+  void probeKnownRenderers();
+  void upnpSearch();
+}
+
+export function upnpStopDiscovery(): void {
+  void Native?.stopListening().catch(() => {});
+}
+
+// The renderer playback is on belongs in the list before any probe answers: a
+// fresh process has no list yet, and a picker that shows nothing while a speaker
+// is audibly playing what we sent it is not to be trusted.
+function seedActiveRenderer() {
+  const store = useUpnpBase.getState();
+  if (!store.connected || !store.deviceId) return;
+  if (store.devices.some((device) => device.id === store.deviceId)) return;
+  const active = store.seen.find((entry) => entry.id === store.deviceId);
+  if (active) store.mergeDevices([active]);
+}
+
+/**
+ * Asks each known renderer, at its own address, whether it is still there.
+ *
+ * A search can miss a device that is on — UDP — which is why the list is merged
+ * across scans rather than replaced. A direct request to a known address has no
+ * such excuse: one that does not answer it is off or gone, and a row for it
+ * would only ever produce a failed connection. The one currently in use is the
+ * poll loop's to declare lost, not this probe's.
+ */
+async function probeKnownRenderers(): Promise<void> {
+  if (!Native) return;
+  const native = Native;
+  const store = useUpnpBase.getState();
+  const known = new Map<string, { id: string; location: string }>();
+  for (const device of store.devices) known.set(device.id, device);
+  for (const entry of store.seen) {
+    if (!known.has(entry.id)) known.set(entry.id, entry);
+  }
+  await Promise.all(
+    [...known.values()].map(async (entry) => {
+      let device: UpnpDevice | null = null;
+      try {
+        device = await native.describe(entry.id, entry.location);
+      } catch {
+        device = null;
+      }
+      if (device) useUpnpBase.getState().mergeDevices([device]);
+      else if (entry.id !== useUpnpBase.getState().deviceId) {
+        useUpnpBase.getState().forgetDevice(entry.id);
+      }
+    }),
+  );
 }
 
 /**
@@ -321,6 +478,9 @@ export async function upnpConnect(device: UpnpDevice): Promise<boolean> {
     reportError(error, { area: "player", endpoint: "upnp.connect" });
   }
   if (!connected) {
+    // It answered a search or a probe and then nothing since: off, most likely,
+    // and a row that fails on every tap is worse than none until it shows again.
+    useUpnpBase.getState().forgetDevice(device.id);
     if (wasLocallyPlaying) {
       const current = useQueue.getState().getCurrent();
       if (current) takeOverFromRemote(position, true);
@@ -333,7 +493,15 @@ export async function upnpConnect(device: UpnpDevice): Promise<boolean> {
   if (current) {
     const loaded = await loadOnRenderer(current, wasLocallyPlaying, position);
     if (!loaded) {
-      await upnpDisconnect();
+      // Back to where the phone was, not to what the failed handover left
+      // behind: the state machine was reset for a track that never played.
+      detach();
+      try {
+        await Native.disconnect();
+      } catch (error) {
+        reportError(error, { area: "player", endpoint: "upnp.disconnect" });
+      }
+      takeOverFromRemote(position, wasLocallyPlaying);
       return false;
     }
   }
@@ -350,8 +518,16 @@ function attach(
   if (!Native) return;
   stateSubscription?.remove();
   stateSubscription = Native.addListener("state", onNativeState);
+  lostSubscription?.remove();
+  lostSubscription = Native.addListener("lost", onRendererLost);
+  currentGeneration = 0;
+  loadedTrackUri = track.trackUrl;
+  pendingCommands = 0;
+  resumeAtSec = null;
+  resetRemoteAdvance();
   const store = useUpnpBase.getState();
   store.setConnected(device.id, device.name);
+  if (device.id !== device.address) store.rememberSeen(device);
   store.setSession({
     deviceId: device.id,
     deviceName: device.name,
@@ -383,6 +559,8 @@ async function adoptRendererVolume() {
 function detach() {
   stateSubscription?.remove();
   stateSubscription = undefined;
+  lostSubscription?.remove();
+  lostSubscription = undefined;
   queueUnsubscribe?.();
   queueUnsubscribe = null;
   useUpnpBase.getState().setConnected(null, null);
@@ -396,7 +574,7 @@ function detach() {
  */
 export async function upnpDisconnect(): Promise<void> {
   if (!isUpnpConnected()) return;
-  const position = lastPositionSec;
+  const position = interpolatedPosition();
   const shouldPlay = wasPlaying;
 
   detach();
@@ -435,6 +613,30 @@ registerLogoutHandler(() => {
   void upnpRelease();
 });
 
+// The renderer has not answered for a while and the native side has given up
+// on it. Playback comes back here, paused: it may well still be playing over
+// there, and two outputs at once is the one thing worse than silence.
+function onRendererLost() {
+  if (!isUpnpConnected()) return;
+  const name = useUpnpBase.getState().deviceName ?? "";
+  // The last position the renderer confirmed, not the clock that kept running
+  // through the seconds it stayed silent: a renderer that went away most likely
+  // never played those, and picking up a little early beats skipping them.
+  const position = lastPositionSec;
+  detach();
+  void Native?.disconnect().catch((error) => {
+    reportError(error, { area: "player", endpoint: "upnp.disconnect" });
+  });
+  takeOverFromRemote(position, false);
+  noticeRemoteLost(name);
+}
+
+// A poll straight away on coming back to the foreground: the schedule kept
+// running while the app was away, but the seek bar was interpolating blind.
+AppState.addEventListener("change", (state) => {
+  if (state === "active" && isUpnpConnected()) void Native?.pollNow();
+});
+
 // ── Picking a session back up after a restart ────────────────────────────────
 
 // What the launch check found, kept for whichever answer the user gives to the
@@ -452,13 +654,6 @@ let pendingProbe: {
 function forgetSession(session: UpnpPersistedSession) {
   const store = useUpnpBase.getState();
   if (store.session === session) store.setSession(null);
-}
-
-// A renderer's TrackURI is the URI we gave it, but some hand it back with the
-// entities still escaped or with padding around it.
-function sameUri(a: string, b: string): boolean {
-  const norm = (u: string) => u.trim().replace(/&amp;/g, "&");
-  return norm(a) === norm(b);
 }
 
 // Renderers that never report TrackURI can still be told apart from someone
@@ -558,7 +753,7 @@ export async function initUpnpOnLaunch(): Promise<void> {
     return;
   }
   const holdsOurTrack = state.trackUri
-    ? sameUri(state.trackUri, session.trackUrl)
+    ? sameStreamUri(state.trackUri, session.trackUrl)
     : sameDuration(state.durationMs, current.duration);
   const stillOnIt =
     state.playbackState === "PLAYING" ||
@@ -620,6 +815,8 @@ function seedFromProbe(state: UpnpState) {
   wasPlaying = state.playbackState === "PLAYING";
   pausedByUs = state.playbackState === "PAUSED_PLAYBACK";
   finishedFired = false;
+  errorFired = false;
+  resumeAtSec = null;
   rebase(lastPositionSec);
 }
 
@@ -646,20 +843,79 @@ export async function takeOverLocally(): Promise<void> {
 
 // ── Transport ────────────────────────────────────────────────────────────────
 
+// Commands take effect on the phone's side of the story at once, and the
+// renderer is expected to agree by the next poll. Polls are ignored while a
+// command is in flight (see `pendingCommands`), and a refusal undoes the guess.
+
+async function withCommand(
+  run: (native: NonNullable<typeof Native>) => Promise<void>,
+): Promise<void> {
+  if (!Native) return;
+  const native = Native;
+  pendingCommands += 1;
+  notifyChange();
+  try {
+    await run(native);
+  } catch (error) {
+    reportError(error, { area: "player", endpoint: "upnp.transport" });
+  } finally {
+    pendingCommands -= 1;
+    notifyChange();
+  }
+}
+
 function upnpPlay() {
   pausedByUs = false;
-  void Native?.play();
+  wasPlaying = true;
+  finishedFired = false;
+  rebase(resumeAtSec ?? lastPositionSec);
+  // A renderer stopped in lieu of pausing starts over from the top; the native
+  // side puts it back where the listener left it once it is actually playing.
+  const resumeAt = resumeAtSec;
+  resumeAtSec = null;
+  void withCommand(async (native) => {
+    const ok = await native.play(resumeAt != null ? resumeAt * 1000 : 0);
+    if (!ok) {
+      wasPlaying = false;
+      return;
+    }
+    if (resumeAt != null) {
+      lastPositionSec = resumeAt;
+      rebase(resumeAt);
+    }
+  });
 }
 
 function upnpPause() {
+  const position = interpolatedPosition();
   pausedByUs = true;
-  void Native?.pause();
+  wasPlaying = false;
+  lastPositionSec = position;
+  rebase(position);
+  void withCommand(async (native) => {
+    const result = await native.pause();
+    if (!result.ok) {
+      pausedByUs = false;
+      wasPlaying = true;
+      rebase(position);
+      return;
+    }
+    if (result.stoppedInstead) resumeAtSec = position;
+  });
 }
 
 function upnpSeek(seconds: number) {
   rebase(seconds);
   lastPositionSec = seconds;
-  void Native?.seek(seconds * 1000);
+  // Nothing to seek in while the renderer is stopped; it happens on resume.
+  if (resumeAtSec != null) {
+    resumeAtSec = seconds;
+    notifyChange();
+    return;
+  }
+  void withCommand(async (native) => {
+    await native.seek(seconds * 1000);
+  });
 }
 
 export function upnpSetVolume(volume: number) {
@@ -685,7 +941,7 @@ registerRemoteTarget({
     useQueue.getState().next();
   },
   skipPrevious: () => {
-    if (lastPositionSec > RESTART_BEFORE_SECONDS) {
+    if (interpolatedPosition() > RESTART_BEFORE_SECONDS) {
       upnpSeek(0);
       return;
     }
@@ -698,15 +954,16 @@ registerRemoteTarget({
     }
     queue.previous();
   },
-  getCurrentTime: () => lastPositionSec,
+  getCurrentTime: () => interpolatedPosition(),
   isPlaying: () => wasPlaying,
   setVolume: upnpSetVolume,
+  getVolume: () => useUpnpBase.getState().volume,
+  release: upnpRelease,
   isInterpolating: () => isUpnpConnected() && wasPlaying,
   readSnapshot: (): PlaybackSnapshot => {
     const duration =
       lastDurationSec || (useQueue.getState().getCurrent()?.duration ?? 0);
-    const elapsed = wasPlaying ? (Date.now() - baseAt) / 1000 : 0;
-    let currentTime = basePosition + elapsed;
+    let currentTime = interpolatedPosition();
     if (duration > 0) currentTime = Math.min(currentTime, duration);
     return { playing: wasPlaying, buffering: loading, currentTime, duration };
   },

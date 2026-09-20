@@ -1955,7 +1955,9 @@
 			"player": {
 				"title": "Playing now",
 				"notices": {
-					"sourceUnavailable": "Couldn't play that track — the file wasn't reachable. Check that your server is switched on and on the same network."
+					"sourceUnavailable": "Couldn't play that track — the file wasn't reachable. Check that your server is switched on and on the same network.",
+					"remoteTrackRefused": "{{name}} couldn't play “{{track}}”. Pick another track, or play on this device.",
+					"remoteLost": "Lost contact with {{name}}. Playback is back on this device."
 				},
 				"original": "Original",
 				"playingFrom": {
@@ -2032,10 +2034,11 @@
 				"outputSpeakersAndTvs": "Speakers & TVs (UPnP/DLNA)",
 				"outputScanning": "Looking for devices…",
 				"outputNoDevices": "No devices found on this network",
-				"outputUnverified": "Might not accept playback",
 				"outputChromecast": "Chromecast",
 				"outputChromecastConnected": "Connected",
 				"outputChromecastUnavailable": "The Chromecast device picker is unavailable.",
+				"outputChromecastNoPlayServices": "Chromecast needs Google Play services, which this device does not have.",
+				"outputChromecastNoPlayServicesHint": "Needs Google Play services",
 				"outputConnectErrorMessage": "Could not play to {{name}}."
 			},
 			"shares": {

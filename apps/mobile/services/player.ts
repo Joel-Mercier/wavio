@@ -1304,7 +1304,9 @@ function handlePlaybackStatus(status: AudioStatus) {
     }
   }
 
-  if (status.didJustFinish && !isLoading) {
+  // The local engine is parked while a remote target plays; whatever it says
+  // about finishing is about a track it was paused on, not the queue.
+  if (status.didJustFinish && !isLoading && !activeRemoteTarget()) {
     const previousId = useQueue.getState().getCurrent()?.id ?? null;
     const previous = useQueue.getState().getCurrent();
     // Fully played — drop any resume bookmark so it doesn't reopen at the end.
@@ -1422,6 +1424,14 @@ remoteListeners.push(
     seekTo(positionMs / 1000);
   }),
 );
+// The hardware volume keys while a remote target owns playback: the session
+// reports the remote's volume, so the OS adjusts that rather than this device's
+// media stream (see lockScreenMirror).
+remoteListeners.push(
+  player.addListener("remoteVolume", (volume: number) => {
+    activeRemoteTarget()?.setVolume?.(volume);
+  }),
+);
 statusListeners.push(
   player.addListener("playbackStatusUpdate", handlePlaybackStatus),
 );
@@ -1471,11 +1481,16 @@ const queueUnsub = useQueue.subscribe((state) => {
       // happens further down this same callback. A skip is the only way to leave
       // an episode without reaching didJustFinish, so without this it loses up
       // to a full throttle window.
+      // While a remote target plays, the engine's own position is where it was
+      // paused before the handover; the target knows where the episode got to.
+      const remote = activeRemoteTarget();
       recordPodcastProgress(
         outgoing,
-        effectivePosition(player.currentTime ?? 0),
+        remote
+          ? remote.getCurrentTime()
+          : effectivePosition(player.currentTime ?? 0),
         {
-          duration: player.duration,
+          duration: remote ? outgoing.duration : player.duration,
           force: true,
         },
       );
@@ -1715,10 +1730,17 @@ export function playTracks(
   // / !hasHydrated) it loads the track paused and leaves playbackInitialized
   // false. An explicit user play must start playback regardless. A remote
   // target owns playback elsewhere, so never force the local engine there.
-  if (
-    current.id === previousId ||
-    (!playbackInitialized && !activeRemoteTarget())
-  ) {
+  const remote = activeRemoteTarget();
+  if (remote) {
+    // Same track again: on the remote that is "start it over", not a local load
+    // on top of it.
+    if (current.id === previousId) {
+      remote.seekTo(0);
+      remote.play();
+    }
+    return true;
+  }
+  if (current.id === previousId || !playbackInitialized) {
     loadAndPlay(current);
   }
   return true;

@@ -11,10 +11,7 @@ import Tv from "lucide-react-native/dist/esm/icons/tv.mjs";
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
-import CastContext, {
-  useCastDevice,
-  useCastSession,
-} from "react-native-google-cast";
+import CastContext from "react-native-google-cast";
 import { Uniwind } from "uniwind";
 import BottomSheetModalComponent from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -32,6 +29,7 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { isUpnpAvailable, type UpnpDevice } from "@/modules/upnp-cast";
+import { castDisconnect, castSetVolume } from "@/services/cast";
 import {
   activate as activateJukebox,
   jukeboxCommitGain,
@@ -51,24 +49,29 @@ import {
   upnpDisconnect,
   upnpSearch,
   upnpSetVolume,
+  upnpStartDiscovery,
+  upnpStopDiscovery,
 } from "@/services/upnp";
+import useCast from "@/stores/cast";
 import useJukebox from "@/stores/jukebox";
 import useQueue from "@/stores/queue";
 import useUpnp from "@/stores/upnp";
 import { logError } from "@/utils/log";
 import { TOAST_DURATION } from "@/utils/toastDuration";
 
-// A device that answered discovery but never got as far as a re-scan can take a
-// moment to appear, so the sheet scans again shortly after opening rather than
-// leaving the list looking final when it isn't.
-const RESCAN_DELAY_MS = 6000;
-
 // The output sheet lives once at the app root (mounted in app/(app)/_layout), so
 // any screen — the player chrome or the floating player — opens it through this
 // module-level ref rather than prop-drilling one.
 let mountedSheetRef: RefObject<BottomSheetModal | null> | null = null;
+// Registered by the mounted sheet: whether UPnP belongs on its list depends on
+// the active server, which only the component knows.
+let mountedOnOpen: (() => void) | null = null;
 
 export function openOutputSheet() {
+  // Discovery starts now, not once the sheet has finished sliding in: the list
+  // is scanning from its first frame rather than showing a finished, empty
+  // search for the second or two the animation takes.
+  mountedOnOpen?.();
   mountedSheetRef?.current?.present();
 }
 
@@ -92,8 +95,10 @@ export default function OutputSheet() {
   ]) as string[];
   const sheetRef = useRef<BottomSheetModal>(null);
   const capabilities = useCapabilities();
-  const castSession = useCastSession();
-  const castDevice = useCastDevice();
+  const casting = useCast((s) => s.active);
+  const castDeviceName = useCast((s) => s.deviceName);
+  const castVolume = useCast((s) => s.volume);
+  const castAvailable = useCast((s) => s.available);
   const jukeboxActive = useJukebox((s) => s.active);
   const jukeboxGain = useJukebox((s) => s.gain);
   const jukeboxStatus = useJukebox((s) => s.status);
@@ -108,15 +113,18 @@ export default function OutputSheet() {
   // on-device library has no way to produce.
   const canCast = capabilities.remoteStreamableUrl;
   const showUpnp = canCast && isUpnpAvailable();
-  const casting = !!castSession;
   const playingLocally = !jukeboxActive && !upnpConnected && !casting;
 
   useEffect(() => {
     mountedSheetRef = sheetRef;
+    mountedOnOpen = () => {
+      if (showUpnp) upnpStartDiscovery();
+    };
     return () => {
       mountedSheetRef = null;
+      mountedOnOpen = null;
     };
-  }, []);
+  }, [showUpnp]);
 
   const showError = useCallback(
     (message: string) => {
@@ -139,11 +147,8 @@ export default function OutputSheet() {
   const releaseCurrentOutput = useCallback(async () => {
     if (jukeboxActive) await takeOverLocally();
     if (upnpConnected) await upnpDisconnect();
-    // Ending the session hands playback back to this device through
-    // useCastSync, which restores the receiver's position locally.
-    if (castSession)
-      await CastContext.getSessionManager().endCurrentSession(true);
-  }, [castSession, jukeboxActive, upnpConnected]);
+    if (casting) await castDisconnect();
+  }, [casting, jukeboxActive, upnpConnected]);
 
   const selectLocal = async () => {
     if (playingLocally) return;
@@ -192,6 +197,12 @@ export default function OutputSheet() {
   };
 
   const openChromecastPicker = async () => {
+    // Without Google Play services (or on a TV) the Cast SDK never comes up,
+    // and the picker would be a dead tap; say so instead.
+    if (castAvailable === false) {
+      showError(t("app.player.outputChromecastNoPlayServices"));
+      return;
+    }
     // Chromecast keeps its own device picker, which is also where an active
     // session is ended — so this hands off to it rather than mirroring its list.
     try {
@@ -208,7 +219,10 @@ export default function OutputSheet() {
 
   const handleSheetChange = useCallback(
     (index: number) => {
-      if (index < 0) return;
+      if (index < 0) {
+        if (showUpnp) upnpStopDiscovery();
+        return;
+      }
       // Ping the server for live jukebox state rather than relying on stale
       // cached status. When a session is active, also pull the playlist so
       // another device's changes are reflected.
@@ -218,10 +232,6 @@ export default function OutputSheet() {
           jukeboxReconcileFromServer().catch(() => {});
         }
       }
-      if (!showUpnp) return;
-      upnpSearch();
-      const timer = setTimeout(upnpSearch, RESCAN_DELAY_MS);
-      return () => clearTimeout(timer);
     },
     [capabilities.jukebox, showUpnp],
   );
@@ -347,11 +357,6 @@ export default function OutputSheet() {
                       device.name,
                       upnpDeviceId === device.id,
                       () => selectUpnpDevice(device),
-                      // A device that never confirmed what it is may not take a
-                      // track; saying so beats a tap that quietly does nothing.
-                      device.verified
-                        ? undefined
-                        : t("app.player.outputUnverified"),
                     ),
                   )
                 )}
@@ -362,10 +367,14 @@ export default function OutputSheet() {
               outputRow(
                 "chromecast",
                 <Cast size={20} color={casting ? emerald500 : gray200} />,
-                castDevice?.friendlyName ?? t("app.player.outputChromecast"),
+                (casting && castDeviceName) || t("app.player.outputChromecast"),
                 casting,
                 openChromecastPicker,
-                casting ? t("app.player.outputChromecastConnected") : undefined,
+                casting
+                  ? t("app.player.outputChromecastConnected")
+                  : castAvailable === false
+                    ? t("app.player.outputChromecastNoPlayServicesHint")
+                    : undefined,
               )}
 
             {jukeboxActive && (
@@ -401,6 +410,19 @@ export default function OutputSheet() {
                   value={upnpVolume}
                   onScrub={upnpSetVolume}
                   onComplete={upnpSetVolume}
+                />
+              </VStack>
+            )}
+
+            {casting && (
+              <VStack className="gap-y-2">
+                <Text className="text-sm text-primary-100">
+                  {t("app.player.jukeboxGain")}
+                </Text>
+                <GestureSlider
+                  value={castVolume}
+                  onScrub={castSetVolume}
+                  onComplete={castSetVolume}
                 />
               </VStack>
             )}

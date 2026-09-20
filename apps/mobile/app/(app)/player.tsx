@@ -70,6 +70,7 @@ import {
   togglePlayPause,
 } from "@/services/player";
 import useApp from "@/stores/app";
+import useCast from "@/stores/cast";
 import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
 import useQueue, { type QueueTrack } from "@/stores/queue";
@@ -136,9 +137,10 @@ export default function PlayerScreen() {
   const lyricsPickerSheetRef = useRef<BottomSheetModal>(null);
   const jukeboxActive = useJukebox((s) => s.active);
   const upnpConnected = useUpnp((s) => s.connected);
+  const casting = useCast((s) => s.active);
   // One indicator for every output: the button says "not this phone", and the
   // sheet says which one.
-  const playingRemotely = jukeboxActive || upnpConnected;
+  const playingRemotely = jukeboxActive || upnpConnected || casting;
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
   const playingArtwork = useTrackArtwork(playingTrack);

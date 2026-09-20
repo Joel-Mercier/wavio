@@ -13,18 +13,26 @@ import createSelectors from "@/utils/createSelectors";
 
 export type PlaybackNoticeCode =
   /** The source couldn't be opened and there is no fallback left to try. */
-  "PLAYBACK_SOURCE_UNAVAILABLE";
+  | "PLAYBACK_SOURCE_UNAVAILABLE"
+  /** A remote output (renderer, Cast receiver) would not take the track. */
+  | "REMOTE_TRACK_REFUSED"
+  /** A remote output stopped answering; playback came back to this device. */
+  | "REMOTE_LOST";
+
+export type PlaybackNoticeParams = Record<string, string>;
 
 interface PlaybackNoticeStore {
   notice: PlaybackNoticeCode | null;
-  raise: (notice: PlaybackNoticeCode) => void;
+  params: PlaybackNoticeParams | null;
+  raise: (notice: PlaybackNoticeCode, params?: PlaybackNoticeParams) => void;
   clear: () => void;
 }
 
 const usePlaybackNoticeBase = create<PlaybackNoticeStore>()((set) => ({
   notice: null,
-  raise: (notice) => set({ notice }),
-  clear: () => set({ notice: null }),
+  params: null,
+  raise: (notice, params) => set({ notice, params: params ?? null }),
+  clear: () => set({ notice: null, params: null }),
 }));
 
 export const usePlaybackNotice = createSelectors(usePlaybackNoticeBase);

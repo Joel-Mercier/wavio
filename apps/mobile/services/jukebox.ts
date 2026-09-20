@@ -619,6 +619,10 @@ registerRemoteTarget({
   getCurrentTime: jukeboxGetCurrentTime,
   isPlaying: jukeboxIsPlaying,
   setVolume: jukeboxSetGain,
+  getVolume: () => useJukebox.getState().gain,
+  release: async () => {
+    await deactivate();
+  },
   isInterpolating: () =>
     useJukebox.getState().active &&
     (useJukebox.getState().status?.playing ?? false),
