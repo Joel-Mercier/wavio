@@ -2060,7 +2060,9 @@
 			"player": {
 				"title": "Играет сейчас",
 				"notices": {
-					"sourceUnavailable": "Не удалось воспроизвести этот трек — файл недоступен. Убедитесь, что ваш сервер включен и находится в той же сети."
+					"sourceUnavailable": "Не удалось воспроизвести этот трек — файл недоступен. Убедитесь, что ваш сервер включен и находится в той же сети.",
+					"remoteTrackRefused": "{{name}} couldn't play “{{track}}”. Pick another track, or play on this device.",
+					"remoteLost": "Lost contact with {{name}}. Playback is back on this device."
 				},
 				"original": "Оригинал",
 				"playingFrom": {
@@ -2135,10 +2137,11 @@
 				"outputSpeakersAndTvs": "Акустические системы и телевизоры (UPnP/DLNA)",
 				"outputScanning": "Ищу устройства…",
 				"outputNoDevices": "В этой сети не обнаружено никаких устройств",
-				"outputUnverified": "Возможно, воспроизведение не будет поддерживаться",
 				"outputChromecast": "Chromecast",
 				"outputChromecastConnected": "Подключено",
 				"outputChromecastUnavailable": "Функция выбора устройства Chromecast недоступна.",
+				"outputChromecastNoPlayServices": "Chromecast needs Google Play services, which this device does not have.",
+				"outputChromecastNoPlayServicesHint": "Needs Google Play services",
 				"outputConnectErrorMessage": "Не удалось воспроизвести файл по адресу {{name}}.",
 				"sleepTimerMinutes_one": "{{count}} минута",
 				"sleepTimerMinutes_few": "{{count}} минуты",
