@@ -1954,7 +1954,9 @@
 			"player": {
 				"title": "Reproduciéndose ahora",
 				"notices": {
-					"sourceUnavailable": "No se ha podido reproducir esa pista: no se ha podido acceder al archivo. Comprueba que tu servidor esté encendido y conectado a la misma red."
+					"sourceUnavailable": "No se ha podido reproducir esa pista: no se ha podido acceder al archivo. Comprueba que tu servidor esté encendido y conectado a la misma red.",
+					"remoteTrackRefused": "{{name}} couldn't play “{{track}}”. Pick another track, or play on this device.",
+					"remoteLost": "Lost contact with {{name}}. Playback is back on this device."
 				},
 				"original": "Original",
 				"playingFrom": {
@@ -2029,10 +2031,11 @@
 				"outputSpeakersAndTvs": "Altavoces y televisores (UPnP/DLNA)",
 				"outputScanning": "¿Buscas dispositivos…",
 				"outputNoDevices": "No se han encontrado dispositivos en esta red",
-				"outputUnverified": "Es posible que no admita la reproducción",
 				"outputChromecast": "Chromecast",
 				"outputChromecastConnected": "Conectado",
 				"outputChromecastUnavailable": "El selector de dispositivos Chromecast no está disponible.",
+				"outputChromecastNoPlayServices": "Chromecast needs Google Play services, which this device does not have.",
+				"outputChromecastNoPlayServicesHint": "Needs Google Play services",
 				"outputConnectErrorMessage": "No se ha podido reproducir el vídeo de {{name}}.",
 				"sleepTimerMinutes_one": "{{count}} minuto",
 				"sleepTimerMinutes_other": "{{count}} minutos"
