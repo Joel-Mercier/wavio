@@ -1954,7 +1954,9 @@
 			"player": {
 				"title": "En cours de lecture",
 				"notices": {
-					"sourceUnavailable": "Impossible de lire ce morceau : le fichier n'était pas accessible. Vérifiez que votre serveur est allumé et qu'il se trouve sur le même réseau."
+					"sourceUnavailable": "Impossible de lire ce morceau : le fichier n'était pas accessible. Vérifiez que votre serveur est allumé et qu'il se trouve sur le même réseau.",
+					"remoteTrackRefused": "{{name}} couldn't play “{{track}}”. Pick another track, or play on this device.",
+					"remoteLost": "Lost contact with {{name}}. Playback is back on this device."
 				},
 				"original": "Original",
 				"playingFrom": {
@@ -2029,10 +2031,11 @@
 				"outputSpeakersAndTvs": "Enceintes et téléviseurs (UPnP/DLNA)",
 				"outputScanning": "Recherche d'appareils …",
 				"outputNoDevices": "Aucun appareil trouvé sur le réseau",
-				"outputUnverified": "La lecture pourrait ne pas fonctionner",
 				"outputChromecast": "Chromecast",
 				"outputChromecastConnected": "Connecté",
 				"outputChromecastUnavailable": "Le sélecteur de périphérique Chromecast est indisponible.",
+				"outputChromecastNoPlayServices": "Chromecast needs Google Play services, which this device does not have.",
+				"outputChromecastNoPlayServicesHint": "Needs Google Play services",
 				"outputConnectErrorMessage": "Lecture impossible sur {{name}}.",
 				"sleepTimerMinutes_one": "{{count}} minute",
 				"sleepTimerMinutes_other": "{{count}} minutes"
