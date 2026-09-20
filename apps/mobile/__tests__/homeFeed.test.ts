@@ -106,6 +106,57 @@ describe("buildHomeFeed hidden sections", () => {
   });
 });
 
+describe("featured artists", () => {
+  const featured = (albums: AlbumID3[]) =>
+    buildHomeFeed({
+      seedAlbums: albums,
+      genres,
+      availability: availability(),
+      sessionSeed: 42,
+      hiddenSections: [],
+      order: [],
+    })
+      .filter((s) => s.kind === "moreFromArtist")
+      .map((s) => (s.kind === "moreFromArtist" ? s.artistId : ""));
+
+  it("never features a compilation's album artist", () => {
+    const albums = [
+      ...seedAlbums,
+      { id: "va-1", name: "Hits", artistId: "va", isCompilation: true },
+      { id: "va-2", name: "More Hits", artistId: "va2", artist: "Various Artists" },
+      { id: "va-3", name: "Mix", artistId: "va3", artist: "VA" },
+    ] as unknown as AlbumID3[];
+    for (let seed = 0; seed < 50; seed++) {
+      const picks = buildHomeFeed({
+        seedAlbums: albums,
+        genres,
+        availability: availability(),
+        sessionSeed: seed,
+        hiddenSections: [],
+        order: [],
+      })
+        .filter((s) => s.kind === "moreFromArtist")
+        .map((s) => (s.kind === "moreFromArtist" ? s.artistId : ""));
+      for (const id of picks) expect(["va", "va2", "va3"]).not.toContain(id);
+    }
+  });
+
+  it("still features regular artists when compilations are present", () => {
+    const albums = [
+      { id: "va-1", name: "Hits", artistId: "va", isCompilation: true },
+      ...seedAlbums,
+    ] as unknown as AlbumID3[];
+    expect(featured(albums).length).toBe(3);
+  });
+
+  it("produces no row at all when only compilations seed the feed", () => {
+    const albums = [
+      { id: "va-1", name: "Hits", artistId: "va", isCompilation: true },
+    ] as unknown as AlbumID3[];
+    expect(featured(albums)).toEqual([]);
+  });
+});
+
 describe("integration-gated sections", () => {
   it("includes the ListenBrainz section only when it is connected", () => {
     expect(build().map((s) => s.id)).toContain("listenBrainzCreatedForYou");

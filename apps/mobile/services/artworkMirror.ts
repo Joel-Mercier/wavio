@@ -85,10 +85,14 @@ function cacheKey(url: string): string {
 }
 
 export type ArtworkMirror = {
-  cachedArtworkUri: (remoteUrl: string | undefined) => string | undefined;
+  cachedArtworkUri: (
+    remoteUrl: string | undefined,
+    options?: { verify?: boolean },
+  ) => string | undefined;
   ensureArtworkCached: (
     remoteUrl: string | undefined,
   ) => Promise<string | undefined>;
+  refreshIndex: () => void;
   clearArtworkCache: () => void;
 };
 
@@ -108,17 +112,64 @@ export function createArtworkMirror(
 
   // No extension: both decoders sniff the content (BitmapFactory, UIImage), and
   // a cover served as PNG under a .jpg name would be a lie on disk.
-  const fileFor = (url: string): File => new File(artworkDir(), cacheKey(url));
+  const fileFor = (key: string): File => new File(artworkDir(), key);
 
-  function isFresh(file: File): boolean {
-    const modified = file.modificationTime;
-    // Missing timestamp (not reported on every platform) — treat as fresh and
-    // let the entry age out via the count cap instead.
-    if (modified == null) return true;
-    // expo-file-system reports seconds on some platforms and milliseconds on
-    // others; normalize by magnitude rather than trusting either.
-    const ms = modified > 1e11 ? modified : modified * 1000;
-    return Date.now() - ms < MAX_AGE_MS;
+  // What the directory holds, by cache key → modification time in ms. Every
+  // expo-file-system property read (`exists`, `modificationTime`, even
+  // constructing a `File`) is a synchronous JSI → Kotlin round trip costing a
+  // few ms, and the car browse tree asks about a cover once per track node —
+  // 20k nodes froze the JS thread for close to a minute (issue #205). Listing
+  // the directory once and answering from memory makes that lookup free; the
+  // index is kept current by our own writes/deletes and re-listed on demand
+  // by callers about to issue a burst of lookups (see `refreshIndex`).
+  let index: Map<string, number> | null = null;
+  let dirUri: string | null = null;
+
+  // expo-file-system reports seconds on some platforms and milliseconds on
+  // others; normalize by magnitude rather than trusting either. A missing
+  // timestamp (not reported on every platform) counts as fresh and lets the
+  // entry age out via the count cap instead.
+  const toMs = (modified: number | null | undefined): number => {
+    if (modified == null) return Date.now();
+    return modified > 1e11 ? modified : modified * 1000;
+  };
+  const isFresh = (modifiedMs: number): boolean =>
+    Date.now() - modifiedMs < MAX_AGE_MS;
+
+  function loadIndex(): Map<string, number> {
+    const loaded = new Map<string, number>();
+    try {
+      const dir = artworkDir();
+      dirUri = dir.uri;
+      if (dir.exists) {
+        for (const entry of dir.list()) {
+          if (entry instanceof File) {
+            loaded.set(entry.name, toMs(entry.modificationTime));
+          }
+        }
+      }
+    } catch {
+      // An unreadable directory behaves like an empty one; the next write
+      // re-creates it.
+    }
+    return loaded;
+  }
+
+  const entries = (): Map<string, number> => {
+    if (!index) index = loadIndex();
+    return index;
+  };
+
+  const uriFor = (key: string): string => {
+    if (dirUri == null) dirUri = artworkDir().uri;
+    return dirUri.endsWith("/") ? `${dirUri}${key}` : `${dirUri}/${key}`;
+  };
+
+  function remove(key: string): void {
+    try {
+      fileFor(key).delete();
+    } catch {}
+    entries().delete(key);
   }
 
   /**
@@ -127,48 +178,60 @@ export function createArtworkMirror(
    * Synchronous by design: the caller applies lock-screen metadata during a
    * track change and needs an answer without yielding, so a warm cover appears
    * on the very first notification rather than flashing in a moment later.
+   *
+   * Answered from the in-memory index, so it is cheap enough to call per list
+   * item. `verify` additionally stats the file — for the one-shot callers
+   * (lock screen, now-playing) where handing out a URI the OS has since
+   * reclaimed would leave the controls blank, and one native call is nothing.
    */
-  function cachedArtworkUri(remoteUrl: string | undefined): string | undefined {
+  function cachedArtworkUri(
+    remoteUrl: string | undefined,
+    { verify = false }: { verify?: boolean } = {},
+  ): string | undefined {
     if (!isRemote(remoteUrl)) return undefined;
-    try {
-      const file = fileFor(remoteUrl);
-      if (!file.exists || !isFresh(file)) return undefined;
-      return file.uri;
-    } catch {
-      return undefined;
+    const key = cacheKey(remoteUrl);
+    const modified = entries().get(key);
+    if (modified == null || !isFresh(modified)) return undefined;
+    if (verify) {
+      let exists = false;
+      try {
+        exists = fileFor(key).exists;
+      } catch {}
+      if (!exists) {
+        entries().delete(key);
+        return undefined;
+      }
     }
+    return uriFor(key);
+  }
+
+  /**
+   * Forget the in-memory view of the directory so the next lookup re-lists it.
+   *
+   * The OS may reclaim files from Paths.cache behind our back; callers that
+   * are about to hand out many URIs at once (a browse-tree build) call this
+   * first so the burst is answered from a fresh listing — one directory read
+   * instead of one stat per item.
+   */
+  function refreshIndex(): void {
+    index = null;
   }
 
   // Drop the oldest entries once the directory outgrows the cap, and anything
   // past its TTL. Runs after a successful download, so the cap is enforced
   // lazily rather than on a timer.
   function prune(): void {
-    try {
-      const entries = artworkDir()
-        .list()
-        .filter((entry): entry is File => entry instanceof File);
-      const stale = entries.filter((file) => !isFresh(file));
-      for (const file of stale) {
-        try {
-          file.delete();
-        } catch {}
-      }
-      const remaining = entries.filter((file) => !stale.includes(file));
-      if (remaining.length <= maxEntries) return;
-      remaining
-        .sort((a, b) => (a.modificationTime ?? 0) - (b.modificationTime ?? 0))
-        .slice(0, remaining.length - maxEntries)
-        .forEach((file) => {
-          try {
-            file.delete();
-          } catch {}
-        });
-    } catch {
-      // Best effort — an oversized cache is harmless.
+    const current = entries();
+    for (const [key, modified] of Array.from(current)) {
+      if (!isFresh(modified)) remove(key);
     }
+    if (current.size <= maxEntries) return;
+    Array.from(current)
+      .sort((a, b) => a[1] - b[1])
+      .slice(0, current.size - maxEntries)
+      .forEach(([key]) => remove(key));
   }
 
-  // Deduplicates concurrent callers only; the lasting cache is the file on disk.
   const inFlight = new Map<string, Promise<string | undefined>>();
 
   /**
@@ -231,7 +294,8 @@ export function createArtworkMirror(
 
         const dir = artworkDir();
         dir.create({ idempotent: true, intermediates: true });
-        const target = fileFor(remoteUrl);
+        const key = cacheKey(remoteUrl);
+        const target = fileFor(key);
         // A stale-but-present file would keep its old modification time, which
         // is what the TTL reads; delete so the refresh really is a new entry.
         if (target.exists) {
@@ -241,6 +305,7 @@ export function createArtworkMirror(
         }
         target.create();
         target.write(bytes);
+        entries().set(key, Date.now());
 
         prune();
         return target.uri;
@@ -268,6 +333,7 @@ export function createArtworkMirror(
    */
   function clearArtworkCache(): void {
     inFlight.clear();
+    index = null;
     try {
       const dir = artworkDir();
       if (dir.exists) dir.delete();
@@ -276,5 +342,10 @@ export function createArtworkMirror(
     }
   }
 
-  return { cachedArtworkUri, ensureArtworkCached, clearArtworkCache };
+  return {
+    cachedArtworkUri,
+    ensureArtworkCached,
+    refreshIndex,
+    clearArtworkCache,
+  };
 }

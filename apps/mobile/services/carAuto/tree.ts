@@ -15,6 +15,7 @@ import { currentAuthScope } from "@/stores/auth";
 import usePodcasts, { podcastFavoritesForScope } from "@/stores/podcasts";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
+import { mapInChunks } from "@/utils/mapInChunks";
 import { mapWithConcurrency } from "@/utils/mapWithConcurrency";
 import {
   CAR_ARTWORK_BUDGET,
@@ -49,6 +50,10 @@ const covers = (id?: string) => coversForUrl(coverUrl(id));
 // requests and trips server rate limits (HTTP 429); 4 keeps the tree fast while
 // staying under typical Navidrome / reverse-proxy limits.
 const TREE_PREFETCH_CONCURRENCY = 4;
+
+// Slice size for the two lists that can run to thousands of tracks (favorites,
+// a playlist's entries); every other list in the tree is bounded by the server.
+const TRACK_NODE_CHUNK = 500;
 
 // In-memory snapshots used by play.ts to resolve leaf mediaIds without
 // refetching. Refreshed every time buildBrowseTree() runs.
@@ -346,7 +351,9 @@ export async function buildBrowseTree(): Promise<BrowseTreeBuild> {
     },
     ...userPlaylists.map(playlistNode),
   ];
-  tree.favorites = starredSongs.map((s) => trackNode(s, "favorites"));
+  tree.favorites = await mapInChunks(starredSongs, TRACK_NODE_CHUNK, (s) =>
+    trackNode(s, "favorites"),
+  );
   recordParentTracks("favorites", tree.favorites);
 
   // Library → Albums (starred albums)
@@ -414,7 +421,9 @@ export async function buildBrowseTree(): Promise<BrowseTreeBuild> {
         const entries = pl.entry ?? [];
         for (const e of entries) snapshot.tracks.set(e.id, e);
         const parent = `playlist:${id}`;
-        tree[parent] = entries.map((e) => trackNode(e, parent));
+        tree[parent] = await mapInChunks(entries, TRACK_NODE_CHUNK, (e) =>
+          trackNode(e, parent),
+        );
         recordParentTracks(parent, tree[parent]);
       } catch {
         failed();

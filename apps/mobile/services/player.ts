@@ -812,7 +812,7 @@ async function upgradeLockScreenArtwork(
 function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
   lockScreenTrackId = track.id;
   const remoteArtwork = lockScreenArtworkUrl(track);
-  const cached = cachedArtworkUri(remoteArtwork);
+  const cached = cachedArtworkUri(remoteArtwork, { verify: true });
   // Prefer the mirrored file. Failing that, pass the remote URL only when it
   // would actually load — with custom headers configured the native fetch is
   // guaranteed to 403, so sending it just burns a request and logs a failure.

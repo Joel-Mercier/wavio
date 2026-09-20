@@ -28,8 +28,10 @@ const mockNet = {
 jest.mock("expo-file-system", () => {
   class MockFile {
     uri: string;
+    name: string;
     constructor(dir: { uri: string }, name: string) {
       this.uri = `${dir.uri}/${name}`;
+      this.name = name;
     }
     get exists() {
       return mockFs.files.has(this.uri);
@@ -60,7 +62,10 @@ jest.mock("expo-file-system", () => {
         mockFs.files.clear();
       }
       list() {
-        return [];
+        const prefix = `${this.uri}/`;
+        return Array.from(mockFs.files.keys())
+          .filter((uri) => uri.startsWith(prefix))
+          .map((uri) => new MockFile(this, uri.slice(prefix.length)));
       }
       toString() {
         return this.uri;
@@ -79,6 +84,7 @@ import {
   cachedArtworkUri,
   clearArtworkCache,
   ensureArtworkCached,
+  refreshArtworkIndex,
 } from "@/services/lockScreenArtwork";
 
 const HEADERS = { "CF-Access-Client-Id": "id" };
@@ -245,8 +251,58 @@ describe("cachedArtworkUri", () => {
     await ensureArtworkCached(url);
     expect(cachedArtworkUri(url)).toBeDefined();
     // Eight days old, in seconds — the backstop for a server whose cover URL
-    // doesn't change when the artwork does.
+    // doesn't change when the artwork does. The age is read when the directory
+    // is listed (a fresh process, or a caller about to do a burst of lookups),
+    // not on every lookup.
     mockFs.modificationTime = Math.floor(Date.now() / 1000) - 8 * 86400;
+    refreshArtworkIndex();
     expect(cachedArtworkUri(url)).toBeUndefined();
+  });
+
+  it("finds files that were on disk before this process listed the directory", async () => {
+    const url = "https://music.example.com/rest/getCoverArt?id=mf-abc_1";
+    await ensureArtworkCached(url);
+    const uri = cachedArtworkUri(url);
+    refreshArtworkIndex();
+    expect(cachedArtworkUri(url)).toBe(uri);
+  });
+
+  it("answers from the index once listed, even if the file is gone", async () => {
+    const url = "https://music.example.com/rest/getCoverArt?id=mf-abc_1";
+    await ensureArtworkCached(url);
+    const uri = cachedArtworkUri(url);
+    expect(uri).toBeDefined();
+    // The OS reclaimed the cache dir behind our back.
+    mockFs.files.clear();
+    // Per-item callers (a 20k-node browse tree) get the cheap answer …
+    expect(cachedArtworkUri(url)).toBe(uri);
+    // … one-shot callers ask for the truth, which also corrects the index.
+    expect(cachedArtworkUri(url, { verify: true })).toBeUndefined();
+    expect(cachedArtworkUri(url)).toBeUndefined();
+  });
+
+  it("does not touch the file system for a lookup after the first", async () => {
+    const url = "https://music.example.com/rest/getCoverArt?id=mf-abc_1";
+    await ensureArtworkCached(url);
+    refreshArtworkIndex();
+    cachedArtworkUri(url);
+    const other = "https://music.example.com/rest/getCoverArt?id=mf-xyz_1";
+    const exists = jest.spyOn(
+      Object.getPrototypeOf(
+        // biome-ignore lint/suspicious/noExplicitAny: test hook into the mock
+        new (jest.requireMock("expo-file-system") as any).File(
+          { uri: "file:///x" },
+          "y",
+        ),
+      ),
+      "exists",
+      "get",
+    );
+    for (let i = 0; i < 1000; i++) {
+      cachedArtworkUri(url);
+      cachedArtworkUri(other);
+    }
+    expect(exists).not.toHaveBeenCalled();
+    exists.mockRestore();
   });
 });

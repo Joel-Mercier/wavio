@@ -9,6 +9,7 @@ import {
   cachedCarArtwork,
   clearCarArtworkCache,
   ensureCarArtwork,
+  refreshCarArtworkIndex,
 } from "@/services/carAuto/artworkMirror";
 import {
   CarAutoBridge,
@@ -83,8 +84,10 @@ type QueueEntry = ReturnType<typeof useQueue.getState>["queue"][number];
 // remote URL does work — until the server needs custom headers or a self-signed
 // certificate, neither of which that loader carries. A local file covers those
 // too, and is what the native side turns into a content:// URI for the host.
-// `cachedCarArtwork` checks the file still exists, so an entry the OS reclaimed
-// from the cache dir falls back to the remote URL rather than to nothing.
+// Answered from the mirror's in-memory index: this runs once per queue entry
+// on every queue push, so a stat per call is off the table. An entry the OS
+// reclaimed is caught by the verified lookup in mirrorNowPlayingArtwork, which
+// then re-mirrors the current track's cover and re-pushes.
 const carArtwork = (url: string | undefined): string | undefined =>
   url ? (cachedCarArtwork(url) ?? url) : undefined;
 
@@ -160,9 +163,13 @@ const rebuildSignature = () => {
     // The tree is built with translated section titles, so a locale change has
     // to invalidate it.
     i18n.language,
-    useRecentPlays
-      .getState()
-      .recentPlays.map((p) => [p.id, p.type, p.title, p.coverArt]),
+    // Recent plays are deliberately absent. They feed the tree's "Recently
+    // played" tab, but they also change on every play, and a rebuild is a burst
+    // of server requests plus a walk over every track in every playlist — with
+    // large playlists that froze the JS thread for close to a minute each time
+    // the user pressed play on something new (issue #205). The recents
+    // subscription still fires; the TTL below decides when it may rebuild, so
+    // the car's recents lag the phone by at most REBUILD_TTL_MS.
     podcastsEnabled,
     podcastsEnabled
       ? podcastFavoritesForScope(
@@ -266,6 +273,8 @@ async function wire() {
     building = true;
     try {
       log("rebuild: building tree");
+      // One directory listing now, instead of a stat per node while building.
+      refreshCarArtworkIndex();
       const build = await buildBrowseTree().catch((e) => {
         log("buildBrowseTree threw", e);
         return null;
@@ -334,7 +343,7 @@ async function wire() {
   // file — the only artwork that survives a server it can't authenticate to.
   const mirrorNowPlayingArtwork = async (track: QueueEntry | null) => {
     const remote = track?.artwork;
-    if (!remote || cachedCarArtwork(remote)) return;
+    if (!remote || cachedCarArtwork(remote, { verify: true })) return;
     const local = await ensureCarArtwork(remote).catch(() => undefined);
     if (!local) return;
     // The track moved on while the fetch was in flight; the push this would

@@ -315,6 +315,19 @@ function pickDecade(
   return { decade, fromYear: decade, toYear: decade + 9 };
 }
 
+// "More from <artist>" for a compilation's album artist is "every compilation
+// on the server": thousands of albums on a large library, all fetched in one
+// getArtist and all rendered (issue #205). The OpenSubsonic flag is authoritative
+// when present; the name check covers servers and local imports that don't set
+// it but tag compilations the conventional way.
+const COMPILATION_ARTIST_NAMES = new Set(["various artists", "various", "va"]);
+
+export function isCompilationArtist(album: AlbumID3): boolean {
+  if (album.isCompilation) return true;
+  const name = album.artist?.trim().toLowerCase();
+  return !!name && COMPILATION_ARTIST_NAMES.has(name);
+}
+
 export function buildHomeFeed({
   seedAlbums,
   genres,
@@ -365,6 +378,7 @@ export function buildHomeFeed({
   const featuredArtists: string[] = [];
   for (const album of shuffle(seedAlbums, rand)) {
     if (!album.artistId) continue;
+    if (isCompilationArtist(album)) continue;
     if (seenArtists.has(album.artistId)) continue;
     seenArtists.add(album.artistId);
     featuredArtists.push(album.artistId);
