@@ -1954,7 +1954,9 @@
 			"player": {
 				"title": "Wird gerade abgespielt",
 				"notices": {
-					"sourceUnavailable": "Der Titel konnte nicht abgespielt werden – die Datei war nicht erreichbar. Bitte überprüfen Sie, ob Ihr Server eingeschaltet ist und sich im selben Netzwerk befindet."
+					"sourceUnavailable": "Der Titel konnte nicht abgespielt werden – die Datei war nicht erreichbar. Bitte überprüfen Sie, ob Ihr Server eingeschaltet ist und sich im selben Netzwerk befindet.",
+					"remoteTrackRefused": "{{name}} couldn't play “{{track}}”. Pick another track, or play on this device.",
+					"remoteLost": "Lost contact with {{name}}. Playback is back on this device."
 				},
 				"original": "Original",
 				"playingFrom": {
@@ -2029,10 +2031,11 @@
 				"outputSpeakersAndTvs": "Lautsprecher und Fernseher (UPnP/DLNA)",
 				"outputScanning": "Auf der Suche nach Geräten…",
 				"outputNoDevices": "In diesem Netzwerk wurden keine Geräte gefunden",
-				"outputUnverified": "Die Wiedergabe wird möglicherweise nicht unterstützt",
 				"outputChromecast": "Chromecast",
 				"outputChromecastConnected": "Verbunden",
 				"outputChromecastUnavailable": "Die Chromecast-Geräteauswahl ist nicht verfügbar.",
+				"outputChromecastNoPlayServices": "Chromecast needs Google Play services, which this device does not have.",
+				"outputChromecastNoPlayServicesHint": "Needs Google Play services",
 				"outputConnectErrorMessage": "Die Wiedergabe unter {{name}} war nicht möglich.",
 				"sleepTimerMinutes_one": "{{count}} Minute",
 				"sleepTimerMinutes_other": "{{count}} Minuten"
