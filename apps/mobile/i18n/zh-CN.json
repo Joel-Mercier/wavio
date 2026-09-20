@@ -1901,7 +1901,9 @@
 			"player": {
 				"title": "正在播放",
 				"notices": {
-					"sourceUnavailable": "无法播放该音轨——无法访问该文件。请检查您的服务器是否已开启，并且是否处于同一网络中。"
+					"sourceUnavailable": "无法播放该音轨——无法访问该文件。请检查您的服务器是否已开启，并且是否处于同一网络中。",
+					"remoteTrackRefused": "{{name}} couldn't play “{{track}}”. Pick another track, or play on this device.",
+					"remoteLost": "Lost contact with {{name}}. Playback is back on this device."
 				},
 				"original": "原始",
 				"playingFrom": {
@@ -1976,10 +1978,11 @@
 				"outputSpeakersAndTvs": "音箱和电视（UPnP/DLNA）",
 				"outputScanning": "正在查找设备…",
 				"outputNoDevices": "未在此网络上找到任何设备",
-				"outputUnverified": "可能无法播放",
 				"outputChromecast": "Chromecast",
 				"outputChromecastConnected": "已连接",
 				"outputChromecastUnavailable": "Chromecast 设备选择器无法使用。",
+				"outputChromecastNoPlayServices": "Chromecast needs Google Play services, which this device does not have.",
+				"outputChromecastNoPlayServicesHint": "Needs Google Play services",
 				"outputConnectErrorMessage": "无法播放 {{name}}。",
 				"sleepTimerMinutes_other": "{{count}}分钟"
 			},
