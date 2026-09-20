@@ -1954,7 +1954,9 @@
 			"player": {
 				"title": "In riproduzione",
 				"notices": {
-					"sourceUnavailable": "Non è stato possibile riprodurre quel brano: il file non era accessibile. Verifica che il tuo server sia acceso e che si trovi sulla stessa rete."
+					"sourceUnavailable": "Non è stato possibile riprodurre quel brano: il file non era accessibile. Verifica che il tuo server sia acceso e che si trovi sulla stessa rete.",
+					"remoteTrackRefused": "{{name}} couldn't play “{{track}}”. Pick another track, or play on this device.",
+					"remoteLost": "Lost contact with {{name}}. Playback is back on this device."
 				},
 				"original": "Originale",
 				"playingFrom": {
@@ -2029,10 +2031,11 @@
 				"outputSpeakersAndTvs": "Altoparlanti e TV (UPnP/DLNA)",
 				"outputScanning": "Cerchi dispositivi…",
 				"outputNoDevices": "Nessun dispositivo rilevato su questa rete",
-				"outputUnverified": "Potrebbe non supportare la riproduzione",
 				"outputChromecast": "Chromecast",
 				"outputChromecastConnected": "Connesso",
 				"outputChromecastUnavailable": "Il selettore dei dispositivi Chromecast non è disponibile.",
+				"outputChromecastNoPlayServices": "Chromecast needs Google Play services, which this device does not have.",
+				"outputChromecastNoPlayServicesHint": "Needs Google Play services",
 				"outputConnectErrorMessage": "Impossibile riprodurre il file su {{name}}.",
 				"sleepTimerMinutes_one": "{{count}} minuto",
 				"sleepTimerMinutes_other": "{{count}} minuti"
