@@ -1552,6 +1552,8 @@
 					"title": "播放设置",
 					"endlessPlaybackLabel": "无限播放",
 					"endlessPlaybackDescription": "队列播完后自动添加相似曲目，保持音乐持续播放。",
+					"playerAudioQualityLabel": "Audio quality in player",
+					"playerAudioQualityDescription": "Show the source format, bitrate and sample rate of the current track on the now playing screen, including when the server is transcoding it.",
 					"playerRatingLabel": "播放器中的星级评分",
 					"playerRatingDescription": "在“正在播放”界面的音质选项旁显示一个五星评分图标，这样您无需打开菜单即可对当前曲目进行评分。",
 					"equalizerLabel": "均衡器",
