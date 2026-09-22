@@ -1597,6 +1597,8 @@
 					"title": "Riproduzione",
 					"endlessPlaybackLabel": "Riproduzione continua",
 					"endlessPlaybackDescription": "Quando la coda finisce, aggiungi automaticamente brani simili per continuare ad ascoltare musica.",
+					"playerAudioQualityLabel": "Audio quality in player",
+					"playerAudioQualityDescription": "Show the source format, bitrate and sample rate of the current track on the now playing screen, including when the server is transcoding it.",
 					"playerRatingLabel": "Stelle nel lettore",
 					"playerRatingDescription": "Visualizza una valutazione a cinque stelle accanto alla qualità audio nella schermata “In riproduzione”, in modo da poter valutare il brano corrente senza aprire un menu.",
 					"equalizerLabel": "Equalizzatore",
