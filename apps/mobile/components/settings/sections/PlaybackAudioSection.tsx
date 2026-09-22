@@ -104,6 +104,12 @@ export default function PlaybackAudioSection() {
   const setEndlessPlaybackEnabled = useApp(
     (store) => store.setEndlessPlaybackEnabled,
   );
+  const showPlayerAudioQuality = useApp(
+    (store) => store.showPlayerAudioQuality,
+  );
+  const setShowPlayerAudioQuality = useApp(
+    (store) => store.setShowPlayerAudioQuality,
+  );
   const showPlayerRating = useApp((store) => store.showPlayerRating);
   const setShowPlayerRating = useApp((store) => store.setShowPlayerRating);
   const queueSyncPriority = useApp((store) => store.queueSyncPriority);
@@ -334,6 +340,14 @@ export default function PlaybackAudioSection() {
           value={lyricsKeepScreenOn}
           onToggle={(value) => setLyricsKeepScreenOn(value)}
           disabled={lyricsSource === "off"}
+        />
+        <SettingsToggleRow
+          label={t("app.settings.playbackSettings.playerAudioQualityLabel")}
+          description={t(
+            "app.settings.playbackSettings.playerAudioQualityDescription",
+          )}
+          value={showPlayerAudioQuality}
+          onToggle={(value) => setShowPlayerAudioQuality(value)}
         />
         {capabilities.setRating && (
           <SettingsToggleRow

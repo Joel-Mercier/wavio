@@ -225,11 +225,13 @@ export default function PlayerScreen() {
   const setPlayerInlineLyrics = useApp((s) => s.setPlayerInlineLyrics);
   const podcastPlaybackRate = useApp((s) => s.podcastPlaybackRate);
   const showPlayerRating = useApp((s) => s.showPlayerRating);
+  const showPlayerAudioQuality = useApp((s) => s.showPlayerAudioQuality);
   const showRating =
     showPlayerRating && capabilities.setRating && !isRadio && !isPodcast;
   // Mirrors AudioQualityLine's own null check so the row (and its bottom
   // margin) collapses when there is neither a quality line nor a rating.
-  const hasQualityLine = !!formatAudioQuality(playingTrack ?? null);
+  const hasQualityLine =
+    showPlayerAudioQuality && !!formatAudioQuality(playingTrack ?? null);
   const {
     lyrics,
     hasKaraoke,
@@ -785,7 +787,9 @@ export default function PlayerScreen() {
               {!isRadio && (hasQualityLine || showRating) && (
                 <HStack className="items-center justify-between gap-x-3 mb-4">
                   <Box className="flex-1">
-                    <AudioQualityLine track={playingTrack ?? null} />
+                    {hasQualityLine && (
+                      <AudioQualityLine track={playingTrack ?? null} />
+                    )}
                   </Box>
                   {showRating && (
                     <StarRating

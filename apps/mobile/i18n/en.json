@@ -1597,6 +1597,8 @@
 					"title": "Playback",
 					"endlessPlaybackLabel": "Endless playback",
 					"endlessPlaybackDescription": "When the queue ends, automatically add similar tracks to keep the music playing.",
+					"playerAudioQualityLabel": "Audio quality in player",
+					"playerAudioQualityDescription": "Show the source format, bitrate and sample rate of the current track on the now playing screen, including when the server is transcoding it.",
 					"playerRatingLabel": "Star rating in player",
 					"playerRatingDescription": "Show a five-star rating next to the audio quality on the now playing screen, so you can rate the current track without opening a menu.",
 					"equalizerLabel": "Equalizer",
