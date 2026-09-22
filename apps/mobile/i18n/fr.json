@@ -1597,6 +1597,8 @@
 					"title": "Lecture",
 					"endlessPlaybackLabel": "Lecture sans fin",
 					"endlessPlaybackDescription": "À la fin de la file d'attente, ajoute automatiquement des morceaux similaires pour continuer la lecture",
+					"playerAudioQualityLabel": "Audio quality in player",
+					"playerAudioQualityDescription": "Show the source format, bitrate and sample rate of the current track on the now playing screen, including when the server is transcoding it.",
 					"playerRatingLabel": "Évaluation par étoiles dans le lecteur",
 					"playerRatingDescription": "Affichez une note de cinq étoiles à côté de la qualité audio sur l'écran de lecture en cours, afin de pouvoir noter le morceau en cours sans avoir à ouvrir de menu.",
 					"equalizerLabel": "Égaliseur",
