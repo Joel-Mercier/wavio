@@ -1597,6 +1597,8 @@
 					"title": "Reproducción",
 					"endlessPlaybackLabel": "Reproducción sin fin",
 					"endlessPlaybackDescription": "Cuando se acabe la lista de reproducción, añade automáticamente canciones similares para que la música siga sonando.",
+					"playerAudioQualityLabel": "Audio quality in player",
+					"playerAudioQualityDescription": "Show the source format, bitrate and sample rate of the current track on the now playing screen, including when the server is transcoding it.",
 					"playerRatingLabel": "Valoración con estrellas en el reproductor",
 					"playerRatingDescription": "Muestra una valoración de cinco estrellas junto a la calidad de audio en la pantalla de reproducción, para que puedas valorar la canción actual sin tener que abrir un menú.",
 					"equalizerLabel": "Ecualizador",
