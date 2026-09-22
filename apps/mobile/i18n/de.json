@@ -1597,6 +1597,8 @@
 					"title": "Wiedergabe",
 					"endlessPlaybackLabel": "Endlosschleife",
 					"endlessPlaybackDescription": "Wenn die Wiedergabeliste zu Ende ist, werden automatisch ähnliche Titel hinzugefügt, damit die Musik weiterläuft.",
+					"playerAudioQualityLabel": "Audio quality in player",
+					"playerAudioQualityDescription": "Show the source format, bitrate and sample rate of the current track on the now playing screen, including when the server is transcoding it.",
 					"playerRatingLabel": "Sternbewertung im Player",
 					"playerRatingDescription": "Zeige neben der Audioqualität auf dem Wiedergabebildschirm eine Fünf-Sterne-Bewertung an, damit du den aktuellen Titel bewerten kannst, ohne ein Menü öffnen zu müssen.",
 					"equalizerLabel": "Equalizer",
