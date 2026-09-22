@@ -1687,6 +1687,8 @@
 					"title": "Воспроизведение",
 					"endlessPlaybackLabel": "Музыка нон-стоп",
 					"endlessPlaybackDescription": "Включать что-нибудь похожее, когда контент заканчивается.",
+					"playerAudioQualityLabel": "Audio quality in player",
+					"playerAudioQualityDescription": "Show the source format, bitrate and sample rate of the current track on the now playing screen, including when the server is transcoding it.",
 					"playerRatingLabel": "Оценка звездами в плеере",
 					"playerRatingDescription": "Отображайте пятизвездочную шкалу оценки рядом с показателем качества звука на экране «Воспроизведение», чтобы можно было оценить текущий трек, не открывая меню.",
 					"equalizerLabel": "Эквалайзер",
