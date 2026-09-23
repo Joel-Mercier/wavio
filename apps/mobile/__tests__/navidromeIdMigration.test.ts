@@ -42,10 +42,12 @@ jest.mock("@/services/network", () => ({
 }));
 
 const mockClear = jest.fn();
-const mockRemoveClient = jest.fn();
+const mockRemovePersistedQueries = jest.fn();
 jest.mock("@/config/queryClient", () => ({
   queryClient: { clear: () => mockClear() },
-  queryPersister: { removeClient: () => mockRemoveClient() },
+}));
+jest.mock("@/config/queryPersister", () => ({
+  removePersistedQueries: () => mockRemovePersistedQueries(),
 }));
 
 jest.mock("@/services/backend/streaming", () => ({
@@ -907,7 +909,7 @@ describe("applyCanonicalIdRemap", () => {
     useOffline.setState({ downloadedTracks: { [OLD_SONG]: track(OLD_SONG) } });
     await applyCanonicalIdRemap();
     expect(mockClear).toHaveBeenCalled();
-    expect(mockRemoveClient).toHaveBeenCalled();
+    expect(mockRemovePersistedQueries).toHaveBeenCalled();
   });
 
   it("reports how many distinct ids changed", async () => {

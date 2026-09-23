@@ -5,8 +5,6 @@
 // "no lyrics" on that track with nothing able to dislodge it.
 jest.mock("@/config/storage", () => ({
   storage: { set: () => {}, getString: () => null, remove: () => {} },
-  QUERY_CACHE_KEY: "wavio-rq-cache",
-  scopedQueryCacheKey: (scope: string) => `${scope}:wavio-rq-cache`,
   createDynamicScopedStorage: () => ({
     setItem: () => {},
     getItem: () => null,
@@ -21,10 +19,9 @@ jest.mock("@/stores/auth", () => ({
 }));
 
 import type { Query } from "@tanstack/react-query";
-import { persistOptions } from "@/config/queryClient";
+import { shouldPersistQuery } from "@/config/queryClient";
 
-const shouldPersist = (query: unknown) =>
-  persistOptions.dehydrateOptions.shouldDehydrateQuery(query as Query);
+const shouldPersist = (query: unknown) => shouldPersistQuery(query as Query);
 
 // The shape dehydration inspects: a settled, successful query.
 const query = (queryKey: unknown[], data: unknown): unknown => ({

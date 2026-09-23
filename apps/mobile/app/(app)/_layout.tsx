@@ -1,4 +1,3 @@
-import { persistQueryClientRestore } from "@tanstack/react-query-persist-client";
 import { Redirect, Stack } from "expo-router";
 import { type ReactNode, useCallback, useEffect } from "react";
 import {
@@ -27,11 +26,8 @@ import ResumeDialogs from "@/components/player/ResumeDialogs";
 import ServerExtensionsSync from "@/components/ServerExtensionsSync";
 import TrackSelectionBar from "@/components/tracks/TrackSelectionBar";
 import UpdateGate from "@/components/update/UpdateGate";
-import {
-  persistOptions,
-  queryClient,
-  setCacheRestoring,
-} from "@/config/queryClient";
+import { queryClient, setCacheRestoring } from "@/config/queryClient";
+import { restorePersistedQueries } from "@/config/queryPersister";
 import { withScopedWritesSuspended } from "@/config/storage";
 import useMusicFolderSelection from "@/hooks/useMusicFolderSelection";
 import { isIndexBackedType } from "@/services/backend/serverTraits";
@@ -239,8 +235,8 @@ export default function AppLayout() {
 
     // Restore the persisted React Query cache for this scope. On a server
     // switch, clear the in-memory cache first so the previous server's data is
-    // never visible, then restore the new scope's blob (the persister's storage
-    // adapter is scope-dynamic, so this reads `${scope}:wavio-rq-cache`).
+    // never visible, then restore the new scope's queries (read from the active
+    // scope's `<scope>:wavio-rq:*` keys).
     setCacheRestoring(true);
     void (async () => {
       try {
@@ -248,7 +244,7 @@ export default function AppLayout() {
           await queryClient.cancelQueries();
           queryClient.clear();
         }
-        await persistQueryClientRestore({ queryClient, ...persistOptions });
+        restorePersistedQueries();
       } catch (error) {
         logError("[app] Failed to restore persisted query cache", error);
       } finally {

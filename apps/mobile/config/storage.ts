@@ -99,6 +99,17 @@ const registerFlushOnBackground = () => {
   });
 };
 
+// For writers outside this module that coalesce their own writes (the React
+// Query persister), so the background flush and flushPendingScopedWrites()
+// reach them too.
+export const registerPendingFlusher = (flush: () => void): (() => void) => {
+  registerFlushOnBackground();
+  pendingFlushers.add(flush);
+  return () => {
+    pendingFlushers.delete(flush);
+  };
+};
+
 export const createThrottledScopedJSONStorage = <S>(
   getScope: () => string,
   delayMs: number,
@@ -148,11 +159,16 @@ export const createThrottledScopedJSONStorage = <S>(
 // tests and the migration helpers can use the real formula. Resolve the active
 // session's scope with `currentAuthScope()` (stores/auth.ts).
 
-// Logical key for the persisted React Query cache. The physical MMKV key is
-// namespaced per (server, user) scope — see mmkvQueryPersisterStorage in
-// config/queryClient.ts — so switching servers never bleeds another server's
-// cached responses into the UI.
-export const QUERY_CACHE_KEY = "wavio-rq-cache";
+// The persisted React Query cache: one key per query,
+// `<scope>:wavio-rq:<queryHash>` (see config/queryPersister.ts), namespaced per
+// (server, user) so switching servers never bleeds another server's cached
+// responses into the UI.
+export const scopedQueryCachePrefix = (scope: string) => `${scope}:wavio-rq:`;
 
-export const scopedQueryCacheKey = (scope: string) =>
-  `${scope}:${QUERY_CACHE_KEY}`;
+// When the scope's cache was last restored — what its 7-day expiry counts from.
+export const scopedQueryCacheTouchedKey = (scope: string) =>
+  `${scope}:wavio-rq-touched`;
+
+// The single-blob layout the per-query keys replaced; migrated on first restore.
+export const scopedLegacyQueryCacheKey = (scope: string) =>
+  `${scope}:wavio-rq-cache`;

@@ -10,7 +10,7 @@ import SettingsScreenScaffold from "@/components/settings/SettingsScreenScaffold
 import StorageOverview from "@/components/settings/StorageOverview";
 import { Divider } from "@/components/ui/divider";
 import { VStack } from "@/components/ui/vstack";
-import { queryPersister } from "@/config/queryClient";
+import { removePersistedQueries } from "@/config/queryPersister";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
 import useActivity from "@/stores/activity";
 import useRecentPlays from "@/stores/recentPlays";
@@ -35,10 +35,10 @@ export default function StorageDataSection() {
   const clearActivity = useActivity((store) => store.clearActivity);
 
   const handleClearCachePress = () => {
-    // Clears only the active server's query cache (in-memory + persisted blob).
+    // Clears only the active server's query cache (in-memory + persisted).
     // Downloaded files are untouched.
     queryClient.clear();
-    void queryPersister.removeClient();
+    removePersistedQueries();
     setShowClearCacheAlertDialog(false);
     setStorageRefreshToken((value) => value + 1);
     showSuccessToast(t("app.settings.cacheSettings.successMessage"));
@@ -118,7 +118,7 @@ export default function StorageDataSection() {
     >
       <VStack className="gap-y-4">
         <SettingsSectionTitle title={t("app.settings.storageSettings.title")} />
-        <StorageOverview refreshToken={storageRefreshToken} />
+        <StorageOverview key={storageRefreshToken} />
         <SettingsActionRow
           variant="danger"
           label={t("app.settings.cacheSettings.label")}

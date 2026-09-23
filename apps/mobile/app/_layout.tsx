@@ -26,7 +26,6 @@ import {
   onlineManager,
   QueryClientProvider,
 } from "@tanstack/react-query";
-import { persistQueryClientSubscribe } from "@tanstack/react-query-persist-client";
 import * as Application from "expo-application";
 import { AppState, type AppStateStatus, Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -35,7 +34,8 @@ import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from "react-native-reanimated";
-import { persistOptions, queryClient } from "@/config/queryClient";
+import { queryClient } from "@/config/queryClient";
+import { subscribeQueryPersistence } from "@/config/queryPersister";
 import { scrubBreadcrumb, scrubEvent } from "@/services/errorReporting";
 import {
   getIsEffectivelyOnline,
@@ -185,10 +185,7 @@ export default sentryWrap(function RootLayout() {
     // Continuously persist the query cache to the active (server, user) scope.
     // The initial restore happens in app/(app)/_layout.tsx's scope-change
     // effect, which can also re-restore when switching servers in-app.
-    const unsubscribePersist = persistQueryClientSubscribe({
-      queryClient,
-      ...persistOptions,
-    });
+    const unsubscribePersist = subscribeQueryPersistence();
     const unsubscribeConnectionType = initConnectionType();
     const unsubscribeSentryScope = initSentryScope();
     const unsubscribeOrientation = initOrientation();

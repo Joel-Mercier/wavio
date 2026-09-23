@@ -116,6 +116,15 @@ describe("buildBackup", () => {
     expect(entry?.values.bookmarks).toBe("b");
   });
 
+  it("excludes the React Query cache from the file", () => {
+    mockMem.set(`${NEW}:wavio-rq:["album","1"]`, "cached");
+    mockMem.set(`${NEW}:wavio-rq-touched`, "1");
+    mockMem.set(`${NEW}:wavio-rq-cache`, "legacy");
+    mockMem.set(`${NEW}:bookmarks`, "b");
+    const entry = buildBackup().scoped.find((s) => s.scope === NEW);
+    expect(Object.keys(entry?.values ?? {})).toEqual(["bookmarks"]);
+  });
+
   it("strips the active session's secrets but keeps the re-login identity", () => {
     mockMem.set(
       "auth",

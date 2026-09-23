@@ -84,6 +84,7 @@ import {
   loginFailureStatus,
   SslUntrustedError,
 } from "@/services/auth/authenticate";
+import { sessionUsernameFor } from "@/services/auth/sessionUsername";
 import {
   isNetworkShareType,
   speaksHttpType,
@@ -327,16 +328,27 @@ export default function LoginScreen() {
             fallbackUrl,
             alias: mtlsAlias,
           });
+          const existing = servers.find((s) => s.url === trimmedUrl);
+          // `joel` on a server that already holds `Joel`'s data signs in as
+          // `Joel`, or the session would open an empty storage scope.
+          const username = existing
+            ? sessionUsernameFor(
+                { id: existing.id, type: serverType },
+                trimmedUsername,
+                allUsers
+                  .filter((u) => u.serverId === existing.id)
+                  .map((u) => u.username),
+              )
+            : trimmedUsername;
           const { options, activeUrl } = await authenticateWithFallback(
             serverType,
             trimmedUrl,
             fallbackUrl,
-            trimmedUsername,
+            username,
             trimmedPassword,
             headers,
             plainPasswordAuth,
           );
-          const existing = servers.find((s) => s.url === trimmedUrl);
           // Narrowing or widening a share's scanned sub-path changes which files
           // belong to the library, so the index has to be reconciled. Flagged
           // here (pre-hydration) for the same reason the local branch does it:
@@ -367,7 +379,7 @@ export default function LoginScreen() {
           // clears any previously saved password for this server+user.
           addOrUpdateUser({
             serverId: server.id,
-            username: trimmedUsername,
+            username,
             password: saveCredentials ? trimmedPassword : undefined,
           });
           setCurrentServer(server.id);
@@ -376,7 +388,7 @@ export default function LoginScreen() {
           login({
             serverId: server.id,
             url: activeUrl,
-            username: trimmedUsername,
+            username,
             password: trimmedPassword,
             ...options,
           });

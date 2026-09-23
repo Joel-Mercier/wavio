@@ -1,4 +1,5 @@
-import { queryClient, queryPersister } from "@/config/queryClient";
+import { queryClient } from "@/config/queryClient";
+import { removePersistedQueries } from "@/config/queryPersister";
 import { streamUrl } from "@/services/backend/streaming";
 import { offlineDownloadService } from "@/services/offline/downloadService";
 import {
@@ -515,7 +516,7 @@ export async function applyCanonicalIdRemap(): Promise<number> {
   // nothing worth salvaging: album and playlist ids move too, so most keys are
   // stale. Same pair the Storage settings screen uses.
   queryClient.clear();
-  void queryPersister.removeClient();
+  removePersistedQueries();
 
   return changed;
 }

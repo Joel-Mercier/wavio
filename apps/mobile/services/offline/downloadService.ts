@@ -769,6 +769,7 @@ export class OfflineDownloadService {
       title: track.title,
       artist: track.artist,
       album: track.album,
+      albumId: track.albumId,
       duration: track.duration || 0,
       coverArt: track.coverArt,
       path: downloadResult.uri,

@@ -166,21 +166,33 @@ export const getArtistAppearances = async (
   return fakeEnvelope({ artistAppearances: { album } });
 };
 
-// Every audio track of the artist, ordered by album then disc/track number.
-// `ArtistIds` is the same filter getArtist uses for the albums, so this stays
-// the tracklist of the discography the artist screen shows.
-export const getArtistSongs = async (id: string) => {
+// One page of the artist's audio tracks, ordered by album then disc/track
+// number. `ArtistIds` is the same filter getArtist uses for the albums, so this
+// stays the tracklist of the discography the artist screen shows.
+export const getArtistSongs = async (
+  id: string,
+  { cursor = 0, size = 500 }: { cursor?: number; size?: number } = {},
+) => {
   const rsp = await fetchItems(
     {
       IncludeItemTypes: "Audio",
       ArtistIds: id,
       SortBy: "Album,ParentIndexNumber,IndexNumber,SortName",
       SortOrder: "Ascending",
+      StartIndex: cursor,
+      Limit: size,
     },
     { notFoundIsExpected: true },
   );
   const song: Child[] = (rsp.Items ?? []).map(mapBaseItemToChild);
-  return fakeEnvelope({ artistSongs: { song } });
+  const next = cursor + song.length;
+  const hasMore =
+    song.length > 0 &&
+    (rsp.TotalRecordCount == null || next < rsp.TotalRecordCount);
+  return fakeEnvelope({
+    artistSongs: { song },
+    nextCursor: hasMore ? next : undefined,
+  });
 };
 
 export const getArtistInfo = async (id: string) => {

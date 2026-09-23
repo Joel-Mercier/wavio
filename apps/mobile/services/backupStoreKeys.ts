@@ -78,4 +78,8 @@ export const BACKUP_EXCLUDED_SCOPED_STORE_NAMES = [
   // — restoring it elsewhere (or later) would claim tracks are cached that
   // aren't, and every entry is re-derivable from the server anyway.
   "trackCacheStore",
+  // The React Query cache (`wavio-rq:*` per query, plus the legacy
+  // `wavio-rq-cache` blob): server responses, re-fetched on demand, and big
+  // enough (tens of MB on a large library) to dominate an export.
+  "wavio-rq",
 ] as const;

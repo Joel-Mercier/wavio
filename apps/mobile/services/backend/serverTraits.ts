@@ -44,6 +44,14 @@ const NON_HTTP = new Set<ServerType>(["local", "smb"]);
 // later is far likelier to be another of those than a fourth Subsonic dialect.
 const SUBSONIC_AUTH = new Set<ServerType>(["navidrome", "opensubsonic"]);
 
+// Signs in `Joel` and `joel` as the same account. An allowlist: generic
+// OpenSubsonic servers differ, and treating two real accounts as one would merge
+// their data — worse than splitting one account's data in two.
+const CASE_INSENSITIVE_USERNAMES = new Set<ServerType>([
+  "navidrome",
+  "jellyfin",
+]);
+
 /** Backend calls are answered from the on-device SQLite index. */
 export const isIndexBackedType = (type: ServerType): boolean =>
   INDEX_BACKED.has(type);
@@ -76,3 +84,7 @@ export const isNetworkShareType = (type: ServerType): boolean =>
 /** Signs requests with Subsonic auth params, so the auth mechanism is a choice. */
 export const usesSubsonicAuthType = (type: ServerType): boolean =>
   SUBSONIC_AUTH.has(type);
+
+/** Usernames differing only in case are one account on this server. */
+export const hasCaseInsensitiveUsernamesType = (type: ServerType): boolean =>
+  CASE_INSENSITIVE_USERNAMES.has(type);

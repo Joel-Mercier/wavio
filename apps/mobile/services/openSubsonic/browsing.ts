@@ -316,17 +316,40 @@ export const getArtistAppearances = async (
 };
 
 const ARTIST_SONGS_CONCURRENCY = 4;
+const ARTIST_SONGS_ALBUMS_PER_PAGE = 20;
+
+// Paging re-enters with the same artist, and a compilation artist's getArtist
+// lists thousands of albums — fetch that once per artist, not once per page.
+let artistAlbumsMemo: { id: string; albums: Promise<AlbumID3[]> } | null = null;
+
+function artistAlbums(id: string): Promise<AlbumID3[]> {
+  if (artistAlbumsMemo?.id !== id) {
+    const albums = getArtist(id).then((rsp) => rsp.artist?.album ?? []);
+    artistAlbumsMemo = { id, albums };
+    albums.catch(() => {
+      if (artistAlbumsMemo?.albums === albums) artistAlbumsMemo = null;
+    });
+  }
+  return artistAlbumsMemo.albums;
+}
 
 // Subsonic has no "songs by artist" endpoint — search3 on the artist name would
 // both miss tracks and cap out — so the discography is the index: getArtist
 // lists the albums and each getAlbum answers with its tracklist. Songs come back
 // in album order, then disc/track within an album. An album that fails to load
-// is skipped rather than sinking the whole list.
-export const getArtistSongs = async (id: string) => {
-  const artistRsp = await getArtist(id);
-  const albums = artistRsp.artist?.album ?? [];
+// is skipped rather than sinking the whole list. The cursor is an album index:
+// a page is the tracklists of the next ARTIST_SONGS_ALBUMS_PER_PAGE albums, so
+// a compilation artist costs one getAlbum per album actually scrolled to, not
+// one per album in its discography.
+export const getArtistSongs = async (
+  id: string,
+  { cursor = 0 }: { cursor?: number; size?: number } = {},
+) => {
+  if (cursor === 0) artistAlbumsMemo = null;
+  const albums = await artistAlbums(id);
+  const end = cursor + ARTIST_SONGS_ALBUMS_PER_PAGE;
   const albumSongs = await mapWithConcurrency(
-    albums,
+    albums.slice(cursor, end),
     ARTIST_SONGS_CONCURRENCY,
     async (album) => {
       try {
@@ -338,5 +361,9 @@ export const getArtistSongs = async (id: string) => {
     },
   );
   const song: Child[] = albumSongs.flat();
-  return { artistSongs: { song }, status: "ok" as const };
+  return {
+    artistSongs: { song },
+    nextCursor: end < albums.length ? end : undefined,
+    status: "ok" as const,
+  };
 };

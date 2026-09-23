@@ -17,6 +17,8 @@ export type OfflineTrack = {
   title: string;
   artist?: string;
   album?: string;
+  // Absent on downloads made before it was recorded; match those by `album`.
+  albumId?: string;
   duration: number;
   coverArt?: string;
   path: string;
