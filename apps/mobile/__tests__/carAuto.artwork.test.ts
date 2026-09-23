@@ -4,15 +4,18 @@
 // they're pushed, and the native side publishes those as content:// URIs.
 // What matters here is the cost of that mirroring: one download per *album*, not
 // per track, and a hard budget so a large library can't turn a browse-tree
-// rebuild into thousands of requests.
+// rebuild into thousands of requests — spent on the same covers every build, so
+// the mirror converges instead of churning (issue #205).
 
 const mockEnsure = jest.fn<Promise<string | undefined>, [string]>();
 const mockCached = jest.fn<string | undefined, [string | undefined]>();
+const mockRetain = jest.fn<void, [string[]]>();
 jest.mock("@/services/carAuto/artworkMirror", () => ({
   CAR_ARTWORK_SIZE: 600,
   CAR_ARTWORK_BUDGET: 3,
   ensureCarArtwork: (url: string) => mockEnsure(url),
   cachedCarArtwork: (url?: string) => mockCached(url),
+  retainCarArtwork: (urls: string[]) => mockRetain(urls),
 }));
 
 jest.mock("@/utils/artwork", () => ({
@@ -73,6 +76,7 @@ const track = (id: string, coverArt: string): BrowseNode => ({
 beforeEach(() => {
   mockEnsure.mockReset();
   mockCached.mockReset();
+  mockRetain.mockReset();
   // Cold mirror by default: nothing has been downloaded yet.
   mockCached.mockReturnValue(undefined);
   mockEnsure.mockImplementation(async (url) => {
@@ -132,17 +136,47 @@ describe("localizeTreeArtwork", () => {
     });
   });
 
-  it("skips covers already mirrored when the node was built", async () => {
+  it("skips covers already mirrored when the node was built, but keeps them", async () => {
     // A warm session resolves these in the node builders, so the first push to
-    // the car is already local and this pass has nothing to add.
+    // the car is already local and this pass has nothing to download — yet the
+    // cover is still wanted, so it must stay pinned against eviction.
+    const local = "file:///cache/car-artwork/al-1";
+    mockCached.mockImplementation((url) =>
+      url === remote("al-1") ? local : undefined,
+    );
     const warm = collection("album:a1", "al-1");
-    warm.localArtworkUrl = "file:///cache/car-artwork/al-1";
+    warm.localArtworkUrl = local;
     const tree: BrowseTree = { "lib:albums": [warm] };
 
     const changed = await localizeTreeArtwork(tree);
 
     expect(changed).toBe(false);
     expect(mockEnsure).not.toHaveBeenCalled();
+    expect(mockRetain).toHaveBeenCalledWith([remote("al-1")]);
+  });
+
+  it("downloads nothing once the budgeted covers are all mirrored", async () => {
+    // Budget is 3 (mocked). The first three wanted covers are warm; the fourth
+    // is past the budget and must not be fetched — spending the budget on
+    // unmirrored covers only is what made every build evict the previous one's.
+    const warm = new Set([remote("al-1"), remote("al-2"), remote("al-3")]);
+    mockCached.mockImplementation((url) =>
+      url && warm.has(url) ? `file:///cache/car-artwork/${url}` : undefined,
+    );
+    const tree: BrowseTree = {
+      "lib:albums": ["al-1", "al-2", "al-3", "al-4"].map((cover) => {
+        const node = collection(`album:${cover}`, cover);
+        node.localArtworkUrl = mockCached(node.artworkUrl);
+        return node;
+      }),
+    };
+
+    const changed = await localizeTreeArtwork(tree);
+
+    expect(changed).toBe(false);
+    expect(mockEnsure).not.toHaveBeenCalled();
+    expect(mockRetain).toHaveBeenCalledWith([...warm]);
+    expect(tree["lib:albums"][3].localArtworkUrl).toBeUndefined();
   });
 
   it("inherits an album cover mirrored by an earlier build", async () => {
@@ -194,6 +228,7 @@ describe("localizeTreeArtwork", () => {
 
     const requested = mockEnsure.mock.calls.map(([url]) => url);
     expect(requested).toEqual([remote("al-1"), remote("al-2"), remote("al-3")]);
+    expect(mockRetain).toHaveBeenCalledWith(requested);
     // Past the budget there's no local copy — the remote URL native falls back
     // to is all these keep, which is no worse than before.
     expect(tree["lib:albums"][3].localArtworkUrl).toBeUndefined();

@@ -53,6 +53,7 @@ class WavioCarBrowserService : MediaLibraryService() {
 
   override fun onDestroy() {
     CarAutoLog.d("browser service destroyed")
+    CarAutoModule.setCarConnected(false)
     if (activePlayer === jsPlayer) activePlayer = null
     if (activeSession === session) activeSession = null
     session?.run { player.release(); release() }
@@ -78,6 +79,35 @@ class WavioCarBrowserService : MediaLibraryService() {
   }
 
   private inner class LibraryCallback : MediaLibrarySession.Callback {
+    /**
+     * A car host connecting is what lets JS build the browse tree at all: that
+     * build is a burst of server requests and cover downloads, so it only runs
+     * while a car is actually there to show it (issue #205).
+     */
+    override fun onConnect(
+      session: MediaSession,
+      controller: MediaSession.ControllerInfo,
+    ): MediaSession.ConnectionResult {
+      CarAutoLog.d("onConnect by ${controller.packageName}")
+      if (controller.packageName in CAR_HOST_PACKAGES) {
+        CarAutoModule.setCarConnected(true)
+      }
+      return super.onConnect(session, controller)
+    }
+
+    /**
+     * Traced, but deliberately not what ends the car session. Legacy browsers —
+     * gearhead among them — can only be reported gone after media3's inactivity
+     * timeout, which would switch the car off mid-drive. The service being
+     * destroyed once the host unbinds is the reliable edge (see onDestroy).
+     */
+    override fun onDisconnected(
+      session: MediaSession,
+      controller: MediaSession.ControllerInfo,
+    ) {
+      CarAutoLog.d("onDisconnected by ${controller.packageName}")
+    }
+
     /**
      * Every player command a controller sends passes through here with the
      * caller attached — the only place that identifies *who* asked, since

@@ -22,7 +22,9 @@ import {
   CAR_ARTWORK_SIZE,
   cachedCarArtwork,
   ensureCarArtwork,
+  retainCarArtwork,
 } from "./artworkMirror";
+import { CarAutoBridge } from "./bridge";
 import type { BrowseNode, BrowseTree } from "./types";
 import { ROOT_ID } from "./types";
 
@@ -54,6 +56,10 @@ const TREE_PREFETCH_CONCURRENCY = 4;
 // Slice size for the two lists that can run to thousands of tracks (favorites,
 // a playlist's entries); every other list in the tree is bounded by the server.
 const TRACK_NODE_CHUNK = 500;
+
+// The build runs while a car is connected, i.e. usually with the phone UI in
+// the background, where a setTimeout-based yield can stall forever.
+const yieldBetweenChunks = () => CarAutoBridge.delay(0);
 
 // In-memory snapshots used by play.ts to resolve leaf mediaIds without
 // refetching. Refreshed every time buildBrowseTree() runs.
@@ -351,8 +357,11 @@ export async function buildBrowseTree(): Promise<BrowseTreeBuild> {
     },
     ...userPlaylists.map(playlistNode),
   ];
-  tree.favorites = await mapInChunks(starredSongs, TRACK_NODE_CHUNK, (s) =>
-    trackNode(s, "favorites"),
+  tree.favorites = await mapInChunks(
+    starredSongs,
+    TRACK_NODE_CHUNK,
+    (s) => trackNode(s, "favorites"),
+    yieldBetweenChunks,
   );
   recordParentTracks("favorites", tree.favorites);
 
@@ -421,8 +430,11 @@ export async function buildBrowseTree(): Promise<BrowseTreeBuild> {
         const entries = pl.entry ?? [];
         for (const e of entries) snapshot.tracks.set(e.id, e);
         const parent = `playlist:${id}`;
-        tree[parent] = await mapInChunks(entries, TRACK_NODE_CHUNK, (e) =>
-          trackNode(e, parent),
+        tree[parent] = await mapInChunks(
+          entries,
+          TRACK_NODE_CHUNK,
+          (e) => trackNode(e, parent),
+          yieldBetweenChunks,
         );
         recordParentTracks(parent, tree[parent]);
       } catch {
@@ -525,6 +537,12 @@ export async function buildBrowseTree(): Promise<BrowseTreeBuild> {
  * mirrored file has been reclaimed from the cache dir, and the tree snapshot on
  * disk outlives that cache.
  *
+ * The budget covers the tree's first CAR_ARTWORK_BUDGET covers, mirrored or
+ * not, and pins them in the mirror. Budgeting only the unmirrored ones made
+ * each build evict the previous build's covers to fit its own, so the cache
+ * never converged (issue #205); now a rebuild only fetches covers new to that
+ * set.
+ *
  * Best-effort by design: anything that doesn't get mirrored — past the budget,
  * failed fetch, no cover at all — is simply left without a local copy, which is
  * exactly the previous behaviour. Returns whether anything actually changed.
@@ -543,16 +561,11 @@ export async function localizeTreeArtwork(tree: BrowseTree): Promise<boolean> {
     into.push(url);
   };
 
-  // Already-mirrored covers are resolved when the node is built, so they must
-  // not spend a budget slot here — otherwise a warm tree starves the cold covers
-  // that actually need one.
   for (const [parentId, nodes] of entries) {
     const inherited = albumCoverFor(parentId);
-    if (isRemoteCover(inherited) && !cachedCarArtwork(inherited)) {
-      queue(inherited, collections);
-    }
+    if (isRemoteCover(inherited)) queue(inherited, collections);
     for (const node of nodes) {
-      if (!isRemoteCover(node.artworkUrl) || node.localArtworkUrl) continue;
+      if (!isRemoteCover(node.artworkUrl)) continue;
       // Track rows under an album ride on the album's cover, queued above.
       if (node.playable && inherited) continue;
       queue(node.artworkUrl, node.playable ? tracks : collections);
@@ -560,10 +573,12 @@ export async function localizeTreeArtwork(tree: BrowseTree): Promise<boolean> {
   }
 
   const budgeted = [...collections, ...tracks].slice(0, CAR_ARTWORK_BUDGET);
+  retainCarArtwork(budgeted);
+  const missing = budgeted.filter((url) => !cachedCarArtwork(url));
   const mirrored = new Map<string, string>();
-  if (budgeted.length > 0) {
+  if (missing.length > 0) {
     await mapWithConcurrency(
-      budgeted,
+      missing,
       TREE_PREFETCH_CONCURRENCY,
       async (url) => {
         const local = await ensureCarArtwork(url).catch(() => undefined);

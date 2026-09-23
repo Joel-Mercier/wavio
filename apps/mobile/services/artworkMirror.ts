@@ -93,6 +93,7 @@ export type ArtworkMirror = {
     remoteUrl: string | undefined,
   ) => Promise<string | undefined>;
   refreshIndex: () => void;
+  retain: (remoteUrls: Iterable<string>) => void;
   clearArtworkCache: () => void;
 };
 
@@ -217,19 +218,41 @@ export function createArtworkMirror(
     index = null;
   }
 
-  // Drop the oldest entries once the directory outgrows the cap, and anything
-  // past its TTL. Runs after a successful download, so the cap is enforced
-  // lazily rather than on a timer.
+  let pinned = new Set<string>();
+
+  /**
+   * Mark the covers the caller still wants, replacing the previous set, so
+   * pruning evicts everything else first.
+   *
+   * Without it the cap evicts by age alone, and a caller that wants more covers
+   * than the cap holds evicts last run's covers to make room for this run's —
+   * the car tree re-downloaded ~300 covers on every launch that way, never the
+   * same ones twice (issue #205).
+   */
+  function retain(remoteUrls: Iterable<string>): void {
+    const keys = new Set<string>();
+    for (const url of remoteUrls) {
+      if (isRemote(url)) keys.add(cacheKey(url));
+    }
+    pinned = keys;
+  }
+
+  // Drop anything past its TTL, then the oldest entries once the directory
+  // outgrows the cap — unpinned ones first. Runs after a successful download,
+  // so the cap is enforced lazily rather than on a timer.
   function prune(): void {
     const current = entries();
     for (const [key, modified] of Array.from(current)) {
       if (!isFresh(modified)) remove(key);
     }
     if (current.size <= maxEntries) return;
-    Array.from(current)
-      .sort((a, b) => a[1] - b[1])
-      .slice(0, current.size - maxEntries)
-      .forEach(([key]) => remove(key));
+    const evictable = Array.from(current)
+      .sort(
+        (a, b) =>
+          Number(pinned.has(a[0])) - Number(pinned.has(b[0])) || a[1] - b[1],
+      )
+      .slice(0, current.size - maxEntries);
+    for (const [key] of evictable) remove(key);
   }
 
   const inFlight = new Map<string, Promise<string | undefined>>();
@@ -334,6 +357,7 @@ export function createArtworkMirror(
   function clearArtworkCache(): void {
     inFlight.clear();
     index = null;
+    pinned = new Set();
     try {
       const dir = artworkDir();
       if (dir.exists) dir.delete();
@@ -346,6 +370,7 @@ export function createArtworkMirror(
     cachedArtworkUri,
     ensureArtworkCached,
     refreshIndex,
+    retain,
     clearArtworkCache,
   };
 }

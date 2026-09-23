@@ -23,4 +23,5 @@ const mirror = createArtworkMirror("car-artwork", CAR_ARTWORK_BUDGET + 100);
 export const cachedCarArtwork = mirror.cachedArtworkUri;
 export const ensureCarArtwork = mirror.ensureArtworkCached;
 export const refreshCarArtworkIndex = mirror.refreshIndex;
+export const retainCarArtwork = mirror.retain;
 export const clearCarArtworkCache = mirror.clearArtworkCache;

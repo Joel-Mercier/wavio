@@ -13,8 +13,10 @@ type CarAutoNative = {
   setPlaybackState: (json: string) => void;
   notifyReady: () => void;
   setVerbose: (enabled: boolean) => void;
+  isCarConnected: () => boolean;
+  postDelayed: (id: number, delayMs: number) => void;
   addListener: (
-    event: "play" | "transport",
+    event: "play" | "transport" | "carConnection" | "delayElapsed",
     listener: (e: Record<string, unknown>) => void,
   ) => { remove: () => void };
 };
@@ -23,6 +25,26 @@ const NativeCarAuto: CarAutoNative | null =
   Platform.OS === "android"
     ? (requireOptionalNativeModule<CarAutoNative>("CarAuto") ?? null)
     : null;
+
+const pendingDelays = new Map<number, () => void>();
+let lastDelayId = 0;
+let delaySubscribed = false;
+
+const nativeDelay = (native: CarAutoNative, ms: number) =>
+  new Promise<void>((resolve) => {
+    if (!delaySubscribed) {
+      delaySubscribed = true;
+      native.addListener("delayElapsed", (event) => {
+        const id = event?.id;
+        if (typeof id !== "number") return;
+        pendingDelays.get(id)?.();
+        pendingDelays.delete(id);
+      });
+    }
+    const id = ++lastDelayId;
+    pendingDelays.set(id, resolve);
+    native.postDelayed(id, ms);
+  });
 
 export type NowPlayingPayload = {
   id: string;
@@ -123,6 +145,36 @@ export const CarAutoBridge = {
     } catch (e) {
       if (__DEV__) console.log("[carauto] setVerbose threw", e);
     }
+  },
+
+  // setTimeout for car code. JS timers fire from Choreographer frames, which
+  // some OEMs stop delivering to an idle background app — the normal state of
+  // the phone in a car — so a plain setTimeout there can wait forever. This one
+  // is driven by a native Handler message instead.
+  delay(ms: number): Promise<void> {
+    if (!NativeCarAuto) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+    return nativeDelay(NativeCarAuto, ms);
+  },
+
+  // Whether an Android Auto host is bound to the browse service right now.
+  isCarConnected(): boolean {
+    if (!NativeCarAuto) return false;
+    try {
+      return NativeCarAuto.isCarConnected();
+    } catch (e) {
+      if (__DEV__) console.log("[carauto] isCarConnected threw", e);
+      return false;
+    }
+  },
+
+  onCarConnection(handler: (connected: boolean) => void): () => void {
+    if (!NativeCarAuto) return () => {};
+    const sub = NativeCarAuto.addListener("carConnection", (event) => {
+      handler(event?.connected === true);
+    });
+    return () => sub.remove();
   },
 
   onPlay(handler: (mediaId: string, parentId?: string) => void): () => void {

@@ -15,14 +15,26 @@ describe("mapInChunks", () => {
     const timer = setInterval(() => {
       tick++;
     }, 0);
-    await mapInChunks(Array.from({ length: 30 }, (_, i) => i), 10, () => {
-      ticks.push(tick);
-    });
+    await mapInChunks(
+      Array.from({ length: 30 }, (_, i) => i),
+      10,
+      () => {
+        ticks.push(tick);
+      },
+    );
     clearInterval(timer);
     // Three chunks: the first runs synchronously, each later one after a yield.
     expect(new Set(ticks.slice(0, 10)).size).toBe(1);
     expect(ticks[10]).toBeGreaterThan(ticks[9]);
     expect(ticks[20]).toBeGreaterThan(ticks[19]);
+  });
+
+  it("yields through a caller-supplied function when given one", async () => {
+    // Car code passes a yield that doesn't depend on JS timers firing.
+    const yieldFn = jest.fn(async () => {});
+    const out = await mapInChunks([1, 2, 3, 4, 5], 2, (n) => n * 2, yieldFn);
+    expect(out).toEqual([2, 4, 6, 8, 10]);
+    expect(yieldFn).toHaveBeenCalledTimes(2);
   });
 
   it("handles an empty list", async () => {

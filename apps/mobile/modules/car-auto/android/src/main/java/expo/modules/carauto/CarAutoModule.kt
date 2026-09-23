@@ -17,7 +17,7 @@ class CarAutoModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("CarAuto")
 
-    Events("play", "transport")
+    Events("play", "transport", "carConnection", "delayElapsed")
 
     OnCreate {
       instance = this@CarAutoModule
@@ -27,6 +27,7 @@ class CarAutoModule : Module() {
     OnDestroy {
       if (instance === this@CarAutoModule) instance = null
       jsReady = false
+      syncTimerHold()
     }
 
     // Called by services/carAuto/session.ts once its `play` / `transport`
@@ -36,6 +37,26 @@ class CarAutoModule : Module() {
     // the car did while JS was booting is replayed here.
     Function("notifyReady") {
       markJsReady()
+    }
+
+    // Read by JS at boot as well as observed through `carConnection`: on a
+    // headless boot the car host binds before the runtime exists, so the event
+    // announcing it has already been missed.
+    Function("isCarConnected") {
+      carConnected
+    }
+
+    // A delay JS can rely on in the car. RN timers fire from Choreographer
+    // frame callbacks, and some OEMs (MIUI, verified) stop delivering frames to
+    // an idle background app — so in a car, with the phone UI in the
+    // background, every setTimeout froze even with a headless task held (see
+    // CarTimerHold). A main-thread Handler message still arrives.
+    Function("postDelayed") { id: Int, delayMs: Double ->
+      mainHandler.postDelayed({
+        if (instance === this@CarAutoModule) {
+          sendEvent("delayElapsed", mapOf("id" to id))
+        }
+      }, delayMs.toLong().coerceAtLeast(0L))
     }
 
     Function("setVerbose") { enabled: Boolean ->
@@ -183,6 +204,28 @@ class CarAutoModule : Module() {
     private var pendingPlay: PendingPlay? = null
     private var pendingTransport: PendingTransport? = null
 
+    @Volatile var carConnected: Boolean = false
+      private set
+
+    fun setCarConnected(connected: Boolean) {
+      if (carConnected == connected) return
+      carConnected = connected
+      CarAutoLog.d("car connected=$connected")
+      instance?.sendEvent("carConnection", mapOf("connected" to connected))
+      syncTimerHold()
+    }
+
+    // Held only once JS is ready, because that is when the task it runs has
+    // been registered — started any earlier, AppRegistry finds no task and
+    // finishes it on the spot.
+    private fun syncTimerHold() {
+      CarTimerHold.update {
+        val context = instance?.let { it.appContext.reactContext }
+        CarAutoLog.d("timer hold: car=$carConnected ready=$jsReady context=${context != null}")
+        if (carConnected && jsReady) context else null
+      }
+    }
+
     // Deciding "deliver or park" and flipping jsReady have to be one atomic step.
     // They run on different threads — car intents arrive on a binder thread,
     // notifyReady on the JS thread — and interleaved they lose the intent: the
@@ -235,6 +278,7 @@ class CarAutoModule : Module() {
     fun markJsReady() {
       synchronized(gate) {
         jsReady = true
+        syncTimerHold()
         val module = instance ?: return
         val play = takePendingPlay()
         if (play != null) {

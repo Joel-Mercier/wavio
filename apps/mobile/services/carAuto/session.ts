@@ -1,4 +1,4 @@
-import { Platform } from "react-native";
+import { AppRegistry, Platform } from "react-native";
 import i18n from "@/config/i18n";
 import {
   getPlaybackSnapshot,
@@ -15,7 +15,12 @@ import {
   CarAutoBridge,
   type NowPlayingPayload,
 } from "@/services/carAuto/bridge";
-import { setupCarPlay, updateCarPlayTree } from "@/services/carAuto/carplay";
+import {
+  isCarPlayConnected,
+  onCarPlayConnection,
+  setupCarPlay,
+  updateCarPlayTree,
+} from "@/services/carAuto/carplay";
 import { handleBrowsePlay } from "@/services/carAuto/play";
 import {
   buildBrowseTree,
@@ -76,6 +81,36 @@ const log = (message: string, error?: unknown) => {
   if (error !== undefined) console.log(`[carauto] ${message}`, error);
   else console.log(`[carauto] ${message}`);
 };
+
+// The browse tree, its cover mirror and the position pulse only matter to a
+// car that is there to show them. Building the tree is a burst of server
+// requests and hundreds of cover downloads, which every launch used to pay with
+// no car in sight (issue #205).
+const isCarConnected = () =>
+  Platform.OS === "ios" ? isCarPlayConnected() : CarAutoBridge.isCarConnected();
+
+const subscribeCarConnection = (listener: (connected: boolean) => void) =>
+  Platform.OS === "ios"
+    ? onCarPlayConnection(listener)
+    : CarAutoBridge.onCarConnection(listener);
+
+// Must match CarTimerHold.TASK_KEY on the native side.
+const CAR_SESSION_TASK = "WavioCarSession";
+
+// Native holds this task for as long as a car is connected (CarTimerHold.kt),
+// because an active headless task is what keeps JS timers running while no
+// Activity is in the foreground — the normal state in a car. Some OEMs still
+// starve them (see CarAutoBridge.delay, which this file's own waits use). It
+// settles on disconnect, as native then finishes it too.
+const holdUntilCarDisconnects = () =>
+  new Promise<void>((resolve) => {
+    if (!CarAutoBridge.isCarConnected()) return resolve();
+    const unsubscribe = CarAutoBridge.onCarConnection((connected) => {
+      if (connected) return;
+      unsubscribe();
+      resolve();
+    });
+  });
 
 type QueueEntry = ReturnType<typeof useQueue.getState>["queue"][number];
 
@@ -208,6 +243,14 @@ async function wire() {
 
   CarAutoBridge.setVerbose(__DEV__);
 
+  // Before notifyReady (see boot), which is what lets native start it.
+  if (Platform.OS === "android") {
+    AppRegistry.registerHeadlessTask(
+      CAR_SESSION_TASK,
+      () => holdUntilCarDisconnects,
+    );
+  }
+
   // The mirrored covers belong to the server being left, and every one is
   // re-derivable — same reasoning as the lock screen's mirror in
   // services/player.ts.
@@ -226,7 +269,9 @@ async function wire() {
     configurePlayback(),
   ]);
 
-  let timer: ReturnType<typeof setTimeout> | null = null;
+  // Bumped to cancel: a pending debounce only fires if no newer request (or a
+  // disconnect) came after it.
+  let rebuildRequest = 0;
   // Only ever set after a *complete* tree was actually pushed, so a build that
   // failed, came back empty or came back partial (offline, server unreachable,
   // a section that timed out) stays retryable.
@@ -241,8 +286,10 @@ async function wire() {
   let treeGeneration = 0;
 
   const rebuild = () => {
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(runRebuild, REBUILD_DEBOUNCE_MS);
+    const request = ++rebuildRequest;
+    void CarAutoBridge.delay(REBUILD_DEBOUNCE_MS).then(() => {
+      if (request === rebuildRequest) void runRebuild();
+    });
   };
 
   const runRebuild = async () => {
@@ -255,6 +302,7 @@ async function wire() {
       rebuildQueued = true;
       return;
     }
+    if (!isCarConnected()) return log("rebuild skipped: no car connected");
     const { isAuthenticated, url, username, serverType } =
       useAuthBase.getState();
     // The on-device library has no url/username, so gate on the session
@@ -332,8 +380,6 @@ async function wire() {
     rebuild();
   });
 
-  rebuild();
-
   // === Mirror current track + queue + playback state to native ===
   let lastTrackId: string | null = null;
   let lastQueueSig: string | null = null;
@@ -342,6 +388,7 @@ async function wire() {
   // Re-pushes so the head unit swaps the remote URL it was given for the local
   // file — the only artwork that survives a server it can't authenticate to.
   const mirrorNowPlayingArtwork = async (track: QueueEntry | null) => {
+    if (!isCarConnected()) return;
     const remote = track?.artwork;
     if (!remote || cachedCarArtwork(remote, { verify: true })) return;
     const local = await ensureCarArtwork(remote).catch(() => undefined);
@@ -432,11 +479,36 @@ async function wire() {
     pushPlaybackState();
   });
 
+  // Unconditional, unlike the pulse below: the native mirror seeds the car
+  // session from these pushes when a host binds later (issue #161).
   subscribePlaybackState(pushPlaybackState);
 
-  // Throttled position pulse so AA's timeline keeps advancing even though
-  // we don't drive a real Player.
-  setInterval(pushPlaybackState, PLAYBACK_PUSH_INTERVAL_MS);
+  // Position pulse so the car's timeline keeps advancing even though we don't
+  // drive a real Player. Bumping `pulseRun` ends the running loop.
+  let pulseRun = 0;
+  const runPulse = async (run: number) => {
+    while (run === pulseRun) {
+      pushPlaybackState();
+      await CarAutoBridge.delay(PLAYBACK_PUSH_INTERVAL_MS);
+    }
+  };
+
+  const onCarConnection = (connected: boolean) => {
+    log(`car connected=${connected}`);
+    if (!connected) {
+      pulseRun++;
+      rebuildRequest++;
+      return;
+    }
+    // Straight to the build: a connect is a single event, with nothing to
+    // coalesce.
+    void runRebuild();
+    void runPulse(++pulseRun);
+    void mirrorNowPlayingArtwork(useQueue.getState().getCurrent());
+  };
+
+  subscribeCarConnection(onCarConnection);
+  if (isCarConnected()) onCarConnection(true);
 
   // === Transport events from AA → drive expo-audio ===
   CarAutoBridge.onTransport((event) => {
