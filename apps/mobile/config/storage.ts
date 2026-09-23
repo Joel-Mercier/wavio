@@ -1,5 +1,10 @@
+import { AppState } from "react-native";
 import { createMMKV } from "react-native-mmkv";
-import type { StateStorage } from "zustand/middleware";
+import type {
+  PersistStorage,
+  StateStorage,
+  StorageValue,
+} from "zustand/middleware";
 
 export const storage = createMMKV({
   id: "wavio",
@@ -69,6 +74,75 @@ export const createDynamicScopedStorage = (
     return storage.remove(`${getScope()}:${name}`);
   },
 });
+
+// zustand's persist middleware stringifies the whole partialized store on every
+// `set`, which is ruinous for a store that holds thousands of entries and is
+// written once per download event (issue #205). This coalesces those writes
+// into one serialization per `delayMs`. The key is resolved when the write is
+// *issued*, not when it lands, so a write pending across a server switch still
+// goes to the scope it belongs to. Anything that enumerates or deletes raw keys
+// must call flushPendingScopedWrites() first, or it sees a stale value / has a
+// late flush write over it.
+const pendingFlushers = new Set<() => void>();
+
+export const flushPendingScopedWrites = () => {
+  for (const flush of [...pendingFlushers]) flush();
+};
+
+let flushOnBackgroundRegistered = false;
+
+const registerFlushOnBackground = () => {
+  if (flushOnBackgroundRegistered) return;
+  flushOnBackgroundRegistered = true;
+  AppState.addEventListener("change", (status) => {
+    if (status !== "active") flushPendingScopedWrites();
+  });
+};
+
+export const createThrottledScopedJSONStorage = <S>(
+  getScope: () => string,
+  delayMs: number,
+): PersistStorage<S> => {
+  let pending: { key: string; value: StorageValue<S> } | null = null;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  const flush = () => {
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+    pendingFlushers.delete(flush);
+    if (!pending) return;
+    const { key, value } = pending;
+    pending = null;
+    storage.set(key, JSON.stringify(value));
+  };
+
+  registerFlushOnBackground();
+
+  return {
+    setItem: (name, value) => {
+      if (scopedWritesSuspended) return;
+      const key = `${getScope()}:${name}`;
+      if (pending && pending.key !== key) flush();
+      pending = { key, value };
+      pendingFlushers.add(flush);
+      if (!timer) timer = setTimeout(flush, delayMs);
+    },
+    getItem: (name) => {
+      const key = `${getScope()}:${name}`;
+      if (pending?.key === key) flush();
+      const value = storage.getString(key);
+      return value ? (JSON.parse(value) as StorageValue<S>) : null;
+    },
+    removeItem: (name) => {
+      if (scopedWritesSuspended) return;
+      const key = `${getScope()}:${name}`;
+      if (pending?.key === key) pending = null;
+      storage.remove(key);
+    },
+  };
+};
 
 // Scope derivation lives in config/authScope.ts, kept free of native imports so
 // tests and the migration helpers can use the real formula. Resolve the active

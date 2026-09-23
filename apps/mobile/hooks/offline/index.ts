@@ -21,6 +21,7 @@ export {
   useDownloadedTracksList,
   useDownloadProgress,
   useDownloadSizeByVolume,
+  useHasDownloadedTracks,
   useOfflineDownloads,
   useOfflineModeEnabled,
   useTotalDownloadSize,

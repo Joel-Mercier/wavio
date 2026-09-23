@@ -24,7 +24,7 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import {
-  useDownloadedTracksCount,
+  useHasDownloadedTracks,
   useHasOfflineAlbumCollections,
   useIsArtistAvailableOffline,
   useIsCollectionAvailableOffline,
@@ -418,14 +418,14 @@ export default function LibraryListItem({
   // library), so those rows stay tappable offline without a cached list query.
   // "All tracks" falls back to the downloaded tracks themselves.
   const hasOfflineAlbumCollections = useHasOfflineAlbumCollections();
-  const downloadedTracksCount = useDownloadedTracksCount();
+  const hasDownloadedTracks = useHasDownloadedTracks();
   const isArtistAvailableOffline = useIsArtistAvailableOffline(
     type.id === "artist" ? item.id : undefined,
   );
   const offlineBrowseAvailable =
     ((type.id === "allAlbums" || type.id === "allArtists") &&
       hasOfflineAlbumCollections) ||
-    (type.id === "allTracks" && downloadedTracksCount > 0) ||
+    (type.id === "allTracks" && hasDownloadedTracks) ||
     isArtistAvailableOffline;
 
   return (

@@ -6,6 +6,7 @@ jest.mock("@/config/storage", () => ({
     remove: (k: string) => mockMem.delete(k),
     getAllKeys: () => [...mockMem.keys()],
   },
+  flushPendingScopedWrites: () => {},
 }));
 
 jest.mock("expo-application", () => ({ nativeApplicationVersion: "1.2.3" }));

@@ -119,6 +119,15 @@ export const useDownloadedTracksList = () => {
   return useMemo(() => Object.values(downloadedTracks), [downloadedTracks]);
 };
 
+// For callers that only care whether anything is downloaded: the selector
+// returns a boolean, so completions don't re-render them the way a count would
+// (issue #205 — the whole Library list re-sorted on every finished track).
+export const useHasDownloadedTracks = () =>
+  useOffline((s) => {
+    for (const _ in s.downloadedTracks) return true;
+    return false;
+  });
+
 // Selects the (referentially stable) map and derives in useMemo so the O(n)
 // work re-runs only when a track is added/removed — not on every store write
 // (progress ticks land several times a second during an active sync).

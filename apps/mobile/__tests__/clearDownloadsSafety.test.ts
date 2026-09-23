@@ -26,6 +26,9 @@ jest.mock("@/config/storage", () => {
     zustandStorage: make(),
     createScopedStorage: () => make(),
     createDynamicScopedStorage: () => make(),
+    createThrottledScopedJSONStorage: () =>
+      jest.requireActual("zustand/middleware").createJSONStorage(() => make()),
+    flushPendingScopedWrites: () => {},
     getAuthScope: () => "scope",
   };
 });

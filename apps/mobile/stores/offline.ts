@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
-import { createDynamicScopedStorage } from "@/config/storage";
+import { persist } from "zustand/middleware";
+import { createThrottledScopedJSONStorage } from "@/config/storage";
 import type { Child } from "@/services/openSubsonic/types";
 import { currentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
@@ -115,9 +115,14 @@ interface OfflineStore {
   addToDownloadQueue: (track: QueuedTrack) => void;
   addManyToDownloadQueue: (tracks: QueuedTrack[]) => void;
   setQueuedTrackSource: (trackId: string, source: OfflineSource) => void;
+  setQueuedTracksSource: (trackIds: string[], source: OfflineSource) => void;
   removeFromDownloadQueue: (trackId: string) => void;
   removeManyFromDownloadQueue: (trackIds: string[]) => void;
   clearDownloadQueue: () => void;
+  // One write per download outcome instead of three or four: every write
+  // re-serializes the persisted store, queue included.
+  completeDownload: (track: OfflineTrack) => void;
+  failDownload: (progress: DownloadProgress, dequeue: boolean) => void;
 
   // Offline album/playlist/artist covers downloaded by the extended-offline
   // sync, keyed by coverArt id → file:// URI (see utils/artwork.ts fallback).
@@ -435,6 +440,16 @@ const useOfflineBase = create<OfflineStore>()(
         }));
       },
 
+      setQueuedTracksSource: (trackIds, source) => {
+        if (trackIds.length === 0) return;
+        const ids = new Set(trackIds);
+        set((state) => ({
+          downloadQueue: state.downloadQueue.map((t) =>
+            ids.has(t.id) ? { ...t, offlineSource: source } : t,
+          ),
+        }));
+      },
+
       removeFromDownloadQueue: (trackId) => {
         set((state) => ({
           downloadQueue: state.downloadQueue.filter((t) => t.id !== trackId),
@@ -460,6 +475,35 @@ const useOfflineBase = create<OfflineStore>()(
 
       clearDownloadQueue: () => {
         set({ downloadQueue: [] });
+      },
+
+      completeDownload: (track) => {
+        set((state) => ({
+          downloadedTracks: { ...state.downloadedTracks, [track.id]: track },
+          downloadQueue: state.downloadQueue.filter((t) => t.id !== track.id),
+          downloadProgress: {
+            ...state.downloadProgress,
+            [track.id]: {
+              trackId: track.id,
+              status: "completed",
+              progress: 100,
+            },
+          },
+        }));
+      },
+
+      failDownload: (progress, dequeue) => {
+        set((state) => ({
+          downloadProgress: {
+            ...state.downloadProgress,
+            [progress.trackId]: progress,
+          },
+          ...(dequeue && {
+            downloadQueue: state.downloadQueue.filter(
+              (t) => t.id !== progress.trackId,
+            ),
+          }),
+        }));
       },
 
       isTrackDownloaded: (trackId) => {
@@ -492,9 +536,7 @@ const useOfflineBase = create<OfflineStore>()(
     }),
     {
       name: "offlineStore",
-      storage: createJSONStorage(() =>
-        createDynamicScopedStorage(currentAuthScope),
-      ),
+      storage: createThrottledScopedJSONStorage(currentAuthScope, 2000),
       skipHydration: true,
       partialize: (state) => ({
         offlineModeEnabled: state.offlineModeEnabled,
