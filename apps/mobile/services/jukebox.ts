@@ -10,6 +10,12 @@ import {
   statusJukebox,
   stopJukebox,
 } from "@/services/backend/jukebox";
+import {
+  type BackgroundTimer,
+  backgroundSleep,
+  clearBackgroundTimer,
+  setBackgroundInterval,
+} from "@/services/backgroundTimer";
 import type {
   JukeboxPlaylist,
   JukeboxStatus,
@@ -45,15 +51,11 @@ let mutedForPreroll = false;
 // settle loop instead of fighting the newer selection.
 let selectGeneration = 0;
 let queueUnsub: (() => void) | null = null;
-let pollHandle: ReturnType<typeof setInterval> | null = null;
+let pollHandle: BackgroundTimer | null = null;
 
 const SEEK_SETTLE_ATTEMPTS = 20;
 const SEEK_SETTLE_DELAY_MS = 200;
 const SEEK_LANDED_TOLERANCE_S = 1;
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 function readQueueIds(): string[] {
   return useQueue.getState().queue.map((t) => t.id);
@@ -176,12 +178,12 @@ function applyServerPlaylist(playlist: JukeboxPlaylist) {
 
 function startPolling(intervalMs: number) {
   stopPolling();
-  pollHandle = setInterval(reconcileFromServer, intervalMs);
+  pollHandle = setBackgroundInterval(reconcileFromServer, intervalMs);
 }
 
 function stopPolling() {
   if (pollHandle) {
-    clearInterval(pollHandle);
+    clearBackgroundTimer(pollHandle);
     pollHandle = null;
   }
 }
@@ -294,7 +296,7 @@ async function readJukeboxStatus(): Promise<JukeboxStatus | undefined> {
 // seekable — before re-issuing the seek or the pause.
 async function waitForPlaying(isCurrent: () => boolean): Promise<void> {
   for (let attempt = 0; attempt < SEEK_SETTLE_ATTEMPTS; attempt++) {
-    await delay(SEEK_SETTLE_DELAY_MS);
+    await backgroundSleep(SEEK_SETTLE_DELAY_MS);
     if (!isCurrent()) return;
     if ((await readJukeboxStatus())?.playing) return;
   }
@@ -310,7 +312,7 @@ async function settleSeek(
   isCurrent: () => boolean,
 ): Promise<void> {
   for (let attempt = 0; attempt < SEEK_SETTLE_ATTEMPTS; attempt++) {
-    await delay(SEEK_SETTLE_DELAY_MS);
+    await backgroundSleep(SEEK_SETTLE_DELAY_MS);
     if (!isCurrent()) return;
     const status = await readJukeboxStatus();
     if (!status?.playing) continue;

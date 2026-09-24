@@ -1,6 +1,11 @@
 import { onlineManager } from "@tanstack/react-query";
 import { getPlayQueue, savePlayQueue } from "@/services/backend/bookmarks";
 import { getCapabilities } from "@/services/backend/capabilities";
+import {
+  type BackgroundTimer,
+  clearBackgroundTimer,
+  setBackgroundTimeout,
+} from "@/services/backgroundTimer";
 import { restoreServerQueue } from "@/services/player";
 import { useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
@@ -10,7 +15,7 @@ import { childToTrack } from "@/utils/childToTrack";
 
 const PUSH_DEBOUNCE_MS = 5_000;
 
-let pushTimer: ReturnType<typeof setTimeout> | null = null;
+let pushTimer: BackgroundTimer | null = null;
 let started = false;
 let unsubscribeQueue: (() => void) | null = null;
 
@@ -52,8 +57,8 @@ async function doPush(): Promise<void> {
 
 function schedulePush(): void {
   if (!canPush()) return;
-  if (pushTimer) clearTimeout(pushTimer);
-  pushTimer = setTimeout(() => {
+  if (pushTimer) clearBackgroundTimer(pushTimer);
+  pushTimer = setBackgroundTimeout(() => {
     pushTimer = null;
     void doPush();
   }, PUSH_DEBOUNCE_MS);
@@ -63,7 +68,7 @@ function schedulePush(): void {
 // goes to the background so the latest queue/position is persisted promptly.
 export function flushPlayQueue(): void {
   if (pushTimer) {
-    clearTimeout(pushTimer);
+    clearBackgroundTimer(pushTimer);
     pushTimer = null;
   }
   void doPush();
@@ -123,7 +128,7 @@ export async function initPlayQueueSync(): Promise<void> {
 
 export function stopPlayQueueSync(): void {
   if (pushTimer) {
-    clearTimeout(pushTimer);
+    clearBackgroundTimer(pushTimer);
     pushTimer = null;
   }
   unsubscribeQueue?.();

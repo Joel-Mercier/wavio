@@ -5,6 +5,11 @@ import type {
   StateStorage,
   StorageValue,
 } from "zustand/middleware";
+import {
+  type BackgroundTimer,
+  clearBackgroundTimer,
+  setBackgroundTimeout,
+} from "@/services/backgroundTimer";
 
 export const storage = createMMKV({
   id: "wavio",
@@ -115,11 +120,11 @@ export const createThrottledScopedJSONStorage = <S>(
   delayMs: number,
 ): PersistStorage<S> => {
   let pending: { key: string; value: StorageValue<S> } | null = null;
-  let timer: ReturnType<typeof setTimeout> | null = null;
+  let timer: BackgroundTimer | null = null;
 
   const flush = () => {
     if (timer) {
-      clearTimeout(timer);
+      clearBackgroundTimer(timer);
       timer = null;
     }
     pendingFlushers.delete(flush);
@@ -138,7 +143,7 @@ export const createThrottledScopedJSONStorage = <S>(
       if (pending && pending.key !== key) flush();
       pending = { key, value };
       pendingFlushers.add(flush);
-      if (!timer) timer = setTimeout(flush, delayMs);
+      if (!timer) timer = setBackgroundTimeout(flush, delayMs);
     },
     getItem: (name) => {
       const key = `${getScope()}:${name}`;

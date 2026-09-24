@@ -1,6 +1,11 @@
 import axios, { type AxiosInstance } from "axios";
 import { smbProbe } from "@/modules/smb";
 import { hasNetworkServerType } from "@/services/backend/serverTraits";
+import {
+  type BackgroundTimer,
+  clearBackgroundTimer,
+  setBackgroundTimeout,
+} from "@/services/backgroundTimer";
 import { parseSmbUrl, splitDomainUser } from "@/services/fileSource/smbAddress";
 import { isMultistatus } from "@/services/fileSource/webdavMultistatus";
 import { buildAuthorizationHeader } from "@/services/jellyfin/index";
@@ -169,10 +174,16 @@ export async function probeUrl(url: string): Promise<boolean> {
   if (!url || !hasNetworkServerType(serverType)) return false;
 
   const controller = new AbortController();
-  const abortTimer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
-  let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
+  const abortTimer = setBackgroundTimeout(
+    () => controller.abort(),
+    PROBE_TIMEOUT_MS,
+  );
+  let deadlineTimer: BackgroundTimer | undefined;
   const deadline = new Promise<boolean>((resolve) => {
-    deadlineTimer = setTimeout(() => resolve(false), PROBE_DEADLINE_MS);
+    deadlineTimer = setBackgroundTimeout(
+      () => resolve(false),
+      PROBE_DEADLINE_MS,
+    );
   });
   try {
     const probe = (() => {
@@ -191,7 +202,7 @@ export async function probeUrl(url: string): Promise<boolean> {
   } catch {
     return false;
   } finally {
-    clearTimeout(abortTimer);
-    clearTimeout(deadlineTimer);
+    clearBackgroundTimer(abortTimer);
+    clearBackgroundTimer(deadlineTimer);
   }
 }

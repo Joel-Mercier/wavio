@@ -3,6 +3,12 @@ import {
   subscribePlaybackState,
 } from "@/hooks/player/playbackSnapshot";
 import {
+  type BackgroundTimer,
+  clearBackgroundTimer,
+  setBackgroundInterval,
+  setBackgroundTimeout,
+} from "@/services/backgroundTimer";
+import {
   activeRemoteTarget,
   subscribeRemoteChange,
 } from "@/services/playback/targets";
@@ -34,13 +40,13 @@ const RECLAIM_DELAYS_MS = [1500, 4000];
  * transport state comes from the remote.
  */
 export function startLockScreenMirror() {
-  let pulse: ReturnType<typeof setInterval> | null = null;
+  let pulse: BackgroundTimer | null = null;
   let remoteActive = false;
   let lastTrackId: string | null = null;
-  let reclaims: ReturnType<typeof setTimeout>[] = [];
+  let reclaims: BackgroundTimer[] = [];
 
   const cancelReclaims = () => {
-    for (const timer of reclaims) clearTimeout(timer);
+    for (const timer of reclaims) clearBackgroundTimer(timer);
     reclaims = [];
   };
 
@@ -84,7 +90,7 @@ export function startLockScreenMirror() {
     cancelReclaims();
     if (!current) return;
     reclaims = RECLAIM_DELAYS_MS.map((delay) =>
-      setTimeout(() => {
+      setBackgroundTimeout(() => {
         if (!remoteActive || lastTrackId !== current.id) return;
         try {
           getActivePlayer().setRemotePlayback(true);
@@ -102,7 +108,7 @@ export function startLockScreenMirror() {
     if (active) {
       assertRemote();
       pushState();
-      if (!pulse) pulse = setInterval(pushState, PUSH_INTERVAL_MS);
+      if (!pulse) pulse = setBackgroundInterval(pushState, PUSH_INTERVAL_MS);
       return;
     }
     cancelReclaims();
@@ -115,7 +121,7 @@ export function startLockScreenMirror() {
     // locally, which drives applyLockScreen the usual way.
     lastTrackId = null;
     if (pulse) {
-      clearInterval(pulse);
+      clearBackgroundTimer(pulse);
       pulse = null;
     }
   };

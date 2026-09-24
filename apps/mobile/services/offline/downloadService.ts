@@ -1,5 +1,11 @@
 import { Directory, File, Paths } from "expo-file-system";
 import { offlineFileInfo } from "@/services/backend/streaming";
+import {
+  type BackgroundTimer,
+  backgroundSleep,
+  clearBackgroundTimer,
+  setBackgroundTimeout,
+} from "@/services/backgroundTimer";
 import { isTlsTrustFailure, reportError } from "@/services/errorReporting";
 import {
   getConnectionType,
@@ -42,8 +48,7 @@ import type { Child } from "../openSubsonic/types";
 // render while the work drains.
 export type DeleteProgress = (done: number, total: number) => void;
 export const DELETE_CHUNK = 25;
-export const yieldToEventLoop = () =>
-  new Promise<void>((resolve) => setTimeout(resolve, 0));
+export const yieldToEventLoop = () => backgroundSleep(0);
 
 const MAX_CONCURRENT_DOWNLOADS = 3;
 
@@ -172,7 +177,7 @@ export class OfflineDownloadService {
   // failures instead of being dropped on the first one. Cleared on success.
   private attempts: Map<string, number> = new Map();
   private consecutiveFailures = 0;
-  private retryTimer: ReturnType<typeof setTimeout> | null = null;
+  private retryTimer: BackgroundTimer | null = null;
   // Set when a download failed for lack of storage; the queue stays parked
   // until then instead of failing every remaining track against a full disk.
   private storageFullUntil = 0;
@@ -197,7 +202,7 @@ export class OfflineDownloadService {
   // sized for an unknown fault.
   private resumeAfterFailures(): void {
     if (this.retryTimer) {
-      clearTimeout(this.retryTimer);
+      clearBackgroundTimer(this.retryTimer);
       this.retryTimer = null;
     }
     this.consecutiveFailures = 0;
@@ -215,7 +220,7 @@ export class OfflineDownloadService {
   private scheduleParkRetry(): void {
     if (this.retryTimer) return;
     const delay = Math.max(0, this.parkedUntil() - Date.now());
-    this.retryTimer = setTimeout(() => {
+    this.retryTimer = setBackgroundTimeout(() => {
       this.retryTimer = null;
       this.storageFullUntil = 0;
       this.tlsBlockedUntil = 0;
@@ -233,7 +238,7 @@ export class OfflineDownloadService {
       QUEUE_RETRY_BACKOFF_STEPS_MS.length - 1,
     );
     const delay = QUEUE_RETRY_BACKOFF_STEPS_MS[Math.max(0, step)];
-    this.retryTimer = setTimeout(() => {
+    this.retryTimer = setBackgroundTimeout(() => {
       this.retryTimer = null;
       this.processQueue();
     }, delay);
@@ -390,7 +395,7 @@ export class OfflineDownloadService {
     this.storageFullUntil = 0;
     this.tlsBlockedUntil = 0;
     if (this.retryTimer) {
-      clearTimeout(this.retryTimer);
+      clearBackgroundTimer(this.retryTimer);
       this.retryTimer = null;
     }
 
@@ -965,7 +970,7 @@ export class OfflineDownloadService {
       this.attempts.clear();
       this.consecutiveFailures = 0;
       if (this.retryTimer) {
-        clearTimeout(this.retryTimer);
+        clearBackgroundTimer(this.retryTimer);
         this.retryTimer = null;
       }
       for (const { reject } of this.resolvers.values()) {

@@ -98,9 +98,10 @@ const subscribeCarConnection = (listener: (connected: boolean) => void) =>
 const CAR_SESSION_TASK = "WavioCarSession";
 
 // Native holds this task for as long as a car is connected (CarTimerHold.kt),
-// because an active headless task is what keeps JS timers running while no
-// Activity is in the foreground — the normal state in a car. Some OEMs still
-// starve them (see CarAutoBridge.delay, which this file's own waits use). It
+// because an active headless task is RN's supported way to keep JS timers
+// running while no Activity is in the foreground — the normal state in a car.
+// It isn't enough on MIUI (timers froze with the task held and audio playing),
+// so this file's own waits go through CarAutoBridge.delay regardless. It
 // settles on disconnect, as native then finishes it too.
 const holdUntilCarDisconnects = () =>
   new Promise<void>((resolve) => {

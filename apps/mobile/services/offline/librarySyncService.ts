@@ -4,6 +4,11 @@ import { getPlaylist, getPlaylists } from "@/services/backend/playlists";
 import { search3 } from "@/services/backend/searching";
 import { isIndexBackedType } from "@/services/backend/serverTraits";
 import {
+  type BackgroundTimer,
+  clearBackgroundTimer,
+  setBackgroundTimeout,
+} from "@/services/backgroundTimer";
+import {
   getIsEffectivelyOnline,
   subscribeConnectionType,
   subscribeEffectiveOnline,
@@ -100,7 +105,7 @@ export class LibrarySyncService {
   private pendingKick = false;
   // Backoff state for transient step failures — reset on any successful step.
   private failureCount = 0;
-  private retryTimer: ReturnType<typeof setTimeout> | null = null;
+  private retryTimer: BackgroundTimer | null = null;
 
   private constructor() {
     subscribeEffectiveOnline(() => {
@@ -162,7 +167,7 @@ export class LibrarySyncService {
     this.generation++;
     this.failureCount = 0;
     if (this.retryTimer) {
-      clearTimeout(this.retryTimer);
+      clearBackgroundTimer(this.retryTimer);
       this.retryTimer = null;
     }
   }
@@ -422,13 +427,13 @@ export class LibrarySyncService {
   }
 
   private scheduleRetry(): void {
-    if (this.retryTimer) clearTimeout(this.retryTimer);
+    if (this.retryTimer) clearBackgroundTimer(this.retryTimer);
     const delay =
       RETRY_BACKOFF_STEPS_MS[
         Math.min(this.failureCount, RETRY_BACKOFF_STEPS_MS.length - 1)
       ];
     this.failureCount++;
-    this.retryTimer = setTimeout(() => {
+    this.retryTimer = setBackgroundTimeout(() => {
       this.retryTimer = null;
       this.kick();
     }, delay);

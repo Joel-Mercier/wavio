@@ -17,6 +17,11 @@ import {
   scopedQueryCacheTouchedKey,
   storage,
 } from "@/config/storage";
+import {
+  type BackgroundTimer,
+  clearBackgroundTimer,
+  setBackgroundTimeout,
+} from "@/services/backgroundTimer";
 import { currentAuthScope, useAuthBase } from "@/stores/auth";
 import { logError } from "@/utils/log";
 
@@ -46,11 +51,11 @@ const RETIRED_QUERY_ROOTS = new Set(["artistSongs"]);
 let cacheScope: string | null = null;
 const pendingWrites = new Set<string>();
 const pendingRemoves = new Set<string>();
-let timer: ReturnType<typeof setTimeout> | null = null;
+let timer: BackgroundTimer | null = null;
 
 function clearPending(): void {
   if (timer) {
-    clearTimeout(timer);
+    clearBackgroundTimer(timer);
     timer = null;
   }
   pendingWrites.clear();
@@ -100,7 +105,7 @@ function onCacheEvent(event: QueryCacheNotifyEvent): void {
     pendingRemoves.delete(queryHash);
     pendingWrites.add(queryHash);
   }
-  if (!timer) timer = setTimeout(flush, FLUSH_DELAY_MS);
+  if (!timer) timer = setBackgroundTimeout(flush, FLUSH_DELAY_MS);
 }
 
 export function subscribeQueryPersistence(): () => void {

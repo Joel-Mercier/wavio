@@ -1,4 +1,5 @@
 import { createBareClient, PROBE_TIMEOUT_MS } from "@/services/backend/probe";
+import { backgroundSleep } from "@/services/backgroundTimer";
 import { reportBreadcrumb, reportError } from "@/services/errorReporting";
 import { getIsOnline } from "@/services/network";
 import {
@@ -63,9 +64,6 @@ const reportedEndpoints = new Set<string>();
 // server logs.
 let burstCount = 0;
 
-const sleep = (ms: number) =>
-  new Promise<void>((resolve) => setTimeout(resolve, ms));
-
 function sameSession(key: SessionKey): boolean {
   const { isAuthenticated, serverId, username } = useAuthBase.getState();
   return (
@@ -109,7 +107,7 @@ async function corroborate(
   endpoint: string | undefined,
 ): Promise<void> {
   for (let attempt = 1; attempt <= CORROBORATION_ATTEMPTS; attempt++) {
-    if (attempt > 1) await sleep(CORROBORATION_RETRY_DELAY_MS);
+    if (attempt > 1) await backgroundSleep(CORROBORATION_RETRY_DELAY_MS);
     if (!sameSession(key)) return;
     const verdict = await pingCredentials(url);
     if (verdict === "ok") {

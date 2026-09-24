@@ -1,5 +1,10 @@
 import { getCapabilities } from "@/services/backend/capabilities";
 import {
+  type BackgroundTimer,
+  clearBackgroundTimer,
+  setBackgroundTimeout,
+} from "@/services/backgroundTimer";
+import {
   getConnectionType,
   getIsEffectivelyOnline,
   subscribeConnectionType,
@@ -59,7 +64,7 @@ let consecutiveFailures = 0;
 // clean pass: deriving the step from it would pin every park at the first step,
 // so a dead server would be re-probed every 30s forever.
 let retryStep = 0;
-let retryTimer: ReturnType<typeof setTimeout> | null = null;
+let retryTimer: BackgroundTimer | null = null;
 let started = false;
 // Ids this pass has already given up on, so a track the server refuses isn't
 // retried on every single queue change. Cleared whenever the drain succeeds at
@@ -160,7 +165,7 @@ function scheduleRetry(): void {
       Math.min(retryStep, RETRY_BACKOFF_STEPS_MS.length - 1)
     ];
   retryStep += 1;
-  retryTimer = setTimeout(() => {
+  retryTimer = setBackgroundTimeout(() => {
     retryTimer = null;
     consecutiveFailures = 0;
     // The backoff *was* the punishment. Without clearing this, every track the
@@ -174,7 +179,7 @@ function scheduleRetry(): void {
 
 function clearRetry(): void {
   if (!retryTimer) return;
-  clearTimeout(retryTimer);
+  clearBackgroundTimer(retryTimer);
   retryTimer = null;
 }
 

@@ -1,5 +1,6 @@
 import { requireOptionalNativeModule } from "expo";
 import { Platform } from "react-native";
+import { backgroundSleep } from "@/services/backgroundTimer";
 import type { BrowseTree } from "./types";
 
 // The Android native module is provided by `modules/car-auto` (registered as
@@ -14,9 +15,8 @@ type CarAutoNative = {
   notifyReady: () => void;
   setVerbose: (enabled: boolean) => void;
   isCarConnected: () => boolean;
-  postDelayed: (id: number, delayMs: number) => void;
   addListener: (
-    event: "play" | "transport" | "carConnection" | "delayElapsed",
+    event: "play" | "transport" | "carConnection",
     listener: (e: Record<string, unknown>) => void,
   ) => { remove: () => void };
 };
@@ -25,26 +25,6 @@ const NativeCarAuto: CarAutoNative | null =
   Platform.OS === "android"
     ? (requireOptionalNativeModule<CarAutoNative>("CarAuto") ?? null)
     : null;
-
-const pendingDelays = new Map<number, () => void>();
-let lastDelayId = 0;
-let delaySubscribed = false;
-
-const nativeDelay = (native: CarAutoNative, ms: number) =>
-  new Promise<void>((resolve) => {
-    if (!delaySubscribed) {
-      delaySubscribed = true;
-      native.addListener("delayElapsed", (event) => {
-        const id = event?.id;
-        if (typeof id !== "number") return;
-        pendingDelays.get(id)?.();
-        pendingDelays.delete(id);
-      });
-    }
-    const id = ++lastDelayId;
-    pendingDelays.set(id, resolve);
-    native.postDelayed(id, ms);
-  });
 
 export type NowPlayingPayload = {
   id: string;
@@ -147,16 +127,9 @@ export const CarAutoBridge = {
     }
   },
 
-  // setTimeout for car code. JS timers fire from Choreographer frames, which
-  // some OEMs stop delivering to an idle background app — the normal state of
-  // the phone in a car — so a plain setTimeout there can wait forever. This one
-  // is driven by a native Handler message instead.
-  delay(ms: number): Promise<void> {
-    if (!NativeCarAuto) {
-      return new Promise((resolve) => setTimeout(resolve, ms));
-    }
-    return nativeDelay(NativeCarAuto, ms);
-  },
+  // setTimeout for car code, which runs with the phone UI in the background
+  // where JS timers never fire (see services/backgroundTimer.ts).
+  delay: backgroundSleep,
 
   // Whether an Android Auto host is bound to the browse service right now.
   isCarConnected(): boolean {

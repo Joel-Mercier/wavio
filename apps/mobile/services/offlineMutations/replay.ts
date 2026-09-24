@@ -15,6 +15,12 @@ import {
   getPlaylist,
   updatePlaylist,
 } from "@/services/backend/playlists";
+import {
+  type BackgroundTimer,
+  backgroundSleep,
+  clearBackgroundTimer,
+  setBackgroundTimeout,
+} from "@/services/backgroundTimer";
 import { isNetworkNoise, reportError } from "@/services/errorReporting";
 import { forgetDeletedPlaylist } from "@/services/forgetPlaylist";
 import {
@@ -46,7 +52,7 @@ let lastEffectiveOnline = false;
 let draining = false;
 let drainRequested = false;
 let generation = 0;
-let backoffTimer: ReturnType<typeof setTimeout> | null = null;
+let backoffTimer: BackgroundTimer | null = null;
 let backoffLevel = 0;
 // Adds that were mid-request when the app last died: the server may or may not
 // have applied them, and adding twice duplicates the entry — so these fetch the
@@ -69,7 +75,7 @@ const notifyDrainResult = (result: DrainResult) => {
 
 const clearBackoffTimer = () => {
   if (backoffTimer) {
-    clearTimeout(backoffTimer);
+    clearBackgroundTimer(backoffTimer);
     backoffTimer = null;
   }
 };
@@ -79,7 +85,7 @@ const scheduleBackoff = () => {
   const delay =
     BACKOFF_STEPS_MS[Math.min(backoffLevel, BACKOFF_STEPS_MS.length - 1)];
   backoffLevel++;
-  backoffTimer = setTimeout(() => {
+  backoffTimer = setBackgroundTimeout(() => {
     backoffTimer = null;
     void drainOfflineMutations();
   }, delay);
@@ -104,9 +110,6 @@ const isPermanentError = (error: unknown) => {
   const code = subsonicCode(error);
   return code === 50 || code === 70;
 };
-
-const sleep = (ms: number) =>
-  new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 async function executeAction(item: QueuedMutation): Promise<void> {
   const { action } = item;
@@ -289,7 +292,7 @@ export async function drainOfflineMutations(): Promise<void> {
         default:
           processed.playlist = true;
       }
-      await sleep(REPLAY_DELAY_MS);
+      await backgroundSleep(REPLAY_DELAY_MS);
     }
   } finally {
     draining = false;

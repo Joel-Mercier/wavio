@@ -13,6 +13,8 @@ import org.json.JSONObject
 @OptIn(UnstableApi::class)
 class CarAutoModule : Module() {
   private val mainHandler = Handler(Looper.getMainLooper())
+  // Only touched on the main thread.
+  private val pendingDelays = HashMap<Int, Runnable>()
 
   override fun definition() = ModuleDefinition {
     Name("CarAuto")
@@ -28,6 +30,10 @@ class CarAutoModule : Module() {
       if (instance === this@CarAutoModule) instance = null
       jsReady = false
       syncTimerHold()
+      mainHandler.post {
+        pendingDelays.values.forEach(mainHandler::removeCallbacks)
+        pendingDelays.clear()
+      }
     }
 
     // Called by services/carAuto/session.ts once its `play` / `transport`
@@ -46,17 +52,28 @@ class CarAutoModule : Module() {
       carConnected
     }
 
-    // A delay JS can rely on in the car. RN timers fire from Choreographer
-    // frame callbacks, and some OEMs (MIUI, verified) stop delivering frames to
-    // an idle background app — so in a car, with the phone UI in the
-    // background, every setTimeout froze even with a headless task held (see
-    // CarTimerHold). A main-thread Handler message still arrives.
+    // Backs services/backgroundTimer.ts. RN timers fire from Choreographer frame
+    // callbacks and stop once the Activity is backgrounded — measured on MIUI
+    // with audio playing, and even with CarTimerHold's headless task held — so
+    // any JS wait that has to run in the background goes through a main-thread
+    // Handler message instead, which still arrives.
     Function("postDelayed") { id: Int, delayMs: Double ->
-      mainHandler.postDelayed({
+      val runnable = Runnable {
+        pendingDelays.remove(id)
         if (instance === this@CarAutoModule) {
           sendEvent("delayElapsed", mapOf("id" to id))
         }
-      }, delayMs.toLong().coerceAtLeast(0L))
+      }
+      mainHandler.post {
+        pendingDelays.put(id, runnable)?.let(mainHandler::removeCallbacks)
+        mainHandler.postDelayed(runnable, delayMs.toLong().coerceAtLeast(0L))
+      }
+    }
+
+    Function("cancelDelayed") { id: Int ->
+      mainHandler.post {
+        pendingDelays.remove(id)?.let(mainHandler::removeCallbacks)
+      }
     }
 
     Function("setVerbose") { enabled: Boolean ->

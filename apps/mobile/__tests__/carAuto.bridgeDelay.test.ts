@@ -9,6 +9,7 @@ jest.mock("react-native", () => ({ Platform: { OS: "android" } }));
 jest.mock("expo", () => ({
   requireOptionalNativeModule: () => ({
     postDelayed: (id: number, ms: number) => mockPostDelayed(id, ms),
+    cancelDelayed: () => {},
     addListener: (
       event: string,
       listener: (event: Record<string, unknown>) => void,
