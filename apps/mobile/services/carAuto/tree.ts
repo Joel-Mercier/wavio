@@ -61,6 +61,16 @@ const TRACK_NODE_CHUNK = 500;
 // the background, where a setTimeout-based yield can stall forever.
 const yieldBetweenChunks = () => CarAutoBridge.delay(0);
 
+// Album tiles listed under an artist. A compilation artist owns every
+// compilation on the server — thousands of tiles nobody scrolls through from a
+// car, each adding to the tree the host reads in one binder transaction.
+const ARTIST_ALBUM_LIMIT = 100;
+
+// Albums the car opened that the build didn't prefetch, kept so every rebuild
+// can carry them over (see buildBrowseTree). Album data rather than nodes:
+// cover URLs embed the session's credentials and must be re-derived per build.
+const ON_DEMAND_ALBUM_LIMIT = 50;
+
 // In-memory snapshots used by play.ts to resolve leaf mediaIds without
 // refetching. Refreshed every time buildBrowseTree() runs.
 type Snapshot = {
@@ -88,6 +98,34 @@ const snapshot: Snapshot = {
 };
 
 export const getSnapshot = () => snapshot;
+
+// The tree of the latest build, so albums resolved on demand land in the same
+// object the session re-pushes after mirroring artwork.
+let currentTree: BrowseTree = {};
+
+const onDemandAlbums = new Map<string, AlbumWithSongsID3>();
+let onDemandScope: string | null = null;
+const inFlightChildren = new Map<string, Promise<BrowseNode[] | null>>();
+
+// Server ids mean nothing on another server or for another user.
+const onDemandCache = () => {
+  const scope = currentAuthScope();
+  if (scope !== onDemandScope) {
+    onDemandAlbums.clear();
+    onDemandScope = scope;
+  }
+  return onDemandAlbums;
+};
+
+const rememberOnDemandAlbum = (album: AlbumWithSongsID3) => {
+  const cache = onDemandCache();
+  cache.delete(album.id);
+  cache.set(album.id, album);
+  if (cache.size > ON_DEMAND_ALBUM_LIMIT) {
+    const oldest = cache.keys().next().value;
+    if (oldest !== undefined) cache.delete(oldest);
+  }
+};
 
 // Record the playable mediaIds in `nodes` (in order) for a given parent so
 // the play resolver can enqueue the surrounding collection when the user taps
@@ -160,6 +198,14 @@ const trackNode = (c: Child, parentId: string): BrowseNode => {
       own.localArtworkUrl ?? cachedCarArtwork(albumCoverFor(parentId)),
     playable: true,
   };
+};
+
+const addAlbumToTree = (tree: BrowseTree, album: AlbumWithSongsID3) => {
+  snapshot.albums.set(album.id, album);
+  const parent = `album:${album.id}`;
+  tree[parent] = (album.song ?? []).map((s) => trackNode(s, parent));
+  recordParentTracks(parent, tree[parent]);
+  return tree[parent];
 };
 
 const HOME_SECTIONS: Array<{
@@ -451,13 +497,7 @@ export async function buildBrowseTree(): Promise<BrowseTreeBuild> {
     async (id) => {
       try {
         const rsp = await getAlbum(id);
-        const album = rsp.album;
-        snapshot.albums.set(id, album);
-        const songs = album.song ?? [];
-        for (const s of songs) snapshot.tracks.set(s.id, s);
-        const parent = `album:${id}`;
-        tree[parent] = songs.map((s) => trackNode(s, parent));
-        recordParentTracks(parent, tree[parent]);
+        addAlbumToTree(tree, rsp.album);
       } catch {
         failed();
         tree[`album:${id}`] = [];
@@ -465,7 +505,10 @@ export async function buildBrowseTree(): Promise<BrowseTreeBuild> {
     },
   );
 
-  // === Prefetch artist detail (top songs + albums) ===
+  // === Prefetch artist detail (top songs + album tiles) ===
+  // The albums' tracklists are not prefetched: an artist can own thousands of
+  // them (issue #205). The car asks for one when it opens it — see
+  // loadOnDemandChildren.
   await mapWithConcurrency(
     Array.from(artistIdsToFetch),
     TREE_PREFETCH_CONCURRENCY,
@@ -473,7 +516,7 @@ export async function buildBrowseTree(): Promise<BrowseTreeBuild> {
       try {
         const artistRsp = await getArtist(id);
         const artist = artistRsp.artist;
-        const albums = artist.album ?? [];
+        const albums = (artist.album ?? []).slice(0, ARTIST_ALBUM_LIMIT);
         const topSongs = await fetchTopSongs({
           id,
           name: artist.name,
@@ -493,23 +536,6 @@ export async function buildBrowseTree(): Promise<BrowseTreeBuild> {
         ];
         tree[artistParent] = children;
         recordParentTracks(artistParent, children);
-        // Ensure each linked album also has a tracklist node prefetched.
-        for (const a of albums) {
-          const albumParent = `album:${a.id}`;
-          if (!tree[albumParent]) {
-            try {
-              const rsp = await getAlbum(a.id);
-              const songs = rsp.album.song ?? [];
-              snapshot.albums.set(a.id, rsp.album);
-              for (const s of songs) snapshot.tracks.set(s.id, s);
-              tree[albumParent] = songs.map((s) => trackNode(s, albumParent));
-              recordParentTracks(albumParent, tree[albumParent]);
-            } catch {
-              failed();
-              tree[albumParent] = [];
-            }
-          }
-        }
       } catch {
         failed();
         tree[`artist:${id}`] = [];
@@ -517,7 +543,43 @@ export async function buildBrowseTree(): Promise<BrowseTreeBuild> {
     },
   );
 
+  // Left out, a parent the car is showing would read as emptied by this push.
+  for (const album of onDemandCache().values()) {
+    if (!tree[`album:${album.id}`]) addAlbumToTree(tree, album);
+  }
+
+  currentTree = tree;
   return { tree, complete };
+}
+
+/**
+ * Children for a parent the pushed tree doesn't hold, fetched when the car
+ * opens it. Only `album:` parents: those are the ones the build lists without
+ * prefetching. Null when the parent isn't one, or the fetch failed — the car
+ * must not keep an empty album for good.
+ */
+export function loadOnDemandChildren(
+  parentId: string,
+): Promise<BrowseNode[] | null> {
+  if (!parentId.startsWith("album:")) return Promise.resolve(null);
+  const existing = currentTree[parentId];
+  if (existing) return Promise.resolve(existing);
+  const pending = inFlightChildren.get(parentId);
+  if (pending) return pending;
+  const id = parentId.slice("album:".length);
+  const load = (async () => {
+    try {
+      const album = onDemandCache().get(id) ?? (await getAlbum(id)).album;
+      rememberOnDemandAlbum(album);
+      return addAlbumToTree(currentTree, album);
+    } catch {
+      return null;
+    } finally {
+      inFlightChildren.delete(parentId);
+    }
+  })();
+  inFlightChildren.set(parentId, load);
+  return load;
 }
 
 /**

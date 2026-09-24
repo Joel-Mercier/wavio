@@ -17,6 +17,10 @@ const mockHeadlessTasks = new Map<
 let mockAuthListener: (() => void) | null = null;
 const mockBuild = jest.fn();
 const mockSetPlaybackState = jest.fn();
+const mockSetChildren = jest.fn();
+const mockNotifyReady = jest.fn();
+const mockLoadOnDemandChildren = jest.fn();
+let mockChildrenListener: ((parentId: string) => void) | null = null;
 
 jest.mock("react-native", () => ({
   Platform: { OS: "android" },
@@ -48,8 +52,18 @@ jest.mock("@/services/carAuto/bridge", () => ({
   CarAutoBridge: {
     available: true,
     setVerbose: jest.fn(),
-    notifyReady: jest.fn(),
+    notifyReady: () => mockNotifyReady(),
     setNodes: jest.fn(),
+    setChildren: (parentId: string, nodes: unknown) =>
+      mockSetChildren(parentId, nodes),
+    onChildrenRequest: (listener: (parentId: string) => void) => {
+      // Native only emits once notifyReady has marked JS ready.
+      if (mockNotifyReady.mock.calls.length > 0) {
+        throw new Error("children listener registered after notifyReady");
+      }
+      mockChildrenListener = listener;
+      return () => {};
+    },
     setNowPlaying: jest.fn(),
     setQueue: jest.fn(),
     setQueueIndex: jest.fn(),
@@ -74,6 +88,8 @@ jest.mock("@/services/carAuto/carplay", () => ({
 jest.mock("@/services/carAuto/play", () => ({ handleBrowsePlay: jest.fn() }));
 jest.mock("@/services/carAuto/tree", () => ({
   buildBrowseTree: () => mockBuild(),
+  loadOnDemandChildren: (parentId: string) =>
+    mockLoadOnDemandChildren(parentId),
   getSnapshot: () => ({
     tracks: new Map([["t", {}]]),
     albums: new Map(),
@@ -156,6 +172,10 @@ beforeEach(() => {
   mockBuild.mockReset();
   mockBuild.mockResolvedValue({ tree: {}, complete: true });
   mockSetPlaybackState.mockReset();
+  mockSetChildren.mockReset();
+  mockNotifyReady.mockReset();
+  mockLoadOnDemandChildren.mockReset();
+  mockChildrenListener = null;
 });
 
 afterEach(() => {
@@ -229,5 +249,30 @@ describe("car session gating", () => {
     await expect(
       mockHeadlessTasks.get("WavioCarSession")?.()({}),
     ).resolves.toBeUndefined();
+  });
+});
+
+describe("on-demand children", () => {
+  it("answers a children request with what the tree loads", async () => {
+    const nodes = [{ id: "track|album:a1|s1", title: "S1", playable: true }];
+    mockLoadOnDemandChildren.mockResolvedValue(nodes);
+    await startSession();
+    expect(mockNotifyReady).toHaveBeenCalled();
+
+    mockChildrenListener?.("album:a1");
+    await flush();
+
+    expect(mockLoadOnDemandChildren).toHaveBeenCalledWith("album:a1");
+    expect(mockSetChildren).toHaveBeenCalledWith("album:a1", nodes);
+  });
+
+  it("passes a failed load through as null", async () => {
+    mockLoadOnDemandChildren.mockResolvedValue(null);
+    await startSession();
+
+    mockChildrenListener?.("album:a1");
+    await flush();
+
+    expect(mockSetChildren).toHaveBeenCalledWith("album:a1", null);
   });
 });

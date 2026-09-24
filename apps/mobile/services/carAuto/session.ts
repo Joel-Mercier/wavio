@@ -25,6 +25,7 @@ import { handleBrowsePlay } from "@/services/carAuto/play";
 import {
   buildBrowseTree,
   getSnapshot,
+  loadOnDemandChildren,
   localizeTreeArtwork,
 } from "@/services/carAuto/tree";
 import {
@@ -478,6 +479,11 @@ async function wire() {
     lastTrackId = null;
     pushNowPlaying();
     pushPlaybackState();
+  });
+
+  CarAutoBridge.onChildrenRequest(async (parentId) => {
+    const nodes = await loadOnDemandChildren(parentId);
+    CarAutoBridge.setChildren(parentId, nodes);
   });
 
   // Unconditional, unlike the pulse below: the native mirror seeds the car

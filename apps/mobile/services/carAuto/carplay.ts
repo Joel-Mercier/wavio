@@ -1,5 +1,6 @@
 import { Platform } from "react-native";
 import { handleBrowsePlay } from "./play";
+import { loadOnDemandChildren } from "./tree";
 import type { BrowseNode, BrowseTree } from "./types";
 import { ROOT_ID } from "./types";
 
@@ -66,6 +67,10 @@ const buildList = (
       if (node.playable) {
         await handleBrowsePlay(node.id, parentId);
         return;
+      }
+      if (currentTree && !currentTree[node.id]) {
+        const children = await loadOnDemandChildren(node.id);
+        if (children && currentTree) currentTree[node.id] = children;
       }
       try {
         const child = buildList(rn, node.title, node.id);

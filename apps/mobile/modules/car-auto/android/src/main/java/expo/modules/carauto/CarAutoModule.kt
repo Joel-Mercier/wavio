@@ -19,7 +19,7 @@ class CarAutoModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("CarAuto")
 
-    Events("play", "transport", "carConnection", "delayElapsed")
+    Events("play", "transport", "carConnection", "delayElapsed", "childrenRequest")
 
     OnCreate {
       instance = this@CarAutoModule
@@ -85,6 +85,19 @@ class CarAutoModule : Module() {
       val changed = BrowseTreeCache.setFromJson(context, json)
       CarAutoLog.d("setNodes ${BrowseTreeCache.debugSummary()} changed=${changed.size}")
       this@CarAutoModule.notifyChildrenChanged(changed)
+    }
+
+    // Answers a `childrenRequest` (see PendingChildren). A null json means JS
+    // couldn't fetch it: the waiting browse gets an empty page and nothing is
+    // stored, so opening the parent again asks again.
+    Function("setChildren") { parentId: String, json: String? ->
+      val changed = json != null && BrowseTreeCache.putChildren(parentId, json)
+      CarAutoLog.d("setChildren $parentId stored=${json != null} changed=$changed")
+      mainHandler.post {
+        PendingChildren.release(parentId)
+        // For a browse that already timed out on an empty page.
+        if (changed) this@CarAutoModule.notifyChildrenChanged(mapOf(parentId to BrowseTreeCache.childCount(parentId)))
+      }
     }
 
     // Every mirror push below records into CarPlaybackMirror *before* touching
@@ -180,6 +193,10 @@ class CarAutoModule : Module() {
     sendEvent("play", payload)
   }
 
+  fun emitChildrenRequest(parentId: String) {
+    sendEvent("childrenRequest", mapOf("parentId" to parentId))
+  }
+
   fun emitTransport(action: String, value: Double?) {
     val payload = HashMap<String, Any>(2)
     payload["action"] = action
@@ -219,6 +236,9 @@ class CarAutoModule : Module() {
     )
 
     private var pendingPlay: PendingPlay? = null
+    // Browses the car made while JS was booting. No TTL: PendingChildren has
+    // already released the host by then, and a late answer is still a useful one.
+    private val pendingChildren = LinkedHashSet<String>()
     private var pendingTransport: PendingTransport? = null
 
     @Volatile var carConnected: Boolean = false
@@ -292,11 +312,24 @@ class CarAutoModule : Module() {
       false
     }
 
+    fun deliverChildrenRequest(parentId: String) {
+      synchronized(gate) {
+        val module = instance
+        if (module != null && jsReady) {
+          module.emitChildrenRequest(parentId)
+        } else {
+          pendingChildren.add(parentId)
+        }
+      }
+    }
+
     fun markJsReady() {
       synchronized(gate) {
         jsReady = true
         syncTimerHold()
         val module = instance ?: return
+        pendingChildren.forEach(module::emitChildrenRequest)
+        pendingChildren.clear()
         val play = takePendingPlay()
         if (play != null) {
           CarAutoLog.d("flushing pending play ${play.mediaId}")
