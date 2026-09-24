@@ -1,4 +1,30 @@
-import { hashKey, QueryClient } from "@tanstack/react-query";
+jest.mock("@/config/storage", () => {
+  const { createJSONStorage } = jest.requireActual("zustand/middleware");
+  const make = () => ({
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+  });
+  return {
+    createThrottledScopedJSONStorage: () => createJSONStorage(make),
+  };
+});
+jest.mock("@/stores/auth", () => ({ currentAuthScope: () => "scope" }));
+jest.mock("@/hooks/useIsOnline", () => ({ useIsOnline: () => true }));
+jest.mock("@/config/queryClient", () => ({
+  getIsCacheRestoring: () => false,
+  subscribeCacheRestoring: () => () => {},
+}));
+
+import {
+  hashKey,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
+import * as React from "react";
+import TestRenderer from "react-test-renderer";
+import { useIsCollectionAvailableOffline } from "@/hooks/offline/useOfflineAvailability";
+import useOffline, { type OfflineTrack } from "@/stores/offline";
 
 // useIsDetailCached / useIsCollectionAvailableOffline no longer subscribe to the
 // whole query cache: each row watches the single query behind it, matched by
@@ -102,5 +128,89 @@ describe("cache event filtering by queryHash", () => {
     for (const hash of seen) expect(typeof hash).toBe("string");
 
     unsubscribe();
+  });
+});
+
+// Rendered through the hook so the store-side filtering is covered too: a
+// download drain writes progress and queue state several times per track, and
+// every Library row used to re-read its snapshot on each of them (#205).
+describe("useIsCollectionAvailableOffline", () => {
+  const makeOfflineTrack = (id: string): OfflineTrack => ({
+    id,
+    title: id,
+    duration: 1,
+    path: `/doc/${id}.mp3`,
+    size: 1,
+    downloadedAt: "2026-01-01T00:00:00.000Z",
+  });
+
+  const roots: TestRenderer.ReactTestRenderer[] = [];
+  afterEach(() => {
+    TestRenderer.act(() => {
+      for (const root of roots.splice(0)) root.unmount();
+    });
+  });
+
+  const mount = (client: QueryClient, id: string | undefined) => {
+    const seen: boolean[] = [];
+    const Probe = () => {
+      seen.push(useIsCollectionAvailableOffline("playlist", id));
+      return null;
+    };
+    TestRenderer.act(() => {
+      roots.push(
+        TestRenderer.create(
+          React.createElement(
+            QueryClientProvider,
+            { client },
+            React.createElement(Probe),
+          ),
+        ),
+      );
+    });
+    return seen;
+  };
+
+  beforeEach(() => {
+    useOffline.setState({
+      downloadedTracks: {},
+      downloadedCollections: {},
+      downloadProgress: {},
+      downloadQueue: [],
+    });
+  });
+
+  it("flips once the last track lands, ignoring progress writes", () => {
+    const client = makeClient();
+    client.setQueryData(["playlist", "p1"], {
+      playlist: { id: "p1", entry: [{ id: "a" }, { id: "b" }] },
+    });
+    useOffline.getState().addDownloadedTrack(makeOfflineTrack("a"));
+    const seen = mount(client, "p1");
+    expect(seen).toEqual([false]);
+
+    TestRenderer.act(() => {
+      useOffline.getState().setDownloadProgress("b", {
+        trackId: "b",
+        status: "downloading",
+        progress: 0,
+      });
+    });
+    expect(seen).toEqual([false]);
+
+    TestRenderer.act(() => {
+      useOffline.getState().completeDownload(makeOfflineTrack("b"));
+    });
+    expect(seen).toEqual([false, true]);
+  });
+
+  it("never subscribes without an id", () => {
+    const client = makeClient();
+    const subscribe = jest.spyOn(useOffline, "subscribe");
+    const seen = mount(client, undefined);
+
+    expect(seen).toEqual([false]);
+    expect(subscribe).not.toHaveBeenCalled();
+    subscribe.mockRestore();
   });
 });

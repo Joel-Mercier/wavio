@@ -276,7 +276,8 @@ describe("downloadTracks", () => {
     await done;
 
     expect(writes() - before).toBe(1);
-    expect(state().downloadProgress.a?.status).toBe("completed");
+    expect(state().getDownloadedTrack("a")).toBeDefined();
+    expect(state().downloadProgress.a).toBeUndefined();
     expect(state().downloadQueue).toHaveLength(0);
   });
 });
@@ -297,5 +298,44 @@ describe("resume", () => {
 
     expect(writes() - before).toBe(1);
     expect(state().downloadProgress.t199?.status).toBe("failed");
+  });
+
+  it("drops the progress entries of tracks already on disk in one write", () => {
+    const { offlineDownloadService, state, writes } = importService();
+    state().addDownloadedTracks(
+      Array.from({ length: 200 }, (_, i) => makeOfflineTrack(`d${i}`, "user")),
+    );
+    state().setManyDownloadProgress([
+      ...Array.from({ length: 200 }, (_, i) => ({
+        trackId: `d${i}`,
+        status: "paused" as const,
+        progress: 100,
+      })),
+      { trackId: "f", status: "failed", progress: 0, error: "boom" },
+    ]);
+
+    const before = writes();
+    offlineDownloadService.resume();
+
+    expect(writes() - before).toBe(1);
+    expect(state().downloadProgress.d0).toBeUndefined();
+    expect(state().downloadProgress.d199).toBeUndefined();
+    expect(state().downloadProgress.f?.status).toBe("failed");
+  });
+
+  it("keeps the progress entry of a downloaded track that is queued again", () => {
+    const { offlineDownloadService, state } = importService();
+    holdDownloads();
+    state().addDownloadedTracks([makeOfflineTrack("a", "user")]);
+    state().addToDownloadQueue(makeChild("a"));
+    state().setDownloadProgress("a", {
+      trackId: "a",
+      status: "pending",
+      progress: 0,
+    });
+
+    offlineDownloadService.resume();
+
+    expect(state().downloadProgress.a).toBeDefined();
   });
 });

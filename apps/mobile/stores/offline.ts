@@ -74,12 +74,10 @@ export type OfflineCollection = {
 // so a resumed auto download is still removable by disabling extended offline.
 export type QueuedTrack = Child & { offlineSource?: OfflineSource };
 
-export type DownloadStatus =
-  | "pending"
-  | "downloading"
-  | "completed"
-  | "failed"
-  | "paused";
+// No "completed": a finished download drops its progress entry, since
+// downloadedTracks already records it and every entry kept here is re-spread and
+// re-persisted on each write.
+export type DownloadStatus = "pending" | "downloading" | "failed" | "paused";
 
 export type DownloadProgress = {
   trackId: string;
@@ -111,6 +109,7 @@ interface OfflineStore {
   setDownloadProgress: (trackId: string, progress: DownloadProgress) => void;
   setManyDownloadProgress: (entries: DownloadProgress[]) => void;
   removeDownloadProgress: (trackId: string) => void;
+  removeManyDownloadProgress: (trackIds: string[]) => void;
   clearFailedDownloads: () => void;
 
   downloadQueue: QueuedTrack[];
@@ -399,6 +398,17 @@ const useOfflineBase = create<OfflineStore>()(
         });
       },
 
+      removeManyDownloadProgress: (trackIds) => {
+        if (trackIds.length === 0) return;
+        set((state) => {
+          const downloadProgress = { ...state.downloadProgress };
+          for (const trackId of trackIds) {
+            delete downloadProgress[trackId];
+          }
+          return { downloadProgress };
+        });
+      },
+
       clearFailedDownloads: () => {
         set((state) => {
           const remaining: Record<string, DownloadProgress> = {};
@@ -480,18 +490,15 @@ const useOfflineBase = create<OfflineStore>()(
       },
 
       completeDownload: (track) => {
-        set((state) => ({
-          downloadedTracks: { ...state.downloadedTracks, [track.id]: track },
-          downloadQueue: state.downloadQueue.filter((t) => t.id !== track.id),
-          downloadProgress: {
-            ...state.downloadProgress,
-            [track.id]: {
-              trackId: track.id,
-              status: "completed",
-              progress: 100,
-            },
-          },
-        }));
+        set((state) => {
+          const { [track.id]: _done, ...downloadProgress } =
+            state.downloadProgress;
+          return {
+            downloadedTracks: { ...state.downloadedTracks, [track.id]: track },
+            downloadQueue: state.downloadQueue.filter((t) => t.id !== track.id),
+            downloadProgress,
+          };
+        });
       },
 
       failDownload: (progress, dequeue) => {

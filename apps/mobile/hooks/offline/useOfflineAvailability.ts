@@ -4,7 +4,7 @@ import {
   type QueryKey,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useRef, useSyncExternalStore } from "react";
 import {
   getIsCacheRestoring,
   subscribeCacheRestoring,
@@ -143,26 +143,62 @@ export function useIsCollectionAvailableOffline(
   id: string | undefined,
 ): boolean {
   const queryClient = useQueryClient();
-  // The result reads exactly one query ([kind, id]) plus the offline store, so
-  // those are the only two things worth waking this row for.
+  // The result reads exactly one query ([kind, id]) plus the two offline maps,
+  // so those are the only things worth waking this row for — not the progress
+  // and queue writes a download drain makes several times per track (#205).
   const queryHash = useMemo(() => hashKey([kind, id]), [kind, id]);
+  const last = useRef<{
+    hash: string;
+    collections: unknown;
+    tracks: unknown;
+    data: unknown;
+    value: boolean;
+  } | null>(null);
 
   const subscribe = useCallback(
     (cb: () => void) => {
+      if (!id) return noopUnsubscribe;
       const unsubCache = subscribeToQuery(queryClient, queryHash, cb);
-      const unsubOffline = useOffline.subscribe(cb);
+      const unsubOffline = useOffline.subscribe((state, prev) => {
+        if (
+          state.downloadedTracks !== prev.downloadedTracks ||
+          state.downloadedCollections !== prev.downloadedCollections
+        ) {
+          cb();
+        }
+      });
       return () => {
         unsubCache();
         unsubOffline();
       };
     },
-    [queryClient, queryHash],
+    [queryClient, queryHash, id],
   );
 
-  const getSnapshot = useCallback(
-    () => isCollectionAvailableOffline(queryClient, kind, id),
-    [queryClient, kind, id],
-  );
+  const getSnapshot = useCallback(() => {
+    if (!id) return false;
+    const { downloadedTracks, downloadedCollections } = useOffline.getState();
+    const data = queryClient.getQueryCache().get(queryHash)?.state.data;
+    const prev = last.current;
+    if (
+      prev &&
+      prev.hash === queryHash &&
+      prev.collections === downloadedCollections &&
+      prev.tracks === downloadedTracks &&
+      prev.data === data
+    ) {
+      return prev.value;
+    }
+    const value = isCollectionAvailableOffline(queryClient, kind, id);
+    last.current = {
+      hash: queryHash,
+      collections: downloadedCollections,
+      tracks: downloadedTracks,
+      data,
+      value,
+    };
+    return value;
+  }, [queryClient, queryHash, kind, id]);
 
   return useSyncExternalStore(subscribe, getSnapshot);
 }

@@ -419,12 +419,17 @@ export class OfflineDownloadService {
     // Any progress entry stuck in "downloading" or "pending" from a killed
     // session is stale: nothing is actually downloading it. Mark as failed
     // unless the track is still in the queue (in which case we'll resume it).
+    // Entries for tracks already on disk are dropped too: earlier builds kept a
+    // "completed" entry per download, which grew the store by one per track.
     const queuedIds = new Set(offlineStore.downloadQueue.map((t) => t.id));
     const interrupted: DownloadProgress[] = [];
+    const settled: string[] = [];
     for (const [id, progress] of Object.entries(
       offlineStore.downloadProgress,
     )) {
-      if (
+      if (id in offlineStore.downloadedTracks && !queuedIds.has(id)) {
+        settled.push(id);
+      } else if (
         (progress.status === "downloading" || progress.status === "pending") &&
         !queuedIds.has(id)
       ) {
@@ -437,6 +442,7 @@ export class OfflineDownloadService {
       }
     }
     offlineStore.setManyDownloadProgress(interrupted);
+    offlineStore.removeManyDownloadProgress(settled);
 
     this.processQueue();
   }

@@ -8,6 +8,9 @@ import { startCarAutoSession } from "./services/carAuto/session";
 // rather than from a screen for the same reason: a headless boot has no React
 // tree, and a remote session restored at launch still has to claim the controls.
 import { startLockScreenMirror } from "./services/playback/lockScreenMirror";
+// Decides when the unreachable-server recovery poll may run (foreground,
+// playing, or a car connected) — including on a headless car boot.
+import { startRecoveryPollGate } from "./services/recoveryPollGate";
 
 try {
   startCarAutoSession();
@@ -19,4 +22,10 @@ try {
   startLockScreenMirror();
 } catch (e) {
   console.warn("[lockscreen] failed to start remote mirror", e);
+}
+
+try {
+  startRecoveryPollGate();
+} catch (e) {
+  console.warn("[network] failed to start recovery poll gate", e);
 }

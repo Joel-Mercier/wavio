@@ -75,14 +75,16 @@ import {
 import { useUpdatePlaylist } from "@/hooks/backend/usePlaylists";
 import { useCreateShare } from "@/hooks/backend/useSharing";
 import {
+  useDownloadProgress,
   useIsCollectionAvailableOffline,
   useIsDetailCached,
-  useOfflineDownloads,
+  useIsTrackAvailableOffline,
 } from "@/hooks/offline";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { isTlsTrustFailure } from "@/services/errorReporting";
 import { isPermanentWriteRefusal } from "@/services/notFound";
+import { offlineDownloadService } from "@/services/offline";
 import type { Child, PlaylistWithSongs } from "@/services/openSubsonic/types";
 import { saveTrackToDevice } from "@/services/saveTrackToDevice";
 import useAudioMuse, {
@@ -148,13 +150,6 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   const audioMuseSimilarAvailable = useAudioMuse(selectSimilarTracksAvailable);
   const audioMuseSongPathAvailable = useAudioMuse(selectSongPathAvailable);
   const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
-  const {
-    isTrackDownloaded,
-    isTrackDownloading,
-    downloadTrack,
-    removeDownloadedTrack,
-    getDownloadProgress,
-  } = useOfflineDownloads();
 
   // Only `mutate` is referentially stable on a mutation result, and the
   // memoized `api` below reaches every track row through context — depend on
@@ -175,6 +170,13 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   const quickTarget = lastTarget && !isLastTargetDeleted ? lastTarget : null;
 
   const [track, setTrack] = useState<Child | null>(null);
+  // Scoped to the open track: this provider sits at the root, and watching the
+  // whole downloaded map re-rendered it on every finished download (#205).
+  const isDownloaded = useIsTrackAvailableOffline(track?.id ?? "");
+  const downloadProgress = useDownloadProgress(track?.id ?? "");
+  const isDownloading =
+    downloadProgress?.status === "downloading" ||
+    downloadProgress?.status === "pending";
   const [ctx, setCtx] = useState<TrackActionsContextValue>({});
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showCreditsModal, setShowCreditsModal] = useState(false);
@@ -775,7 +777,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     if (!track) return;
     bottomSheetModalRef.current?.dismiss();
     try {
-      await downloadTrack(track);
+      await offlineDownloadService.downloadTrack(track);
       toast.show({
         placement: "top",
         duration: TOAST_DURATION.default,
@@ -809,7 +811,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     if (!track) return;
     bottomSheetModalRef.current?.dismiss();
     try {
-      await removeDownloadedTrack(track.id);
+      await offlineDownloadService.removeDownloadedTrack(track.id);
       toast.show({
         placement: "top",
         duration: TOAST_DURATION.default,
@@ -1061,8 +1063,8 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                   </HStack>
                 </FadeOutScaleDown>
                 {capabilities.offlineDownload &&
-                  !isTrackDownloading(track.id) &&
-                  !isTrackDownloaded(track.id) && (
+                  !isDownloading &&
+                  !isDownloaded && (
                     <FadeOutScaleDown
                       onPress={handleOfflineDownloadPress}
                       disabled={!isOnline}
@@ -1077,29 +1079,25 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                       </HStack>
                     </FadeOutScaleDown>
                   )}
-                {capabilities.offlineDownload &&
-                  isTrackDownloading(track.id) && (
+                {capabilities.offlineDownload && isDownloading && (
+                  <HStack className="items-center">
+                    <Download size={24} color={gray400} />
+                    <Text className="ml-4 text-lg text-gray-400">
+                      {t("app.tracks.downloadingForOffline")} (
+                      {downloadProgress?.progress || 0}%)
+                    </Text>
+                  </HStack>
+                )}
+                {capabilities.offlineDownload && isDownloaded && (
+                  <FadeOutScaleDown onPress={handleRemoveOfflineDownloadPress}>
                     <HStack className="items-center">
-                      <Download size={24} color={gray400} />
-                      <Text className="ml-4 text-lg text-gray-400">
-                        {t("app.tracks.downloadingForOffline")} (
-                        {getDownloadProgress(track.id)?.progress || 0}%)
+                      <X size={24} color={red500} />
+                      <Text className="ml-4 text-lg text-red-400">
+                        {t("app.tracks.removeOfflineDownload")}
                       </Text>
                     </HStack>
-                  )}
-                {capabilities.offlineDownload &&
-                  isTrackDownloaded(track.id) && (
-                    <FadeOutScaleDown
-                      onPress={handleRemoveOfflineDownloadPress}
-                    >
-                      <HStack className="items-center">
-                        <X size={24} color={red500} />
-                        <Text className="ml-4 text-lg text-red-400">
-                          {t("app.tracks.removeOfflineDownload")}
-                        </Text>
-                      </HStack>
-                    </FadeOutScaleDown>
-                  )}
+                  </FadeOutScaleDown>
+                )}
                 {capabilities.setRating && (
                   <FadeOutScaleDown onPress={handleRatingPress}>
                     <HStack className="items-center justify-between">

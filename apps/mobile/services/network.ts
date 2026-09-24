@@ -99,6 +99,10 @@ const onlineListeners = new Set<() => void>();
 const reachableListeners = new Set<() => void>();
 
 let recoveryTimer: BackgroundTimer | null = null;
+// Off while nobody can benefit from a recovery: backgrounded, nothing playing,
+// no car (services/recoveryPollGate.ts). A play press or a foreground probes on
+// its own, so recovery is only deferred, never lost.
+let recoveryPollEnabled = true;
 // A plain JS timer on purpose: RN stops it in the background, which keeps an
 // idle backgrounded app from pinging the server forever (see startHeartbeat).
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
@@ -182,7 +186,7 @@ function setServerReachable(value: boolean) {
 }
 
 function startRecoveryPoll() {
-  if (recoveryTimer) return;
+  if (recoveryTimer || !recoveryPollEnabled) return;
   recoveryTimer = setBackgroundInterval(() => {
     void probeServer();
   }, RECOVERY_POLL_MS);
@@ -193,6 +197,18 @@ function stopRecoveryPoll() {
     clearBackgroundTimer(recoveryTimer);
     recoveryTimer = null;
   }
+}
+
+export function setRecoveryPollEnabled(enabled: boolean): void {
+  if (enabled === recoveryPollEnabled) return;
+  recoveryPollEnabled = enabled;
+  if (!enabled) {
+    stopRecoveryPoll();
+    return;
+  }
+  if (!isOnline || serverReachable) return;
+  startRecoveryPoll();
+  void probeServer();
 }
 
 // Steady-state poll while the server is reachable, so a server that goes away

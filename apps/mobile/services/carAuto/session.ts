@@ -15,12 +15,11 @@ import {
   CarAutoBridge,
   type NowPlayingPayload,
 } from "@/services/carAuto/bridge";
+import { setupCarPlay, updateCarPlayTree } from "@/services/carAuto/carplay";
 import {
-  isCarPlayConnected,
-  onCarPlayConnection,
-  setupCarPlay,
-  updateCarPlayTree,
-} from "@/services/carAuto/carplay";
+  isCarConnected,
+  subscribeCarConnection,
+} from "@/services/carAuto/connection";
 import { handleBrowsePlay } from "@/services/carAuto/play";
 import {
   buildBrowseTree,
@@ -82,18 +81,6 @@ const log = (message: string, error?: unknown) => {
   if (error !== undefined) console.log(`[carauto] ${message}`, error);
   else console.log(`[carauto] ${message}`);
 };
-
-// The browse tree, its cover mirror and the position pulse only matter to a
-// car that is there to show them. Building the tree is a burst of server
-// requests and hundreds of cover downloads, which every launch used to pay with
-// no car in sight (issue #205).
-const isCarConnected = () =>
-  Platform.OS === "ios" ? isCarPlayConnected() : CarAutoBridge.isCarConnected();
-
-const subscribeCarConnection = (listener: (connected: boolean) => void) =>
-  Platform.OS === "ios"
-    ? onCarPlayConnection(listener)
-    : CarAutoBridge.onCarConnection(listener);
 
 // Must match CarTimerHold.TASK_KEY on the native side.
 const CAR_SESSION_TASK = "WavioCarSession";
@@ -304,6 +291,10 @@ async function wire() {
       rebuildQueued = true;
       return;
     }
+    // The browse tree, its cover mirror and the position pulse only matter to a
+    // car that is there to show them. Building the tree is a burst of server
+    // requests and hundreds of cover downloads, which every launch used to pay
+    // with no car in sight (issue #205).
     if (!isCarConnected()) return log("rebuild skipped: no car connected");
     const { isAuthenticated, url, username, serverType } =
       useAuthBase.getState();
