@@ -38,6 +38,7 @@ import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import ImageWithFallback from "@/components/ImageWithFallback";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import RatingModal from "@/components/RatingModal";
 import RichText from "@/components/RichText";
@@ -190,6 +191,11 @@ export default function ArtistDetail() {
       : colors?.muted === black
         ? colors?.darkVibrant
         : colors?.muted) || black;
+  const artistThumbnailFallback = (
+    <Box className="w-16 h-16 aspect-square rounded-full bg-primary-800 items-center justify-center">
+      <User size={24} color={white} />
+    </Box>
+  );
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => {
     const opacity = interpolate(
@@ -621,10 +627,11 @@ export default function ArtistDetail() {
                 >
                   <HStack className="items-center mb-6">
                     <Box className="relative">
-                      <Image
+                      <ImageWithFallback
                         source={{ uri: artworkUrl(data?.artist?.coverArt) }}
                         alt="Liked songs cover"
                         className="w-16 h-16 rounded-full aspect-square"
+                        fallback={artistThumbnailFallback}
                       />
                       <Box className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-black items-center justify-center">
                         <Heart size={14} color={emerald500} fill={emerald500} />
@@ -809,10 +816,11 @@ export default function ArtistDetail() {
                 >
                   <HStack className="items-center">
                     <Box className="relative">
-                      <Image
+                      <ImageWithFallback
                         source={{ uri: artworkUrl(data?.artist?.coverArt) }}
                         alt="All songs cover"
                         className="w-16 h-16 rounded-full aspect-square"
+                        fallback={artistThumbnailFallback}
                       />
                       <Box className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-black items-center justify-center">
                         <ListMusic size={14} color={emerald500} />

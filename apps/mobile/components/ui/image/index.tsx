@@ -1,4 +1,3 @@
-import { createImage } from "@gluestack-ui/core/image/creator";
 import type { VariantProps } from "@gluestack-ui/utils/nativewind-utils";
 import { tva } from "@gluestack-ui/utils/nativewind-utils";
 import { Image as ExpoImage } from "expo-image";
@@ -26,17 +25,21 @@ const imageStyle = tva({
   },
 });
 
-const UIImage = createImage({ Root: StyledExpoImage });
-
+// Not built on Gluestack's createImage: it rewrites a source whose `uri` is
+// falsy into `{ uri: source }`, and expo-image then throws on the non-string
+// uri. Index-backed and Jellyfin backends hand back `""` for a missing cover,
+// so every cover-less item would crash its screen (issue #208).
 type ImageProps = VariantProps<typeof imageStyle> &
-  React.ComponentProps<typeof UIImage>;
+  React.ComponentProps<typeof StyledExpoImage>;
 const Image = React.forwardRef<
-  React.ComponentRef<typeof UIImage>,
+  React.ComponentRef<typeof StyledExpoImage>,
   ImageProps & { className?: string }
 >(function Image({ size = "md", className, ...props }, ref) {
+  if (!props.source) return null;
   return (
-    <UIImage
+    <StyledExpoImage
       cachePolicy="memory-disk"
+      role="img"
       {...props}
       // Cover art from a server behind an authenticating proxy needs that
       // server's custom headers, and every caller builds its source inline.
