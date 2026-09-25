@@ -2178,7 +2178,12 @@
 					"saveSuccessMessage": "Salvato per l'ascolto offline",
 					"saveErrorMessage": "Si è verificato un errore durante il salvataggio per l'ascolto offline",
 					"removeSuccessMessage": "Rimosso dai download offline",
-					"removeErrorMessage": "Si è verificato un errore durante la rimozione dei download offline"
+					"removeErrorMessage": "Si è verificato un errore durante la rimozione dei download offline",
+					"removingDownloads": "Removing downloads…",
+					"removeConfirmTitle": "Remove offline downloads?",
+					"removeConfirmAction": "Rimuovi",
+					"removeConfirmDescription_one": "{{count}} downloaded song will be deleted from this device. Songs also saved in another album or playlist are kept.",
+					"removeConfirmDescription_other": "{{count}} downloaded songs will be deleted from this device. Songs also saved in another album or playlist are kept."
 				},
 				"favorites": "Preferiti",
 				"filters": {
