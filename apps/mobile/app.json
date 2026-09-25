@@ -102,6 +102,7 @@
       "./plugins/withDependenciesInfo",
       "./plugins/withSslTrust",
       "./plugins/withInstallApkPermission",
+      "./plugins/withProfileable",
       [
         "@sentry/react-native/expo",
         {

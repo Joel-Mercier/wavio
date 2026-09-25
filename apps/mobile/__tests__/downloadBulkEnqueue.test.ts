@@ -65,6 +65,10 @@ jest.mock("@/services/offline/collections", () => ({
 
 const mockDownload = jest.fn();
 
+jest.mock("expo-file-system/legacy", () => ({
+  deleteAsync: async () => {},
+}));
+
 jest.mock("expo-file-system", () => ({
   Paths: { document: "/doc" },
   Directory: class {
@@ -153,6 +157,9 @@ function importService() {
   };
 }
 
+// Completions are committed to the store in batches (LANDED_COMMIT_MS).
+const commitWindow = () => jest.advanceTimersByTimeAsync(300);
+
 beforeEach(() => {
   jest.useFakeTimers();
   mockDownload.mockReset();
@@ -192,6 +199,7 @@ describe("downloadTracks", () => {
     expect(settled).toBe(false);
 
     release.get("b")?.();
+    await commitWindow();
     await done;
     expect(state().isTrackDownloaded("a")).toBe(true);
     expect(state().isTrackDownloaded("b")).toBe(true);
@@ -260,25 +268,94 @@ describe("downloadTracks", () => {
 
     const second = offlineDownloadService.downloadTracks([makeChild("a")]);
     release.get("a")?.();
+    await commitWindow();
 
     await expect(Promise.all([first, second])).resolves.toBeDefined();
     expect(mockDownload).toHaveBeenCalledTimes(1);
   });
 
-  it("records a completed download in a single store write", async () => {
+  it("keeps a promotion made while the auto download was in flight", async () => {
+    const { offlineDownloadService, state } = importService();
+    const { release } = holdDownloads();
+    offlineDownloadService.enqueueTracks([makeChild("a")], "auto");
+    await jest.advanceTimersByTimeAsync(0);
+    expect(mockDownload).toHaveBeenCalledTimes(1);
+
+    const saved = offlineDownloadService.downloadTracks([makeChild("a")]);
+    release.get("a")?.();
+    await commitWindow();
+    await saved;
+
+    expect(state().getDownloadedTrack("a")?.source).toBe("user");
+  });
+
+  it("commits downloads that land together in a single store write", async () => {
     const { offlineDownloadService, state, writes } = importService();
     const { release } = holdDownloads();
-    const done = offlineDownloadService.downloadTracks([makeChild("a")]);
+    const done = offlineDownloadService.downloadTracks(
+      ["a", "b", "c"].map(makeChild),
+    );
     await jest.advanceTimersByTimeAsync(0);
 
     const before = writes();
-    release.get("a")?.();
+    for (const id of ["a", "b", "c"]) release.get(id)?.();
+    await jest.advanceTimersByTimeAsync(0);
+    expect(writes() - before).toBe(0);
+
+    await commitWindow();
     await done;
 
     expect(writes() - before).toBe(1);
-    expect(state().getDownloadedTrack("a")).toBeDefined();
+    expect(state().getDownloadedTrack("c")).toBeDefined();
     expect(state().downloadProgress.a).toBeUndefined();
     expect(state().downloadQueue).toHaveLength(0);
+  });
+
+  it("never picks a landed download up again before it is committed", async () => {
+    const { offlineDownloadService } = importService();
+    const { release } = holdDownloads();
+    offlineDownloadService.enqueueTracks(
+      ["a", "b", "c", "d", "e"].map(makeChild),
+      "user",
+    );
+    await jest.advanceTimersByTimeAsync(0);
+
+    release.get("a")?.();
+    await jest.advanceTimersByTimeAsync(0);
+
+    const requested = mockDownload.mock.calls.map(([url]) => idOf(url));
+    expect(requested).toEqual(["a", "b", "c", "d"]);
+  });
+
+  it("writes no downloading entry over a pending one", async () => {
+    const { offlineDownloadService, writes } = importService();
+    holdDownloads();
+    const before = writes();
+    void offlineDownloadService
+      .downloadTracks(["a", "b", "c"].map(makeChild))
+      .catch(() => {});
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(mockDownload).toHaveBeenCalledTimes(3);
+    // The queue and the pending entries, nothing per started download.
+    expect(writes() - before).toBe(2);
+  });
+
+  it("commits a landed download before a removal looks for it", async () => {
+    const { offlineDownloadService, state } = importService();
+    const { release } = holdDownloads();
+    void offlineDownloadService
+      .downloadTracks([makeChild("a")])
+      .catch(() => {});
+    await jest.advanceTimersByTimeAsync(0);
+    release.get("a")?.();
+    await jest.advanceTimersByTimeAsync(0);
+
+    const removal = offlineDownloadService.removeDownloadedTracks(["a"]);
+    await commitWindow();
+    await removal;
+
+    expect(state().isTrackDownloaded("a")).toBe(false);
   });
 });
 

@@ -123,7 +123,12 @@ describe("featured artists", () => {
     const albums = [
       ...seedAlbums,
       { id: "va-1", name: "Hits", artistId: "va", isCompilation: true },
-      { id: "va-2", name: "More Hits", artistId: "va2", artist: "Various Artists" },
+      {
+        id: "va-2",
+        name: "More Hits",
+        artistId: "va2",
+        artist: "Various Artists",
+      },
       { id: "va-3", name: "Mix", artistId: "va3", artist: "VA" },
     ] as unknown as AlbumID3[];
     for (let seed = 0; seed < 50; seed++) {

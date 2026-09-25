@@ -37,6 +37,11 @@
       "/node_modules/@react-native/babel-preset/"
     ]
   },
+  "reanimated": {
+    "staticFeatureFlags": {
+      "ANDROID_SYNCHRONOUSLY_UPDATE_UI_PROPS": true
+    }
+  },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo/html-elements": "^57.0.0",

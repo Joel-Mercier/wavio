@@ -86,7 +86,7 @@ export type DownloadProgress = {
   error?: string;
 };
 
-interface OfflineStore {
+export interface OfflineStore {
   offlineModeEnabled: boolean;
   setOfflineModeEnabled: (enabled: boolean) => void;
 
@@ -124,7 +124,7 @@ interface OfflineStore {
   clearDownloadQueue: () => void;
   // One write per download outcome instead of three or four: every write
   // re-serializes the persisted store, queue included.
-  completeDownload: (track: OfflineTrack) => void;
+  completeDownloads: (tracks: OfflineTrack[]) => void;
   failDownload: (progress: DownloadProgress, dequeue: boolean) => void;
 
   // Offline album/playlist/artist covers downloaded by the extended-offline
@@ -504,13 +504,19 @@ const useOfflineBase = create<OfflineStore>()(
         set({ downloadQueue: [] });
       },
 
-      completeDownload: (track) => {
+      completeDownloads: (tracks) => {
+        if (tracks.length === 0) return;
         set((state) => {
-          const { [track.id]: _done, ...downloadProgress } =
-            state.downloadProgress;
+          const done = new Set(tracks.map((track) => track.id));
+          const downloadedTracks = { ...state.downloadedTracks };
+          const downloadProgress = { ...state.downloadProgress };
+          for (const track of tracks) {
+            downloadedTracks[track.id] = track;
+            delete downloadProgress[track.id];
+          }
           return {
-            downloadedTracks: { ...state.downloadedTracks, [track.id]: track },
-            downloadQueue: state.downloadQueue.filter((t) => t.id !== track.id),
+            downloadedTracks,
+            downloadQueue: state.downloadQueue.filter((t) => !done.has(t.id)),
             downloadProgress,
           };
         });

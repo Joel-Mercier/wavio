@@ -199,7 +199,7 @@ describe("useIsCollectionAvailableOffline", () => {
     expect(seen).toEqual([false]);
 
     TestRenderer.act(() => {
-      useOffline.getState().completeDownload(makeOfflineTrack("b"));
+      useOffline.getState().completeDownloads([makeOfflineTrack("b")]);
     });
     expect(seen).toEqual([false, true]);
   });

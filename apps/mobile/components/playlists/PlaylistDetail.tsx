@@ -45,6 +45,7 @@ import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
+import CollectionDownloadedCount from "@/components/offline/CollectionDownloadedCount";
 import RemoveDownloadsDialog from "@/components/offline/RemoveDownloadsDialog";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import SaveGeneratedPlaylistDialog from "@/components/playlists/SaveGeneratedPlaylistDialog";
@@ -1247,8 +1248,10 @@ export default function PlaylistDetail() {
                     <Download size={24} color={gray400} />
                     <Text className="ml-4 text-lg text-gray-400">
                       {t("app.shared.offline.savingForOffline")} (
-                      {playlistDownload.downloadedCount}/
-                      {playlistDownload.total})
+                      <CollectionDownloadedCount
+                        trackedIds={playlistDownload.trackedIds}
+                      />
+                      /{playlistDownload.total})
                     </Text>
                   </HStack>
                 ) : playlistDownload.status === "all" ? (
@@ -1261,19 +1264,32 @@ export default function PlaylistDetail() {
                     </HStack>
                   </FadeOutScaleDown>
                 ) : (
-                  <FadeOutScaleDown
-                    onPress={handleSaveOfflinePress}
-                    disabled={!isOnline}
-                  >
-                    <HStack className="items-center">
-                      <Box className="size-6 rounded-full bg-emerald-500 items-center justify-center">
-                        <ArrowDown size={20} color={black} />
-                      </Box>
-                      <Text className="ml-4 text-lg text-emerald-400">
-                        {t("app.shared.offline.saveForOfflineListening")}
-                      </Text>
-                    </HStack>
-                  </FadeOutScaleDown>
+                  <>
+                    <FadeOutScaleDown
+                      onPress={handleSaveOfflinePress}
+                      disabled={!isOnline}
+                    >
+                      <HStack className="items-center">
+                        <Box className="size-6 rounded-full bg-emerald-500 items-center justify-center">
+                          <ArrowDown size={20} color={black} />
+                        </Box>
+                        <Text className="ml-4 text-lg text-emerald-400">
+                          {t("app.shared.offline.saveForOfflineListening")}
+                        </Text>
+                      </HStack>
+                    </FadeOutScaleDown>
+                    {playlistDownload.status === "partial" &&
+                      playlistDownload.isRegistered && (
+                        <FadeOutScaleDown onPress={handleRemoveOfflinePress}>
+                          <HStack className="items-center">
+                            <X size={24} color={red500} />
+                            <Text className="ml-4 text-lg text-red-400">
+                              {t("app.shared.offline.removeOfflineDownloads")}
+                            </Text>
+                          </HStack>
+                        </FadeOutScaleDown>
+                      )}
+                  </>
                 ))}
               <FadeOutScaleDown onPress={handlePlaylistUpdatePress}>
                 <HStack className="items-center">
@@ -1334,7 +1350,7 @@ export default function PlaylistDetail() {
         isOpen={showRemoveDownloadsDialog}
         onClose={() => setShowRemoveDownloadsDialog(false)}
         onConfirm={handleConfirmRemoveOffline}
-        count={playlistDownload.downloadedCount}
+        trackedIds={playlistDownload.trackedIds}
       />
       <AlertDialog
         isOpen={showAlertDialog}

@@ -7,6 +7,7 @@
 const mockReferencedElsewhere = { ids: new Set<string>() };
 const mockScope = { value: "scope" };
 const mockDeleted: string[] = [];
+const mockEvents: string[] = [];
 
 jest.mock("@/config/storage", () => {
   const mem = new Map<string, string>();
@@ -26,7 +27,7 @@ jest.mock("@/config/storage", () => {
     createDynamicScopedStorage: () => make(),
     createThrottledScopedJSONStorage: () =>
       jest.requireActual("zustand/middleware").createJSONStorage(() => make()),
-    flushPendingScopedWrites: () => {},
+    flushPendingScopedWrites: () => mockEvents.push("flush"),
     getAuthScope: () => "scope",
   };
 });
@@ -72,6 +73,14 @@ jest.mock("@/services/offline", () => ({
 }));
 jest.mock("@/services/offline/collections", () => ({
   trackIdsReferencedByCollections: () => mockReferencedElsewhere.ids,
+}));
+
+jest.mock("expo-file-system/legacy", () => ({
+  deleteAsync: async (uri: string) => {
+    if (uri.includes("locked")) throw new Error("EACCES");
+    mockDeleted.push(uri);
+    mockEvents.push("delete");
+  },
 }));
 
 jest.mock("expo-file-system", () => {
@@ -129,6 +138,7 @@ beforeEach(() => {
   mockReferencedElsewhere.ids = new Set<string>();
   mockScope.value = "scope";
   mockDeleted.length = 0;
+  mockEvents.length = 0;
   useOffline.setState({
     downloadedTracks: { onDisk: downloaded("onDisk") },
     downloadedCollections: {},
@@ -200,7 +210,7 @@ const seed = (ids: string[], extra: Partial<OfflineTrack> = {}) => {
 const ids = (n: number) => Array.from({ length: n }, (_, i) => `t${i}`);
 
 describe("removeDownloadedTracks", () => {
-  it("commits the store once per slice, not twice per track", async () => {
+  it("drops every entry in one write, persisted before any file is deleted", async () => {
     seed(ids(250));
     let writes = 0;
     const unsubscribe = useOffline.subscribe(() => writes++);
@@ -208,7 +218,8 @@ describe("removeDownloadedTracks", () => {
     await offlineDownloadService.removeDownloadedTracks(ids(250));
     unsubscribe();
 
-    expect(writes).toBe(3);
+    expect(writes).toBe(1);
+    expect(mockEvents[0]).toBe("flush");
     expect(mockDeleted).toHaveLength(250);
     expect(useOffline.getState().downloadedTracks).toEqual({});
   });
@@ -226,7 +237,7 @@ describe("removeDownloadedTracks", () => {
     expect(useOffline.getState().downloadProgress).toEqual({});
   });
 
-  it("keeps the entry of a track whose file could not be deleted", async () => {
+  it("restores the entry of a track whose file could not be deleted", async () => {
     seed(["a", "locked"]);
 
     await offlineDownloadService.removeDownloadedTracks(["a", "locked"]);
@@ -236,25 +247,38 @@ describe("removeDownloadedTracks", () => {
     ]);
   });
 
-  it("stops at the next slice once the scope has changed", async () => {
-    seed(ids(250));
+  it("finishes the deletes after a scope switch without writing to the new scope", async () => {
+    seed(["a", "locked"]);
     const unsubscribe = useOffline.subscribe(() => {
       mockScope.value = "other";
     });
 
-    await offlineDownloadService.removeDownloadedTracks(ids(250));
+    await offlineDownloadService.removeDownloadedTracks(["a", "locked"]);
     unsubscribe();
 
-    expect(mockDeleted).toHaveLength(100);
-    expect(Object.keys(useOffline.getState().downloadedTracks)).toHaveLength(
-      150,
-    );
+    expect(mockDeleted).toEqual(["/doc/offline/scope/a.mp3"]);
+    expect(useOffline.getState().downloadedTracks).toEqual({});
+  });
+
+  it("holds back a download of a track until its file is deleted", async () => {
+    seed(["a"]);
+    const removal = offlineDownloadService.removeDownloadedTracks(["a"]);
+    const internals = offlineDownloadService as unknown as {
+      processQueue: () => void;
+      activeIds: Set<string>;
+    };
+    useOffline.setState({ downloadQueue: [queued("a")] });
+    internals.processQueue();
+
+    expect(internals.activeIds.has("a")).toBe(false);
+    useOffline.setState({ downloadQueue: [] });
+    await removal;
   });
 
   it("doesn't clobber a download completing mid-removal", async () => {
     seed(ids(150));
     const removal = offlineDownloadService.removeDownloadedTracks(ids(150));
-    useOffline.getState().completeDownload(downloaded("fresh"));
+    useOffline.getState().completeDownloads([downloaded("fresh")]);
     await removal;
 
     expect(Object.keys(useOffline.getState().downloadedTracks)).toEqual([
@@ -289,32 +313,18 @@ describe("removeDownloadedTracks", () => {
 });
 
 describe("removeCollection", () => {
-  it("keeps the collection registered until its tracks are gone", async () => {
+  it("unregisters the collection with its tracks, persisted before any file is deleted", async () => {
     seed(ids(150));
     const removal = offlineDownloadService.removeCollection("c1", ids(150));
 
-    expect(useOffline.getState().downloadedCollections.c1).toBeDefined();
+    expect(useOffline.getState().downloadedCollections.c1).toBeUndefined();
+    expect(useOffline.getState().downloadedTracks).toEqual({});
     expect(offlineDownloadService.isRemovingCollection("c1")).toBe(true);
-    expect(
-      Object.keys(useOffline.getState().downloadedTracks).length,
-    ).toBeGreaterThan(0);
+    expect(mockEvents[0]).toBe("flush");
 
     await removal;
     expect(offlineDownloadService.isRemovingCollection("c1")).toBe(false);
-    expect(useOffline.getState().downloadedCollections.c1).toBeUndefined();
-    expect(useOffline.getState().downloadedTracks).toEqual({});
-  });
-
-  it("leaves the collection alone when the scope changed mid-removal", async () => {
-    seed(ids(150));
-    const unsubscribe = useOffline.subscribe(() => {
-      mockScope.value = "other";
-    });
-
-    await offlineDownloadService.removeCollection("c1", ids(150));
-    unsubscribe();
-
-    expect(useOffline.getState().downloadedCollections.c1).toBeDefined();
+    expect(mockDeleted).toHaveLength(150);
   });
 
   it("ignores a second removal of a collection already being removed", async () => {

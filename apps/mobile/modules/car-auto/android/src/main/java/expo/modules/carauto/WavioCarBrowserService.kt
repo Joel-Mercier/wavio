@@ -226,11 +226,9 @@ class WavioCarBrowserService : MediaLibraryService() {
       return Futures.immediateFuture(result)
     }
 
-    // Honor the controller's paging window. Each browse MediaItem embeds its
-    // (downscaled) local cover art as bytes, so returning a whole large list
-    // in one shot could exceed the binder transaction limit. Slicing to the
-    // requested page bounds each transaction; Android Auto pages through with
-    // a sane pageSize, then stops when a short page comes back.
+    // Honor the controller's paging window for controllers that page. Android
+    // Auto doesn't: it asks with pageSize=Int.MAX_VALUE and gets the whole
+    // list, which is why tree.ts caps the long tracklists.
     private fun childrenPage(
       parentId: String,
       page: Int,

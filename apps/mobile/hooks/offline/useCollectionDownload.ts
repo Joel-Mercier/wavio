@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { offlineDownloadService } from "@/services/offline";
 import {
   artworkCacheService,
@@ -11,7 +12,7 @@ import {
   collectionRemovalIds,
 } from "@/services/offline/collectionDownloadPlan";
 import type { Child } from "@/services/openSubsonic/types";
-import useOffline from "@/stores/offline";
+import useOffline, { type OfflineStore } from "@/stores/offline";
 
 export type {
   CollectionDownloadDrift,
@@ -43,6 +44,47 @@ function cacheCollectionArtwork(meta: DownloadCollectionMeta, songs: Child[]) {
   cacheArtworkForTracks(songs);
 }
 
+function notYetDownloaded(songs: Child[]) {
+  const { downloadedTracks } = useOffline.getState();
+  return songs.filter((song) => !(song.id in downloadedTracks));
+}
+
+// Re-runs `compute` only when the tracked list or one of the two maps it reads
+// is replaced: every other offline write (artwork, queue) reuses the last value.
+function memoizeOverDownloadMaps<T>(
+  trackedIds: string[] | undefined,
+  compute: (ids: string[], state: OfflineStore) => T,
+) {
+  let downloaded: OfflineStore["downloadedTracks"] | undefined;
+  let progress: OfflineStore["downloadProgress"] | undefined;
+  let last: T | undefined;
+  return (state: OfflineStore): T => {
+    if (
+      last === undefined ||
+      state.downloadedTracks !== downloaded ||
+      state.downloadProgress !== progress
+    ) {
+      downloaded = state.downloadedTracks;
+      progress = state.downloadProgress;
+      last = compute(trackedIds ?? [], state);
+    }
+    return last;
+  };
+}
+
+export function useCollectionDownloadedCount(trackedIds: string[] | undefined) {
+  const select = useMemo(
+    () =>
+      memoizeOverDownloadMaps(trackedIds, (ids, state) => {
+        let count = 0;
+        for (const id of ids) if (id in state.downloadedTracks) count++;
+        return count;
+      }),
+    [trackedIds],
+  );
+  return useOffline(select);
+}
+
 // Drives the "Save for offline listening" / "Remove downloads" action on album
 // and playlist detail sheets, plus the header badge. Reactive over the offline
 // store so the row label and badge update as the queue drains. When `meta` is
@@ -61,8 +103,6 @@ export function useCollectionDownload(
   songs: Child[] | undefined,
   meta?: DownloadCollectionMeta,
 ) {
-  const downloadedTracks = useOffline((s) => s.downloadedTracks);
-  const downloadProgress = useOffline((s) => s.downloadProgress);
   const collection = useOffline((s) =>
     meta ? s.downloadedCollections[meta.id] : undefined,
   );
@@ -77,15 +117,23 @@ export function useCollectionDownload(
   // nothing but the live list to measure against.
   const trackedIds = collection?.trackIds ?? liveIds;
 
-  const { total, downloadedCount, status } = useMemo(
+  // Only the coarse status, so a detail screen re-renders when the collection
+  // changes state rather than on every track of a drain (issue #205). The
+  // running count lives in useCollectionDownloadedCount, for the few leaves
+  // that show it.
+  const selectStatus = useMemo(
     () =>
-      collectionDownloadStatus(
-        trackedIds ?? [],
-        downloadedTracks,
-        downloadProgress,
-      ),
-    [trackedIds, downloadedTracks, downloadProgress],
+      memoizeOverDownloadMaps(trackedIds, (ids, state) => {
+        const { total, status } = collectionDownloadStatus(
+          ids,
+          state.downloadedTracks,
+          state.downloadProgress,
+        );
+        return { total, status };
+      }),
+    [trackedIds],
   );
+  const { total, status } = useOffline(useShallow(selectStatus));
 
   // Only meaningful with both lists in hand: `songs` is undefined while the
   // query loads, and while offline it may be paused entirely — neither is
@@ -141,9 +189,8 @@ export function useCollectionDownload(
       );
       artworkCacheService.pruneOrphaned();
     }
-    const pending = songs.filter((song) => !(song.id in downloadedTracks));
-    await offlineDownloadService.downloadTracks(pending);
-  }, [meta, collection, songs, liveIds, downloadedTracks, isRemoving]);
+    await offlineDownloadService.downloadTracks(notYetDownloaded(songs));
+  }, [meta, collection, songs, liveIds, isRemoving]);
 
   const saveAll = useCallback(async () => {
     if (!songs?.length || isRemoving) return;
@@ -169,9 +216,8 @@ export function useCollectionDownload(
       });
       cacheCollectionArtwork(meta, songs);
     }
-    const pending = songs.filter((song) => !(song.id in downloadedTracks));
-    await offlineDownloadService.downloadTracks(pending);
-  }, [songs, downloadedTracks, meta, collection, updateToServer, isRemoving]);
+    await offlineDownloadService.downloadTracks(notYetDownloaded(songs));
+  }, [songs, meta, collection, updateToServer, isRemoving]);
 
   const removeAll = useCallback(async () => {
     if (meta) {
@@ -187,16 +233,18 @@ export function useCollectionDownload(
       return;
     }
     if (!songs?.length) return;
+    const { downloadedTracks } = useOffline.getState();
     await offlineDownloadService.removeDownloadedTracks(
       songs.filter((song) => song.id in downloadedTracks).map((s) => s.id),
     );
     artworkCacheService.pruneOrphaned();
-  }, [songs, downloadedTracks, meta, collection, liveIds]);
+  }, [songs, meta, collection, liveIds]);
 
   return {
     total,
-    downloadedCount,
+    trackedIds,
     status,
+    isRegistered,
     isRemoving,
     drift,
     saveAll,

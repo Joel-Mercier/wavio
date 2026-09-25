@@ -8,6 +8,7 @@ const mockGetArtist = jest.fn();
 const mockGetAlbumList2 = jest.fn();
 const mockGetStarred2 = jest.fn();
 const mockGetPlaylists = jest.fn();
+const mockGetPlaylist = jest.fn();
 const mockFetchTopSongs = jest.fn();
 let mockScope = "server-a|joel";
 
@@ -30,7 +31,7 @@ jest.mock("@/services/backend/lists", () => ({
   getStarred2: (...args: unknown[]) => mockGetStarred2(...args),
 }));
 jest.mock("@/services/backend/playlists", () => ({
-  getPlaylist: jest.fn(),
+  getPlaylist: (...args: unknown[]) => mockGetPlaylist(...args),
   getPlaylists: (...args: unknown[]) => mockGetPlaylists(...args),
 }));
 jest.mock("@/services/topSongs", () => ({
@@ -169,5 +170,36 @@ describe("loadOnDemandChildren", () => {
 
     await expect(tree.loadOnDemandChildren("playlist:p1")).resolves.toBeNull();
     expect(mockGetAlbum).not.toHaveBeenCalled();
+  });
+});
+
+describe("long tracklists", () => {
+  const songs = (prefix: string, count: number) =>
+    Array.from({ length: count }, (_, i) => ({
+      id: `${prefix}${i}`,
+      title: `${prefix}${i}`,
+    }));
+
+  it("lists a capped set of rows but records every track for playback", async () => {
+    mockGetStarred2.mockResolvedValue({
+      starred2: { song: songs("fav", 3000) },
+    });
+    mockGetPlaylists.mockResolvedValue({
+      playlists: { playlist: [{ id: "big", name: "Big" }] },
+    });
+    mockGetPlaylist.mockResolvedValue({
+      playlist: { id: "big", name: "Big", entry: songs("pl", 5000) },
+    });
+
+    const { tree: built } = await tree.buildBrowseTree();
+    const snapshot = tree.getSnapshot();
+
+    expect(built.favorites).toHaveLength(200);
+    expect(built["playlist:big"]).toHaveLength(200);
+    expect(snapshot.parentTracks.get("favorites")).toHaveLength(3000);
+    const playlistTracks = snapshot.parentTracks.get("playlist:big");
+    expect(playlistTracks).toHaveLength(5000);
+    expect(playlistTracks?.[4999]).toBe("track|playlist:big|pl4999");
+    expect(snapshot.tracks.has("pl4999")).toBe(true);
   });
 });

@@ -60,11 +60,13 @@ export function useHasPlayableTracks(
   songs: Child[] | null | undefined,
 ): boolean {
   const isOnline = useIsOnline();
-  const downloadedTracks = useOffline((s) => s.downloadedTracks);
-  return useMemo(() => {
-    if (isOnline) return true;
-    return !!songs?.some((song) => song.id in downloadedTracks);
-  }, [isOnline, songs, downloadedTracks]);
+  // A boolean, so an online screen never re-renders as downloads land.
+  return useOffline(
+    useCallback(
+      (s) => isOnline || !!songs?.some((song) => song.id in s.downloadedTracks),
+      [isOnline, songs],
+    ),
+  );
 }
 
 // Whether a collection/detail row should be ENABLED (tappable). Online — or

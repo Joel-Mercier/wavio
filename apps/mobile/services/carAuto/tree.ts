@@ -15,7 +15,6 @@ import { currentAuthScope } from "@/stores/auth";
 import usePodcasts, { podcastFavoritesForScope } from "@/stores/podcasts";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
-import { mapInChunks } from "@/utils/mapInChunks";
 import { mapWithConcurrency } from "@/utils/mapWithConcurrency";
 import {
   CAR_ARTWORK_BUDGET,
@@ -24,7 +23,6 @@ import {
   ensureCarArtwork,
   retainCarArtwork,
 } from "./artworkMirror";
-import { CarAutoBridge } from "./bridge";
 import type { BrowseNode, BrowseTree } from "./types";
 import { ROOT_ID } from "./types";
 
@@ -53,13 +51,12 @@ const covers = (id?: string) => coversForUrl(coverUrl(id));
 // staying under typical Navidrome / reverse-proxy limits.
 const TREE_PREFETCH_CONCURRENCY = 4;
 
-// Slice size for the two lists that can run to thousands of tracks (favorites,
-// a playlist's entries); every other list in the tree is bounded by the server.
-const TRACK_NODE_CHUNK = 500;
-
-// The build runs while a car is connected, i.e. usually with the phone UI in
-// the background, where a setTimeout-based yield can stall forever.
-const yieldBetweenChunks = () => CarAutoBridge.delay(0);
+// Rows listed under Favorites or a playlist, the two lists that can run to
+// thousands of tracks. The host reads a parent whole on every open (5000 rows
+// measured at 3 MB, parcelled on the main thread, twice), and nobody scrolls
+// that far from a car. A tap still queues the whole collection: parentTracks
+// records every track, not just the listed ones.
+const CAR_TRACK_LIMIT = 200;
 
 // Album tiles listed under an artist. A compilation artist owns every
 // compilation on the server — thousands of tiles nobody scrolls through from a
@@ -135,6 +132,25 @@ const recordParentTracks = (parentId: string, nodes: BrowseNode[]) => {
   if (ids.length > 0) snapshot.parentTracks.set(parentId, ids);
 };
 
+const trackMediaId = (parentId: string, songId: string) =>
+  `track|${parentId}|${songId}`;
+
+const addLongTracklistToTree = (
+  tree: BrowseTree,
+  parentId: string,
+  songs: Child[],
+) => {
+  tree[parentId] = songs
+    .slice(0, CAR_TRACK_LIMIT)
+    .map((s) => trackNode(s, parentId));
+  if (songs.length > 0) {
+    snapshot.parentTracks.set(
+      parentId,
+      songs.map((s) => trackMediaId(parentId, s.id)),
+    );
+  }
+};
+
 const isRemoteCover = (url?: string): url is string =>
   !!url && /^https?:/i.test(url);
 
@@ -188,7 +204,7 @@ const trackNode = (c: Child, parentId: string): BrowseNode => {
   snapshot.tracks.set(c.id, c);
   const own = covers(c.coverArt);
   return {
-    id: `track|${parentId}|${c.id}`,
+    id: trackMediaId(parentId, c.id),
     title: c.title ?? "Unknown",
     subtitle: c.artist,
     ...own,
@@ -403,13 +419,7 @@ export async function buildBrowseTree(): Promise<BrowseTreeBuild> {
     },
     ...userPlaylists.map(playlistNode),
   ];
-  tree.favorites = await mapInChunks(
-    starredSongs,
-    TRACK_NODE_CHUNK,
-    (s) => trackNode(s, "favorites"),
-    yieldBetweenChunks,
-  );
-  recordParentTracks("favorites", tree.favorites);
+  addLongTracklistToTree(tree, "favorites", starredSongs);
 
   // Library → Albums (starred albums)
   const starredAlbums = starredRsp?.starred2?.album ?? [];
@@ -475,14 +485,7 @@ export async function buildBrowseTree(): Promise<BrowseTreeBuild> {
         snapshot.playlists.set(id, pl);
         const entries = pl.entry ?? [];
         for (const e of entries) snapshot.tracks.set(e.id, e);
-        const parent = `playlist:${id}`;
-        tree[parent] = await mapInChunks(
-          entries,
-          TRACK_NODE_CHUNK,
-          (e) => trackNode(e, parent),
-          yieldBetweenChunks,
-        );
-        recordParentTracks(parent, tree[parent]);
+        addLongTracklistToTree(tree, `playlist:${id}`, entries);
       } catch {
         failed();
         tree[`playlist:${id}`] = [];
