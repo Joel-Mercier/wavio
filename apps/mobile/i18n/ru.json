@@ -2294,7 +2294,14 @@
 					"saveSuccessMessage": "Сохранено для офлайн-прослушивания",
 					"saveErrorMessage": "Произошла ошибка при сохранении для офлайн-прослушивания",
 					"removeSuccessMessage": "Удалено из загрузок",
-					"removeErrorMessage": "Произошла ошибка при удалении загрузок"
+					"removeErrorMessage": "Произошла ошибка при удалении загрузок",
+					"removingDownloads": "Removing downloads…",
+					"removeConfirmTitle": "Remove offline downloads?",
+					"removeConfirmAction": "Удалить",
+					"removeConfirmDescription_one": "{{count}} downloaded song will be deleted from this device. Songs also saved in another album or playlist are kept.",
+					"removeConfirmDescription_few": "{{count}} downloaded songs will be deleted from this device. Songs also saved in another album or playlist are kept.",
+					"removeConfirmDescription_many": "{{count}} downloaded songs will be deleted from this device. Songs also saved in another album or playlist are kept.",
+					"removeConfirmDescription_other": "{{count}} downloaded songs will be deleted from this device. Songs also saved in another album or playlist are kept."
 				},
 				"favorites": "Любимые треки",
 				"filters": {
