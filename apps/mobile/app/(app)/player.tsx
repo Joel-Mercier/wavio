@@ -575,7 +575,7 @@ export default function PlayerScreen() {
                   }}
                   className="w-full"
                 >
-                  <MovingText>
+                  <MovingText animate={isPlaying}>
                     <Text
                       className="text-white text-center font-bold tracking-wide"
                       style={headerTextShadow}
@@ -722,7 +722,7 @@ export default function PlayerScreen() {
                       router.replace(`/albums/${playingTrack.albumId}`);
                     }}
                   >
-                    <MovingText>
+                    <MovingText animate={isPlaying}>
                       <Text className="text-white text-2xl font-bold font-heading">
                         {playingTrack?.title}
                       </Text>
@@ -750,7 +750,7 @@ export default function PlayerScreen() {
                       router.replace(`/artists/${playingTrack.artistId}`);
                     }}
                   >
-                    <MovingText>
+                    <MovingText animate={isPlaying}>
                       <Text className="text-white/80 text-lg">
                         {playingTrack?.artist ||
                           (!isPodcast && !isRadio

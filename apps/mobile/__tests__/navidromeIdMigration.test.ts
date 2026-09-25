@@ -61,6 +61,10 @@ jest.mock("@/services/offline/downloadService", () => ({
   },
 }));
 
+jest.mock("@/services/offline/artworkCacheService", () => ({
+  artworkCacheService: { commitLanded: () => {} },
+}));
+
 const mockDrainOfflineMutations = jest.fn();
 jest.mock("@/services/offlineMutations/replay", () => ({
   drainOfflineMutations: () => mockDrainOfflineMutations(),

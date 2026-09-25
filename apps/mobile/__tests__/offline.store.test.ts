@@ -402,9 +402,28 @@ describe("offline store - library sync bulk actions", () => {
     expect(Object.keys(get().downloadedCollections)).toEqual(["p1"]);
   });
 
+  it("addCachedArtworks registers a batch with one timestamp", () => {
+    get().addCachedArtworks({ "al-0": "file:///artwork/al-0.jpg" });
+    get().addCachedArtworks({
+      "al-1": "file:///artwork/al-1.jpg",
+      "al-2": "file:///artwork/al-2.jpg",
+    });
+    expect(get().artworkCache).toEqual({
+      "al-0": "file:///artwork/al-0.jpg",
+      "al-1": "file:///artwork/al-1.jpg",
+      "al-2": "file:///artwork/al-2.jpg",
+    });
+    expect(get().artworkCachedAt["al-1"]).toBe(get().artworkCachedAt["al-2"]);
+    const cache = get().artworkCache;
+    get().addCachedArtworks({});
+    expect(get().artworkCache).toBe(cache);
+  });
+
   it("removeCachedArtwork drops only the given cover ids", () => {
-    get().addCachedArtwork("al-1", "file:///artwork/al-1.jpg");
-    get().addCachedArtwork("al-2", "file:///artwork/al-2.jpg");
+    get().addCachedArtworks({
+      "al-1": "file:///artwork/al-1.jpg",
+      "al-2": "file:///artwork/al-2.jpg",
+    });
     get().removeCachedArtwork(["al-1"]);
     expect(get().artworkCache).toEqual({
       "al-2": "file:///artwork/al-2.jpg",
@@ -412,11 +431,11 @@ describe("offline store - library sync bulk actions", () => {
   });
 
   it("caches artwork and clears it with clearAllDownloads", () => {
-    get().addCachedArtwork("al-1", "file:///artwork/al-1.jpg");
+    get().addCachedArtworks({ "al-1": "file:///artwork/al-1.jpg" });
     expect(get().artworkCache["al-1"]).toBe("file:///artwork/al-1.jpg");
     get().clearAllDownloads();
     expect(get().artworkCache).toEqual({});
-    get().addCachedArtwork("al-2", "file:///artwork/al-2.jpg");
+    get().addCachedArtworks({ "al-2": "file:///artwork/al-2.jpg" });
     get().clearArtworkCache();
     expect(get().artworkCache).toEqual({});
   });

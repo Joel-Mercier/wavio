@@ -1,5 +1,10 @@
 import { type Directory, File } from "expo-file-system";
 import { isIndexBackedType } from "@/services/backend/serverTraits";
+import {
+  type BackgroundTimer,
+  clearBackgroundTimer,
+  setBackgroundTimeout,
+} from "@/services/backgroundTimer";
 import { isTlsTrustFailure } from "@/services/errorReporting";
 import {
   getConnectionType,
@@ -26,6 +31,9 @@ const ARTWORK_SIZE = 600;
 // download queue without starving it.
 const ARTWORK_CONCURRENCY = 4;
 const ARTWORK_ATTEMPTS = 3;
+// Covers on disk are registered in batches: each store write copies the whole
+// cache index, which at thousands of covers cost more than the downloads.
+const ARTWORK_COMMIT_MS = 250;
 
 // A cover id that is already a URI the app can't ask the server for: the local
 // backend stores a `file://` path to artwork it extracted, and a `data:` cover
@@ -87,6 +95,9 @@ export class ArtworkCacheService {
   // resume(), so re-trusting the certificate picks artwork back up on the next
   // app foreground / reconnection rather than needing a server switch.
   private trustBlocked = false;
+  // Covers on disk but not yet registered (see ARTWORK_COMMIT_MS).
+  private landed: Map<string, { uri: string; previous?: string }> = new Map();
+  private landedTimer: BackgroundTimer | null = null;
 
   private constructor() {
     subscribeEffectiveOnline(() => {
@@ -138,7 +149,7 @@ export class ArtworkCacheService {
     ) {
       return;
     }
-    if (this.pending.has(key)) return;
+    if (this.pending.has(key) || this.landed.has(key)) return;
     this.pending.add(key);
     this.queue.push(coverArt);
     this.syncProgress();
@@ -193,6 +204,7 @@ export class ArtworkCacheService {
   // is intentionally left alone — the in-flight `.then` handlers still run and
   // decrement it, so zeroing it here would drive it negative.
   reset(): void {
+    this.dropLanded();
     this.generation++;
     this.queue = [];
     this.pending.clear();
@@ -205,6 +217,7 @@ export class ArtworkCacheService {
   // track was removed locally, or deleted server-side and reconciled by the
   // crawl — then the aliases that pointed at them.
   pruneOrphaned(): void {
+    this.commitLanded();
     const offlineStore = useOffline.getState();
     // Queued tracks count as referenced: a cover is fetched (small, 4 wide) long
     // before its audio lands, so between the two a track holds a cached cover
@@ -223,17 +236,52 @@ export class ArtworkCacheService {
       ([coverArt]) => !referenced.has(coverArt),
     );
     if (orphaned.length > 0) {
-      for (const [, uri] of orphaned) {
-        try {
-          const file = new File(uri);
-          if (file.exists) file.delete();
-        } catch {}
-      }
+      for (const [, uri] of orphaned) deleteFile(uri);
       offlineStore.removeCachedArtwork(orphaned.map(([coverArt]) => coverArt));
     }
     // Covers still queued count as present: their aliases are already written
     // and their files are moments away.
     useOffline.getState().pruneArtworkAliases(this.pending);
+  }
+
+  // Also called ahead of anything that reads the cache index as a whole, so a
+  // cover that just landed is on the books. A replaced cover's old file is
+  // deleted only once nothing points at it any more.
+  commitLanded(): void {
+    if (this.landedTimer) {
+      clearBackgroundTimer(this.landedTimer);
+      this.landedTimer = null;
+    }
+    if (this.landed.size === 0) return;
+    const batch = [...this.landed];
+    this.landed.clear();
+    useOffline
+      .getState()
+      .addCachedArtworks(
+        Object.fromEntries(batch.map(([key, { uri }]) => [key, uri])),
+      );
+    for (const [, { uri, previous }] of batch) {
+      if (previous && previous !== uri) deleteFile(previous);
+    }
+  }
+
+  // A scope switch resets the store before this runs, so committing here would
+  // register the outgoing scope's covers in the incoming one.
+  private dropLanded(): void {
+    if (this.landedTimer) {
+      clearBackgroundTimer(this.landedTimer);
+      this.landedTimer = null;
+    }
+    for (const { uri } of this.landed.values()) deleteFile(uri);
+    this.landed.clear();
+  }
+
+  private land(key: string, uri: string, previous?: string): void {
+    this.landed.set(key, { uri, previous });
+    this.landedTimer ??= setBackgroundTimeout(
+      () => this.commitLanded(),
+      ARTWORK_COMMIT_MS,
+    );
   }
 
   private dir(): Directory {
@@ -326,13 +374,7 @@ export class ArtworkCacheService {
         return true;
       }
       if (!result.exists) return false;
-      useOffline.getState().addCachedArtwork(key, result.uri);
-      if (previous && previous !== result.uri) {
-        try {
-          const previousFile = new File(previous);
-          if (previousFile.exists) previousFile.delete();
-        } catch {}
-      }
+      this.land(key, result.uri, previous);
       return true;
     } catch (error) {
       // An untrusted server certificate is not a per-cover failure: it fails the
@@ -358,6 +400,13 @@ export class ArtworkCacheService {
       return false;
     }
   }
+}
+
+function deleteFile(uri: string): void {
+  try {
+    const file = new File(uri);
+    if (file.exists) file.delete();
+  } catch {}
 }
 
 export const artworkCacheService = ArtworkCacheService.getInstance();

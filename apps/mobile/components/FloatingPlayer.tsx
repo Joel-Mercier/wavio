@@ -415,12 +415,12 @@ export default function FloatingPlayer() {
               }
             />
             <VStack className="flex-1">
-              <MovingText>
+              <MovingText animate={isPlaying}>
                 <Text className="text-white font-bold text-sm">
                   {playingTrack.title || ""}
                 </Text>
               </MovingText>
-              <MovingText>
+              <MovingText animate={isPlaying}>
                 <Text className="text-gray-300 text-xs">
                   {playingTrack.artist ||
                     (!isRadio && !isPodcast
@@ -542,12 +542,12 @@ export default function FloatingPlayer() {
                 style={[textStyle, { zIndex: 1 }]}
                 className="ml-4 flex-1"
               >
-                <MovingText>
+                <MovingText animate={isPlaying}>
                   <Text className="text-white font-bold text-md">
                     {playingTrack.title || ""}
                   </Text>
                 </MovingText>
-                <MovingText>
+                <MovingText animate={isPlaying}>
                   <Text className="text-gray-300">
                     {playingTrack.artist ||
                       (!isRadio && !isPodcast

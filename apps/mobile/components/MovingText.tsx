@@ -34,6 +34,9 @@ interface MovingTextProps {
   pixelsPerSecond?: number;
   gap?: number;
   fadeWidth?: number;
+  // Off rests the text at its start: a scroll that never stops keeps the UI
+  // thread busy even while nothing is playing.
+  animate?: boolean;
 }
 
 export default function MovingText({
@@ -43,6 +46,7 @@ export default function MovingText({
   pixelsPerSecond = 25,
   gap = 24,
   fadeWidth = 24,
+  animate = true,
 }: MovingTextProps) {
   const child = Children.only(children);
   const className = isValidElement(child) ? child.props.className : undefined;
@@ -57,6 +61,8 @@ export default function MovingText({
   const overflow = Math.max(0, textWidth - containerWidth);
   const shouldAnimate = overflow > 0 && containerWidth > 0;
   const distance = overflow + gap;
+  const duration = Math.max(1000, (distance / pixelsPerSecond) * 1000);
+  const returnDuration = Math.max(400, duration / 2);
   const fadeFraction =
     containerWidth > 0 ? Math.min(0.5, fadeWidth / containerWidth) : 0;
 
@@ -68,7 +74,16 @@ export default function MovingText({
       fadeProgress.value = 0;
       return;
     }
-    const duration = Math.max(1000, (distance / pixelsPerSecond) * 1000);
+    if (!animate) {
+      cancelAnimation(translateX);
+      cancelAnimation(fadeProgress);
+      translateX.value = withTiming(0, {
+        duration: returnDuration,
+        easing: Easing.out(Easing.cubic),
+      });
+      fadeProgress.value = withTiming(0, { duration: FADE_DURATION });
+      return;
+    }
     translateX.value = 0;
     fadeProgress.value = 0;
     // fadeProgress drives the left-edge fade only (the right edge stays faded
@@ -89,10 +104,7 @@ export default function MovingText({
         withDelay(endDelay, withTiming(-distance, { duration: 0 })),
         withTiming(
           0,
-          {
-            duration: Math.max(400, duration / 2),
-            easing: Easing.out(Easing.cubic),
-          },
+          { duration: returnDuration, easing: Easing.out(Easing.cubic) },
           (finished) => {
             if (finished) {
               fadeProgress.value = withTiming(0, { duration: FADE_DURATION });
@@ -103,20 +115,21 @@ export default function MovingText({
       -1,
       false,
     );
+    // No reset here: pausing eases the text home from wherever it is.
     return () => {
       cancelAnimation(translateX);
       cancelAnimation(fadeProgress);
-      translateX.value = 0;
-      fadeProgress.value = 0;
     };
   }, [
     translateX,
     fadeProgress,
     shouldAnimate,
+    animate,
     distance,
+    duration,
+    returnDuration,
     initialDelay,
     endDelay,
-    pixelsPerSecond,
   ]);
 
   const animatedStyle = useAnimatedStyle(() => ({

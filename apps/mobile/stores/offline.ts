@@ -140,7 +140,9 @@ export interface OfflineStore {
   // without this every track row and artist avatar dead-ends on the server
   // while offline.
   artworkAliases: Record<string, string>;
-  addCachedArtwork: (coverArtId: string, path: string) => void;
+  // Covers land a few at a time, so they are committed in batches: every write
+  // copies both maps whole.
+  addCachedArtworks: (entries: Record<string, string>) => void;
   removeCachedArtwork: (coverArtIds: string[]) => void;
   addArtworkAliases: (aliases: Record<string, string>) => void;
   pruneArtworkAliases: (pendingTargets?: ReadonlySet<string>) => void;
@@ -233,17 +235,18 @@ const useOfflineBase = create<OfflineStore>()(
         });
       },
 
-      addCachedArtwork: (coverArtId, path) => {
-        set((state) => ({
-          artworkCache: {
-            ...state.artworkCache,
-            [coverArtId]: path,
-          },
-          artworkCachedAt: {
-            ...state.artworkCachedAt,
-            [coverArtId]: new Date().toISOString(),
-          },
-        }));
+      addCachedArtworks: (entries) => {
+        const coverArtIds = Object.keys(entries);
+        if (coverArtIds.length === 0) return;
+        const cachedAt = new Date().toISOString();
+        set((state) => {
+          const artworkCache = { ...state.artworkCache, ...entries };
+          const artworkCachedAt = { ...state.artworkCachedAt };
+          for (const coverArtId of coverArtIds) {
+            artworkCachedAt[coverArtId] = cachedAt;
+          }
+          return { artworkCache, artworkCachedAt };
+        });
       },
 
       removeCachedArtwork: (coverArtIds) => {

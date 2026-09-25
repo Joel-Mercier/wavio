@@ -99,7 +99,7 @@ describe("useCollectionDownload", () => {
         status: "downloading",
         progress: 0,
       });
-      useOffline.getState().addCachedArtwork("cover", "file:///cover.jpg");
+      useOffline.getState().addCachedArtworks({ cover: "file:///cover.jpg" });
     });
     act(() => {
       useOffline.getState().completeDownloads([offlineTrack("a")]);
@@ -119,7 +119,7 @@ describe("useCollectionDownload", () => {
     expect(seen).toEqual([0]);
 
     act(() => {
-      useOffline.getState().addCachedArtwork("cover", "file:///cover.jpg");
+      useOffline.getState().addCachedArtworks({ cover: "file:///cover.jpg" });
     });
     act(() => {
       useOffline.getState().completeDownloads([offlineTrack("a")]);
