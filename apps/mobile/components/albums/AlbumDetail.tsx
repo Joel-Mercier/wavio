@@ -54,6 +54,7 @@ import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
+import RemoveDownloadsDialog from "@/components/offline/RemoveDownloadsDialog";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import RatingModal from "@/components/RatingModal";
 import ShuffleToggle from "@/components/ShuffleToggle";
@@ -62,6 +63,7 @@ import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
+import { Spinner } from "@/components/ui/spinner";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 import {
@@ -125,6 +127,8 @@ export default function AlbumDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [showRatingModal, setShowRatingModal] = useState<boolean>(false);
+  const [showRemoveDownloadsDialog, setShowRemoveDownloadsDialog] =
+    useState<boolean>(false);
   const [clipboardText, setClipboardText] = useState("");
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
   const isWideLayout = useApp((s) => s.isWideLayout);
@@ -562,8 +566,13 @@ export default function AlbumDetail() {
     }
   };
 
-  const handleRemoveOfflinePress = async () => {
+  const handleRemoveOfflinePress = () => {
     bottomSheetModalRef.current?.dismiss();
+    setShowRemoveDownloadsDialog(true);
+  };
+
+  const handleConfirmRemoveOffline = async () => {
+    setShowRemoveDownloadsDialog(false);
     try {
       await albumDownload.removeAll();
       toast.show({
@@ -963,7 +972,11 @@ export default function AlbumDetail() {
                     }
                   />
                   {capabilities.offlineDownload &&
-                    (albumDownload.status === "downloading" ? (
+                    (albumDownload.isRemoving ? (
+                      <Box className="size-6 items-center justify-center">
+                        <Spinner size="small" color={gray400} />
+                      </Box>
+                    ) : albumDownload.status === "downloading" ? (
                       <Download size={24} color={gray400} />
                     ) : albumDownload.status === "all" ? (
                       <FadeOutScaleDown onPress={handleRemoveOfflinePress}>
@@ -1214,7 +1227,16 @@ export default function AlbumDetail() {
                   </FadeOutScaleDown>
                 )}
               {capabilities.offlineDownload &&
-                (albumDownload.status === "downloading" ? (
+                (albumDownload.isRemoving ? (
+                  <HStack className="items-center">
+                    <Box className="size-6 items-center justify-center">
+                      <Spinner size="small" color={gray400} />
+                    </Box>
+                    <Text className="ml-4 text-lg text-gray-400">
+                      {t("app.shared.offline.removingDownloads")}
+                    </Text>
+                  </HStack>
+                ) : albumDownload.status === "downloading" ? (
                   <HStack className="items-center">
                     <Download size={24} color={gray400} />
                     <Text className="ml-4 text-lg text-gray-400">
@@ -1354,6 +1376,12 @@ export default function AlbumDetail() {
         value={data?.album?.userRating || 0}
         onConfirm={handleRatingChange}
         isPending={doSetRating.isPending}
+      />
+      <RemoveDownloadsDialog
+        isOpen={showRemoveDownloadsDialog}
+        onClose={() => setShowRemoveDownloadsDialog(false)}
+        onConfirm={handleConfirmRemoveOffline}
+        count={albumDownload.downloadedCount}
       />
     </Box>
   );

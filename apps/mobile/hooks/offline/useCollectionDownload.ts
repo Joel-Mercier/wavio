@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import { offlineDownloadService } from "@/services/offline";
 import {
   artworkCacheService,
@@ -66,6 +66,10 @@ export function useCollectionDownload(
   const collection = useOffline((s) =>
     meta ? s.downloadedCollections[meta.id] : undefined,
   );
+  const isRemoving = useSyncExternalStore(
+    offlineDownloadService.subscribeRemovingCollections,
+    () => !!meta && offlineDownloadService.isRemovingCollection(meta.id),
+  );
 
   const liveIds = useMemo(() => songs?.map((song) => song.id), [songs]);
 
@@ -116,7 +120,7 @@ export function useCollectionDownload(
   // replaces a registered collection's track list, so a track can never be
   // orphaned by an overwrite.
   const updateToServer = useCallback(async () => {
-    if (!meta || !collection || !songs || !liveIds) return;
+    if (!meta || !collection || !songs || !liveIds || isRemoving) return;
     const live = new Set(liveIds);
     const removed = collection.trackIds.filter((id) => !live.has(id));
     // Spread the existing collection first so `source` survives: an auto copy
@@ -131,7 +135,7 @@ export function useCollectionDownload(
     });
     cacheCollectionArtwork(meta, songs);
     if (removed.length) {
-      offlineDownloadService.removeTracksNotReferencedElsewhere(
+      await offlineDownloadService.removeTracksNotReferencedElsewhere(
         meta.id,
         removed,
       );
@@ -139,10 +143,10 @@ export function useCollectionDownload(
     }
     const pending = songs.filter((song) => !(song.id in downloadedTracks));
     await offlineDownloadService.downloadTracks(pending);
-  }, [meta, collection, songs, liveIds, downloadedTracks]);
+  }, [meta, collection, songs, liveIds, downloadedTracks, isRemoving]);
 
   const saveAll = useCallback(async () => {
-    if (!songs?.length) return;
+    if (!songs?.length || isRemoving) return;
     // A re-save of an already registered collection is an update, and has to go
     // through the same path: overwriting `trackIds` with the live list here
     // would leave whatever left the collection on disk, referenced by nothing —
@@ -167,7 +171,7 @@ export function useCollectionDownload(
     }
     const pending = songs.filter((song) => !(song.id in downloadedTracks));
     await offlineDownloadService.downloadTracks(pending);
-  }, [songs, downloadedTracks, meta, collection, updateToServer]);
+  }, [songs, downloadedTracks, meta, collection, updateToServer, isRemoving]);
 
   const removeAll = useCallback(async () => {
     if (meta) {
@@ -176,18 +180,16 @@ export function useCollectionDownload(
       // the tracks it downloaded under its previous membership, and passing
       // only the current list would strand them on disk with nothing left
       // referencing them.
-      offlineDownloadService.removeCollection(
+      await offlineDownloadService.removeCollection(
         meta.id,
         collectionRemovalIds(collection?.trackIds, liveIds),
       );
       return;
     }
     if (!songs?.length) return;
-    for (const song of songs) {
-      if (song.id in downloadedTracks) {
-        offlineDownloadService.removeDownloadedTrack(song.id);
-      }
-    }
+    await offlineDownloadService.removeDownloadedTracks(
+      songs.filter((song) => song.id in downloadedTracks).map((s) => s.id),
+    );
     artworkCacheService.pruneOrphaned();
   }, [songs, downloadedTracks, meta, collection, liveIds]);
 
@@ -195,6 +197,7 @@ export function useCollectionDownload(
     total,
     downloadedCount,
     status,
+    isRemoving,
     drift,
     saveAll,
     updateToServer,

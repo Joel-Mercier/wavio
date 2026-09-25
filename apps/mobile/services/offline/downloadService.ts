@@ -49,6 +49,10 @@ import type { Child } from "../openSubsonic/types";
 export type DeleteProgress = (done: number, total: number) => void;
 export const DELETE_CHUNK = 25;
 export const yieldToEventLoop = () => backgroundSleep(0);
+// Removals delete a slice of files and commit it in one store write before
+// yielding, so a scope switch (which can only land during the yield) never
+// finds the disk and the store disagreeing.
+const REMOVE_CHUNK = 100;
 
 const MAX_CONCURRENT_DOWNLOADS = 3;
 
@@ -183,6 +187,8 @@ export class OfflineDownloadService {
   private storageFullUntil = 0;
   // Same, for a server certificate the device won't trust.
   private tlsBlockedUntil = 0;
+  private removingCollections: Set<string> = new Set();
+  private removingListeners: Set<() => void> = new Set();
 
   private constructor() {
     subscribeConnectionType((type) => {
@@ -809,8 +815,7 @@ export class OfflineDownloadService {
       if (file.exists) {
         file.delete();
       }
-      offlineStore.removeDownloadedTrack(trackId);
-      offlineStore.removeDownloadProgress(trackId);
+      offlineStore.removeManyDownloadedTracks([trackId]);
       // Fire-and-forget: an orphaned empty folder is cosmetic, and failing the
       // removal over one would leave the store and disk disagreeing.
       void pruneEmptyAlbumFolders(track).catch(() => {});
@@ -825,30 +830,71 @@ export class OfflineDownloadService {
   // delete songs shared with another. Used both when a collection goes away
   // entirely and when its membership shrinks (a smart playlist re-evaluated
   // server-side, an edited playlist).
-  removeTracksNotReferencedElsewhere(
+  async removeTracksNotReferencedElsewhere(
     collectionId: string,
     trackIds: string[],
-  ): void {
+  ): Promise<void> {
     const referencedElsewhere = trackIdsReferencedByCollections(
       Object.values(useOffline.getState().downloadedCollections).filter(
         (collection) => collection.id !== collectionId,
       ),
     );
+    const orphaned = trackIds.filter((id) => !referencedElsewhere.has(id));
+    // Before the deletes, so the queue stops fetching what is being removed.
+    this.cancelQueuedDownloads(orphaned);
+    await this.removeDownloadedTracks(orphaned);
+  }
 
-    const orphaned: string[] = [];
-    for (const trackId of trackIds) {
-      if (referencedElsewhere.has(trackId)) continue;
-      orphaned.push(trackId);
+  async removeDownloadedTracks(
+    trackIds: string[],
+    onProgress?: DeleteProgress,
+  ): Promise<void> {
+    const scope = currentAuthScope();
+    const external = isExternalDownloadLocation();
+    const removedTracks: OfflineTrack[] = [];
+    const total = trackIds.length;
+    onProgress?.(0, total);
+    for (let start = 0; start < total; start += REMOVE_CHUNK) {
+      if (currentAuthScope() !== scope) return;
+      const removed: string[] = [];
+      for (const trackId of trackIds.slice(start, start + REMOVE_CHUNK)) {
+        const track = useOffline.getState().downloadedTracks[trackId];
+        if (!track) continue;
+        try {
+          const file = new File(track.path);
+          if (file.exists) file.delete();
+          removed.push(trackId);
+          if (external) removedTracks.push(track);
+        } catch (error) {
+          logError(`Error removing track ${trackId}:`, error);
+        }
+      }
+      useOffline.getState().removeManyDownloadedTracks(removed);
+      onProgress?.(Math.min(start + REMOVE_CHUNK, total), total);
+      await yieldToEventLoop();
+    }
+    await this.pruneAlbumFolders(removedTracks, scope);
+  }
+
+  // One pass per album, not per track: each pass costs two ContentResolver
+  // listings against a tree that may be the user's whole music library, and
+  // `pruneEmptyAlbumFolders` never suspends, so the loop has to yield by hand.
+  private async pruneAlbumFolders(
+    tracks: OfflineTrack[],
+    scope: string,
+  ): Promise<void> {
+    const pruned = new Set<string>();
+    for (const track of tracks) {
+      const album = albumSegments(track).join("/");
+      if (pruned.has(album)) continue;
+      pruned.add(album);
       try {
-        this.removeDownloadedTrack(trackId);
-      } catch (error) {
-        logError(
-          `Download Manager: Error removing track ${trackId} for collection ${collectionId}:`,
-          error,
-        );
+        await pruneEmptyAlbumFolders(track, scope);
+      } catch {}
+      if (pruned.size % DELETE_CHUNK === 0) {
+        await yieldToEventLoop();
       }
     }
-    this.cancelQueuedDownloads(orphaned);
   }
 
   // Deleting the files isn't enough when the collection shrinks mid-download:
@@ -880,15 +926,48 @@ export class OfflineDownloadService {
   // Removes a saved collection (playlist/album) and its tracks, but keeps any
   // track still referenced by another saved collection so removing one playlist
   // doesn't delete songs shared with another.
-  removeCollection(collectionId: string, trackIds: string[]): void {
-    this.removeTracksNotReferencedElsewhere(collectionId, trackIds);
+  //
+  // The collection stays registered until its tracks are gone: a kill
+  // mid-removal then leaves a partial collection the user can still see and
+  // remove, not unowned tracks only "clear all" reaches. `isRemovingCollection`
+  // holds meanwhile so the UI can show it and refuse a re-save racing the
+  // deletes.
+  async removeCollection(
+    collectionId: string,
+    trackIds: string[],
+  ): Promise<void> {
+    if (this.removingCollections.has(collectionId)) return;
+    const scope = currentAuthScope();
+    this.setRemovingCollection(collectionId, true);
+    try {
+      await this.removeTracksNotReferencedElsewhere(collectionId, trackIds);
+      if (currentAuthScope() !== scope) return;
+      useOffline.getState().removeDownloadedCollection(collectionId);
+      // Covers the removed collection was the last reference to go with it.
+      // Deliberately not done per single-track removal: the prune walks the
+      // whole cache against every collection, so the collection-level and
+      // extended-offline-disable prunes are where it earns its cost.
+      artworkCacheService.pruneOrphaned();
+    } finally {
+      this.setRemovingCollection(collectionId, false);
+    }
+  }
 
-    useOffline.getState().removeDownloadedCollection(collectionId);
-    // Covers the removed collection was the last reference to go with it.
-    // Deliberately not done per single-track removal: the prune walks the whole
-    // cache against every collection, so the collection-level and
-    // extended-offline-disable prunes are where it earns its cost.
-    artworkCacheService.pruneOrphaned();
+  isRemovingCollection(collectionId: string): boolean {
+    return this.removingCollections.has(collectionId);
+  }
+
+  subscribeRemovingCollections = (listener: () => void): (() => void) => {
+    this.removingListeners.add(listener);
+    return () => {
+      this.removingListeners.delete(listener);
+    };
+  };
+
+  private setRemovingCollection(collectionId: string, removing: boolean) {
+    if (removing) this.removingCollections.add(collectionId);
+    else this.removingCollections.delete(collectionId);
+    for (const listener of this.removingListeners) listener();
   }
 
   // Clears downloads for the currently active server only. The offline store
@@ -941,27 +1020,10 @@ export class OfflineDownloadService {
           const artworkDir = internalArtworkDirectory(scope);
           if (artworkDir.exists) artworkDir.delete();
         }
-        // One pass per album, not per track: each pass costs two ContentResolver
-        // listings against a tree that may be the user's whole music library,
-        // and `pruneEmptyAlbumFolders` never suspends, so the loop has to yield
-        // by hand or a large library clears with the UI frozen.
-        //
         // Needs the scope for the same reason the artwork sweep above does: it
         // names the branch of the picked folder this session owns, and without
         // one there is no branch we may delete from.
-        const pruned = new Set<string>();
-        for (const track of tracks) {
-          if (!scope) break;
-          const album = albumSegments(track).join("/");
-          if (pruned.has(album)) continue;
-          pruned.add(album);
-          try {
-            await pruneEmptyAlbumFolders(track, scope);
-          } catch {}
-          if (pruned.size % DELETE_CHUNK === 0) {
-            await yieldToEventLoop();
-          }
-        }
+        if (scope) await this.pruneAlbumFolders(tracks, scope);
       } else if (scope) {
         const scopedDir = internalScopedDirectory(scope);
         if (scopedDir.exists) scopedDir.delete();

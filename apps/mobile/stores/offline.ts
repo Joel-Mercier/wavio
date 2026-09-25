@@ -94,6 +94,8 @@ interface OfflineStore {
   addDownloadedTrack: (track: OfflineTrack) => void;
   addDownloadedTracks: (tracks: OfflineTrack[]) => void;
   removeDownloadedTrack: (trackId: string) => void;
+  // Drops the tracks and their progress entries in one write.
+  removeManyDownloadedTracks: (trackIds: string[]) => void;
   clearAllDownloads: () => void;
 
   downloadedCollections: Record<string, OfflineCollection>;
@@ -203,6 +205,19 @@ const useOfflineBase = create<OfflineStore>()(
           return {
             downloadedTracks: remainingTracks,
           };
+        });
+      },
+
+      removeManyDownloadedTracks: (trackIds) => {
+        if (trackIds.length === 0) return;
+        set((state) => {
+          const downloadedTracks = { ...state.downloadedTracks };
+          const downloadProgress = { ...state.downloadProgress };
+          for (const trackId of trackIds) {
+            delete downloadedTracks[trackId];
+            delete downloadProgress[trackId];
+          }
+          return { downloadedTracks, downloadProgress };
         });
       },
 

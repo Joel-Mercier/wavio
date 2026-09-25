@@ -21,10 +21,8 @@ import {
 import { trackIdsReferencedByCollections } from "@/services/offline/collections";
 import { isExternalDownloadLocation } from "@/services/offline/downloadDestination";
 import {
-  DELETE_CHUNK,
   type DeleteProgress,
   offlineDownloadService,
-  yieldToEventLoop,
 } from "@/services/offline/downloadService";
 import {
   ALBUM_PAGE_SIZE,
@@ -309,22 +307,10 @@ export class LibrarySyncService {
       .filter(
         (track) => track.source === "auto" && !referencedByUser.has(track.id),
       );
-    const total = autoTracks.length;
-    onProgress?.(0, total);
-    let done = 0;
-    for (const track of autoTracks) {
-      try {
-        offlineDownloadService.removeDownloadedTrack(track.id);
-      } catch (error) {
-        logError(`Library sync: error removing auto track ${track.id}:`, error);
-      }
-      done++;
-      if (done % DELETE_CHUNK === 0) {
-        onProgress?.(done, total);
-        await yieldToEventLoop();
-      }
-    }
-    onProgress?.(total, total);
+    await offlineDownloadService.removeDownloadedTracks(
+      autoTracks.map((track) => track.id),
+      onProgress,
+    );
     // Prune rather than wipe: the artwork cache is no longer the crawl's alone.
     // A cover the user's own saved collections and tracks still reference has to
     // survive toggling extended offline off — the exact parallel of the
@@ -675,7 +661,7 @@ export class LibrarySyncService {
     });
     if (!pageDone) return;
     // Songs is the last phase, so the pass's inventory is complete here.
-    this.reconcileServerDeletions();
+    await this.reconcileServerDeletions();
     useLibrarySync.getState().setCrawl({
       // The inventory has been reconciled; drop it so the persisted blob
       // stays small.
@@ -740,7 +726,7 @@ export class LibrarySyncService {
   // so it's removed locally too (files included). User-saved content is never
   // touched. Interrupted passes never get here, so a partial inventory can't
   // masquerade as deletions.
-  private reconcileServerDeletions(): void {
+  private async reconcileServerDeletions(): Promise<void> {
     // canProceed() gates the loop, but a step already in flight when the freeze
     // engages (the interceptor can set it from that very response) still lands
     // here with an inventory of pre-migration ids — against which every local
@@ -776,16 +762,6 @@ export class LibrarySyncService {
     }
     offlineStore.removeDownloadedCollections(plan.removeCollectionIds);
     offlineStore.replaceCollectionTrackIds(plan.replaceAlbumTrackIds);
-    for (const trackId of plan.removeTrackIds) {
-      try {
-        offlineDownloadService.removeDownloadedTrack(trackId);
-      } catch (error) {
-        logError(
-          `Library sync: error removing deleted track ${trackId}:`,
-          error,
-        );
-      }
-    }
     const staleQueuedIds = new Set(
       offlineStore.downloadQueue
         .filter(
@@ -795,6 +771,7 @@ export class LibrarySyncService {
         .map((queued) => queued.id),
     );
     offlineDownloadService.removeQueuedAutoDownloads(staleQueuedIds);
+    await offlineDownloadService.removeDownloadedTracks(plan.removeTrackIds);
     artworkCacheService.pruneOrphaned();
   }
 }
