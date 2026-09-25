@@ -2178,7 +2178,12 @@
 					"saveSuccessMessage": "Enregistré pour écoute hors ligne",
 					"saveErrorMessage": "Une erreur s'est produite lors de l'enregistrement hors ligne",
 					"removeSuccessMessage": "Supprimé des téléchargements hors ligne",
-					"removeErrorMessage": "Une erreur s'est produite lors de la suppression des téléchargements hors ligne"
+					"removeErrorMessage": "Une erreur s'est produite lors de la suppression des téléchargements hors ligne",
+					"removingDownloads": "Removing downloads…",
+					"removeConfirmTitle": "Remove offline downloads?",
+					"removeConfirmAction": "Supprimer",
+					"removeConfirmDescription_one": "{{count}} downloaded song will be deleted from this device. Songs also saved in another album or playlist are kept.",
+					"removeConfirmDescription_other": "{{count}} downloaded songs will be deleted from this device. Songs also saved in another album or playlist are kept."
 				},
 				"favorites": "Favoris",
 				"filters": {
