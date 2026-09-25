@@ -1597,8 +1597,8 @@
 					"title": "Lecture",
 					"endlessPlaybackLabel": "Lecture sans fin",
 					"endlessPlaybackDescription": "À la fin de la file d'attente, ajoute automatiquement des morceaux similaires pour continuer la lecture",
-					"playerAudioQualityLabel": "Audio quality in player",
-					"playerAudioQualityDescription": "Show the source format, bitrate and sample rate of the current track on the now playing screen, including when the server is transcoding it.",
+					"playerAudioQualityLabel": "Affichage de la qualité audio dans le lecteur",
+					"playerAudioQualityDescription": "Affiche le format source, le débit et la fréquence d'échantillonnage du titre courant sur l'écran en cours de lecture, y compris lorsque le serveur le transcode.",
 					"playerRatingLabel": "Évaluation par étoiles dans le lecteur",
 					"playerRatingDescription": "Affichez une note de cinq étoiles à côté de la qualité audio sur l'écran de lecture en cours, afin de pouvoir noter le morceau en cours sans avoir à ouvrir de menu.",
 					"equalizerLabel": "Égaliseur",
@@ -1957,8 +1957,8 @@
 				"title": "En cours de lecture",
 				"notices": {
 					"sourceUnavailable": "Impossible de lire ce morceau : le fichier n'était pas accessible. Vérifiez que votre serveur est allumé et qu'il se trouve sur le même réseau.",
-					"remoteTrackRefused": "{{name}} couldn't play “{{track}}”. Pick another track, or play on this device.",
-					"remoteLost": "Lost contact with {{name}}. Playback is back on this device."
+					"remoteTrackRefused": "{{name}} n'a pas pu jouer «{{track}}». Choisissez un autre titre, ou lancez la lecture  sur cet appareil.",
+					"remoteLost": "Le contact avec {{name}} a été perdu. La lecture se fait désormais sur cet appareil."
 				},
 				"original": "Original",
 				"playingFrom": {
@@ -2036,8 +2036,8 @@
 				"outputChromecast": "Chromecast",
 				"outputChromecastConnected": "Connecté",
 				"outputChromecastUnavailable": "Le sélecteur de périphérique Chromecast est indisponible.",
-				"outputChromecastNoPlayServices": "Chromecast needs Google Play services, which this device does not have.",
-				"outputChromecastNoPlayServicesHint": "Needs Google Play services",
+				"outputChromecastNoPlayServices": "Chromecast nécessite les services Google Play, dont cet appareil ne dispose pas.",
+				"outputChromecastNoPlayServicesHint": "Nécessite les services Google Play",
 				"outputConnectErrorMessage": "Lecture impossible sur {{name}}.",
 				"sleepTimerMinutes_one": "{{count}} minute",
 				"sleepTimerMinutes_other": "{{count}} minutes"
@@ -2179,11 +2179,11 @@
 					"saveErrorMessage": "Une erreur s'est produite lors de l'enregistrement hors ligne",
 					"removeSuccessMessage": "Supprimé des téléchargements hors ligne",
 					"removeErrorMessage": "Une erreur s'est produite lors de la suppression des téléchargements hors ligne",
-					"removingDownloads": "Removing downloads…",
-					"removeConfirmTitle": "Remove offline downloads?",
+					"removingDownloads": "Suppression des téléchargements…",
+					"removeConfirmTitle": "Supprimer les téléchargements hors ligne ?",
 					"removeConfirmAction": "Supprimer",
-					"removeConfirmDescription_one": "{{count}} downloaded song will be deleted from this device. Songs also saved in another album or playlist are kept.",
-					"removeConfirmDescription_other": "{{count}} downloaded songs will be deleted from this device. Songs also saved in another album or playlist are kept."
+					"removeConfirmDescription_one": "Le titre téléchargé sera supprimé de cet appareil. Les titres également enregistrés dans un autre album ou une playlist sont conservés.",
+					"removeConfirmDescription_other": "{{count}} titres téléchargés seront supprimés de cet appareil. Les titres également enregistrés dans un autre album ou une playlist sont conservés."
 				},
 				"favorites": "Favoris",
 				"filters": {
