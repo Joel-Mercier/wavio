@@ -81,10 +81,10 @@
 				"allTracks": "Tutti i brani",
 				"allAlbumsSubtitle": "Album",
 				"allArtistsSubtitle": "Artisti",
-				"emptyHint": "Your library only shows what you've favorited (albums, artists, podcasts, radio stations), your playlists and your downloads. Tap the heart on something and it will appear here.",
+				"emptyHint": "La tua libreria mostra solo i contenuti che hai aggiunto ai preferiti (album, artisti, podcast, stazioni radio), le tue playlist e i tuoi download. Tocca il cuoricino su un contenuto e questo apparirà qui.",
 				"search": {
 					"inputPlaceholder": "Cerca nella tua libreria",
-					"emptyHint": "This only searches your library: favorited albums, artists, radio stations and your playlists. To search your whole collection, including songs, use the Search tab."
+					"emptyHint": "Questa funzione effettua la ricerca solo nella tua libreria: album aggiunti ai preferiti, artisti, stazioni radio e playlist. Per effettuare una ricerca nell'intera collezione, inclusi i brani, utilizza la scheda \"Cerca\"."
 				}
 			},
 			"create": {
@@ -1597,8 +1597,8 @@
 					"title": "Riproduzione",
 					"endlessPlaybackLabel": "Riproduzione continua",
 					"endlessPlaybackDescription": "Quando la coda finisce, aggiungi automaticamente brani simili per continuare ad ascoltare musica.",
-					"playerAudioQualityLabel": "Audio quality in player",
-					"playerAudioQualityDescription": "Show the source format, bitrate and sample rate of the current track on the now playing screen, including when the server is transcoding it.",
+					"playerAudioQualityLabel": "Qualità audio nel lettore",
+					"playerAudioQualityDescription": "Visualizza il formato sorgente, il bitrate e la frequenza di campionamento del brano corrente nella schermata \"In riproduzione\", anche quando il server lo sta transcodificando.",
 					"playerRatingLabel": "Stelle nel lettore",
 					"playerRatingDescription": "Visualizza una valutazione a cinque stelle accanto alla qualità audio nella schermata “In riproduzione”, in modo da poter valutare il brano corrente senza aprire un menu.",
 					"equalizerLabel": "Equalizzatore",
@@ -1822,7 +1822,7 @@
 					"setRating": "Vota {{rating}}/5",
 					"playlistEdit": "Modifica i dettagli della playlist",
 					"playlistDelete": "Elimina playlist",
-					"scrobble": "Report play",
+					"scrobble": "Riproduci report",
 					"playlistAddSongs_one": "Aggiungi il brano \" {{count}} \" alla playlist",
 					"playlistAddSongs_other": "Aggiungi i brani di {{count}} alla playlist",
 					"playlistRemoveSongs_one": "Rimuovi il brano \" {{count}} \" dalla playlist",
@@ -1957,8 +1957,8 @@
 				"title": "In riproduzione",
 				"notices": {
 					"sourceUnavailable": "Non è stato possibile riprodurre quel brano: il file non era accessibile. Verifica che il tuo server sia acceso e che si trovi sulla stessa rete.",
-					"remoteTrackRefused": "{{name}} couldn't play “{{track}}”. Pick another track, or play on this device.",
-					"remoteLost": "Lost contact with {{name}}. Playback is back on this device."
+					"remoteTrackRefused": "{{name}} Non è stato possibile riprodurre “{{track}}”. Scegli un altro brano oppure riproducilo su questo dispositivo.",
+					"remoteLost": "Il contatto con {{name}}è stato perso. La riproduzione è nuovamente attiva su questo dispositivo."
 				},
 				"original": "Originale",
 				"playingFrom": {
@@ -2027,8 +2027,8 @@
 				"jukeboxResumeMessage": "Sul server è ancora in corso una sessione del jukebox. Vuoi riprendere il controllo o riprodurre su questo dispositivo?",
 				"jukeboxResumeResume": "Riprendere il controllo",
 				"jukeboxResumePlayHere": "Riproduci qui",
-				"upnpResumeTitle": "Resume on {{name}}?",
-				"upnpResumeMessage": "{{name}} still has your music. Resume control or play on this device?",
+				"upnpResumeTitle": "Curriculum su {{name}}?",
+				"upnpResumeMessage": "{{name}} contiene ancora la tua musica. Vuoi riprendere il controllo o riprodurre su questo dispositivo?",
 				"output": "Risultato",
 				"outputSpeakersAndTvs": "Altoparlanti e TV (UPnP/DLNA)",
 				"outputScanning": "Cerchi dispositivi…",
@@ -2036,8 +2036,8 @@
 				"outputChromecast": "Chromecast",
 				"outputChromecastConnected": "Connesso",
 				"outputChromecastUnavailable": "Il selettore dei dispositivi Chromecast non è disponibile.",
-				"outputChromecastNoPlayServices": "Chromecast needs Google Play services, which this device does not have.",
-				"outputChromecastNoPlayServicesHint": "Needs Google Play services",
+				"outputChromecastNoPlayServices": "Chromecast richiede i servizi Google Play, che questo dispositivo non possiede.",
+				"outputChromecastNoPlayServicesHint": "Richiede i servizi Google Play",
 				"outputConnectErrorMessage": "Impossibile riprodurre il file su {{name}}.",
 				"sleepTimerMinutes_one": "{{count}} minuto",
 				"sleepTimerMinutes_other": "{{count}} minuti"
@@ -2179,11 +2179,11 @@
 					"saveErrorMessage": "Si è verificato un errore durante il salvataggio per l'ascolto offline",
 					"removeSuccessMessage": "Rimosso dai download offline",
 					"removeErrorMessage": "Si è verificato un errore durante la rimozione dei download offline",
-					"removingDownloads": "Removing downloads…",
-					"removeConfirmTitle": "Remove offline downloads?",
+					"removingDownloads": "Come eliminare i file scaricati d…",
+					"removeConfirmTitle": "Eliminare i download offline?",
 					"removeConfirmAction": "Rimuovi",
-					"removeConfirmDescription_one": "{{count}} downloaded song will be deleted from this device. Songs also saved in another album or playlist are kept.",
-					"removeConfirmDescription_other": "{{count}} downloaded songs will be deleted from this device. Songs also saved in another album or playlist are kept."
+					"removeConfirmDescription_one": "{{count}} Il brano scaricato verrà eliminato da questo dispositivo. I brani salvati anche in un altro album o in un'altra playlist verranno mantenuti.",
+					"removeConfirmDescription_other": "{{count}} I brani scaricati verranno eliminati da questo dispositivo. I brani salvati anche in un altro album o in un'altra playlist verranno mantenuti."
 				},
 				"favorites": "Preferiti",
 				"filters": {
