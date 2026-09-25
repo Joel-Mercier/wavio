@@ -2178,7 +2178,12 @@
 					"saveSuccessMessage": "Zum Offline-Anhören gespeichert",
 					"saveErrorMessage": "Beim Speichern für die Offline-Wiedergabe ist ein Fehler aufgetreten",
 					"removeSuccessMessage": "Aus den Offline-Downloads entfernt",
-					"removeErrorMessage": "Beim Löschen der Offline-Downloads ist ein Fehler aufgetreten"
+					"removeErrorMessage": "Beim Löschen der Offline-Downloads ist ein Fehler aufgetreten",
+					"removingDownloads": "Removing downloads…",
+					"removeConfirmTitle": "Remove offline downloads?",
+					"removeConfirmAction": "Entfernen",
+					"removeConfirmDescription_one": "{{count}} downloaded song will be deleted from this device. Songs also saved in another album or playlist are kept.",
+					"removeConfirmDescription_other": "{{count}} downloaded songs will be deleted from this device. Songs also saved in another album or playlist are kept."
 				},
 				"favorites": "Favoriten",
 				"filters": {
