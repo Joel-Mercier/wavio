@@ -2120,7 +2120,11 @@
 					"saveSuccessMessage": "已保存到离线收听",
 					"saveErrorMessage": "保存到离线收听时发生错误",
 					"removeSuccessMessage": "已移除离线下载",
-					"removeErrorMessage": "移除离线下载时发生错误"
+					"removeErrorMessage": "移除离线下载时发生错误",
+					"removingDownloads": "Removing downloads…",
+					"removeConfirmTitle": "Remove offline downloads?",
+					"removeConfirmAction": "删除",
+					"removeConfirmDescription_other": "{{count}} downloaded songs will be deleted from this device. Songs also saved in another album or playlist are kept."
 				},
 				"favorites": "收藏",
 				"filters": {
