@@ -16,14 +16,16 @@ export {
   useDownloadLocation,
 } from "./useDownloadLocation";
 export {
+  useDownloadActions,
   useDownloadedCollections,
   useDownloadedTracksCount,
-  useDownloadedTracksList,
   useDownloadProgress,
+  useDownloadQueueLength,
   useDownloadSizeByVolume,
   useHasDownloadedTracks,
   useOfflineDownloads,
   useOfflineModeEnabled,
+  useSettledDownloadedTracks,
   useTotalDownloadSize,
 } from "./useDownloads";
 export {

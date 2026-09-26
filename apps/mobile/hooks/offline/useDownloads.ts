@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   type DeleteProgress,
   librarySyncService,
@@ -18,6 +18,33 @@ import { logError } from "@/utils/log";
 // whole store (e.g. via the aggregate useOfflineDownloads) re-renders every
 // consumer on each setDownloadProgress tick, which fans out to hundreds of rows
 // during an active download.
+
+async function removeDownloadedTrack(trackId: string) {
+  try {
+    await offlineDownloadService.removeDownloadedTrack(trackId);
+  } catch (error) {
+    logError("Download Manager: Error removing downloaded track:", error);
+    throw error;
+  }
+}
+
+async function clearAllDownloads(onProgress?: DeleteProgress) {
+  try {
+    await offlineDownloadService.clearAllDownloads(onProgress);
+    // The downloaded state (and cached artwork) is gone; a still-enabled
+    // library sync restarts its crawl from scratch.
+    librarySyncService.handleDownloadsCleared();
+  } catch (error) {
+    logError("Download Manager: Error clearing all downloads:", error);
+    throw error;
+  }
+}
+
+// The remove actions alone, for a screen that must not subscribe to the store.
+export const useDownloadActions = () => ({
+  removeDownloadedTrack,
+  clearAllDownloads,
+});
 
 // Aggregate manager hook for screens/providers that need several actions at
 // once (settings + track lookups + download/remove actions). NOT for list items.
@@ -50,27 +77,6 @@ export const useOfflineDownloads = () => {
       await offlineDownloadService.downloadTracks(tracks);
     } catch (error) {
       logError("Download Manager: Error downloading tracks:", error);
-      throw error;
-    }
-  }, []);
-
-  const removeDownloadedTrack = useCallback(async (trackId: string) => {
-    try {
-      await offlineDownloadService.removeDownloadedTrack(trackId);
-    } catch (error) {
-      logError("Download Manager: Error removing downloaded track:", error);
-      throw error;
-    }
-  }, []);
-
-  const clearAllDownloads = useCallback(async (onProgress?: DeleteProgress) => {
-    try {
-      await offlineDownloadService.clearAllDownloads(onProgress);
-      // The downloaded state (and cached artwork) is gone; a still-enabled
-      // library sync restarts its crawl from scratch.
-      librarySyncService.handleDownloadsCleared();
-    } catch (error) {
-      logError("Download Manager: Error clearing all downloads:", error);
       throw error;
     }
   }, []);
@@ -111,13 +117,57 @@ export const useOfflineDownloads = () => {
 export const useOfflineModeEnabled = () =>
   useOffline((s) => s.offlineModeEnabled);
 
-// Reactive view of the downloaded-tracks list (changes on add/remove/clear —
-// not progress ticks). Derived in a useMemo so the array keeps its identity
-// between renders and the consumers' sort/search memos actually hold.
-export const useDownloadedTracksList = () => {
-  const downloadedTracks = useOffline((s) => s.downloadedTracks);
-  return useMemo(() => Object.values(downloadedTracks), [downloadedTracks]);
+const SETTLE_MS = 2000;
+
+// The downloaded-tracks map for a screen that lists every download: while the
+// queue drains, completions are held until they stop arriving for SETTLE_MS or
+// the queue empties. Every completion replaces the map, and re-sorting ~20k rows
+// on each one kept the JS thread busy enough to stall the drain itself (issue
+// #205). A removal is never held, so a deleted row can't linger on screen, and a
+// drain that parks (offline, disk full) still catches up.
+export const useSettledDownloadedTracks = () => {
+  const [tracks, setTracks] = useState(
+    () => useOffline.getState().downloadedTracks,
+  );
+  useEffect(() => {
+    let shown = useOffline.getState().downloadedTracks;
+    let settleTimer: ReturnType<typeof setTimeout> | null = null;
+    const show = (next: typeof shown) => {
+      if (settleTimer) {
+        clearTimeout(settleTimer);
+        settleTimer = null;
+      }
+      if (next === shown) return;
+      shown = next;
+      setTracks(next);
+    };
+    setTracks(shown);
+    const unsubscribe = useOffline.subscribe((state, prev) => {
+      const next = state.downloadedTracks;
+      if (next === shown) return;
+      if (state.downloadQueue.length === 0) return show(next);
+      if (next === prev.downloadedTracks) return;
+      if (
+        Object.keys(next).length < Object.keys(prev.downloadedTracks).length
+      ) {
+        return show(next);
+      }
+      if (settleTimer) clearTimeout(settleTimer);
+      settleTimer = setTimeout(
+        () => show(useOffline.getState().downloadedTracks),
+        SETTLE_MS,
+      );
+    });
+    return () => {
+      unsubscribe();
+      if (settleTimer) clearTimeout(settleTimer);
+    };
+  }, []);
+  return tracks;
 };
+
+export const useDownloadQueueLength = () =>
+  useOffline((s) => s.downloadQueue.length);
 
 // For callers that only care whether anything is downloaded: the selector
 // returns a boolean, so completions don't re-render them the way a count would

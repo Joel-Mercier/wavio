@@ -9,6 +9,8 @@
 const mockAppState: { downloadLocationUri: string | null } = {
   downloadLocationUri: null,
 };
+// Persistence flushes and file deletes, in the order they happen.
+const mockEvents: string[] = [];
 
 jest.mock("@/config/storage", () => {
   const mem = new Map<string, string>();
@@ -28,7 +30,7 @@ jest.mock("@/config/storage", () => {
     createDynamicScopedStorage: () => make(),
     createThrottledScopedJSONStorage: () =>
       jest.requireActual("zustand/middleware").createJSONStorage(() => make()),
-    flushPendingScopedWrites: () => {},
+    flushPendingScopedWrites: () => mockEvents.push("flush"),
     getAuthScope: () => "scope",
   };
 });
@@ -116,6 +118,7 @@ jest.mock("expo-file-system", () => {
       exists = true;
       delete() {
         mockFileDeletes.push(this.uri);
+        mockEvents.push(`delete ${this.uri}`);
       }
     },
   };
@@ -161,6 +164,7 @@ beforeEach(() => {
   mockDirectoryListCalls.length = 0;
   mockDirectoryListings.clear();
   mockAppState.downloadLocationUri = null;
+  mockEvents.length = 0;
 });
 
 describe("clearAllDownloads", () => {
@@ -186,6 +190,33 @@ describe("clearAllDownloads", () => {
     // it would mean the external branch fell through to the internal one.
     expect(mockDirectoryDeletes).not.toContain("/doc/offline/scope");
     expect(useOffline.getState().getDownloadedTracksList()).toEqual([]);
+  });
+
+  // The store persists on a throttle, so wiping it last let a kill mid-clear
+  // restart on entries whose files were already gone.
+  it("persists the wiped store before deleting any file", async () => {
+    const { offlineDownloadService, useOffline } = importService();
+    useOffline.setState({
+      downloadedTracks: {
+        a: record("a", "/doc/offline/scope/a.mp3"),
+        b: record("b", "/doc/offline/scope/b.mp3"),
+      },
+    });
+    const unsubscribe = useOffline.subscribe((state) => {
+      if (Object.keys(state.downloadedTracks).length === 0) {
+        mockEvents.push("wiped");
+      }
+    });
+
+    await offlineDownloadService.clearAllDownloads();
+    unsubscribe();
+
+    expect(mockEvents).toEqual([
+      "wiped",
+      "flush",
+      "delete /doc/offline/scope/a.mp3",
+      "delete /doc/offline/scope/b.mp3",
+    ]);
   });
 
   it("still wipes the app-private scope directory when it owns it", async () => {

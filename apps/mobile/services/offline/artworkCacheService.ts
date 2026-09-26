@@ -1,4 +1,5 @@
 import { type Directory, File } from "expo-file-system";
+import { flushPendingScopedWrites } from "@/config/storage";
 import { isIndexBackedType } from "@/services/backend/serverTraits";
 import {
   type BackgroundTimer,
@@ -98,6 +99,11 @@ export class ArtworkCacheService {
   // Covers on disk but not yet registered (see ARTWORK_COMMIT_MS).
   private landed: Map<string, { uri: string; previous?: string }> = new Map();
   private landedTimer: BackgroundTimer | null = null;
+  // Cached covers whose file was seen on disk this session. An index entry can
+  // outlive its file (a kill between the two, before this was store-first), and
+  // nothing would ever fetch it again; checked once per cover, not per enqueue,
+  // since a backfill enqueues every downloaded track.
+  private onDisk: Set<string> = new Set();
 
   private constructor() {
     subscribeEffectiveOnline(() => {
@@ -145,7 +151,8 @@ export class ArtworkCacheService {
     // (Jellyfin item GUIDs never change when the image does).
     if (
       artworkCache[key] &&
-      !isArtworkStale(artworkCachedAt[key], Date.now())
+      !isArtworkStale(artworkCachedAt[key], Date.now()) &&
+      this.isOnDisk(key, artworkCache[key])
     ) {
       return;
     }
@@ -208,6 +215,7 @@ export class ArtworkCacheService {
     this.generation++;
     this.queue = [];
     this.pending.clear();
+    this.onDisk.clear();
     this.attempts.clear();
     this.trustBlocked = false;
     this.syncProgress();
@@ -236,8 +244,14 @@ export class ArtworkCacheService {
       ([coverArt]) => !referenced.has(coverArt),
     );
     if (orphaned.length > 0) {
-      for (const [, uri] of orphaned) deleteFile(uri);
       offlineStore.removeCachedArtwork(orphaned.map(([coverArt]) => coverArt));
+      // Persisted before any file goes, so a kill can only strand files, never
+      // leave entries pointing at deleted ones.
+      flushPendingScopedWrites();
+      for (const [coverArt, uri] of orphaned) {
+        this.onDisk.delete(coverArt);
+        deleteFile(uri);
+      }
     }
     // Covers still queued count as present: their aliases are already written
     // and their files are moments away.
@@ -260,9 +274,13 @@ export class ArtworkCacheService {
       .addCachedArtworks(
         Object.fromEntries(batch.map(([key, { uri }]) => [key, uri])),
       );
-    for (const [, { uri, previous }] of batch) {
-      if (previous && previous !== uri) deleteFile(previous);
-    }
+    for (const [key] of batch) this.onDisk.add(key);
+    const replaced = batch.flatMap(([, { uri, previous }]) =>
+      previous && previous !== uri ? [previous] : [],
+    );
+    if (replaced.length === 0) return;
+    flushPendingScopedWrites();
+    for (const uri of replaced) deleteFile(uri);
   }
 
   // A scope switch resets the store before this runs, so committing here would
@@ -282,6 +300,16 @@ export class ArtworkCacheService {
       () => this.commitLanded(),
       ARTWORK_COMMIT_MS,
     );
+  }
+
+  private isOnDisk(key: string, uri: string): boolean {
+    if (this.onDisk.has(key)) return true;
+    let exists = true;
+    try {
+      exists = new File(uri).exists;
+    } catch {}
+    if (exists) this.onDisk.add(key);
+    return exists;
   }
 
   private dir(): Directory {

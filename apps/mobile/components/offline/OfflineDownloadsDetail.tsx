@@ -41,15 +41,17 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import {
-  useDownloadedTracksList,
-  useOfflineDownloads,
+  useDownloadActions,
+  useDownloadedTracksCount,
+  useDownloadQueueLength,
+  useHasDownloadedTracks,
+  useSettledDownloadedTracks,
   useTotalDownloadSize,
 } from "@/hooks/offline";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { createSearchIndex } from "@/services/searchIndex";
 import useApp from "@/stores/app";
-import type { OfflineTrack } from "@/stores/offline";
 import { niceBytes } from "@/utils/fileSize";
 import { goBackOrHome } from "@/utils/navigation";
 import {
@@ -81,9 +83,13 @@ export default function OfflineDownloadsDetail() {
   const isWideLayout = useApp((s) => s.isWideLayout);
   const sort = useApp((s) => s.downloadsSort);
   const setDownloadsSort = useApp((s) => s.setDownloadsSort);
-  const { removeDownloadedTrack, clearAllDownloads } = useOfflineDownloads();
-  const downloadedTracksList = useDownloadedTracksList();
-  const totalDownloadSize = useTotalDownloadSize();
+  const { removeDownloadedTrack, clearAllDownloads } = useDownloadActions();
+  const settledTracks = useSettledDownloadedTracks();
+  const downloadedTracksList = useMemo(
+    () => Object.values(settledTracks),
+    [settledTracks],
+  );
+  const hasDownloads = useHasDownloadedTracks();
 
   const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
   const listRef = useRef<LegendListRef>(null);
@@ -141,7 +147,7 @@ export default function OfflineDownloadsDetail() {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, [activeSort, query]);
 
-  const isEmpty = downloadedTracksList.length === 0;
+  const isEmpty = !hasDownloads;
 
   const handlePresentSortModalPress = () => {
     bottomSheetSortModalRef.current?.present();
@@ -240,18 +246,7 @@ export default function OfflineDownloadsDetail() {
           <Box className="w-6" />
         </HStack>
         <HStack className="items-center justify-between px-6 mb-4">
-          <VStack>
-            <Text className="text-white font-bold">
-              {t("app.offlineDownloads.totalTracks", {
-                count: downloadedTracksList.length,
-              })}
-            </Text>
-            <Text className="text-primary-100 text-sm">
-              {t("app.offlineDownloads.totalSize", {
-                size: niceBytes(totalDownloadSize),
-              })}
-            </Text>
-          </VStack>
+          <DownloadsSummary />
           <FadeOutScaleDown
             onPress={isEmpty ? undefined : () => setShowClearConfirm(true)}
           >
@@ -420,5 +415,29 @@ export default function OfflineDownloadsDetail() {
         </AlertDialogContent>
       </AlertDialog>
     </Box>
+  );
+}
+
+// Live while the list below is held, and kept out of the screen so each
+// completion re-renders these few lines rather than the whole list.
+function DownloadsSummary() {
+  const { t } = useTranslation();
+  const count = useDownloadedTracksCount();
+  const totalSize = useTotalDownloadSize();
+  const queued = useDownloadQueueLength();
+  return (
+    <VStack className="flex-1 mr-4">
+      <Text className="text-white font-bold">
+        {t("app.offlineDownloads.totalTracks", { count })}
+      </Text>
+      <Text className="text-primary-100 text-sm">
+        {t("app.offlineDownloads.totalSize", { size: niceBytes(totalSize) })}
+      </Text>
+      {queued > 0 && (
+        <Text className="text-primary-100 text-sm">
+          {t("app.offlineDownloads.downloadingHint", { count: queued })}
+        </Text>
+      )}
+    </VStack>
   );
 }

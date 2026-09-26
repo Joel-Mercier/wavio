@@ -203,6 +203,9 @@ export class OfflineDownloadService {
   // They count as in flight, so a save racing the removal can't download a
   // file the removal then deletes.
   private deleting: Set<string> = new Set();
+  // Set while clearAllDownloads deletes files the store already forgot: a
+  // download started meanwhile would land in a directory about to be removed.
+  private clearing = false;
   private resolvers: Map<string, Resolvers> = new Map();
   // Bumped by clearAllDownloads so in-flight downloads from before the clear
   // discard their result instead of re-registering into the wiped store.
@@ -498,6 +501,9 @@ export class OfflineDownloadService {
     // in seconds, and executeDownload's permanent-failure branch would dequeue
     // the lot. subscribeEffectiveOnline above restarts it on recovery.
     if (!getIsEffectivelyOnline()) return;
+
+    // Resumed by clearAllDownloads once its deletes are done.
+    if (this.clearing) return;
 
     // The circuit breaker owns the next attempt — it must not be stepped around
     // by a drain kicked from executeDownload's finally.
@@ -1104,7 +1110,28 @@ export class OfflineDownloadService {
     const scope = serverId && username ? currentAuthScope() : null;
     const external = isExternalDownloadLocation();
 
+    this.clearing = true;
     try {
+      // Everything is forgotten, and that persisted, before any file goes (see
+      // REMOVE_CHUNK): a kill mid-clear can then only strand files, which the
+      // next clear reclaims, never keep entries whose files are gone.
+      artworkCacheService.reset();
+      this.generation++;
+      this.activeIds.clear();
+      this.dropLanded();
+      this.attempts.clear();
+      this.consecutiveFailures = 0;
+      if (this.retryTimer) {
+        clearBackgroundTimer(this.retryTimer);
+        this.retryTimer = null;
+      }
+      for (const { reject } of this.resolvers.values()) {
+        reject(new Error("Downloads cleared"));
+      }
+      this.resolvers.clear();
+      offlineStore.clearAllDownloads();
+      flushPendingScopedWrites();
+
       const total = tracks.length;
       onProgress?.(0, total);
       let done = 0;
@@ -1135,7 +1162,7 @@ export class OfflineDownloadService {
       // emptied.
       if (external) {
         // Cached covers are app-private wherever the tracks went, and the store
-        // wipe below drops the index that makes them reachable — skipping them
+        // wipe above dropped the index that makes them reachable — skipping them
         // here would strand the bytes with nothing left able to name them.
         if (scope) {
           const artworkDir = internalArtworkDirectory(scope);
@@ -1150,27 +1177,15 @@ export class OfflineDownloadService {
         if (scopedDir.exists) scopedDir.delete();
       }
 
-      // The artwork directory and the cache index are both gone by now, so any
-      // cover still in flight would re-register an entry pointing at a file
-      // that no longer has a home.
+      // A cover fetched while the files went would re-register an entry
+      // pointing at a directory that no longer exists.
       artworkCacheService.reset();
-      this.generation++;
-      this.activeIds.clear();
-      this.dropLanded();
-      this.attempts.clear();
-      this.consecutiveFailures = 0;
-      if (this.retryTimer) {
-        clearBackgroundTimer(this.retryTimer);
-        this.retryTimer = null;
-      }
-      for (const { reject } of this.resolvers.values()) {
-        reject(new Error("Downloads cleared"));
-      }
-      this.resolvers.clear();
-      offlineStore.clearAllDownloads();
     } catch (error) {
       logError("Download Manager: Error clearing downloads:", error);
       throw error;
+    } finally {
+      this.clearing = false;
+      this.processQueue();
     }
   }
 
