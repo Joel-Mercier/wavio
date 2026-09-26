@@ -1759,7 +1759,8 @@
 				"clearAll": "清除全部",
 				"searchPlaceholder": "搜索下载",
 				"deleting": "删除 {{done}} / {{total}}",
-				"totalTracks_other": "{{count}} 首"
+				"totalTracks_other": "{{count}} 首",
+				"downloadingHint_other": "{{count}} more tracks downloading. The list updates when they're done."
 			},
 			"pendingChanges": {
 				"title": "待同步的更改",
