@@ -1806,7 +1806,9 @@
 				"searchPlaceholder": "Buscar descargas",
 				"deleting": "Eliminar {{done}} / {{total}}",
 				"totalTracks_one": "{{count}} canción",
-				"totalTracks_other": "{{count}} canciones"
+				"totalTracks_other": "{{count}} canciones",
+				"downloadingHint_one": "{{count}} more track downloading. The list updates when it's done.",
+				"downloadingHint_other": "{{count}} more tracks downloading. The list updates when they're done."
 			},
 			"pendingChanges": {
 				"title": "Cambios pendientes",
