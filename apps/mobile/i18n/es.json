@@ -81,10 +81,10 @@
 				"allTracks": "Todas las canciones",
 				"allAlbumsSubtitle": "Álbumes",
 				"allArtistsSubtitle": "Artistas",
-				"emptyHint": "Your library only shows what you've favorited (albums, artists, podcasts, radio stations), your playlists and your downloads. Tap the heart on something and it will appear here.",
+				"emptyHint": "Tu biblioteca solo muestra lo que has marcado como favorito (álbumes, artistas, podcasts, emisoras de radio), tus listas de reproducción y tus descargas. Toca el corazón junto a un elemento y aparecerá aquí.",
 				"search": {
 					"inputPlaceholder": "Busca en tu biblioteca",
-					"emptyHint": "This only searches your library: favorited albums, artists, radio stations and your playlists. To search your whole collection, including songs, use the Search tab."
+					"emptyHint": "Esta función solo busca en tu biblioteca: álbumes, artistas, emisoras de radio y listas de reproducción que hayas marcado como favoritos. Para buscar en toda tu colección, incluidas las canciones, utiliza la pestaña «Buscar»."
 				}
 			},
 			"create": {
@@ -1597,6 +1597,8 @@
 					"title": "Reproducción",
 					"endlessPlaybackLabel": "Reproducción sin fin",
 					"endlessPlaybackDescription": "Cuando se acabe la lista de reproducción, añade automáticamente canciones similares para que la música siga sonando.",
+					"playerAudioQualityLabel": "Calidad de audio en el reproductor",
+					"playerAudioQualityDescription": "Mostrar el formato de origen, la velocidad de bits y la frecuencia de muestreo de la pista actual en la pantalla de reproducción, incluso cuando el servidor la esté transcodificando.",
 					"playerRatingLabel": "Valoración con estrellas en el reproductor",
 					"playerRatingDescription": "Muestra una valoración de cinco estrellas junto a la calidad de audio en la pantalla de reproducción, para que puedas valorar la canción actual sin tener que abrir un menú.",
 					"equalizerLabel": "Ecualizador",
@@ -1804,7 +1806,9 @@
 				"searchPlaceholder": "Buscar descargas",
 				"deleting": "Eliminar {{done}} / {{total}}",
 				"totalTracks_one": "{{count}} canción",
-				"totalTracks_other": "{{count}} canciones"
+				"totalTracks_other": "{{count}} canciones",
+				"downloadingHint_one": "{{count}} more track downloading. The list updates when it's done.",
+				"downloadingHint_other": "{{count}} more tracks downloading. The list updates when they're done."
 			},
 			"pendingChanges": {
 				"title": "Cambios pendientes",
@@ -1820,6 +1824,7 @@
 					"setRating": "Valora « {{rating}}» /5",
 					"playlistEdit": "Editar los detalles de la lista de reproducción",
 					"playlistDelete": "Eliminar lista de reproducción",
+					"scrobble": "Reproducir informe",
 					"playlistAddSongs_one": "Añadir la canción « {{count}} » a la lista de reproducción",
 					"playlistAddSongs_other": "Añadir canciones de « {{count}} » a la lista de reproducción",
 					"playlistRemoveSongs_one": "Eliminar la canción « {{count}} » de la lista de reproducción",
@@ -1953,7 +1958,9 @@
 			"player": {
 				"title": "Reproduciéndose ahora",
 				"notices": {
-					"sourceUnavailable": "No se ha podido reproducir esa pista: no se ha podido acceder al archivo. Comprueba que tu servidor esté encendido y conectado a la misma red."
+					"sourceUnavailable": "No se ha podido reproducir esa pista: no se ha podido acceder al archivo. Comprueba que tu servidor esté encendido y conectado a la misma red.",
+					"remoteTrackRefused": "{{name}} No se ha podido reproducir «{{track}}». Elige otra canción o reprodúcela en este dispositivo.",
+					"remoteLost": "Se ha perdido el contacto con {{name}}. La reproducción vuelve a funcionar en este dispositivo."
 				},
 				"original": "Original",
 				"playingFrom": {
@@ -2022,16 +2029,17 @@
 				"jukeboxResumeMessage": "Todavía hay una sesión de jukebox en curso en el servidor. ¿Quieres retomar el control o reproducirla en este dispositivo?",
 				"jukeboxResumeResume": "Retomar el control",
 				"jukeboxResumePlayHere": "Reproducir aquí",
-				"upnpResumeTitle": "Resume on {{name}}?",
-				"upnpResumeMessage": "{{name}} still has your music. Resume control or play on this device?",
+				"upnpResumeTitle": "¿Enviar el currículum a {{name}}?",
+				"upnpResumeMessage": "{{name}} Todavía tiene tu música. ¿Quieres retomar el control o reproducirla en este dispositivo?",
 				"output": "Resultado",
 				"outputSpeakersAndTvs": "Altavoces y televisores (UPnP/DLNA)",
 				"outputScanning": "¿Buscas dispositivos…",
 				"outputNoDevices": "No se han encontrado dispositivos en esta red",
-				"outputUnverified": "Es posible que no admita la reproducción",
 				"outputChromecast": "Chromecast",
 				"outputChromecastConnected": "Conectado",
 				"outputChromecastUnavailable": "El selector de dispositivos Chromecast no está disponible.",
+				"outputChromecastNoPlayServices": "Chromecast necesita los servicios de Google Play, de los que este dispositivo no dispone.",
+				"outputChromecastNoPlayServicesHint": "Requiere los servicios de Google Play",
 				"outputConnectErrorMessage": "No se ha podido reproducir el vídeo de {{name}}.",
 				"sleepTimerMinutes_one": "{{count}} minuto",
 				"sleepTimerMinutes_other": "{{count}} minutos"
@@ -2172,7 +2180,12 @@
 					"saveSuccessMessage": "Guardado para escuchar sin conexión",
 					"saveErrorMessage": "Se ha producido un error al guardar el contenido para escucharlo sin conexión",
 					"removeSuccessMessage": "Eliminado de las descargas sin conexión",
-					"removeErrorMessage": "Se ha producido un error al eliminar las descargas sin conexión"
+					"removeErrorMessage": "Se ha producido un error al eliminar las descargas sin conexión",
+					"removingDownloads": "Cómo eliminar las descargas de…",
+					"removeConfirmTitle": "¿Eliminar las descargas sin conexión?",
+					"removeConfirmAction": "Eliminar",
+					"removeConfirmDescription_one": "{{count}} La canción descargada se eliminará de este dispositivo. Las canciones que también estén guardadas en otro álbum o lista de reproducción se conservarán.",
+					"removeConfirmDescription_other": "{{count}} Las canciones descargadas se borrarán de este dispositivo. Las canciones que también estén guardadas en otro álbum o lista de reproducción se conservarán."
 				},
 				"favorites": "Favoritos",
 				"filters": {

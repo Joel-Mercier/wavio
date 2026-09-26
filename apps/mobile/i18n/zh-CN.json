@@ -81,10 +81,10 @@
 				"allTracks": "所有曲目",
 				"allAlbumsSubtitle": "专辑",
 				"allArtistsSubtitle": "艺人",
-				"emptyHint": "Your library only shows what you've favorited (albums, artists, podcasts, radio stations), your playlists and your downloads. Tap the heart on something and it will appear here.",
+				"emptyHint": "您的库中仅显示您已标记为收藏的内容（专辑、艺人、播客、电台）、您的播放列表以及已下载的内容。点击某项内容上的爱心图标，它就会出现在这里。",
 				"search": {
 					"inputPlaceholder": "在音乐库中搜索",
-					"emptyHint": "This only searches your library: favorited albums, artists, radio stations and your playlists. To search your whole collection, including songs, use the Search tab."
+					"emptyHint": "此功能仅搜索您的音乐库：收藏的专辑、艺人、电台以及您的播放列表。若要搜索整个音乐收藏（包括歌曲），请使用“搜索”选项卡。"
 				}
 			},
 			"create": {
@@ -1552,6 +1552,8 @@
 					"title": "播放设置",
 					"endlessPlaybackLabel": "无限播放",
 					"endlessPlaybackDescription": "队列播完后自动添加相似曲目，保持音乐持续播放。",
+					"playerAudioQualityLabel": "播放器中的音质",
+					"playerAudioQualityDescription": "在“正在播放”屏幕上显示当前曲目的源格式、比特率和采样率，包括服务器正在对其进行转码时的情况。",
 					"playerRatingLabel": "播放器中的星级评分",
 					"playerRatingDescription": "在“正在播放”界面的音质选项旁显示一个五星评分图标，这样您无需打开菜单即可对当前曲目进行评分。",
 					"equalizerLabel": "均衡器",
@@ -1757,7 +1759,8 @@
 				"clearAll": "清除全部",
 				"searchPlaceholder": "搜索下载",
 				"deleting": "删除 {{done}} / {{total}}",
-				"totalTracks_other": "{{count}} 首"
+				"totalTracks_other": "{{count}} 首",
+				"downloadingHint_other": "{{count}} more tracks downloading. The list updates when they're done."
 			},
 			"pendingChanges": {
 				"title": "待同步的更改",
@@ -1773,6 +1776,7 @@
 					"setRating": "评分 {{rating}}/5",
 					"playlistEdit": "编辑播放列表信息",
 					"playlistDelete": "删除播放列表",
+					"scrobble": "报告播放",
 					"playlistAddSongs_other": "添加 {{count}} 首歌曲到播放列表",
 					"playlistRemoveSongs_other": "从播放列表移除 {{count}} 首歌曲"
 				},
@@ -1900,7 +1904,9 @@
 			"player": {
 				"title": "正在播放",
 				"notices": {
-					"sourceUnavailable": "无法播放该音轨——无法访问该文件。请检查您的服务器是否已开启，并且是否处于同一网络中。"
+					"sourceUnavailable": "无法播放该音轨——无法访问该文件。请检查您的服务器是否已开启，并且是否处于同一网络中。",
+					"remoteTrackRefused": "{{name}} 无法播放“{{track}}”。请选择另一首歌曲，或在此设备上播放。",
+					"remoteLost": "已与 {{name}}失去联系。该设备已恢复播放功能。"
 				},
 				"original": "原始",
 				"playingFrom": {
@@ -1969,16 +1975,17 @@
 				"jukeboxResumeMessage": "服务器上有点唱机会话正在播放。恢复控制还是在此设备播放？",
 				"jukeboxResumeResume": "恢复控制",
 				"jukeboxResumePlayHere": "在此播放",
-				"upnpResumeTitle": "Resume on {{name}}?",
-				"upnpResumeMessage": "{{name}} still has your music. Resume control or play on this device?",
+				"upnpResumeTitle": "在 {{name}} 上查看简历？",
+				"upnpResumeMessage": "{{name}} 该设备上仍保存着您的音乐。要恢复控制权，还是直接在此设备上播放？",
 				"output": "输出",
 				"outputSpeakersAndTvs": "音箱和电视（UPnP/DLNA）",
 				"outputScanning": "正在查找设备…",
 				"outputNoDevices": "未在此网络上找到任何设备",
-				"outputUnverified": "可能无法播放",
 				"outputChromecast": "Chromecast",
 				"outputChromecastConnected": "已连接",
 				"outputChromecastUnavailable": "Chromecast 设备选择器无法使用。",
+				"outputChromecastNoPlayServices": "Chromecast 需要 Google Play 服务，而该设备并未安装该服务。",
+				"outputChromecastNoPlayServicesHint": "需要 Google Play 服务",
 				"outputConnectErrorMessage": "无法播放 {{name}}。",
 				"sleepTimerMinutes_other": "{{count}}分钟"
 			},
@@ -2114,7 +2121,11 @@
 					"saveSuccessMessage": "已保存到离线收听",
 					"saveErrorMessage": "保存到离线收听时发生错误",
 					"removeSuccessMessage": "已移除离线下载",
-					"removeErrorMessage": "移除离线下载时发生错误"
+					"removeErrorMessage": "移除离线下载时发生错误",
+					"removingDownloads": "删除下载内容…",
+					"removeConfirmTitle": "删除离线下载内容？",
+					"removeConfirmAction": "删除",
+					"removeConfirmDescription_other": "{{count}} 已下载的歌曲将从本设备中删除。同时保存在其他专辑或播放列表中的歌曲将保留。"
 				},
 				"favorites": "收藏",
 				"filters": {

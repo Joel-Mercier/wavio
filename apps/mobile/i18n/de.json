@@ -81,10 +81,10 @@
 				"allTracks": "Alle Titel",
 				"allAlbumsSubtitle": "Alben",
 				"allArtistsSubtitle": "Interpreten",
-				"emptyHint": "Your library only shows what you've favorited (albums, artists, podcasts, radio stations), your playlists and your downloads. Tap the heart on something and it will appear here.",
+				"emptyHint": "In deiner Bibliothek werden nur die von dir als Favoriten markierten Einträge (Alben, Interpreten, Podcasts, Radiosender), deine Wiedergabelisten und deine Downloads angezeigt. Tippe auf das Herz-Symbol bei einem Eintrag, und er wird hier angezeigt.",
 				"search": {
 					"inputPlaceholder": "Durchsuche Deine Bibliothek",
-					"emptyHint": "This only searches your library: favorited albums, artists, radio stations and your playlists. To search your whole collection, including songs, use the Search tab."
+					"emptyHint": "Hiermit wird nur deine Bibliothek durchsucht: als Favoriten markierte Alben, Interpreten, Radiosender und deine Wiedergabelisten. Um deine gesamte Sammlung einschließlich der Titel zu durchsuchen, verwende die Registerkarte „Suchen“."
 				}
 			},
 			"create": {
@@ -1597,6 +1597,8 @@
 					"title": "Wiedergabe",
 					"endlessPlaybackLabel": "Endlosschleife",
 					"endlessPlaybackDescription": "Wenn die Wiedergabeliste zu Ende ist, werden automatisch ähnliche Titel hinzugefügt, damit die Musik weiterläuft.",
+					"playerAudioQualityLabel": "Audioqualität im Player",
+					"playerAudioQualityDescription": "Zeige das Quellformat, die Bitrate und die Abtastrate des aktuellen Titels auf dem Wiedergabebildschirm an, auch wenn der Server ihn gerade transkodiert.",
 					"playerRatingLabel": "Sternbewertung im Player",
 					"playerRatingDescription": "Zeige neben der Audioqualität auf dem Wiedergabebildschirm eine Fünf-Sterne-Bewertung an, damit du den aktuellen Titel bewerten kannst, ohne ein Menü öffnen zu müssen.",
 					"equalizerLabel": "Equalizer",
@@ -1804,7 +1806,9 @@
 				"searchPlaceholder": "Downloads suchen",
 				"deleting": "{{done}} löschen / {{total}}",
 				"totalTracks_one": "{{count}} Titel",
-				"totalTracks_other": "{{count}} Titel"
+				"totalTracks_other": "{{count}} Titel",
+				"downloadingHint_one": "{{count}} more track downloading. The list updates when it's done.",
+				"downloadingHint_other": "{{count}} more tracks downloading. The list updates when they're done."
 			},
 			"pendingChanges": {
 				"title": "Ausstehende Änderungen",
@@ -1820,6 +1824,7 @@
 					"setRating": "Mit {{rating}}/5 bewerten",
 					"playlistEdit": "Playlist-Details bearbeiten",
 					"playlistDelete": "Playlist löschen",
+					"scrobble": "Wiedergabe melden",
 					"playlistAddSongs_one": "{{count}} Titel zur Playlist hinzufügen",
 					"playlistAddSongs_other": "{{count}} Titel zur Playlist hinzufügen",
 					"playlistRemoveSongs_one": "{{count}} Titel aus der Playlist entfernen",
@@ -1953,7 +1958,9 @@
 			"player": {
 				"title": "Wird gerade abgespielt",
 				"notices": {
-					"sourceUnavailable": "Der Titel konnte nicht abgespielt werden – die Datei war nicht erreichbar. Bitte überprüfen Sie, ob Ihr Server eingeschaltet ist und sich im selben Netzwerk befindet."
+					"sourceUnavailable": "Der Titel konnte nicht abgespielt werden – die Datei war nicht erreichbar. Bitte überprüfen Sie, ob Ihr Server eingeschaltet ist und sich im selben Netzwerk befindet.",
+					"remoteTrackRefused": "{{name}} „{{track}}“ konnte nicht abgespielt werden. Wähle einen anderen Titel aus oder spiele ihn auf diesem Gerät ab.",
+					"remoteLost": "Der Kontakt zu {{name}}ist unterbrochen. Die Wiedergabe auf diesem Gerät funktioniert wieder."
 				},
 				"original": "Original",
 				"playingFrom": {
@@ -2022,16 +2029,17 @@
 				"jukeboxResumeMessage": "Auf dem Server läuft noch eine Jukebox-Sitzung. Möchten Sie die Steuerung dieser fortsetzen oder auf diesem Gerät abspielen?",
 				"jukeboxResumeResume": "Kontrolle wiedererlangen",
 				"jukeboxResumePlayHere": "Hier abspielen",
-				"upnpResumeTitle": "Resume on {{name}}?",
-				"upnpResumeMessage": "{{name}} still has your music. Resume control or play on this device?",
+				"upnpResumeTitle": "Lebenslauf auf {{name}}?",
+				"upnpResumeMessage": "{{name}} Ihre Musik ist noch darauf gespeichert. Möchten Sie die Wiedergabe auf diesem Gerät fortsetzen oder abspielen?",
 				"output": "Ausgabe",
 				"outputSpeakersAndTvs": "Lautsprecher und Fernseher (UPnP/DLNA)",
 				"outputScanning": "Auf der Suche nach Geräten…",
 				"outputNoDevices": "In diesem Netzwerk wurden keine Geräte gefunden",
-				"outputUnverified": "Die Wiedergabe wird möglicherweise nicht unterstützt",
 				"outputChromecast": "Chromecast",
 				"outputChromecastConnected": "Verbunden",
 				"outputChromecastUnavailable": "Die Chromecast-Geräteauswahl ist nicht verfügbar.",
+				"outputChromecastNoPlayServices": "Chromecast benötigt Google Play-Dienste, über die dieses Gerät nicht verfügt.",
+				"outputChromecastNoPlayServicesHint": "Erfordert Google Play-Dienste",
 				"outputConnectErrorMessage": "Die Wiedergabe unter {{name}} war nicht möglich.",
 				"sleepTimerMinutes_one": "{{count}} Minute",
 				"sleepTimerMinutes_other": "{{count}} Minuten"
@@ -2172,7 +2180,12 @@
 					"saveSuccessMessage": "Zum Offline-Anhören gespeichert",
 					"saveErrorMessage": "Beim Speichern für die Offline-Wiedergabe ist ein Fehler aufgetreten",
 					"removeSuccessMessage": "Aus den Offline-Downloads entfernt",
-					"removeErrorMessage": "Beim Löschen der Offline-Downloads ist ein Fehler aufgetreten"
+					"removeErrorMessage": "Beim Löschen der Offline-Downloads ist ein Fehler aufgetreten",
+					"removingDownloads": "Downloads entfernen…",
+					"removeConfirmTitle": "Offline-Downloads entfernen?",
+					"removeConfirmAction": "Entfernen",
+					"removeConfirmDescription_one": "{{count}} Der heruntergeladene Titel wird von diesem Gerät gelöscht. Titel, die auch in einem anderen Album oder einer anderen Wiedergabeliste gespeichert sind, bleiben erhalten.",
+					"removeConfirmDescription_other": "{{count}} Heruntergeladene Titel werden von diesem Gerät gelöscht. Titel, die auch in einem anderen Album oder einer anderen Wiedergabeliste gespeichert sind, bleiben erhalten."
 				},
 				"favorites": "Favoriten",
 				"filters": {
