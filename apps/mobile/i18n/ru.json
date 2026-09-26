@@ -1900,7 +1900,11 @@
 				"totalTracks_one": "{{count}} трек",
 				"totalTracks_few": "{{count}} трека",
 				"totalTracks_many": "{{count}} треков",
-				"totalTracks_other": "{{count}} треков"
+				"totalTracks_other": "{{count}} треков",
+				"downloadingHint_one": "{{count}} more track downloading. The list updates when it's done.",
+				"downloadingHint_few": "{{count}} more tracks downloading. The list updates when they're done.",
+				"downloadingHint_many": "{{count}} more tracks downloading. The list updates when they're done.",
+				"downloadingHint_other": "{{count}} more tracks downloading. The list updates when they're done."
 			},
 			"pendingChanges": {
 				"title": "Ожидающие изменения",
