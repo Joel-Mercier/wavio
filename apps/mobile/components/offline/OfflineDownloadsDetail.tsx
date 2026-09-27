@@ -15,6 +15,7 @@ import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import OfflineDownloadItem from "@/components/offline/OfflineDownloadItem";
+import OfflineDownloadItemSkeleton from "@/components/offline/OfflineDownloadItemSkeleton";
 import SortOptionsSheet, {
   useSortFieldLabel,
 } from "@/components/SortOptionsSheet";
@@ -44,21 +45,22 @@ import {
   useDownloadActions,
   useDownloadedTracksCount,
   useDownloadQueueLength,
+  useDownloadsSearch,
   useHasDownloadedTracks,
   useSettledDownloadedTracks,
   useTotalDownloadSize,
 } from "@/hooks/offline";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import useDebounce from "@/hooks/useDebounce";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
-import { createSearchIndex } from "@/services/searchIndex";
 import useApp from "@/stores/app";
 import { niceBytes } from "@/utils/fileSize";
+import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
 import {
   availableSortFields,
   effectiveSort,
   parseSortType,
-  sortItems,
 } from "@/utils/sort";
 import { cn } from "@/utils/tailwind";
 import { TOAST_DURATION } from "@/utils/toastDuration";
@@ -67,6 +69,8 @@ import {
   OFFLINE_TRACK_SORT_SPECS,
   trackSortEnabled,
 } from "@/utils/trackSort";
+
+const SKELETON_DATA = loadingData(16);
 
 export default function OfflineDownloadsDetail() {
   const [gray500, white, primary50, primary800] = Uniwind.getCSSVariable([
@@ -106,6 +110,13 @@ export default function OfflineDownloadsDetail() {
     },
   });
   const query = useSelector(form.store, (state) => state.values.query);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const debounce = useDebounce(400);
+
+  useEffect(() => {
+    debounce(() => setDebouncedQuery(query));
+  }, [query, debounce]);
+
   const handleSearchClearPress = () => {
     form.setFieldValue("query", "");
   };
@@ -127,25 +138,17 @@ export default function OfflineDownloadsDetail() {
   const activeSortField = parseSortType(activeSort).field;
   const sortFieldLabel = useSortFieldLabel();
 
-  const data = useMemo(() => {
-    const sorted = sortItems(
-      downloadedTracksList,
-      activeSort,
-      OFFLINE_TRACK_SORT_SPECS,
-    );
-    if (query.length === 0) {
-      return sorted;
-    }
-    return createSearchIndex(sorted, ["title", "artist", "album"])
-      .search(query)
-      .map((result) => result.item);
-  }, [downloadedTracksList, activeSort, query]);
+  const { data, isSearching } = useDownloadsSearch(
+    downloadedTracksList,
+    activeSort,
+    debouncedQuery,
+  );
 
   // A changed sort/query reorders the list; snap back to the top so the new
   // ordering starts in view instead of leaving the user mid-scroll.
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
-  }, [activeSort, query]);
+  }, [activeSort, debouncedQuery]);
 
   const isEmpty = !hasDownloads;
 
@@ -316,19 +319,25 @@ export default function OfflineDownloadsDetail() {
             <LegendList
               recycleItems
               ref={listRef}
-              data={data}
-              keyExtractor={(item) => item.id}
+              data={isSearching ? SKELETON_DATA : data}
+              keyExtractor={(item, index) =>
+                isSearching ? `skeleton-${index}` : item.id
+              }
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{
                 paddingBottom: screenBottomPadding,
               }}
               ListEmptyComponent={<EmptyDisplay />}
-              renderItem={({ item }) => (
-                <OfflineDownloadItem
-                  item={item}
-                  onRemovePress={() => handleRemovePress(item.id)}
-                />
-              )}
+              renderItem={({ item }) =>
+                isSearching ? (
+                  <OfflineDownloadItemSkeleton />
+                ) : (
+                  <OfflineDownloadItem
+                    item={item}
+                    onRemovePress={() => handleRemovePress(item.id)}
+                  />
+                )
+              }
             />
           )}
         </Box>
