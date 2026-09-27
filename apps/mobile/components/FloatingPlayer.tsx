@@ -453,7 +453,7 @@ export default function FloatingPlayer() {
             )}
           </HStack>
           <HStack className="items-center justify-between">
-            {hasOutputs && !isRadio && !isPodcast ? (
+            {hasOutputs ? (
               <Pressable
                 hitSlop={8}
                 disabled={!isOnline}
@@ -558,7 +558,7 @@ export default function FloatingPlayer() {
               </Animated.View>
             </HStack>
             <HStack className="items-center pl-4 gap-4" style={{ zIndex: 2 }}>
-              {hasOutputs && !isRadio && !isPodcast && (
+              {hasOutputs && (
                 <Pressable
                   hitSlop={12}
                   disabled={!isOnline}

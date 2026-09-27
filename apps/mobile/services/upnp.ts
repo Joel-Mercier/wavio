@@ -2,9 +2,9 @@ import { AppState } from "react-native";
 import type { PlaybackSnapshot } from "@/hooks/player/playbackSnapshot";
 import Native, { type UpnpDevice, type UpnpState } from "@/modules/upnp-cast";
 import { getCapabilities } from "@/services/backend/capabilities";
-import { streamUrl } from "@/services/backend/streaming";
 import { reportError } from "@/services/errorReporting";
 import { getConnectionType, subscribeConnectionType } from "@/services/network";
+import { castContentUrl } from "@/services/playback/castContentUrl";
 import { castMime } from "@/services/playback/castMime";
 import {
   advanceAfterTrackEnd as advanceQueueAfterTrackEnd,
@@ -257,9 +257,7 @@ async function loadOnRenderer(
 ): Promise<boolean> {
   if (!Native || !isUpnpConnected()) return false;
   const deviceName = useUpnpBase.getState().deviceName ?? "";
-  // Radio and podcasts carry their own absolute URL; everything else is built
-  // from the server, deliberately ignoring any downloaded copy.
-  const url = (track.streamUrl as string | undefined) ?? streamUrl(track.id);
+  const url = castContentUrl(track);
   if (!url || url.startsWith("file://")) {
     handleRemoteLoadFailure({
       automatic: options.automatic ?? false,
@@ -276,7 +274,7 @@ async function loadOnRenderer(
     const result = await Native.load(
       url,
       {
-        mime: castMime(track),
+        mime: castMime(track, url),
         title: track.title ?? "",
         artist: track.artist,
         album: track.album,

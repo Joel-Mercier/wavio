@@ -103,6 +103,11 @@ export default function OutputSheet() {
   const jukeboxGain = useJukebox((s) => s.gain);
   const jukeboxStatus = useJukebox((s) => s.status);
   const queueLength = useQueue((s) => s.queue.length);
+  // The jukebox plays server track ids, which radio and podcast episodes are not.
+  const jukeboxCanPlayCurrent = useQueue((s) => {
+    const track = s.currentIndex == null ? null : s.queue[s.currentIndex];
+    return !track?.isRadio && track?.source !== "podcast";
+  });
   const upnpConnected = useUpnp((s) => s.connected);
   const upnpDeviceId = useUpnp((s) => s.deviceId);
   const upnpDevices = useUpnp((s) => s.devices);
@@ -304,6 +309,7 @@ export default function OutputSheet() {
             )}
 
             {capabilities.jukebox &&
+              (jukeboxActive || jukeboxCanPlayCurrent) &&
               outputRow(
                 "jukebox",
                 <Speaker
