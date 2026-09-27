@@ -87,10 +87,19 @@ jest.mock("@/modules/upnp-cast", () => ({
 }));
 
 jest.mock("@/services/backend/streaming", () => ({
-  streamUrl: (id: string) => `http://server/rest/stream?id=${id}&u=x&t=y&s=z`,
+  streamUrl: (id: string) =>
+    jest
+      .requireActual("@/services/local/keys")
+      .parseLocalPodcastEpisodeId(id) ??
+    `http://server/rest/stream?id=${id}&u=x&t=y&s=z`,
 }));
 
 jest.mock("@/services/errorReporting", () => ({ reportError: jest.fn() }));
+
+jest.mock("@/stores/offline", () => ({
+  __esModule: true,
+  default: { getState: () => ({ getDownloadedTrack: () => undefined }) },
+}));
 
 const mockRaiseNotice = jest.fn();
 jest.mock("@/stores/playbackNotice", () => ({
@@ -149,7 +158,13 @@ jest.mock("@/services/network", () => ({
   },
 }));
 
-type Track = { id: string; duration?: number; suffix?: string; title?: string };
+type Track = {
+  id: string;
+  duration?: number;
+  suffix?: string;
+  title?: string;
+  [key: string]: unknown;
+};
 const mockQueueSubscribers = new Set<(state: typeof mockQueueState) => void>();
 const mockQueueState = {
   queue: [] as Track[],
@@ -333,6 +348,81 @@ describe("upnp session", () => {
     mockNative.getVolume.mockResolvedValueOnce(80);
     await connect();
     expect(useUpnpBase.getState().volume).toBeCloseTo(0.8);
+  });
+});
+
+describe("what the renderer is told to fetch", () => {
+  const loaded = () =>
+    mockNative.load.mock.calls.at(-1) as unknown as [string, { mime: string }];
+
+  async function play(track: Track) {
+    mockQueueState.queue = [track];
+    mockQueueState.currentIndex = 0;
+    await upnpConnect(device);
+  }
+
+  it("streams a Taddy episode from its enclosure, not from the server", async () => {
+    await play({
+      id: "11edddac-f3f5-4b1f-8dc3-da2b5f749937",
+      url: "https://dts.podtrac.com/redirect.mp3/episode.mp3?x=1",
+      source: "podcast",
+      podcastSource: "taddy",
+      audioUrl: "https://dts.podtrac.com/redirect.mp3/episode.mp3?x=1",
+    });
+    const [url, info] = loaded();
+    expect(url).toBe("https://dts.podtrac.com/redirect.mp3/episode.mp3?x=1");
+    expect(info.mime).toBe("audio/mpeg");
+  });
+
+  it("streams a downloaded Taddy episode from its enclosure", async () => {
+    await play({
+      id: "taddy-uuid",
+      url: "file:///data/podcasts/episode.m4a",
+      source: "podcast",
+      podcastSource: "taddy",
+      audioUrl: "https://cdn.example.com/episode.m4a",
+    });
+    const [url, info] = loaded();
+    expect(url).toBe("https://cdn.example.com/episode.m4a");
+    expect(info.mime).toBe("audio/mp4");
+    expect(useUpnpBase.getState().connected).toBe(true);
+  });
+
+  it("streams a self-hosted feed episode from its enclosure", async () => {
+    const enclosure = "https://feeds.example.com/ep1.mp3";
+    const id = jest
+      .requireActual("@/services/local/keys")
+      .localPodcastEpisodeId(enclosure);
+    await play({
+      id,
+      streamId: id,
+      url: enclosure,
+      source: "podcast",
+      podcastSource: "server",
+      contentType: "audio/mpeg",
+    });
+    expect(loaded()[0]).toBe(enclosure);
+  });
+
+  it("streams a server-hosted episode through its streamId", async () => {
+    await play({
+      id: "pe-1",
+      streamId: "media-9",
+      url: "http://server/rest/stream?id=media-9&u=x&t=y&s=z",
+      source: "podcast",
+      podcastSource: "server",
+    });
+    expect(loaded()[0]).toContain("/rest/stream?id=media-9");
+  });
+
+  it("streams internet radio from the station's own URL", async () => {
+    await play({
+      id: "radio-1",
+      url: "https://stream.example.com/live",
+      streamUrl: "https://stream.example.com/live",
+      isRadio: true,
+    });
+    expect(loaded()[0]).toBe("https://stream.example.com/live");
   });
 });
 
@@ -1141,6 +1231,57 @@ describe("castMime", () => {
   it("is case-insensitive about the suffix", () => {
     mockStreamingFormat.value = "raw";
     expect(castMime({ id: "t", url: "u", suffix: "FLAC" })).toBe("audio/flac");
+  });
+
+  it("ignores the transcode target for audio the server never serves", () => {
+    mockStreamingFormat.value = "opus";
+    expect(
+      castMime(
+        {
+          id: "t",
+          url: "u",
+          source: "podcast",
+          podcastSource: "taddy",
+          audioUrl: "https://cdn.example.com/ep.mp3",
+        },
+        "https://cdn.example.com/ep.mp3",
+      ),
+    ).toBe("audio/mpeg");
+    expect(
+      castMime({
+        id: "r",
+        url: "https://radio.example.com/live",
+        isRadio: true,
+      }),
+    ).toBe("audio/mpeg");
+  });
+
+  it("still applies the transcode target to a server-hosted episode", () => {
+    mockStreamingFormat.value = "opus";
+    expect(
+      castMime({
+        id: "pe-1",
+        url: "u",
+        source: "podcast",
+        podcastSource: "server",
+        streamId: "media-9",
+      }),
+    ).toBe("audio/ogg");
+  });
+
+  it("describes an episode by its enclosure type, then its file extension", () => {
+    const episode = {
+      id: "t",
+      url: "u",
+      source: "podcast",
+      podcastSource: "taddy",
+      audioUrl: "x",
+    };
+    expect(
+      castMime({ ...episode, contentType: "audio/x-m4a" }, "https://a/b.mp3"),
+    ).toBe("audio/mp4");
+    expect(castMime(episode, "https://a/b.m4a?token=1")).toBe("audio/mp4");
+    expect(castMime(episode, "https://a/b")).toBe("audio/mpeg");
   });
 
   it("falls back to audio rather than letting the renderer guess", () => {

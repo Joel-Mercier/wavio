@@ -9,8 +9,8 @@ import {
   RemoteMediaClient,
 } from "react-native-google-cast";
 import type { PlaybackSnapshot } from "@/hooks/player/playbackSnapshot";
-import { streamUrl } from "@/services/backend/streaming";
 import { reportError } from "@/services/errorReporting";
+import { castContentUrl } from "@/services/playback/castContentUrl";
 import { castMime } from "@/services/playback/castMime";
 import {
   advanceAfterTrackEnd as advanceQueueAfterTrackEnd,
@@ -37,7 +37,6 @@ import {
 import { registerLogoutHandler } from "@/stores/auth";
 import useCast, { useCastBase } from "@/stores/cast";
 import useQueue, { type QueueTrack } from "@/stores/queue";
-import { podcastStreamUrl } from "@/utils/podcastEpisodeToTrack";
 
 // Chromecast as an output, on the same footing as a UPnP renderer or the
 // jukebox: the phone keeps the queue and the metadata, the receiver plays, and
@@ -57,19 +56,6 @@ import { podcastStreamUrl } from "@/utils/podcastEpisodeToTrack";
 const RESTART_BEFORE_SECONDS = 3;
 
 export const isCastActive = (): boolean => useCastBase.getState().active;
-
-// ── What the receiver is told to fetch ───────────────────────────────────────
-
-// Three sources, three answers: internet radio streams its own absolute URL, a
-// podcast episode streams a third-party enclosure or the server's podcast stream
-// endpoint (never `streamUrl(episode id)` — a Taddy uuid means nothing to the
-// server, and an OpenSubsonic episode streams through its `streamId`, not its
-// own id), and a library track streams from the Subsonic endpoint for its id.
-function castContentUrl(track: QueueTrack): string | undefined {
-  if (track.isRadio) return track.streamUrl ?? track.url;
-  if (isPodcastTrack(track)) return podcastStreamUrl(track);
-  return streamUrl(track.id);
-}
 
 // ── Playback state, as last reported by the receiver ─────────────────────────
 
@@ -506,7 +492,7 @@ async function loadOnReceiver(
       startTime: track.isRadio || startSeconds <= 0 ? undefined : startSeconds,
       mediaInfo: {
         contentUrl,
-        contentType: castMime(track),
+        contentType: castMime(track, contentUrl),
         streamType: track.isRadio
           ? MediaStreamType.LIVE
           : MediaStreamType.BUFFERED,
