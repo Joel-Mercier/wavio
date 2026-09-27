@@ -30,6 +30,8 @@ jest.mock("@/config/i18n", () => ({
   },
 }));
 
+import { Orientation } from "expo-screen-orientation";
+import { Dimensions } from "react-native";
 import { PODCAST_PLAYBACK_RATES, useAppBase } from "@/stores/app";
 
 const reset = () =>
@@ -49,6 +51,9 @@ const reset = () =>
       podcastPlaybackRate: 1,
       endlessPlaybackEnabled: false,
       queueSyncPriority: "off",
+      orientation: Orientation.PORTRAIT_UP,
+      windowWidth: 579,
+      isWideLayout: false,
     },
     false,
   );
@@ -61,6 +66,62 @@ beforeEach(() => {
 });
 
 describe("app store", () => {
+  it("initializes layout from the current window width", () => {
+    const initial = useAppBase.getInitialState();
+    expect(initial.windowWidth).toBe(Dimensions.get("window").width);
+    expect(initial.isWideLayout).toBe(initial.windowWidth >= 600);
+  });
+
+  describe.each([
+    Orientation.PORTRAIT_UP,
+    Orientation.PORTRAIT_DOWN,
+    Orientation.LANDSCAPE_LEFT,
+    Orientation.LANDSCAPE_RIGHT,
+    Orientation.UNKNOWN,
+  ])("window layout with orientation %s", (orientation) => {
+    it.each([
+      [579, false],
+      [599, false],
+      [600, true],
+      [840, true],
+    ])("uses width %s to select wide layout %s", (width, wide) => {
+      useAppBase.getState().setOrientation(orientation);
+      useAppBase.getState().setWindowWidth(width);
+      expect(useAppBase.getState().isWideLayout).toBe(wide);
+      useAppBase.getState().setOrientation(Orientation.PORTRAIT_UP);
+      useAppBase.getState().setOrientation(orientation);
+      expect(useAppBase.getState().orientation).toBe(orientation);
+      expect(useAppBase.getState().windowWidth).toBe(width);
+      expect(useAppBase.getState().isWideLayout).toBe(wide);
+    });
+  });
+
+  it("returns to compact layout when a landscape window narrows", () => {
+    useAppBase.getState().setOrientation(Orientation.LANDSCAPE_LEFT);
+    useAppBase.getState().setWindowWidth(840);
+    expect(useAppBase.getState().isWideLayout).toBe(true);
+    useAppBase.getState().setWindowWidth(579);
+    expect(useAppBase.getState().isWideLayout).toBe(false);
+    useAppBase.getState().setOrientation(Orientation.LANDSCAPE_RIGHT);
+    expect(useAppBase.getState().isWideLayout).toBe(false);
+    useAppBase.getState().setWindowWidth(600);
+    expect(useAppBase.getState().isWideLayout).toBe(true);
+  });
+
+  it("does not persist live window layout or device orientation", async () => {
+    useAppBase.getState().setWindowWidth(840);
+    useAppBase.getState().setOrientation(Orientation.LANDSCAPE_RIGHT);
+    const storage = jest.requireMock("@/config/storage").zustandStorage;
+    const persisted = JSON.parse(storage.getItem("app"));
+    expect(persisted.state).not.toHaveProperty("windowWidth");
+    expect(persisted.state).not.toHaveProperty("isWideLayout");
+    expect(persisted.state).not.toHaveProperty("orientation");
+    useAppBase.getState().setWindowWidth(579);
+    await useAppBase.persist.rehydrate();
+    expect(useAppBase.getState().isWideLayout).toBe(false);
+    expect(useAppBase.getState().windowWidth).toBe(579);
+  });
+
   it("setLocale updates locale and notifies i18n", () => {
     useAppBase.getState().setLocale("fr");
     expect(useAppBase.getState().locale).toBe("fr");
