@@ -128,11 +128,12 @@
   },
   "patchedDependencies": {
     "expo-audio@57.0.5": "patches/expo-audio@57.0.5.patch",
-    "expo-navigation-bar@57.0.2": "patches/expo-navigation-bar@57.0.2.patch",
-    "lucide-react-native@1.45.0": "patches/lucide-react-native@1.45.0.patch",
     "zod@4.6.2": "patches/zod@4.6.2.patch",
-    "expo-font@57.0.4": "patches/expo-font@57.0.4.patch",
     "expo-file-system@57.0.7": "patches/expo-file-system@57.0.7.patch",
+    "react-native-reanimated@4.5.3": "patches/react-native-reanimated@4.5.3.patch",
+    "lucide-react-native@1.45.0": "patches/lucide-react-native@1.45.0.patch",
+    "expo-font@57.0.4": "patches/expo-font@57.0.4.patch",
+    "expo-navigation-bar@57.0.2": "patches/expo-navigation-bar@57.0.2.patch",
   },
   "packages": {
     "@0no-co/graphql.web": ["@0no-co/graphql.web@1.3.2", "", { "peerDependencies": { "graphql": "^14.0.0 || ^15.0.0 || ^16.0.0" }, "optionalPeers": ["graphql"] }, "sha512-Q1+pRlLhE31GOY/2c9BAEnFTNxO7Awtc6fhhEDlxyCBQ2N0IhD32cPVvPChrK9mwBNSgRdW/sF1kd2e0ojHj1Q=="],

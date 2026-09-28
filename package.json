@@ -41,7 +41,8 @@
     "expo-navigation-bar@57.0.2": "patches/expo-navigation-bar@57.0.2.patch",
     "lucide-react-native@1.45.0": "patches/lucide-react-native@1.45.0.patch",
     "expo-font@57.0.4": "patches/expo-font@57.0.4.patch",
-    "expo-file-system@57.0.7": "patches/expo-file-system@57.0.7.patch"
+    "expo-file-system@57.0.7": "patches/expo-file-system@57.0.7.patch",
+    "react-native-reanimated@4.5.3": "patches/react-native-reanimated@4.5.3.patch"
   },
   "dependencies": {
     "eas-cli": "^20.2.0",
