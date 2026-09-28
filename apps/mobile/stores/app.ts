@@ -11,20 +11,12 @@ import { DEFAULT_SONG_SORT, type SongSortType } from "@/utils/songSort";
 import type { SortType } from "@/utils/sort";
 import type { OfflineTrackSortType, TrackSortType } from "@/utils/trackSort";
 
-const isLandscapeOrientation = (orientation: Orientation) =>
-  orientation === Orientation.LANDSCAPE_LEFT ||
-  orientation === Orientation.LANDSCAPE_RIGHT;
-
 // Width (dp) at or above which the app switches to its "wide" layout: left
-// sidebar nav, docked player, two-column player, larger grids. Matches Android's
-// sw600dp "tablet" breakpoint so a tablet/foldable in portrait — not just a phone
-// in landscape — gets the wide layout. Phones stay below this in portrait.
+// sidebar nav, docked player, two-column player, larger grids.
 export const WIDE_LAYOUT_BREAKPOINT = 600;
 
-// The wide layout applies when the device is physically landscape OR the window
-// is wide enough on its own (tablet, foldable, large-screen portrait).
-const isWideLayout = (orientation: Orientation, windowWidth: number) =>
-  isLandscapeOrientation(orientation) || windowWidth >= WIDE_LAYOUT_BREAKPOINT;
+const isWideLayout = (windowWidth: number) =>
+  windowWidth >= WIDE_LAYOUT_BREAKPOINT;
 
 // "raw" streams the source file untouched (bit-perfect); the others ask the
 // server to transcode to that codec via the Subsonic `format=` param.
@@ -540,21 +532,15 @@ export const useAppBase = create<AppStore>()(
       },
       orientation: Orientation.PORTRAIT_UP,
       windowWidth: Dimensions.get("window").width,
-      isWideLayout: isWideLayout(
-        Orientation.PORTRAIT_UP,
-        Dimensions.get("window").width,
-      ),
+      isWideLayout: isWideLayout(Dimensions.get("window").width),
       setOrientation: (orientation: Orientation) => {
-        set((state) => ({
-          orientation,
-          isWideLayout: isWideLayout(orientation, state.windowWidth),
-        }));
+        set({ orientation });
       },
       setWindowWidth: (windowWidth: number) => {
-        set((state) => ({
+        set({
           windowWidth,
-          isWideLayout: isWideLayout(state.orientation, windowWidth),
-        }));
+          isWideLayout: isWideLayout(windowWidth),
+        });
       },
     }),
     {
