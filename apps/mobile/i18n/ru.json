@@ -1901,10 +1901,10 @@
 				"totalTracks_few": "{{count}} трека",
 				"totalTracks_many": "{{count}} треков",
 				"totalTracks_other": "{{count}} треков",
-				"downloadingHint_one": "{{count}} more track downloading. The list updates when it's done.",
-				"downloadingHint_few": "{{count}} more tracks downloading. The list updates when they're done.",
-				"downloadingHint_many": "{{count}} more tracks downloading. The list updates when they're done.",
-				"downloadingHint_other": "{{count}} more tracks downloading. The list updates when they're done."
+				"downloadingHint_one": "{{count}} продолжается загрузка треков. Список обновится, когда загрузка завершится.",
+				"downloadingHint_few": "{{count}} Загрузка других треков продолжается. Список обновится, когда загрузка завершится.",
+				"downloadingHint_many": "{{count}} Загрузка других треков продолжается. Список обновится, когда загрузка завершится.",
+				"downloadingHint_other": "{{count}} Загрузка других треков продолжается. Список обновится, когда загрузка завершится."
 			},
 			"pendingChanges": {
 				"title": "Ожидающие изменения",
