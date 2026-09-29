@@ -1,5 +1,6 @@
 const mockSetRemotePlayback = jest.fn();
 const mockUpdateRemotePlayback = jest.fn();
+const mockSetRemoteVolume = jest.fn();
 const mockPushLockScreenMetadata = jest.fn();
 jest.mock("@/services/player", () => ({
   getActivePlayer: () => ({
@@ -9,6 +10,7 @@ jest.mock("@/services/player", () => ({
       positionMs: number,
       durationMs: number,
     ) => mockUpdateRemotePlayback(playing, positionMs, durationMs),
+    setRemoteVolume: (volume: number) => mockSetRemoteVolume(volume),
   }),
   pushLockScreenMetadata: (track: unknown) => mockPushLockScreenMetadata(track),
 }));
@@ -40,11 +42,17 @@ jest.mock("@/hooks/player/playbackSnapshot", () => ({
 }));
 
 let mockRemoteActive = false;
+let mockRemoteVolume: number | undefined = 0.4;
 let mockRemoteListener: (() => void) | null = null;
 jest.mock("@/services/playback/targets", () => ({
   activeRemoteTarget: () =>
     mockRemoteActive
-      ? { id: "jukebox", readSnapshot: () => mockRemoteSnapshot }
+      ? {
+          id: "jukebox",
+          readSnapshot: () => mockRemoteSnapshot,
+          getVolume:
+            mockRemoteVolume == null ? undefined : () => mockRemoteVolume,
+        }
       : null,
   subscribeRemoteChange: (cb: () => void) => {
     mockRemoteListener = cb;
@@ -88,6 +96,8 @@ beforeEach(() => {
   jest.useFakeTimers();
   mockSetRemotePlayback.mockReset();
   mockUpdateRemotePlayback.mockReset();
+  mockSetRemoteVolume.mockReset();
+  mockRemoteVolume = 0.4;
   mockPushLockScreenMetadata.mockReset();
   mockSnapshot = {
     playing: false,
@@ -160,6 +170,33 @@ describe("lock screen mirror - handover", () => {
     startLockScreenMirror();
     expect(mockSetRemotePlayback).toHaveBeenCalledWith(true);
   });
+
+  test("says the claim again while a cold-started service comes up, then stops", () => {
+    // A Chromecast still playing after the app was killed: the claim lands
+    // before the playback service is bound and is dropped on the floor.
+    mockRemoteActive = true;
+    startLockScreenMirror();
+    mockSetRemotePlayback.mockClear();
+
+    jest.advanceTimersByTime(1500);
+    expect(mockSetRemotePlayback).toHaveBeenCalledTimes(1);
+    jest.advanceTimersByTime(2500);
+    expect(mockSetRemotePlayback).toHaveBeenCalledTimes(2);
+    expect(mockSetRemotePlayback).toHaveBeenLastCalledWith(true);
+    jest.advanceTimersByTime(10000);
+    expect(mockSetRemotePlayback).toHaveBeenCalledTimes(2);
+  });
+
+  test("drops a pending reclaim once playback comes back to this device", () => {
+    startLockScreenMirror();
+    setRemote(true);
+    mockSetRemotePlayback.mockClear();
+
+    setRemote(false);
+    jest.advanceTimersByTime(10000);
+    expect(mockSetRemotePlayback).toHaveBeenCalledTimes(1);
+    expect(mockSetRemotePlayback).toHaveBeenCalledWith(false);
+  });
 });
 
 describe("lock screen mirror - state", () => {
@@ -177,6 +214,25 @@ describe("lock screen mirror - state", () => {
     mockStateListener?.();
 
     expect(mockUpdateRemotePlayback).toHaveBeenCalledWith(true, 12400, 210000);
+  });
+
+  test("pushes the remote's volume alongside, so the session can claim the volume keys", () => {
+    startLockScreenMirror();
+    setRemote(true);
+    mockSetRemoteVolume.mockClear();
+    mockRemoteVolume = 0.65;
+
+    mockStateListener?.();
+
+    expect(mockSetRemoteVolume).toHaveBeenCalledWith(0.65);
+  });
+
+  test("pushes no volume for a target that has none", () => {
+    mockRemoteVolume = undefined;
+    startLockScreenMirror();
+    setRemote(true);
+    mockStateListener?.();
+    expect(mockSetRemoteVolume).not.toHaveBeenCalled();
   });
 
   test("pulses the position so the seek bar advances between remote updates", () => {

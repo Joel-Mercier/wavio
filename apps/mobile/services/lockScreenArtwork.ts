@@ -16,5 +16,6 @@ const mirror = createArtworkMirror("lockscreen-artwork", 128);
 
 export const cachedArtworkUri = mirror.cachedArtworkUri;
 export const ensureArtworkCached = mirror.ensureArtworkCached;
+export const refreshArtworkIndex = mirror.refreshIndex;
 // Registered as a logout handler in services/player.ts.
 export const clearArtworkCache = mirror.clearArtworkCache;

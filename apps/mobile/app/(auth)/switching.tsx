@@ -14,6 +14,7 @@ import {
   authenticateWithFallback,
   loginFailureStatus,
 } from "@/services/auth/authenticate";
+import { sessionUsernameFor } from "@/services/auth/sessionUsername";
 import { hasNetworkServerType } from "@/services/backend/serverTraits";
 import { reportError, scrubUrl } from "@/services/errorReporting";
 import { useAuthBase } from "@/stores/auth";
@@ -56,21 +57,38 @@ export default function SwitchingScreen() {
       goToManualLogin();
       return;
     }
+    // A user saved as `joel` whose data sits under `Joel` signs in as `Joel`,
+    // like the manual login does.
+    const username = sessionUsernameFor(
+      server,
+      user.username,
+      useServersBase
+        .getState()
+        .getUsersForServer(server.id)
+        .map((u) => u.username),
+    );
     try {
       setError(false);
       const { options, activeUrl } = await authenticateWithFallback(
         server.type,
         server.url,
         server.fallbackUrl,
-        user.username,
+        username,
         user.password,
         server.headers,
         server.plainPasswordAuth,
       );
+      if (username !== user.username) {
+        useServersBase.getState().addOrUpdateUser({
+          serverId: server.id,
+          username,
+          password: user.password,
+        });
+      }
       useAuthBase.getState().login({
         serverId: server.id,
         url: activeUrl,
-        username: user.username,
+        username,
         password: user.password,
         ...options,
       });

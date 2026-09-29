@@ -6,6 +6,7 @@ jest.mock("@/config/storage", () => ({
     remove: (k: string) => mockMem.delete(k),
     getAllKeys: () => [...mockMem.keys()],
   },
+  flushPendingScopedWrites: () => {},
 }));
 
 const mockDirs = new Set<string>();

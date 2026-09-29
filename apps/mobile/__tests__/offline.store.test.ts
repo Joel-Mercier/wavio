@@ -16,6 +16,9 @@ jest.mock("@/config/storage", () => {
     zustandStorage: make(),
     createScopedStorage: () => make(),
     createDynamicScopedStorage: () => make(),
+    createThrottledScopedJSONStorage: () =>
+      jest.requireActual("zustand/middleware").createJSONStorage(() => make()),
+    flushPendingScopedWrites: () => {},
     getAuthScope: () => "scope",
   };
 });
@@ -133,8 +136,8 @@ describe("offline store - downloaded tracks", () => {
     get().addDownloadedTrack(makeTrack("a"));
     get().setDownloadProgress("a", {
       trackId: "a",
-      status: "completed",
-      progress: 100,
+      status: "downloading",
+      progress: 50,
     });
     get().addToDownloadQueue(makeChild("b"));
     get().clearAllDownloads();
@@ -194,14 +197,26 @@ describe("offline store - progress", () => {
     });
     get().setDownloadProgress("a", {
       trackId: "a",
-      status: "completed",
-      progress: 100,
+      status: "paused",
+      progress: 10,
     });
     expect(get().downloadProgress.a).toEqual({
       trackId: "a",
-      status: "completed",
-      progress: 100,
+      status: "paused",
+      progress: 10,
     });
+  });
+
+  it("removeManyDownloadProgress drops only the given ids", () => {
+    for (const id of ["a", "b", "c"]) {
+      get().setDownloadProgress(id, {
+        trackId: id,
+        status: "pending",
+        progress: 0,
+      });
+    }
+    get().removeManyDownloadProgress(["a", "c"]);
+    expect(Object.keys(get().downloadProgress)).toEqual(["b"]);
   });
 
   it("clearFailedDownloads removes only failed entries", () => {
@@ -213,8 +228,8 @@ describe("offline store - progress", () => {
     });
     get().setDownloadProgress("b", {
       trackId: "b",
-      status: "completed",
-      progress: 100,
+      status: "paused",
+      progress: 0,
     });
     get().setDownloadProgress("c", {
       trackId: "c",
@@ -223,7 +238,7 @@ describe("offline store - progress", () => {
     });
     get().clearFailedDownloads();
     expect(get().downloadProgress.a).toBeUndefined();
-    expect(get().downloadProgress.b?.status).toBe("completed");
+    expect(get().downloadProgress.b?.status).toBe("paused");
     expect(get().downloadProgress.c?.status).toBe("downloading");
   });
 });
@@ -387,9 +402,28 @@ describe("offline store - library sync bulk actions", () => {
     expect(Object.keys(get().downloadedCollections)).toEqual(["p1"]);
   });
 
+  it("addCachedArtworks registers a batch with one timestamp", () => {
+    get().addCachedArtworks({ "al-0": "file:///artwork/al-0.jpg" });
+    get().addCachedArtworks({
+      "al-1": "file:///artwork/al-1.jpg",
+      "al-2": "file:///artwork/al-2.jpg",
+    });
+    expect(get().artworkCache).toEqual({
+      "al-0": "file:///artwork/al-0.jpg",
+      "al-1": "file:///artwork/al-1.jpg",
+      "al-2": "file:///artwork/al-2.jpg",
+    });
+    expect(get().artworkCachedAt["al-1"]).toBe(get().artworkCachedAt["al-2"]);
+    const cache = get().artworkCache;
+    get().addCachedArtworks({});
+    expect(get().artworkCache).toBe(cache);
+  });
+
   it("removeCachedArtwork drops only the given cover ids", () => {
-    get().addCachedArtwork("al-1", "file:///artwork/al-1.jpg");
-    get().addCachedArtwork("al-2", "file:///artwork/al-2.jpg");
+    get().addCachedArtworks({
+      "al-1": "file:///artwork/al-1.jpg",
+      "al-2": "file:///artwork/al-2.jpg",
+    });
     get().removeCachedArtwork(["al-1"]);
     expect(get().artworkCache).toEqual({
       "al-2": "file:///artwork/al-2.jpg",
@@ -397,11 +431,11 @@ describe("offline store - library sync bulk actions", () => {
   });
 
   it("caches artwork and clears it with clearAllDownloads", () => {
-    get().addCachedArtwork("al-1", "file:///artwork/al-1.jpg");
+    get().addCachedArtworks({ "al-1": "file:///artwork/al-1.jpg" });
     expect(get().artworkCache["al-1"]).toBe("file:///artwork/al-1.jpg");
     get().clearAllDownloads();
     expect(get().artworkCache).toEqual({});
-    get().addCachedArtwork("al-2", "file:///artwork/al-2.jpg");
+    get().addCachedArtworks({ "al-2": "file:///artwork/al-2.jpg" });
     get().clearArtworkCache();
     expect(get().artworkCache).toEqual({});
   });

@@ -47,6 +47,7 @@ import { useTrackArtwork } from "@/hooks/useTrackArtwork";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
 import type { PodcastSeries } from "@/services/taddyPodcasts/types";
 import useApp from "@/stores/app";
+import useCast from "@/stores/cast";
 import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
 import useQueue from "@/stores/queue";
@@ -92,7 +93,8 @@ export default function FloatingPlayer() {
   const capabilities = useCapabilities();
   const jukeboxActive = useJukebox((s) => s.active);
   const upnpConnected = useUpnp((s) => s.connected);
-  const playingRemotely = jukeboxActive || upnpConnected;
+  const casting = useCast((s) => s.active);
+  const playingRemotely = jukeboxActive || upnpConnected || casting;
   // The sheet is worth opening when there is any output to pick between, not
   // only when the server happens to have a jukebox.
   const hasOutputs = capabilities.jukebox || capabilities.remoteStreamableUrl;
@@ -413,12 +415,12 @@ export default function FloatingPlayer() {
               }
             />
             <VStack className="flex-1">
-              <MovingText>
+              <MovingText animate={isPlaying}>
                 <Text className="text-white font-bold text-sm">
                   {playingTrack.title || ""}
                 </Text>
               </MovingText>
-              <MovingText>
+              <MovingText animate={isPlaying}>
                 <Text className="text-gray-300 text-xs">
                   {playingTrack.artist ||
                     (!isRadio && !isPodcast
@@ -451,7 +453,7 @@ export default function FloatingPlayer() {
             )}
           </HStack>
           <HStack className="items-center justify-between">
-            {hasOutputs && !isRadio && !isPodcast ? (
+            {hasOutputs ? (
               <Pressable
                 hitSlop={8}
                 disabled={!isOnline}
@@ -540,12 +542,12 @@ export default function FloatingPlayer() {
                 style={[textStyle, { zIndex: 1 }]}
                 className="ml-4 flex-1"
               >
-                <MovingText>
+                <MovingText animate={isPlaying}>
                   <Text className="text-white font-bold text-md">
                     {playingTrack.title || ""}
                   </Text>
                 </MovingText>
-                <MovingText>
+                <MovingText animate={isPlaying}>
                   <Text className="text-gray-300">
                     {playingTrack.artist ||
                       (!isRadio && !isPodcast
@@ -556,7 +558,7 @@ export default function FloatingPlayer() {
               </Animated.View>
             </HStack>
             <HStack className="items-center pl-4 gap-4" style={{ zIndex: 2 }}>
-              {hasOutputs && !isRadio && !isPodcast && (
+              {hasOutputs && (
                 <Pressable
                   hitSlop={12}
                   disabled={!isOnline}

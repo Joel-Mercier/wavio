@@ -103,8 +103,12 @@ import {
   probeServer,
   probeServerPreferringPrimary,
   resetServerReachable,
+  setRecoveryPollEnabled,
   subscribeConnectionType,
 } from "@/services/network";
+
+// Mirror of RECOVERY_POLL_MS in services/network.ts.
+const RECOVERY_POLL_MS = 12000;
 
 // Mirror of OFFLINE_GRACE_MS in services/network.ts: the device-offline
 // transition is debounced so a network handoff doesn't flash the offline UI.
@@ -163,6 +167,7 @@ afterEach(() => {
   // Stop any recovery poll / pending offline timer and return reachability to
   // the optimistic default so module-level state doesn't bleed between tests.
   resetServerReachable();
+  setRecoveryPollEnabled(true);
   jest.clearAllTimers();
   jest.useRealTimers();
 });
@@ -367,6 +372,67 @@ describe("server reachability probe", () => {
     resetServerReachable();
     expect(getServerReachable()).toBe(true);
     expect(getIsEffectivelyOnline()).toBe(true);
+  });
+});
+
+describe("recovery poll gate", () => {
+  const goUnreachable = async () => {
+    await setDeviceOnline(true);
+    mockPing.mockRejectedValue(new Error("ERR_NETWORK"));
+    await probeServer();
+    await probeServer();
+    expect(getServerReachable()).toBe(false);
+    mockPing.mockClear();
+  };
+
+  it("re-probes on the recovery cadence while enabled", async () => {
+    await goUnreachable();
+    await jest.advanceTimersByTimeAsync(RECOVERY_POLL_MS);
+    expect(mockPing).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops polling while disabled", async () => {
+    await goUnreachable();
+    setRecoveryPollEnabled(false);
+    await jest.advanceTimersByTimeAsync(RECOVERY_POLL_MS * 5);
+    expect(mockPing).not.toHaveBeenCalled();
+  });
+
+  it("a failed probe while disabled does not restart the poll", async () => {
+    await goUnreachable();
+    setRecoveryPollEnabled(false);
+    await probeServer();
+    mockPing.mockClear();
+    await jest.advanceTimersByTimeAsync(RECOVERY_POLL_MS * 3);
+    expect(mockPing).not.toHaveBeenCalled();
+  });
+
+  it("probes at once and resumes the cadence when re-enabled", async () => {
+    await goUnreachable();
+    setRecoveryPollEnabled(false);
+    mockPing.mockResolvedValueOnce({});
+    setRecoveryPollEnabled(true);
+    await flushMicrotasks();
+    expect(mockPing).toHaveBeenCalledTimes(1);
+    expect(getServerReachable()).toBe(true);
+  });
+
+  it("keeps polling after a re-enable whose probe still fails", async () => {
+    await goUnreachable();
+    setRecoveryPollEnabled(false);
+    setRecoveryPollEnabled(true);
+    await flushMicrotasks();
+    expect(mockPing).toHaveBeenCalledTimes(1);
+    await jest.advanceTimersByTimeAsync(RECOVERY_POLL_MS);
+    expect(mockPing).toHaveBeenCalledTimes(2);
+  });
+
+  it("does nothing on re-enable while the server is reachable", async () => {
+    await setDeviceOnline(true);
+    setRecoveryPollEnabled(false);
+    setRecoveryPollEnabled(true);
+    await flushMicrotasks();
+    expect(mockPing).not.toHaveBeenCalled();
   });
 });
 

@@ -1,5 +1,6 @@
 import { Platform } from "react-native";
 import { handleBrowsePlay } from "./play";
+import { loadOnDemandChildren } from "./tree";
 import type { BrowseNode, BrowseTree } from "./types";
 import { ROOT_ID } from "./types";
 
@@ -19,6 +20,24 @@ const loadRn = () => {
 let currentTree: BrowseTree | null = null;
 let connected = false;
 let registered = false;
+const connectionListeners = new Set<(connected: boolean) => void>();
+
+const setConnected = (value: boolean) => {
+  if (connected === value) return;
+  connected = value;
+  for (const listener of connectionListeners) listener(value);
+};
+
+export const isCarPlayConnected = () => connected;
+
+export const onCarPlayConnection = (
+  listener: (connected: boolean) => void,
+): (() => void) => {
+  connectionListeners.add(listener);
+  return () => {
+    connectionListeners.delete(listener);
+  };
+};
 
 const sectionToItems = (nodes: BrowseNode[]) =>
   nodes.map((node) => {
@@ -48,6 +67,10 @@ const buildList = (
       if (node.playable) {
         await handleBrowsePlay(node.id, parentId);
         return;
+      }
+      if (currentTree && !currentTree[node.id]) {
+        const children = await loadOnDemandChildren(node.id);
+        if (children && currentTree) currentTree[node.id] = children;
       }
       try {
         const child = buildList(rn, node.title, node.id);
@@ -81,14 +104,16 @@ export const setupCarPlay = () => {
   registered = true;
 
   const onConnect = () => {
-    connected = true;
+    setConnected(true);
     applyTree();
   };
   const onDisconnect = () => {
-    connected = false;
+    setConnected(false);
   };
   rn.CarPlay.registerOnConnect(onConnect);
   rn.CarPlay.registerOnDisconnect(onDisconnect);
+  // A connection made before registration is never re-announced.
+  if (rn.CarPlay.connected) onConnect();
 
   return () => {
     rn.CarPlay.unregisterOnConnect(onConnect);

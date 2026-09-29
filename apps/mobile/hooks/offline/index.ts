@@ -1,5 +1,6 @@
 // Offline hooks, grouped by concern:
 // - useDownloads        — download state (tracks/collections/progress/size) + actions
+// - useDownloadsSearch  — sorted/searched list for the Offline downloads screen
 // - useCollectionDownload — save/remove a playlist or album for offline
 // - useOfflineAvailability — "can I open/play this offline?" (track/collection/detail)
 // - useOfflineCollection  — reconstruct a saved collection for rendering/playback
@@ -16,15 +17,19 @@ export {
   useDownloadLocation,
 } from "./useDownloadLocation";
 export {
+  useDownloadActions,
   useDownloadedCollections,
   useDownloadedTracksCount,
-  useDownloadedTracksList,
   useDownloadProgress,
+  useDownloadQueueLength,
   useDownloadSizeByVolume,
+  useHasDownloadedTracks,
   useOfflineDownloads,
   useOfflineModeEnabled,
+  useSettledDownloadedTracks,
   useTotalDownloadSize,
 } from "./useDownloads";
+export { useDownloadsSearch } from "./useDownloadsSearch";
 export {
   type LibrarySyncUiStatus,
   useLibrarySyncStatus,

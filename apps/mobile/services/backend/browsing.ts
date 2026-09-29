@@ -1,7 +1,12 @@
-import { dispatch, isNavidrome } from "@/services/backend/dispatch";
+import {
+  dispatch,
+  isNavidrome,
+  isNavidromeNative,
+} from "@/services/backend/dispatch";
 import * as J from "@/services/jellyfin/browsing";
 import * as L from "@/services/local/browsing";
 import * as N from "@/services/navidrome/genres";
+import * as NS from "@/services/navidrome/songs";
 import * as S from "@/services/openSubsonic/browsing";
 
 export const getMusicFolders = dispatch(
@@ -18,8 +23,16 @@ export const getArtistAppearances = dispatch(
   J.getArtistAppearances,
   L.getArtistAppearances,
 );
+// Navidrome pages the artist's tracks natively; everything else speaking
+// Subsonic pages the getAlbum fan-out by album. The native API answers 401
+// without the session captured at login, hence isNavidromeNative.
+type ArtistSongsPage = { cursor?: number; size?: number };
+const subsonicGetArtistSongs = (id: string, page?: ArtistSongsPage) =>
+  isNavidromeNative()
+    ? NS.getArtistSongs(id, page)
+    : S.getArtistSongs(id, page);
 export const getArtistSongs = dispatch(
-  S.getArtistSongs,
+  subsonicGetArtistSongs,
   J.getArtistSongs,
   L.getArtistSongs,
 );

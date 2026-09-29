@@ -26,6 +26,10 @@ const mockOfflineState = {
   downloadQueue: [] as { id: string; coverArt?: string }[],
 };
 
+const mockCacheWrites: Record<string, string>[] = [];
+// Store writes, persistence flushes and file deletes in the order they happen.
+const mockEvents: string[] = [];
+
 const offlineStore = {
   get artworkCache() {
     return mockOfflineState.artworkCache;
@@ -43,11 +47,16 @@ const offlineStore = {
     return mockOfflineState.downloadQueue;
   },
   getDownloadedTracksList: () => mockOfflineState.downloadedTracks,
-  addCachedArtwork: (key: string, uri: string) => {
-    mockOfflineState.artworkCache[key] = uri;
-    mockOfflineState.artworkCachedAt[key] = new Date().toISOString();
+  addCachedArtworks: (entries: Record<string, string>) => {
+    mockCacheWrites.push(entries);
+    mockEvents.push(`register ${Object.keys(entries).join(",")}`);
+    for (const [key, uri] of Object.entries(entries)) {
+      mockOfflineState.artworkCache[key] = uri;
+      mockOfflineState.artworkCachedAt[key] = new Date().toISOString();
+    }
   },
   removeCachedArtwork: (keys: string[]) => {
+    mockEvents.push(`forget ${keys.join(",")}`);
     for (const key of keys) {
       delete mockOfflineState.artworkCache[key];
       delete mockOfflineState.artworkCachedAt[key];
@@ -73,6 +82,9 @@ const offlineStore = {
 jest.mock("@/stores/offline", () => ({
   __esModule: true,
   default: { getState: () => offlineStore },
+}));
+jest.mock("@/config/storage", () => ({
+  flushPendingScopedWrites: () => mockEvents.push("flush"),
 }));
 jest.mock("@/stores/auth", () => ({
   useAuthBase: { getState: () => mockAuthState },
@@ -109,6 +121,8 @@ jest.mock("@/services/offline/downloadDestination", () => ({
 
 const mockDownloads: string[] = [];
 const mockFileDeletes: string[] = [];
+const mockMissingFiles = new Set<string>();
+const mockExistsChecks: string[] = [];
 
 jest.mock("expo-file-system", () => ({
   Paths: { document: "/doc" },
@@ -124,10 +138,12 @@ jest.mock("expo-file-system", () => ({
         .join("/");
     }
     get exists() {
-      return true;
+      mockExistsChecks.push(this.uri);
+      return !mockMissingFiles.has(this.uri);
     }
     delete() {
       mockFileDeletes.push(this.uri);
+      mockEvents.push(`delete ${this.uri}`);
     }
     static downloadFileAsync(source: string, destination: { uri: string }) {
       mockDownloads.push(source);
@@ -150,10 +166,16 @@ import { ARTWORK_REFRESH_MS } from "@/services/offline/librarySyncPlan";
 
 // The queue drains through promise callbacks, so let the microtask queue settle
 // before asserting on what landed on disk.
-const flush = async () => {
+const drain = async () => {
   for (let i = 0; i < 10; i++) {
     await new Promise((resolve) => setImmediate(resolve));
   }
+};
+
+// Drains, then registers what landed without waiting out the commit timer.
+const flush = async () => {
+  await drain();
+  artworkCacheService.commitLanded();
 };
 
 const song = (id: string, coverArt?: string, albumId?: string) => ({
@@ -165,6 +187,7 @@ const song = (id: string, coverArt?: string, albumId?: string) => ({
 });
 
 beforeEach(() => {
+  artworkCacheService.reset();
   mockOfflineState.artworkCache = {};
   mockOfflineState.artworkCachedAt = {};
   mockOfflineState.artworkAliases = {};
@@ -177,7 +200,113 @@ beforeEach(() => {
   mockAuthState.serverType = "navidrome";
   mockDownloads.length = 0;
   mockFileDeletes.length = 0;
-  artworkCacheService.reset();
+  mockCacheWrites.length = 0;
+  mockEvents.length = 0;
+  mockMissingFiles.clear();
+  mockExistsChecks.length = 0;
+});
+
+describe("batched commits", () => {
+  it("registers the covers that land together in one store write", async () => {
+    artworkCacheService.enqueue("al-a1");
+    artworkCacheService.enqueue("al-a2");
+    artworkCacheService.enqueue("al-a3");
+    await drain();
+    expect(mockDownloads).toHaveLength(3);
+    expect(mockCacheWrites).toEqual([]);
+
+    artworkCacheService.commitLanded();
+    expect(mockCacheWrites).toHaveLength(1);
+    expect(Object.keys(mockCacheWrites[0]).sort()).toEqual([
+      "al-a1",
+      "al-a2",
+      "al-a3",
+    ]);
+  });
+
+  it("commits on its own once the batch window closes", async () => {
+    artworkCacheService.enqueue("al-a1");
+    await drain();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(mockOfflineState.artworkCache["al-a1"]).toBeDefined();
+  });
+
+  it("doesn't fetch a cover again while its commit is pending", async () => {
+    artworkCacheService.enqueue("al-a1");
+    await drain();
+    artworkCacheService.enqueue("al-a1");
+    await flush();
+    expect(mockDownloads).toHaveLength(1);
+  });
+
+  // A scope switch resets the store first, so a late commit would register the
+  // outgoing scope's covers in the incoming one.
+  it("drops uncommitted covers and their files on reset", async () => {
+    artworkCacheService.enqueue("al-a1");
+    await drain();
+
+    artworkCacheService.reset();
+    artworkCacheService.commitLanded();
+    expect(mockCacheWrites).toEqual([]);
+    expect(mockFileDeletes).toEqual([
+      expect.stringMatching(/artwork\/al-a1_\d+\.jpg$/),
+    ]);
+  });
+
+  it("deletes a refreshed cover's old file only once the new one is registered", async () => {
+    mockOfflineState.artworkCache["al-a1"] = "file:///artwork/al-a1_1.jpg";
+    mockOfflineState.artworkCachedAt["al-a1"] = new Date(
+      Date.now() - ARTWORK_REFRESH_MS - 1000,
+    ).toISOString();
+    artworkCacheService.enqueue("al-a1");
+    await drain();
+    expect(mockFileDeletes).toEqual([]);
+
+    artworkCacheService.commitLanded();
+    expect(mockOfflineState.artworkCache["al-a1"]).not.toBe(
+      "file:///artwork/al-a1_1.jpg",
+    );
+    expect(mockFileDeletes).toEqual(["file:///artwork/al-a1_1.jpg"]);
+  });
+
+  // The index persists on a throttle, so a kill right after the delete would
+  // otherwise restart on the old entry, whose file is gone.
+  it("persists the new entry before deleting a refreshed cover's old file", async () => {
+    mockOfflineState.artworkCache["al-a1"] = "file:///artwork/al-a1_1.jpg";
+    mockOfflineState.artworkCachedAt["al-a1"] = new Date(
+      Date.now() - ARTWORK_REFRESH_MS - 1000,
+    ).toISOString();
+    artworkCacheService.enqueue("al-a1");
+    await flush();
+
+    expect(mockEvents).toEqual([
+      "register al-a1",
+      "flush",
+      "delete file:///artwork/al-a1_1.jpg",
+    ]);
+  });
+
+  it("doesn't flush a batch that replaced nothing", async () => {
+    artworkCacheService.enqueue("al-a1");
+    await flush();
+
+    expect(mockEvents).toEqual(["register al-a1"]);
+  });
+
+  it("registers landed covers before pruning, keeping their aliases", async () => {
+    mockOfflineState.artworkAliases = { "mf-s2": "mf-s1" };
+    mockOfflineState.downloadQueue = [
+      { id: "s1", coverArt: "mf-s1" },
+      { id: "s2", coverArt: "mf-s2" },
+    ];
+    artworkCacheService.enqueue("mf-s1");
+    await drain();
+
+    artworkCacheService.pruneOrphaned();
+
+    expect(mockOfflineState.artworkCache["mf-s1"]).toBeDefined();
+    expect(mockOfflineState.artworkAliases).toEqual({ "mf-s2": "mf-s1" });
+  });
 });
 
 describe("enqueue guards", () => {
@@ -233,6 +362,33 @@ describe("enqueue guards", () => {
     artworkCacheService.enqueue("al-a1");
     await flush();
     expect(mockDownloads).toHaveLength(1);
+  });
+
+  it("re-fetches a fresh cover whose file is gone", async () => {
+    mockOfflineState.artworkCache["al-a1"] = "file:///artwork/al-a1_1.jpg";
+    mockOfflineState.artworkCachedAt["al-a1"] = new Date().toISOString();
+    mockMissingFiles.add("file:///artwork/al-a1_1.jpg");
+
+    artworkCacheService.enqueue("al-a1");
+    await flush();
+
+    expect(mockDownloads).toEqual(["https://server/cover/al-a1"]);
+    expect(mockOfflineState.artworkCache["al-a1"]).toMatch(
+      /artwork\/al-a1_\d+\.jpg$/,
+    );
+  });
+
+  // A backfill enqueues every downloaded track, most of them onto the same few
+  // album covers.
+  it("checks a cached cover's file once, not on every enqueue", async () => {
+    mockOfflineState.artworkCache["al-a1"] = "file:///artwork/al-a1_1.jpg";
+    mockOfflineState.artworkCachedAt["al-a1"] = new Date().toISOString();
+
+    for (let i = 0; i < 5; i++) artworkCacheService.enqueue("al-a1");
+    await flush();
+
+    expect(mockDownloads).toEqual([]);
+    expect(mockExistsChecks).toEqual(["file:///artwork/al-a1_1.jpg"]);
   });
 
   it("dedupes an id already queued or in flight", async () => {
@@ -369,6 +525,22 @@ describe("pruneOrphaned", () => {
 
     expect(mockOfflineState.artworkAliases).toEqual({ "mf-s2": "mf-s1" });
     await flush();
+  });
+
+  it("persists the pruned index before deleting any file", () => {
+    mockOfflineState.artworkCache = {
+      "al-gone": "file:///artwork/al-gone.jpg",
+      "mf-gone": "file:///artwork/mf-gone.jpg",
+    };
+
+    artworkCacheService.pruneOrphaned();
+
+    expect(mockEvents).toEqual([
+      "forget al-gone,mf-gone",
+      "flush",
+      "delete file:///artwork/al-gone.jpg",
+      "delete file:///artwork/mf-gone.jpg",
+    ]);
   });
 
   it("drops the aliases that pointed at a pruned cover", () => {

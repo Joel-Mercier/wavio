@@ -1,6 +1,6 @@
 import { Directory, File, Paths } from "expo-file-system";
 import { getAuthScope } from "@/config/authScope";
-import { storage } from "@/config/storage";
+import { flushPendingScopedWrites, storage } from "@/config/storage";
 import { isSingletonServerType } from "@/services/backend/serverTraits";
 import { SCOPED_STORE_NAMES } from "@/services/backupStoreKeys";
 import { reportError } from "@/services/errorReporting";
@@ -63,6 +63,7 @@ function readJson<T>(raw: string | undefined | null): T | null {
 // services/backup.ts: a scoped key is `<scope>:<storeName>` and a scope can
 // never contain ":", so the scope is the slice before the first store marker.
 function scopesPresentInStorage(): Set<string> {
+  flushPendingScopedWrites();
   const found = new Set<string>();
   for (const key of storage.getAllKeys()) {
     for (const name of SCOPED_STORE_NAMES) {
@@ -142,6 +143,7 @@ export function buildScopeRemap(
 // the originalOrder/cursor siblings) and the React Query cache
 // (`<scope>:wavio-rq-cache`) without either having to be enumerated here.
 function renameScopedKeys(remap: ScopeRemap): void {
+  flushPendingScopedWrites();
   for (const key of storage.getAllKeys()) {
     const idx = key.indexOf(":");
     if (idx <= 0) continue;

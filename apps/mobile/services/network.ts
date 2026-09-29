@@ -7,6 +7,12 @@ import {
   hasNetworkServerType,
   isNetworkShareType,
 } from "@/services/backend/serverTraits";
+import {
+  type BackgroundTimer,
+  clearBackgroundTimer,
+  setBackgroundInterval,
+  setBackgroundTimeout,
+} from "@/services/backgroundTimer";
 import { reportBreadcrumb, scrubUrl } from "@/services/errorReporting";
 import {
   type CellularStreamFormat,
@@ -92,10 +98,16 @@ const typeListeners = new Set<(type: NetInfoStateType) => void>();
 const onlineListeners = new Set<() => void>();
 const reachableListeners = new Set<() => void>();
 
-let recoveryTimer: ReturnType<typeof setInterval> | null = null;
+let recoveryTimer: BackgroundTimer | null = null;
+// Off while nobody can benefit from a recovery: backgrounded, nothing playing,
+// no car (services/recoveryPollGate.ts). A play press or a foreground probes on
+// its own, so recovery is only deferred, never lost.
+let recoveryPollEnabled = true;
+// A plain JS timer on purpose: RN stops it in the background, which keeps an
+// idle backgrounded app from pinging the server forever (see startHeartbeat).
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
-let quickRetryTimer: ReturnType<typeof setTimeout> | null = null;
-let pendingOfflineTimer: ReturnType<typeof setTimeout> | null = null;
+let quickRetryTimer: BackgroundTimer | null = null;
+let pendingOfflineTimer: BackgroundTimer | null = null;
 let probeInFlight = false;
 let consecutiveProbeFailures = 0;
 let internetCheckInFlight = false;
@@ -174,17 +186,29 @@ function setServerReachable(value: boolean) {
 }
 
 function startRecoveryPoll() {
-  if (recoveryTimer) return;
-  recoveryTimer = setInterval(() => {
+  if (recoveryTimer || !recoveryPollEnabled) return;
+  recoveryTimer = setBackgroundInterval(() => {
     void probeServer();
   }, RECOVERY_POLL_MS);
 }
 
 function stopRecoveryPoll() {
   if (recoveryTimer) {
-    clearInterval(recoveryTimer);
+    clearBackgroundTimer(recoveryTimer);
     recoveryTimer = null;
   }
+}
+
+export function setRecoveryPollEnabled(enabled: boolean): void {
+  if (enabled === recoveryPollEnabled) return;
+  recoveryPollEnabled = enabled;
+  if (!enabled) {
+    stopRecoveryPoll();
+    return;
+  }
+  if (!isOnline || serverReachable) return;
+  startRecoveryPoll();
+  void probeServer();
 }
 
 // Steady-state poll while the server is reachable, so a server that goes away
@@ -210,7 +234,7 @@ function stopHeartbeat() {
 // confirmed within a couple of seconds rather than waiting a full recovery poll.
 function scheduleQuickReprobe() {
   if (quickRetryTimer) return;
-  quickRetryTimer = setTimeout(() => {
+  quickRetryTimer = setBackgroundTimeout(() => {
     quickRetryTimer = null;
     void probeServer();
   }, QUICK_RETRY_MS);
@@ -218,14 +242,14 @@ function scheduleQuickReprobe() {
 
 function cancelQuickReprobe() {
   if (quickRetryTimer) {
-    clearTimeout(quickRetryTimer);
+    clearBackgroundTimer(quickRetryTimer);
     quickRetryTimer = null;
   }
 }
 
 function cancelPendingOffline() {
   if (pendingOfflineTimer) {
-    clearTimeout(pendingOfflineTimer);
+    clearBackgroundTimer(pendingOfflineTimer);
     pendingOfflineTimer = null;
   }
 }
@@ -390,10 +414,13 @@ function probeInternetReachable(): Promise<boolean> {
       if (settled) return;
       settled = true;
       controller.abort();
-      clearTimeout(timer);
+      clearBackgroundTimer(timer);
       resolve(result);
     };
-    const timer = setTimeout(() => settle(false), INTERNET_CHECK_TIMEOUT_MS);
+    const timer = setBackgroundTimeout(
+      () => settle(false),
+      INTERNET_CHECK_TIMEOUT_MS,
+    );
     for (const url of INTERNET_CHECK_URLS) {
       fetch(url, { method: "HEAD", signal: controller.signal })
         .then(() => settle(true))
@@ -517,7 +544,7 @@ function applyState(state: NetInfoState) {
     // looks identical to going offline. Wait out the grace window before
     // committing — if connectivity returns first, cancelPendingOffline() above
     // means the UI never flickered offline.
-    pendingOfflineTimer = setTimeout(commitOffline, OFFLINE_GRACE_MS);
+    pendingOfflineTimer = setBackgroundTimeout(commitOffline, OFFLINE_GRACE_MS);
   }
 }
 

@@ -366,6 +366,7 @@
 				"addToPlaylistTitle": "Add to playlist",
 				"recentPlaylists": "Recent",
 				"allPlaylists": "All playlists",
+				"searchPlaylistsPlaceholder": "Search playlists",
 				"newPlaylist": "New playlist",
 				"finished": "Finished",
 				"addTrackSuccessMessage_one": "Song successfully added to playlist",
@@ -1597,6 +1598,8 @@
 					"title": "Playback",
 					"endlessPlaybackLabel": "Endless playback",
 					"endlessPlaybackDescription": "When the queue ends, automatically add similar tracks to keep the music playing.",
+					"playerAudioQualityLabel": "Audio quality in player",
+					"playerAudioQualityDescription": "Show the source format, bitrate and sample rate of the current track on the now playing screen, including when the server is transcoding it.",
 					"playerRatingLabel": "Star rating in player",
 					"playerRatingDescription": "Show a five-star rating next to the audio quality on the now playing screen, so you can rate the current track without opening a menu.",
 					"equalizerLabel": "Equalizer",
@@ -1617,6 +1620,30 @@
 						"off": {
 							"label": "Off",
 							"description": "Don't sync. Your queue stays on this device only and is never sent to the server."
+						}
+					},
+					"mediaControlsLabel": "Media notification buttons",
+					"mediaControlsDescription": "Extra buttons shown next to previous, play/pause and next in the media notification and on the lock screen. Android only has room for two, so the favorite button takes the place of a 10-second skip button. Radio stations and podcast episodes never show it.",
+					"mediaControlsOptions": {
+						"seek": {
+							"label": "Skip back and forward",
+							"description": "Rewind and fast-forward 10 seconds."
+						},
+						"favoriteAndSeekForward": {
+							"label": "Favorite and skip forward",
+							"description": "Add the current track to your favorites (or remove it), and fast-forward 10 seconds."
+						},
+						"seekBackwardAndFavorite": {
+							"label": "Skip back and favorite",
+							"description": "Rewind 10 seconds, and add the current track to your favorites (or remove it)."
+						},
+						"favorite": {
+							"label": "Favorite only",
+							"description": "Just the favorite button, which leaves fewer buttons to hit by accident."
+						},
+						"none": {
+							"label": "None",
+							"description": "Only previous, play/pause and next."
 						}
 					},
 					"waveformSeekbarLabel": "Waveform seek bar",
@@ -1804,7 +1831,9 @@
 				"totalSize": "Total size: {{size}}",
 				"clearAll": "Clear all",
 				"searchPlaceholder": "Search downloads",
-				"deleting": "Deleting {{done}} / {{total}}"
+				"deleting": "Deleting {{done}} / {{total}}",
+				"downloadingHint_one": "{{count}} more track downloading. The list updates when it's done.",
+				"downloadingHint_other": "{{count}} more tracks downloading. The list updates when they're done."
 			},
 			"pendingChanges": {
 				"title": "Pending changes",
@@ -1955,7 +1984,9 @@
 			"player": {
 				"title": "Playing now",
 				"notices": {
-					"sourceUnavailable": "Couldn't play that track — the file wasn't reachable. Check that your server is switched on and on the same network."
+					"sourceUnavailable": "Couldn't play that track — the file wasn't reachable. Check that your server is switched on and on the same network.",
+					"remoteTrackRefused": "{{name}} couldn't play “{{track}}”. Pick another track, or play on this device.",
+					"remoteLost": "Lost contact with {{name}}. Playback is back on this device."
 				},
 				"original": "Original",
 				"playingFrom": {
@@ -2032,10 +2063,11 @@
 				"outputSpeakersAndTvs": "Speakers & TVs (UPnP/DLNA)",
 				"outputScanning": "Looking for devices…",
 				"outputNoDevices": "No devices found on this network",
-				"outputUnverified": "Might not accept playback",
 				"outputChromecast": "Chromecast",
 				"outputChromecastConnected": "Connected",
 				"outputChromecastUnavailable": "The Chromecast device picker is unavailable.",
+				"outputChromecastNoPlayServices": "Chromecast needs Google Play services, which this device does not have.",
+				"outputChromecastNoPlayServicesHint": "Needs Google Play services",
 				"outputConnectErrorMessage": "Could not play to {{name}}."
 			},
 			"shares": {
@@ -2174,7 +2206,12 @@
 					"saveSuccessMessage": "Saved for offline listening",
 					"saveErrorMessage": "An error occurred while saving for offline listening",
 					"removeSuccessMessage": "Removed from offline downloads",
-					"removeErrorMessage": "An error occurred while removing offline downloads"
+					"removeErrorMessage": "An error occurred while removing offline downloads",
+					"removingDownloads": "Removing downloads…",
+					"removeConfirmTitle": "Remove offline downloads?",
+					"removeConfirmDescription_one": "{{count}} downloaded song will be deleted from this device. Songs also saved in another album or playlist are kept.",
+					"removeConfirmDescription_other": "{{count}} downloaded songs will be deleted from this device. Songs also saved in another album or playlist are kept.",
+					"removeConfirmAction": "Remove"
 				},
 				"favorites": "Favorites",
 				"album_one": "Album",

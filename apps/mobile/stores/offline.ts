@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
-import { createDynamicScopedStorage } from "@/config/storage";
+import { persist } from "zustand/middleware";
+import { createThrottledScopedJSONStorage } from "@/config/storage";
 import type { Child } from "@/services/openSubsonic/types";
 import { currentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
@@ -17,6 +17,8 @@ export type OfflineTrack = {
   title: string;
   artist?: string;
   album?: string;
+  // Absent on downloads made before it was recorded; match those by `album`.
+  albumId?: string;
   duration: number;
   coverArt?: string;
   path: string;
@@ -72,12 +74,10 @@ export type OfflineCollection = {
 // so a resumed auto download is still removable by disabling extended offline.
 export type QueuedTrack = Child & { offlineSource?: OfflineSource };
 
-export type DownloadStatus =
-  | "pending"
-  | "downloading"
-  | "completed"
-  | "failed"
-  | "paused";
+// No "completed": a finished download drops its progress entry, since
+// downloadedTracks already records it and every entry kept here is re-spread and
+// re-persisted on each write.
+export type DownloadStatus = "pending" | "downloading" | "failed" | "paused";
 
 export type DownloadProgress = {
   trackId: string;
@@ -86,7 +86,7 @@ export type DownloadProgress = {
   error?: string;
 };
 
-interface OfflineStore {
+export interface OfflineStore {
   offlineModeEnabled: boolean;
   setOfflineModeEnabled: (enabled: boolean) => void;
 
@@ -94,6 +94,8 @@ interface OfflineStore {
   addDownloadedTrack: (track: OfflineTrack) => void;
   addDownloadedTracks: (tracks: OfflineTrack[]) => void;
   removeDownloadedTrack: (trackId: string) => void;
+  // Drops the tracks and their progress entries in one write.
+  removeManyDownloadedTracks: (trackIds: string[]) => void;
   clearAllDownloads: () => void;
 
   downloadedCollections: Record<string, OfflineCollection>;
@@ -109,15 +111,21 @@ interface OfflineStore {
   setDownloadProgress: (trackId: string, progress: DownloadProgress) => void;
   setManyDownloadProgress: (entries: DownloadProgress[]) => void;
   removeDownloadProgress: (trackId: string) => void;
+  removeManyDownloadProgress: (trackIds: string[]) => void;
   clearFailedDownloads: () => void;
 
   downloadQueue: QueuedTrack[];
   addToDownloadQueue: (track: QueuedTrack) => void;
   addManyToDownloadQueue: (tracks: QueuedTrack[]) => void;
   setQueuedTrackSource: (trackId: string, source: OfflineSource) => void;
+  setQueuedTracksSource: (trackIds: string[], source: OfflineSource) => void;
   removeFromDownloadQueue: (trackId: string) => void;
   removeManyFromDownloadQueue: (trackIds: string[]) => void;
   clearDownloadQueue: () => void;
+  // One write per download outcome instead of three or four: every write
+  // re-serializes the persisted store, queue included.
+  completeDownloads: (tracks: OfflineTrack[]) => void;
+  failDownload: (progress: DownloadProgress, dequeue: boolean) => void;
 
   // Offline album/playlist/artist covers downloaded by the extended-offline
   // sync, keyed by coverArt id → file:// URI (see utils/artwork.ts fallback).
@@ -132,7 +140,9 @@ interface OfflineStore {
   // without this every track row and artist avatar dead-ends on the server
   // while offline.
   artworkAliases: Record<string, string>;
-  addCachedArtwork: (coverArtId: string, path: string) => void;
+  // Covers land a few at a time, so they are committed in batches: every write
+  // copies both maps whole.
+  addCachedArtworks: (entries: Record<string, string>) => void;
   removeCachedArtwork: (coverArtIds: string[]) => void;
   addArtworkAliases: (aliases: Record<string, string>) => void;
   pruneArtworkAliases: (pendingTargets?: ReadonlySet<string>) => void;
@@ -200,6 +210,19 @@ const useOfflineBase = create<OfflineStore>()(
         });
       },
 
+      removeManyDownloadedTracks: (trackIds) => {
+        if (trackIds.length === 0) return;
+        set((state) => {
+          const downloadedTracks = { ...state.downloadedTracks };
+          const downloadProgress = { ...state.downloadProgress };
+          for (const trackId of trackIds) {
+            delete downloadedTracks[trackId];
+            delete downloadProgress[trackId];
+          }
+          return { downloadedTracks, downloadProgress };
+        });
+      },
+
       clearAllDownloads: () => {
         set({
           downloadedTracks: {},
@@ -212,17 +235,18 @@ const useOfflineBase = create<OfflineStore>()(
         });
       },
 
-      addCachedArtwork: (coverArtId, path) => {
-        set((state) => ({
-          artworkCache: {
-            ...state.artworkCache,
-            [coverArtId]: path,
-          },
-          artworkCachedAt: {
-            ...state.artworkCachedAt,
-            [coverArtId]: new Date().toISOString(),
-          },
-        }));
+      addCachedArtworks: (entries) => {
+        const coverArtIds = Object.keys(entries);
+        if (coverArtIds.length === 0) return;
+        const cachedAt = new Date().toISOString();
+        set((state) => {
+          const artworkCache = { ...state.artworkCache, ...entries };
+          const artworkCachedAt = { ...state.artworkCachedAt };
+          for (const coverArtId of coverArtIds) {
+            artworkCachedAt[coverArtId] = cachedAt;
+          }
+          return { artworkCache, artworkCachedAt };
+        });
       },
 
       removeCachedArtwork: (coverArtIds) => {
@@ -392,6 +416,17 @@ const useOfflineBase = create<OfflineStore>()(
         });
       },
 
+      removeManyDownloadProgress: (trackIds) => {
+        if (trackIds.length === 0) return;
+        set((state) => {
+          const downloadProgress = { ...state.downloadProgress };
+          for (const trackId of trackIds) {
+            delete downloadProgress[trackId];
+          }
+          return { downloadProgress };
+        });
+      },
+
       clearFailedDownloads: () => {
         set((state) => {
           const remaining: Record<string, DownloadProgress> = {};
@@ -435,6 +470,16 @@ const useOfflineBase = create<OfflineStore>()(
         }));
       },
 
+      setQueuedTracksSource: (trackIds, source) => {
+        if (trackIds.length === 0) return;
+        const ids = new Set(trackIds);
+        set((state) => ({
+          downloadQueue: state.downloadQueue.map((t) =>
+            ids.has(t.id) ? { ...t, offlineSource: source } : t,
+          ),
+        }));
+      },
+
       removeFromDownloadQueue: (trackId) => {
         set((state) => ({
           downloadQueue: state.downloadQueue.filter((t) => t.id !== trackId),
@@ -460,6 +505,38 @@ const useOfflineBase = create<OfflineStore>()(
 
       clearDownloadQueue: () => {
         set({ downloadQueue: [] });
+      },
+
+      completeDownloads: (tracks) => {
+        if (tracks.length === 0) return;
+        set((state) => {
+          const done = new Set(tracks.map((track) => track.id));
+          const downloadedTracks = { ...state.downloadedTracks };
+          const downloadProgress = { ...state.downloadProgress };
+          for (const track of tracks) {
+            downloadedTracks[track.id] = track;
+            delete downloadProgress[track.id];
+          }
+          return {
+            downloadedTracks,
+            downloadQueue: state.downloadQueue.filter((t) => !done.has(t.id)),
+            downloadProgress,
+          };
+        });
+      },
+
+      failDownload: (progress, dequeue) => {
+        set((state) => ({
+          downloadProgress: {
+            ...state.downloadProgress,
+            [progress.trackId]: progress,
+          },
+          ...(dequeue && {
+            downloadQueue: state.downloadQueue.filter(
+              (t) => t.id !== progress.trackId,
+            ),
+          }),
+        }));
       },
 
       isTrackDownloaded: (trackId) => {
@@ -492,9 +569,7 @@ const useOfflineBase = create<OfflineStore>()(
     }),
     {
       name: "offlineStore",
-      storage: createJSONStorage(() =>
-        createDynamicScopedStorage(currentAuthScope),
-      ),
+      storage: createThrottledScopedJSONStorage(currentAuthScope, 2000),
       skipHydration: true,
       partialize: (state) => ({
         offlineModeEnabled: state.offlineModeEnabled,

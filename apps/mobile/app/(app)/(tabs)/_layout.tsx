@@ -56,6 +56,11 @@ export default function TabLayout() {
           // react-navigation lays the screens out to its right automatically and
           // reports useBottomTabBarHeight() === 0.
           tabBarPosition: isWideLayout ? "left" : "bottom",
+          // Pinned because react-navigation's default keys off its own
+          // breakpoints (≥ 768dp or wider than tall), not ours: a portrait
+          // tablet got a stacked sidebar, and a narrow landscape iPhone would get
+          // a 32dp compact bar under a player placed for TAB_BAR_CONTENT_HEIGHT.
+          tabBarLabelPosition: isWideLayout ? "beside-icon" : "below-icon",
           tabBarStyle: isWideLayout
             ? {
                 position: "relative",

@@ -33,13 +33,19 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { useCreateShare } from "@/hooks/backend/useSharing";
-import { useIsPlaying, usePlayingTrack, useSyncedLyrics } from "@/hooks/player";
+import {
+  useIsPlaying,
+  useIsTwoColumnPlayer,
+  usePlayingTrack,
+  useSyncedLyrics,
+} from "@/hooks/player";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useKeepScreenAwake } from "@/hooks/useKeepScreenAwake";
 import { togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
+import useCast from "@/stores/cast";
 import useJukebox from "@/stores/jukebox";
 import useUpnp from "@/stores/upnp";
 import { logError } from "@/utils/log";
@@ -56,7 +62,7 @@ export default function LyricsScreen() {
   ]) as string[];
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const isWideLayout = useApp((s) => s.isWideLayout);
+  const isTwoColumn = useIsTwoColumnPlayer();
   const karaokeEnabled = useApp((s) => s.karaokeEnabled);
   const setKaraokeEnabled = useApp((s) => s.setKaraokeEnabled);
   const translationLang = useApp((s) => s.lyricsTranslationLang);
@@ -72,7 +78,8 @@ export default function LyricsScreen() {
   const [shareUrl, setShareUrl] = useState("");
   const jukeboxActive = useJukebox((s) => s.active);
   const upnpConnected = useUpnp((s) => s.connected);
-  const playingRemotely = jukeboxActive || upnpConnected;
+  const casting = useCast((s) => s.active);
+  const playingRemotely = jukeboxActive || upnpConnected || casting;
   const hasOutputs = capabilities.jukebox || capabilities.remoteStreamableUrl;
   const isPlaying = useIsPlaying();
   const lyricsKeepScreenOn = useApp((s) => s.lyricsKeepScreenOn);
@@ -201,7 +208,7 @@ export default function LyricsScreen() {
         <HStack
           className={cn(
             "items-center justify-between mb-4 px-6",
-            !isWideLayout && "mt-4",
+            !isTwoColumn && "mt-4",
           )}
         >
           <FadeOutScaleDown

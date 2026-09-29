@@ -28,7 +28,8 @@ type State = {
    *
    * SSDP runs over UDP and loses packets, so a device that missed one round is
    * usually still there. Replacing the list makes speakers blink in and out
-   * between scans; merging means a device only ever disappears when the app does.
+   * between scans; merging means a device only disappears when asked directly,
+   * at its own address, and found silent (`forgetDevice`).
    * Never persisted — a device list from a different network is worse than none.
    */
   devices: UpnpDevice[];
@@ -36,18 +37,35 @@ type State = {
   /** The renderer's own volume, 0..1. UPnP works in 0..100. */
   volume: number;
   session: UpnpPersistedSession | null;
+  /**
+   * Renderers this app has played to before, most recent first. Asked directly
+   * for their description when the picker opens, before any search: one request
+   * to a known address needs no multicast, which is the part of discovery that
+   * a router or a busy TV most often drops. Bounded, and pruned only by being
+   * pushed out — a speaker that is off today may be on tomorrow.
+   */
+  seen: UpnpSeenRenderer[];
   // True when the renderer from the last session was found still holding our
   // track at app launch and we're prompting the user to resume control. Never
   // persisted.
   pendingResume: boolean;
 };
 
+export type UpnpSeenRenderer = Pick<
+  UpnpDevice,
+  "id" | "name" | "address" | "location" | "isTV"
+>;
+
+const MAX_SEEN = 8;
+
 type Actions = {
   setConnected: (deviceId: string | null, deviceName: string | null) => void;
   mergeDevices: (found: UpnpDevice[]) => void;
+  forgetDevice: (id: string) => void;
   setScanning: (scanning: boolean) => void;
   setVolume: (volume: number) => void;
   setSession: (session: UpnpPersistedSession | null) => void;
+  rememberSeen: (device: UpnpDevice) => void;
   setPendingResume: (pendingResume: boolean) => void;
   __reset: () => void;
 };
@@ -60,34 +78,27 @@ const initialState: State = {
   scanning: false,
   volume: 0.3,
   session: null,
+  seen: [],
   pendingResume: false,
 };
 
 /**
- * One row per device, keeping the friendlier name.
+ * One row per device.
  *
- * A speaker can answer discovery more than once — as its own device type and as
- * a root device — and the two answers do not always carry the same name. Two
- * rows for one speaker is confusing enough; one of them showing a bare IP
- * address is worse, and just as likely to be the one tapped.
+ * Devices are keyed by UDN, so one box hosting several renderers on different
+ * ports — an Android TV's own renderer and Kodi's, say — shows each of them. A
+ * device that never gave a UDN is keyed by its address instead, and such a row
+ * is dropped when a properly identified device sits at the same address: it is
+ * the same box, answering twice, and the row with the friendlier name is the
+ * one worth tapping.
  */
 function dedupe(devices: UpnpDevice[]): UpnpDevice[] {
-  const byAddress = new Map<string, UpnpDevice>();
-  for (const device of devices) {
-    const key = device.address || device.id;
-    const kept = byAddress.get(key);
-    if (
-      !kept ||
-      (looksLikeAddress(kept.name) && !looksLikeAddress(device.name))
-    ) {
-      byAddress.set(key, device);
-    }
-  }
-  return [...byAddress.values()];
-}
-
-function looksLikeAddress(name: string): boolean {
-  return /^\d{1,3}(\.\d{1,3}){3}\b/.test(name.trim());
+  const identified = new Set(
+    devices.filter((d) => d.id !== d.address).map((d) => d.address),
+  );
+  return devices.filter(
+    (device) => device.id !== device.address || !identified.has(device.address),
+  );
 }
 
 const useUpnpBase = create<State & Actions>()(
@@ -104,19 +115,41 @@ const useUpnpBase = create<State & Actions>()(
           for (const device of found) byId.set(device.id, device);
           return { devices: dedupe([...byId.values()]) };
         }),
+      forgetDevice: (id) =>
+        set((state) => ({
+          devices: state.devices.filter((device) => device.id !== id),
+        })),
       setScanning: (scanning) => set({ scanning }),
       setVolume: (volume) => set({ volume: Math.max(0, Math.min(1, volume)) }),
       setSession: (session) => set({ session }),
+      rememberSeen: (device) =>
+        set((state) => ({
+          seen: [
+            {
+              id: device.id,
+              name: device.name,
+              address: device.address,
+              location: device.location,
+              isTV: device.isTV,
+            },
+            ...state.seen.filter((entry) => entry.id !== device.id),
+          ].slice(0, MAX_SEEN),
+        })),
       setPendingResume: (pendingResume) => set({ pendingResume }),
       __reset: () => set(initialState),
     }),
     {
       name: "upnpStore",
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() =>
         createDynamicScopedStorage(currentAuthScope),
       ),
-      partialize: (state) => ({ session: state.session }),
+      partialize: (state) => ({ session: state.session, seen: state.seen }),
+      migrate: (persisted, version) => {
+        const state = (persisted ?? {}) as Partial<State>;
+        if (version < 2) return { ...state, seen: [] };
+        return state;
+      },
     },
   ),
 );

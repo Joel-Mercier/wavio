@@ -1,6 +1,11 @@
 import { requireOptionalNativeModule } from "expo";
 import { File, FileMode } from "expo-file-system";
-import { type ByteReader, type RawTagData, readRawTags } from "./rawTags";
+import {
+  type ByteReader,
+  headReader,
+  type RawTagData,
+  readRawTags,
+} from "./rawTags";
 
 export type { ByteReader, ReplayGain } from "./rawTags";
 
@@ -68,13 +73,24 @@ export type AudioMetadata = {
   releaseTypes?: string[];
 };
 
+type NativeAudioMetadata = AudioMetadata & {
+  /**
+   * The tag region, read off the descriptor the extractor already opened
+   * (Android, local files, `readTagHead` only). Absent on iOS and over HTTP.
+   */
+  tagHead?: Uint8Array;
+  /** The file ended inside `tagHead`, so there is nothing past it to read. */
+  tagHeadIsWholeFile?: boolean;
+};
+
 type AudioMetadataNativeModule = {
   getAudioMetadata(
     uri: string,
     includeArtwork: boolean,
     artworkDir: string | null,
     headers: Record<string, string> | null,
-  ): Promise<AudioMetadata>;
+    readTagHead: boolean,
+  ): Promise<NativeAudioMetadata>;
 };
 
 // Autolinked from `modules/audio-metadata` (registered as `AudioMetadata` via
@@ -128,19 +144,26 @@ export async function getAudioMetadata(
     );
   }
   const toFile = options?.artworkDir != null;
-  const base = await Native.getAudioMetadata(
-    uri,
-    toFile || (options?.includeArtwork ?? false),
-    options?.artworkDir ?? null,
-    options?.headers ?? null,
-  );
+  const { tagHead, tagHeadIsWholeFile, ...base } =
+    await Native.getAudioMetadata(
+      uri,
+      toFile || (options?.includeArtwork ?? false),
+      options?.artworkDir ?? null,
+      options?.headers ?? null,
+      options?.enrich ?? false,
+    );
   if (!options?.enrich) return base;
+  const open = () => (options.openReader ?? openDeviceReader)(uri);
   // `readRawTags` swallows its own errors and returns `{}` on failure, so this
   // never regresses the native result. Opening the reader can throw (a file
   // that vanished mid-scan), so it gets the same treatment.
   let reader: (ByteReader & { close(): void }) | undefined;
   try {
-    reader = await (options.openReader ?? openDeviceReader)(uri);
+    // Opening a SAF document from JS is a synchronous provider round trip on
+    // the JS thread, which serialized every extraction in a scan (issue #211).
+    reader = tagHead
+      ? headReader(tagHead, tagHeadIsWholeFile ?? false, open)
+      : await open();
     return mergeRawTags(base, await readRawTags(reader));
   } catch {
     return base;

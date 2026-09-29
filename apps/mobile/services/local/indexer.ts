@@ -3,7 +3,6 @@ import { type AudioMetadata, getAudioMetadata } from "@/modules/audio-metadata";
 import { reportBreadcrumb, reportError } from "@/services/errorReporting";
 import { activeFileSource } from "@/services/fileSource";
 import type { FileSource, RemoteEntry } from "@/services/fileSource/types";
-import { searchVariants } from "@/services/searchText";
 import { requestHeadersForUrl } from "@/services/serverHeaders";
 import { logError } from "@/utils/log";
 import {
@@ -19,6 +18,7 @@ import {
   mirrorFolderImage,
   pickFolderImage,
 } from "./folderArt";
+import { deleteFtsRow, replaceFtsRow } from "./ftsRows";
 import {
   type DirectoryIgnore,
   type IgnoreScope,
@@ -54,9 +54,9 @@ const MAX_DEPTH = 12;
 // Rows are written in batches inside one transaction for throughput; extraction
 // itself happens outside any transaction (it's slow, native I/O).
 const WRITE_BATCH_SIZE = 50;
-// The device source lists synchronously — and is the one source the walk runs
-// serially for exactly that reason — so yield to the event loop every N
-// directories, or a large walk starves the UI thread.
+// The device source lists synchronously outside a SAF tree — and the walk runs
+// it serially there for exactly that reason — so yield to the event loop every
+// N directories, or a large walk starves the UI thread.
 const LIST_YIELD_EVERY = 25;
 // A scan raises an Issue only when it fails on both enough files and a large
 // enough share of them: individual unreadable files are a fact of any real
@@ -129,6 +129,24 @@ export type ScanResult = {
    * `removed` are both 0.
    */
   artChanged: number;
+  /**
+   * Where the scan's time went. Absent on results persisted before it existed.
+   * A slow scan is otherwise unexplainable after the fact: issue #211 was ~14
+   * minutes of listing that read as slow extraction.
+   */
+  timings?: ScanTimings;
+};
+
+export type ScanTimings = {
+  /** Walking the folders, until every audio file is known. */
+  listingMs: number;
+  /** Reading tags off the files that needed it, and writing their rows. */
+  extractMs: number;
+  /** Prune, tag-correction replay, sidecar artwork and orphaned-art cleanup. */
+  finishingMs: number;
+  totalMs: number;
+  /** Files handed to the extractor at once during this scan. */
+  extractConcurrency: number;
 };
 
 /** Cooperative cancellation token. Pass into `scanLibrary` and call `cancel()`. */
@@ -166,6 +184,7 @@ type ScannedFile = {
 
 type ExistingRow = {
   id: string;
+  ftsRowid: number | null;
   mtime: number | null;
   size: number | null;
   dir: string | null;
@@ -281,6 +300,7 @@ export async function scanLibrary(
   } = {},
 ): Promise<ScanResult> {
   const { onProgress, controller, enrich = true, force = false } = opts;
+  const startedAt = Date.now();
   const albumArtNames = artNamesOrDefault(
     opts.albumArtNames,
     DEFAULT_ALBUM_ART_NAMES,
@@ -302,11 +322,35 @@ export async function scanLibrary(
     artChanged: 0,
   };
 
+  const source = activeFileSource();
+  const { extractConcurrency } = source;
+  const timings: ScanTimings = {
+    listingMs: 0,
+    extractMs: 0,
+    finishingMs: 0,
+    totalMs: 0,
+    extractConcurrency,
+  };
+  const finish = (): ScanResult => {
+    timings.totalMs = Date.now() - startedAt;
+    result.timings = timings;
+    reportBreadcrumb("local-library", "scan finished", {
+      source: source.kind,
+      indexed: result.indexed,
+      skipped: result.skipped,
+      failed: result.failed,
+      removed: result.removed,
+      cancelled: result.cancelled,
+      incomplete: result.incomplete,
+      ...timings,
+    });
+    return result;
+  };
+
   onProgress?.({ phase: "listing", processed: 0, total: 0 });
 
   // 1. Gather every audio file under the selected folders (de-duplicated by URI
   //    in case folders overlap or nest).
-  const source = activeFileSource();
   const seen = new Map<string, ScannedFile>();
   const listed: ListingState = {
     dirs: 0,
@@ -367,7 +411,8 @@ export async function scanLibrary(
   // finished one and never resumes it.
   result.incomplete = listed.failed > 0 || result.cancelled;
   result.ignoredDirectories = listed.ignored;
-  if (result.cancelled) return result;
+  timings.listingMs = Date.now() - startedAt;
+  if (result.cancelled) return finish();
   if (listed.ignored > 0) {
     reportBreadcrumb("local-library", "directories hidden by an ignore file", {
       ignored: listed.ignored,
@@ -421,6 +466,7 @@ export async function scanLibrary(
   }
 
   onProgress?.({ phase: "indexing", processed: 0, total: work.length });
+  const extractStartedAt = Date.now();
 
   // 3. Extract + write changed files, batching writes into transactions.
   const dest = artworkDir();
@@ -490,12 +536,13 @@ export async function scanLibrary(
     }
   };
   await Promise.all(
-    Array.from(
-      { length: Math.min(source.extractConcurrency, work.length) },
-      () => worker(),
+    Array.from({ length: Math.min(extractConcurrency, work.length) }, () =>
+      worker(),
     ),
   );
   await flush();
+  timings.extractMs = Date.now() - extractStartedAt;
+  const finishingStartedAt = Date.now();
 
   // Stopping during extraction leaves files listed but not indexed, which is the
   // same partial library a failed listing produces — and the same thing
@@ -555,15 +602,15 @@ export async function scanLibrary(
       processed: result.indexed,
       total: work.length,
     });
-    const removable: string[] = [];
+    const removable: ExistingRow[] = [];
     for (const [uri, row] of existing) {
-      if (!seen.has(uri)) removable.push(row.id);
+      if (!seen.has(uri)) removable.push(row);
     }
     if (removable.length > 0) {
       await db.withTransactionAsync(async () => {
-        for (const id of removable) {
+        for (const { id, ftsRowid } of removable) {
+          await deleteFtsRow(db, id, ftsRowid);
           await db.runAsync("DELETE FROM tracks WHERE id = ?", id);
-          await db.runAsync("DELETE FROM tracks_fts WHERE id = ?", id);
           // Unlike track_stats (which is left dangling so a returning file keeps
           // its play count), a tag correction is meaningless without the file it
           // corrects — and leaving it would silently re-apply to a *different*
@@ -627,7 +674,8 @@ export async function scanLibrary(
     processed: result.indexed,
     total: work.length,
   });
-  return result;
+  timings.finishingMs = Date.now() - finishingStartedAt;
+  return finish();
 }
 
 /**
@@ -644,13 +692,13 @@ export async function deleteTracksByFolders(
   const placeholders = folders.map(() => "?").join(", ");
   let removed = 0;
   await db.withTransactionAsync(async () => {
-    const ids = await db.getAllAsync<{ id: string }>(
-      `SELECT id FROM tracks WHERE source_folder IN (${placeholders})`,
+    const ids = await db.getAllAsync<{ id: string; fts_rowid: number | null }>(
+      `SELECT id, fts_rowid FROM tracks WHERE source_folder IN (${placeholders})`,
       ...folders,
     );
-    for (const { id } of ids) {
+    for (const { id, fts_rowid } of ids) {
+      await deleteFtsRow(db, id, fts_rowid);
       await db.runAsync("DELETE FROM tracks WHERE id = ?", id);
-      await db.runAsync("DELETE FROM tracks_fts WHERE id = ?", id);
     }
     removed = ids.length;
   });
@@ -842,14 +890,16 @@ async function loadExistingRows(
   const rows = await db.getAllAsync<{
     id: string;
     uri: string;
+    fts_rowid: number | null;
     mtime: number | null;
     size: number | null;
     dir: string | null;
-  }>("SELECT id, uri, mtime, size, dir FROM tracks");
+  }>("SELECT id, uri, fts_rowid, mtime, size, dir FROM tracks");
   const map = new Map<string, ExistingRow>();
   for (const row of rows) {
     map.set(row.uri, {
       id: row.id,
+      ftsRowid: row.fts_rowid ?? null,
       mtime: row.mtime,
       size: row.size,
       dir: row.dir,
@@ -955,6 +1005,7 @@ INSERT OR REPLACE INTO tracks (
   duration_ms, bitrate, sample_rate, is_compilation, suffix, artwork_path,
   artwork_mime, lyrics, music_brainz_id, artists_json, replay_gain_json,
   release_types_json, album_key, artist_key, source_folder, indexed_at,
+  fts_rowid,
   -- Seeded from the scanned keys. A track carrying a correction has these put
   -- back by reapplyOverridesAfterIndexing once the scan finishes.
   resolved_album_key, resolved_artist_key
@@ -964,16 +1015,17 @@ INSERT OR REPLACE INTO tracks (
   $disc_number, $disc_total, $duration_ms, $bitrate, $sample_rate,
   $is_compilation, $suffix, $artwork_path, $artwork_mime, $lyrics,
   $music_brainz_id, $artists_json, $replay_gain_json, $release_types_json,
-  $album_key, $artist_key, $source_folder, $indexed_at, $album_key, $artist_key
+  $album_key, $artist_key, $source_folder, $indexed_at, $fts_rowid,
+  $album_key, $artist_key
 )`;
 
 async function writeTrack(
   db: Awaited<ReturnType<typeof getLocalLibraryDb>>,
   row: TrackInsert,
 ): Promise<void> {
-  // Keep the standalone FTS row in sync. `INSERT OR REPLACE` above may delete a
-  // prior row (PK or UNIQUE(uri) conflict); clear by id first, then re-add.
-  await db.runAsync("DELETE FROM tracks_fts WHERE id = ?", row.id);
+  // Replace the FTS row before the `tracks` row: the REPLACE rewrites every
+  // column, so it has to carry the new `fts_rowid` or it would null it.
+  const ftsRowid = await replaceFtsRow(db, row);
   await db.runAsync(INSERT_SQL, {
     $id: row.id,
     $uri: row.uri,
@@ -1009,24 +1061,8 @@ async function writeTrack(
     $artist_key: row.artist_key,
     $source_folder: row.source_folder,
     $indexed_at: row.indexed_at,
+    $fts_rowid: ftsRowid,
   });
-  await db.runAsync(
-    `INSERT INTO tracks_fts (id, title, artist, album, album_artist, normalized)
-     VALUES ($id, $title, $artist, $album, $album_artist, $normalized)`,
-    {
-      $id: row.id,
-      $title: row.title,
-      $artist: row.artist,
-      $album: row.album,
-      $album_artist: row.album_artist,
-      $normalized: searchVariants([
-        row.title,
-        row.artist,
-        row.album,
-        row.album_artist,
-      ]),
-    },
-  );
 }
 
 // --- sidecar artwork -------------------------------------------------------

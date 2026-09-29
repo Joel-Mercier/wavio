@@ -45,6 +45,8 @@ import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
+import CollectionDownloadedCount from "@/components/offline/CollectionDownloadedCount";
+import RemoveDownloadsDialog from "@/components/offline/RemoveDownloadsDialog";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import SaveGeneratedPlaylistDialog from "@/components/playlists/SaveGeneratedPlaylistDialog";
 import ShuffleToggle from "@/components/ShuffleToggle";
@@ -64,6 +66,7 @@ import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
+import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import {
   Toast,
@@ -146,6 +149,8 @@ export default function PlaylistDetail() {
   );
   const [showAlertDialog, setShowAlertDialog] = useState<boolean>(false);
   const [showSnapshotDialog, setShowSnapshotDialog] = useState<boolean>(false);
+  const [showRemoveDownloadsDialog, setShowRemoveDownloadsDialog] =
+    useState<boolean>(false);
   const [isRefreshingSnapshot, setIsRefreshingSnapshot] =
     useState<boolean>(false);
   const [clipboardText, setClipboardText] = useState("");
@@ -750,8 +755,13 @@ export default function PlaylistDetail() {
     }
   };
 
-  const handleRemoveOfflinePress = async () => {
+  const handleRemoveOfflinePress = () => {
     bottomSheetModalRef.current?.dismiss();
+    setShowRemoveDownloadsDialog(true);
+  };
+
+  const handleConfirmRemoveOffline = async () => {
+    setShowRemoveDownloadsDialog(false);
     try {
       await playlistDownload.removeAll();
       toast.show({
@@ -958,7 +968,11 @@ export default function PlaylistDetail() {
                     </HStack>
                   </FadeOutScaleDown>
                   {capabilities.offlineDownload &&
-                    (playlistDownload.status === "downloading" ? (
+                    (playlistDownload.isRemoving ? (
+                      <Box className="size-6 items-center justify-center">
+                        <Spinner size="small" color={gray400} />
+                      </Box>
+                    ) : playlistDownload.status === "downloading" ? (
                       <Download size={24} color={gray400} />
                     ) : playlistDownload.status === "all" ? (
                       <FadeOutScaleDown onPress={handleRemoveOfflinePress}>
@@ -1220,13 +1234,24 @@ export default function PlaylistDetail() {
                   </FadeOutScaleDown>
                 )}
               {capabilities.offlineDownload &&
-                (playlistDownload.status === "downloading" ? (
+                (playlistDownload.isRemoving ? (
+                  <HStack className="items-center">
+                    <Box className="size-6 items-center justify-center">
+                      <Spinner size="small" color={gray400} />
+                    </Box>
+                    <Text className="ml-4 text-lg text-gray-400">
+                      {t("app.shared.offline.removingDownloads")}
+                    </Text>
+                  </HStack>
+                ) : playlistDownload.status === "downloading" ? (
                   <HStack className="items-center">
                     <Download size={24} color={gray400} />
                     <Text className="ml-4 text-lg text-gray-400">
                       {t("app.shared.offline.savingForOffline")} (
-                      {playlistDownload.downloadedCount}/
-                      {playlistDownload.total})
+                      <CollectionDownloadedCount
+                        trackedIds={playlistDownload.trackedIds}
+                      />
+                      /{playlistDownload.total})
                     </Text>
                   </HStack>
                 ) : playlistDownload.status === "all" ? (
@@ -1239,19 +1264,32 @@ export default function PlaylistDetail() {
                     </HStack>
                   </FadeOutScaleDown>
                 ) : (
-                  <FadeOutScaleDown
-                    onPress={handleSaveOfflinePress}
-                    disabled={!isOnline}
-                  >
-                    <HStack className="items-center">
-                      <Box className="size-6 rounded-full bg-emerald-500 items-center justify-center">
-                        <ArrowDown size={20} color={black} />
-                      </Box>
-                      <Text className="ml-4 text-lg text-emerald-400">
-                        {t("app.shared.offline.saveForOfflineListening")}
-                      </Text>
-                    </HStack>
-                  </FadeOutScaleDown>
+                  <>
+                    <FadeOutScaleDown
+                      onPress={handleSaveOfflinePress}
+                      disabled={!isOnline}
+                    >
+                      <HStack className="items-center">
+                        <Box className="size-6 rounded-full bg-emerald-500 items-center justify-center">
+                          <ArrowDown size={20} color={black} />
+                        </Box>
+                        <Text className="ml-4 text-lg text-emerald-400">
+                          {t("app.shared.offline.saveForOfflineListening")}
+                        </Text>
+                      </HStack>
+                    </FadeOutScaleDown>
+                    {playlistDownload.status === "partial" &&
+                      playlistDownload.isRegistered && (
+                        <FadeOutScaleDown onPress={handleRemoveOfflinePress}>
+                          <HStack className="items-center">
+                            <X size={24} color={red500} />
+                            <Text className="ml-4 text-lg text-red-400">
+                              {t("app.shared.offline.removeOfflineDownloads")}
+                            </Text>
+                          </HStack>
+                        </FadeOutScaleDown>
+                      )}
+                  </>
                 ))}
               <FadeOutScaleDown onPress={handlePlaylistUpdatePress}>
                 <HStack className="items-center">
@@ -1307,6 +1345,12 @@ export default function PlaylistDetail() {
         })}
         target="backend"
         onSaved={handleSnapshotSaved}
+      />
+      <RemoveDownloadsDialog
+        isOpen={showRemoveDownloadsDialog}
+        onClose={() => setShowRemoveDownloadsDialog(false)}
+        onConfirm={handleConfirmRemoveOffline}
+        trackedIds={playlistDownload.trackedIds}
       />
       <AlertDialog
         isOpen={showAlertDialog}

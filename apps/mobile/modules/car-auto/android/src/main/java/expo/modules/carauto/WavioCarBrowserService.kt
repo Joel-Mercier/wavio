@@ -14,6 +14,7 @@ import androidx.media3.session.SessionResult
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.MoreExecutors
 
 /**
  * Standalone MediaLibraryService that exposes the JS-built BrowseTree to
@@ -53,6 +54,7 @@ class WavioCarBrowserService : MediaLibraryService() {
 
   override fun onDestroy() {
     CarAutoLog.d("browser service destroyed")
+    CarAutoModule.setCarConnected(false)
     if (activePlayer === jsPlayer) activePlayer = null
     if (activeSession === session) activeSession = null
     session?.run { player.release(); release() }
@@ -78,6 +80,35 @@ class WavioCarBrowserService : MediaLibraryService() {
   }
 
   private inner class LibraryCallback : MediaLibrarySession.Callback {
+    /**
+     * A car host connecting is what lets JS build the browse tree at all: that
+     * build is a burst of server requests and cover downloads, so it only runs
+     * while a car is actually there to show it (issue #205).
+     */
+    override fun onConnect(
+      session: MediaSession,
+      controller: MediaSession.ControllerInfo,
+    ): MediaSession.ConnectionResult {
+      CarAutoLog.d("onConnect by ${controller.packageName}")
+      if (controller.packageName in CAR_HOST_PACKAGES) {
+        CarAutoModule.setCarConnected(true)
+      }
+      return super.onConnect(session, controller)
+    }
+
+    /**
+     * Traced, but deliberately not what ends the car session. Legacy browsers —
+     * gearhead among them — can only be reported gone after media3's inactivity
+     * timeout, which would switch the car off mid-drive. The service being
+     * destroyed once the host unbinds is the reliable edge (see onDestroy).
+     */
+    override fun onDisconnected(
+      session: MediaSession,
+      controller: MediaSession.ControllerInfo,
+    ) {
+      CarAutoLog.d("onDisconnected by ${controller.packageName}")
+    }
+
     /**
      * Every player command a controller sends passes through here with the
      * caller attached — the only place that identifies *who* asked, since
@@ -179,23 +210,38 @@ class WavioCarBrowserService : MediaLibraryService() {
       pageSize: Int,
       params: LibraryParams?,
     ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
-      // Honor the controller's paging window. Each browse MediaItem embeds its
-      // (downscaled) local cover art as bytes, so returning a whole large list
-      // in one shot could exceed the binder transaction limit. Slicing to the
-      // requested page bounds each transaction; Android Auto pages through with
-      // a sane pageSize, then stops when a short page comes back.
-      val all = BrowseTreeCache.getChildren(parentId)
-      CarAutoLog.d(
-        "onGetChildren $parentId page=$page/$pageSize of ${all.size} by ${browser.packageName}",
-      )
-      val from = page.toLong() * pageSize.toLong()
-      if (from >= all.size) {
-        return Futures.immediateFuture(LibraryResult.ofItemList(ImmutableList.of(), params))
+      if (PendingChildren.isOnDemand(parentId)) {
+        CarAutoLog.d("onGetChildren $parentId: asking JS")
+        return Futures.transform(
+          PendingChildren.await(parentId),
+          { childrenPage(parentId, page, pageSize, params) },
+          // Released on the main thread, which is where this then runs.
+          MoreExecutors.directExecutor(),
+        )
       }
+      val result = childrenPage(parentId, page, pageSize, params)
+      CarAutoLog.d(
+        "onGetChildren $parentId page=$page/$pageSize of ${BrowseTreeCache.childCount(parentId)} by ${browser.packageName}",
+      )
+      return Futures.immediateFuture(result)
+    }
+
+    // Honor the controller's paging window for controllers that page. Android
+    // Auto doesn't: it asks with pageSize=Int.MAX_VALUE and gets the whole
+    // list, which is why tree.ts caps the long tracklists.
+    private fun childrenPage(
+      parentId: String,
+      page: Int,
+      pageSize: Int,
+      params: LibraryParams?,
+    ): LibraryResult<ImmutableList<MediaItem>> {
+      val all = BrowseTreeCache.getChildren(parentId)
+      val from = page.toLong() * pageSize.toLong()
+      if (from >= all.size) return LibraryResult.ofItemList(ImmutableList.of(), params)
       val start = from.toInt()
       val end = minOf(from + pageSize.toLong(), all.size.toLong()).toInt()
       val items = ImmutableList.copyOf(all.subList(start, end).map { it.toMediaItem() })
-      return Futures.immediateFuture(LibraryResult.ofItemList(items, params))
+      return LibraryResult.ofItemList(items, params)
     }
 
     override fun onAddMediaItems(

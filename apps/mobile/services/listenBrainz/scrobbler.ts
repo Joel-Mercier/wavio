@@ -1,4 +1,9 @@
 import axios from "axios";
+import {
+  type BackgroundTimer,
+  clearBackgroundTimer,
+  setBackgroundTimeout,
+} from "@/services/backgroundTimer";
 import { isNetworkNoise, reportError } from "@/services/errorReporting";
 import {
   MAX_LISTENS_PER_REQUEST,
@@ -36,12 +41,12 @@ let lastOnline = false;
 let draining = false;
 let drainRequested = false;
 let generation = 0;
-let backoffTimer: ReturnType<typeof setTimeout> | null = null;
+let backoffTimer: BackgroundTimer | null = null;
 let backoffLevel = 0;
 
 const clearBackoffTimer = () => {
   if (backoffTimer) {
-    clearTimeout(backoffTimer);
+    clearBackgroundTimer(backoffTimer);
     backoffTimer = null;
   }
 };
@@ -51,7 +56,7 @@ const scheduleBackoff = () => {
   const delay =
     BACKOFF_STEPS_MS[Math.min(backoffLevel, BACKOFF_STEPS_MS.length - 1)];
   backoffLevel++;
-  backoffTimer = setTimeout(() => {
+  backoffTimer = setBackgroundTimeout(() => {
     backoffTimer = null;
     void drainListenQueue();
   }, delay);

@@ -1,4 +1,5 @@
 import {
+  artistTracksFromDownloads,
   collectionArtistCredits,
   collectionCreditsArtist,
   offlineCollectionToAlbum,
@@ -28,7 +29,47 @@ const tracks: Record<string, OfflineTrack> = {
   b: makeTrack("b"),
 };
 
+describe("artistTracksFromDownloads", () => {
+  const albums = [
+    { id: "al1", name: "First" },
+    { id: "al2", name: "Second" },
+  ];
+
+  it("keeps the artist's albums, in discography then disc/track order", () => {
+    const result = artistTracksFromDownloads(
+      [
+        offlineTrackToChild(makeTrack("x", { albumId: "other" })),
+        offlineTrackToChild(makeTrack("b2", { albumId: "al2", track: 2 })),
+        offlineTrackToChild(makeTrack("a1", { albumId: "al1", track: 1 })),
+        offlineTrackToChild(makeTrack("b1", { albumId: "al2", track: 1 })),
+        offlineTrackToChild(
+          makeTrack("a0", { albumId: "al1", discNumber: 2, track: 1 }),
+        ),
+      ],
+      albums,
+    );
+    expect(result.map((t) => t.id)).toEqual(["a1", "a0", "b1", "b2"]);
+  });
+
+  it("matches downloads recorded without an albumId by album name", () => {
+    const result = artistTracksFromDownloads(
+      [
+        offlineTrackToChild(makeTrack("legacy", { album: "Second" })),
+        offlineTrackToChild(makeTrack("stranger", { album: "Elsewhere" })),
+      ],
+      albums,
+    );
+    expect(result.map((t) => t.id)).toEqual(["legacy"]);
+  });
+});
+
 describe("offlineTrackToChild", () => {
+  it("carries the albumId recorded at download time", () => {
+    expect(
+      offlineTrackToChild(makeTrack("a", { albumId: "al1" })).albumId,
+    ).toBe("al1");
+  });
+
   it("maps a downloaded track to a Subsonic Child and infers suffix from path", () => {
     const child = offlineTrackToChild(makeTrack("a", { path: "/x/a.mp3" }));
     expect(child).toMatchObject({

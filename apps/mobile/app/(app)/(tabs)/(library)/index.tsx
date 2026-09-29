@@ -56,7 +56,7 @@ import { usePlaylists } from "@/hooks/backend/usePlaylists";
 import {
   isCollectionAvailableOffline,
   useDownloadedCollections,
-  useDownloadedTracksCount,
+  useHasDownloadedTracks,
 } from "@/hooks/offline";
 import { useAlbumScreenLayout } from "@/hooks/useAlbumScreenLayout";
 import { useCapabilities } from "@/hooks/useCapabilities";
@@ -169,7 +169,7 @@ export default function LibraryScreen() {
   const isOnline = useIsOnline();
   const queryClient = useQueryClient();
   const downloadedCollections = useDownloadedCollections();
-  const downloadedTracksCount = useDownloadedTracksCount();
+  const hasDownloadedTracks = useHasDownloadedTracks();
   const {
     data: starredData,
     isLoading: isLoadingStarred,
@@ -399,8 +399,7 @@ export default function LibraryScreen() {
     // (extended offline mode caches the whole library) — downloaded tracks
     // count too, since they back All tracks even with no saved collection.
     const hasOfflineCollections =
-      !isOnline &&
-      (downloadedCollections.length > 0 || downloadedTracksCount > 0);
+      !isOnline && (downloadedCollections.length > 0 || hasDownloadedTracks);
     if (
       noBucketFilter &&
       !downloadedFilter &&
@@ -426,7 +425,7 @@ export default function LibraryScreen() {
     musicFoldersData,
     isOnline,
     downloadedCollections,
-    downloadedTracksCount,
+    hasDownloadedTracks,
     queryClient,
   ]);
 

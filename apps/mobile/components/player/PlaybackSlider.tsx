@@ -7,6 +7,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import {
   useIsBuffering,
+  useIsTwoColumnPlayer,
   usePlaybackDuration,
   usePlaybackProgress,
   usePlaybackProgressValue,
@@ -75,7 +76,7 @@ function useSeekWiring() {
 }
 
 function WaveformVariant() {
-  const isWideLayout = useApp((s) => s.isWideLayout);
+  const isTwoColumn = useIsTwoColumnPlayer();
   const liveProgress = usePlaybackProgressValue();
   const buffering = useIsBuffering();
   const wiring = useSeekWiring();
@@ -84,7 +85,7 @@ function WaveformVariant() {
   const waveform = useWaveform(wiring.track ?? null);
 
   return (
-    <VStack className={cn(isWideLayout ? "mb-2" : "mb-4")}>
+    <VStack className={cn(isTwoColumn ? "mb-2" : "mb-4")}>
       <WaveformSeekbar
         peaks={waveform.peaks}
         progress={liveProgress}
@@ -97,7 +98,7 @@ function WaveformVariant() {
         onScrub={wiring.onScrub}
         onComplete={wiring.onComplete}
       />
-      {/* Collapses to nothing in portrait; in the wide layout it grows to keep
+      {/* Collapses to nothing in one column; in two columns it grows to keep
           the transport controls at the bottom of the centred column, exactly as
           it does for the plain slider below. */}
       <Box className="flex-1 h-[50px]" />
@@ -107,7 +108,7 @@ function WaveformVariant() {
 
 function SliderVariant() {
   const { currentTime } = usePlaybackProgress();
-  const isWideLayout = useApp((s) => s.isWideLayout);
+  const isTwoColumn = useIsTwoColumnPlayer();
   // Live position as a 0..1 shared value, updated on the UI thread (~4 Hz) with
   // no React re-render, so a progress tick can never fight the drag gesture.
   const liveProgress = usePlaybackProgressValue();
@@ -115,7 +116,7 @@ function SliderVariant() {
   const wiring = useSeekWiring();
 
   return (
-    <VStack className={cn(isWideLayout ? "mb-2" : "mb-6")}>
+    <VStack className={cn(isTwoColumn ? "mb-2" : "mb-6")}>
       <GestureSlider
         progress={liveProgress}
         disabled={!wiring.hasDuration}

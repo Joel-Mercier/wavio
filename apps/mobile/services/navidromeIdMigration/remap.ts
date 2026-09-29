@@ -1,5 +1,7 @@
-import { queryClient, queryPersister } from "@/config/queryClient";
+import { queryClient } from "@/config/queryClient";
+import { removePersistedQueries } from "@/config/queryPersister";
 import { streamUrl } from "@/services/backend/streaming";
+import { artworkCacheService } from "@/services/offline/artworkCacheService";
 import { offlineDownloadService } from "@/services/offline/downloadService";
 import {
   clearTrackCache,
@@ -503,6 +505,9 @@ function applyRemap(remap: Remap): void {
  * @returns how many distinct ids actually changed.
  */
 export async function applyCanonicalIdRemap(): Promise<number> {
+  // Covers waiting on their batched commit would otherwise register under
+  // their pre-migration ids once the remap is done.
+  artworkCacheService.commitLanded();
   const map = await canonicalIdMap(collectIds());
   const remap: Remap = (id) => map.get(id) ?? id;
 
@@ -515,7 +520,7 @@ export async function applyCanonicalIdRemap(): Promise<number> {
   // nothing worth salvaging: album and playlist ids move too, so most keys are
   // stale. Same pair the Storage settings screen uses.
   queryClient.clear();
-  void queryPersister.removeClient();
+  removePersistedQueries();
 
   return changed;
 }

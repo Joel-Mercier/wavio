@@ -19,6 +19,9 @@ jest.mock("@/config/storage", () => {
     zustandStorage: make(),
     createScopedStorage: () => make(),
     createDynamicScopedStorage: () => make(),
+    createThrottledScopedJSONStorage: () =>
+      jest.requireActual("zustand/middleware").createJSONStorage(() => make()),
+    flushPendingScopedWrites: () => {},
     getAuthScope: () => "scope",
   };
 });
@@ -162,8 +165,9 @@ describe("download queue under a full disk", () => {
       downloaded(String(url).replace("https://server/stream/", "")),
     );
 
-    // Nothing about connectivity changed — only time passed.
-    await jest.advanceTimersByTimeAsync(30 * 60 * 1000 + 1);
+    // Nothing about connectivity changed — only time passed. The extra second
+    // covers the batched completion commit.
+    await jest.advanceTimersByTimeAsync(30 * 60 * 1000 + 1000);
 
     expect(requestedIds()).toEqual(["a"]);
     expect(state().isTrackDownloaded("a")).toBe(true);
@@ -214,7 +218,7 @@ describe("what a completed download records", () => {
       [{ ...makeChild("flacTrack"), suffix: "flac", bitRate: 1016 }],
       "user",
     );
-    await jest.advanceTimersByTimeAsync(0);
+    await jest.advanceTimersByTimeAsync(1000);
 
     const saved = state().getDownloadedTrack("flacTrack");
     expect(saved?.path).toMatch(/\.mp3$/);

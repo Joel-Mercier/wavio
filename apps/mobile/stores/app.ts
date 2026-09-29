@@ -11,20 +11,12 @@ import { DEFAULT_SONG_SORT, type SongSortType } from "@/utils/songSort";
 import type { SortType } from "@/utils/sort";
 import type { OfflineTrackSortType, TrackSortType } from "@/utils/trackSort";
 
-const isLandscapeOrientation = (orientation: Orientation) =>
-  orientation === Orientation.LANDSCAPE_LEFT ||
-  orientation === Orientation.LANDSCAPE_RIGHT;
-
 // Width (dp) at or above which the app switches to its "wide" layout: left
-// sidebar nav, docked player, two-column player, larger grids. Matches Android's
-// sw600dp "tablet" breakpoint so a tablet/foldable in portrait — not just a phone
-// in landscape — gets the wide layout. Phones stay below this in portrait.
+// sidebar nav, docked player, two-column player, larger grids.
 export const WIDE_LAYOUT_BREAKPOINT = 600;
 
-// The wide layout applies when the device is physically landscape OR the window
-// is wide enough on its own (tablet, foldable, large-screen portrait).
-const isWideLayout = (orientation: Orientation, windowWidth: number) =>
-  isLandscapeOrientation(orientation) || windowWidth >= WIDE_LAYOUT_BREAKPOINT;
+const isWideLayout = (windowWidth: number) =>
+  windowWidth >= WIDE_LAYOUT_BREAKPOINT;
 
 // "raw" streams the source file untouched (bit-perfect); the others ask the
 // server to transcode to that codec via the Subsonic `format=` param.
@@ -45,6 +37,18 @@ export type TrackCacheCount = (typeof TRACK_CACHE_COUNTS)[number];
 
 export const TRACK_CACHE_BUDGETS_MB = [250, 500, 1000, 2000] as const;
 export type TrackCacheBudgetMb = (typeof TRACK_CACHE_BUDGETS_MB)[number];
+
+// The optional buttons of the Android media notification, beside previous /
+// play / next. The system only has room for two, so a favorite button always
+// costs one of the 10-second skips.
+export const MEDIA_CONTROLS_LAYOUTS = [
+  "seek",
+  "favoriteAndSeekForward",
+  "seekBackwardAndFavorite",
+  "favorite",
+  "none",
+] as const;
+export type MediaControlsLayout = (typeof MEDIA_CONTROLS_LAYOUTS)[number];
 
 // Genre tag rows shown on the internet radio stations home screen, used when
 // the user hasn't customized them.
@@ -252,8 +256,12 @@ interface AppStore {
   setPodcastPlaybackRate: (podcastPlaybackRate: number) => void;
   endlessPlaybackEnabled: boolean;
   setEndlessPlaybackEnabled: (enabled: boolean) => void;
+  showPlayerAudioQuality: boolean;
+  setShowPlayerAudioQuality: (enabled: boolean) => void;
   showPlayerRating: boolean;
   setShowPlayerRating: (enabled: boolean) => void;
+  mediaControlsLayout: MediaControlsLayout;
+  setMediaControlsLayout: (mediaControlsLayout: MediaControlsLayout) => void;
   // See services/playQueueSync.ts.
   queueSyncPriority: "server" | "local" | "off";
   setQueueSyncPriority: (priority: "server" | "local" | "off") => void;
@@ -488,9 +496,17 @@ export const useAppBase = create<AppStore>()(
       setEndlessPlaybackEnabled: (endlessPlaybackEnabled: boolean) => {
         set({ endlessPlaybackEnabled });
       },
+      showPlayerAudioQuality: true,
+      setShowPlayerAudioQuality: (showPlayerAudioQuality: boolean) => {
+        set({ showPlayerAudioQuality });
+      },
       showPlayerRating: false,
       setShowPlayerRating: (showPlayerRating: boolean) => {
         set({ showPlayerRating });
+      },
+      mediaControlsLayout: "seek",
+      setMediaControlsLayout: (mediaControlsLayout: MediaControlsLayout) => {
+        set({ mediaControlsLayout });
       },
       queueSyncPriority: "off",
       setQueueSyncPriority: (queueSyncPriority: "server" | "local" | "off") => {
@@ -534,21 +550,15 @@ export const useAppBase = create<AppStore>()(
       },
       orientation: Orientation.PORTRAIT_UP,
       windowWidth: Dimensions.get("window").width,
-      isWideLayout: isWideLayout(
-        Orientation.PORTRAIT_UP,
-        Dimensions.get("window").width,
-      ),
+      isWideLayout: isWideLayout(Dimensions.get("window").width),
       setOrientation: (orientation: Orientation) => {
-        set((state) => ({
-          orientation,
-          isWideLayout: isWideLayout(orientation, state.windowWidth),
-        }));
+        set({ orientation });
       },
       setWindowWidth: (windowWidth: number) => {
-        set((state) => ({
+        set({
           windowWidth,
-          isWideLayout: isWideLayout(state.orientation, windowWidth),
-        }));
+          isWideLayout: isWideLayout(windowWidth),
+        });
       },
     }),
     {

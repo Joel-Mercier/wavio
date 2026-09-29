@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import AlbumListItem from "@/components/albums/AlbumListItem";
 import { useSectionEnabled } from "@/components/home/enabledSections";
@@ -12,6 +12,11 @@ interface ArtistAlbumsSectionProps {
   sectionIndex: number;
 }
 
+// The row is a plain horizontal ScrollView, so every card mounts at once; the
+// artist page behind "see all" has the full, virtualised discography. Same cap
+// as the other carousels.
+const MAX_ALBUMS = 12;
+
 function ArtistAlbumsSection({
   artistId,
   sectionIndex,
@@ -20,7 +25,10 @@ function ArtistAlbumsSection({
   const { t } = useTranslation();
   const { data, isLoading, error } = useArtist(enabled ? artistId : "");
   const artist = data?.artist;
-  const albums = artist?.album;
+  const albums = useMemo(
+    () => artist?.album?.slice(0, MAX_ALBUMS),
+    [artist?.album],
+  );
   return (
     <HomeSection
       title={artist?.name ?? ""}

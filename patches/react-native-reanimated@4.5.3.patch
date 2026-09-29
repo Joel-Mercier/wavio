@@ -1,0 +1,12 @@
+diff --git a/Common/cpp/reanimated/NativeModules/ReanimatedModuleProxy.cpp b/Common/cpp/reanimated/NativeModules/ReanimatedModuleProxy.cpp
+index 2b68ff76dd7293d757a1e44fd73e7913f4c8595f..9d27156fe9afa4481fa870b8df9cb3fffd49c4fc 100644
+--- a/Common/cpp/reanimated/NativeModules/ReanimatedModuleProxy.cpp
++++ b/Common/cpp/reanimated/NativeModules/ReanimatedModuleProxy.cpp
+@@ -87,7 +87,6 @@ std::pair<UpdatesBatch, UpdatesBatch> partitionUpdates(
+   static const std::unordered_set<std::string> synchronousPropNames = {
+       "opacity",
+       "elevation",
+-      "zIndex",
+       "shadowColor",
+ #if __APPLE__
+       "shadowOffset",

@@ -1,5 +1,6 @@
 import { downloadedFileSuffix } from "@/services/offline/fileNaming";
 import type {
+  AlbumID3,
   AlbumWithSongsID3,
   Child,
   PlaylistWithSongs,
@@ -69,6 +70,7 @@ export function offlineTrackToChild(track: OfflineTrack): Child {
     title: track.title,
     artist: track.artist,
     album: track.album,
+    albumId: track.albumId,
     coverArt: track.coverArt,
     duration: track.duration,
     size: track.size,
@@ -80,6 +82,31 @@ export function offlineTrackToChild(track: OfflineTrack): Child {
     genre: track.genre,
     sortName: track.sortName,
   };
+}
+
+// An artist's downloaded tracks, in the order of its discography (`albums`, as
+// getArtist lists them) and by disc/track within an album. Downloads recorded
+// before albumId was kept only carry the album name, so those match by name.
+export function artistTracksFromDownloads(
+  tracks: Child[],
+  albums: Pick<AlbumID3, "id" | "name">[],
+): Child[] {
+  const orderById = new Map(albums.map((album, index) => [album.id, index]));
+  const orderByName = new Map(
+    albums.map((album, index) => [album.name, index]),
+  );
+  const albumIndex = (track: Child) =>
+    track.albumId
+      ? orderById.get(track.albumId)
+      : orderByName.get(track.album ?? "");
+  return tracks
+    .filter((track) => albumIndex(track) !== undefined)
+    .sort(
+      (a, b) =>
+        (albumIndex(a) ?? 0) - (albumIndex(b) ?? 0) ||
+        (a.discNumber ?? 0) - (b.discNumber ?? 0) ||
+        (a.track ?? 0) - (b.track ?? 0),
+    );
 }
 
 function collectionTracks(

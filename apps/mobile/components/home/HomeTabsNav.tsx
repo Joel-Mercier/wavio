@@ -21,6 +21,7 @@ import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
+import useCast from "@/stores/cast";
 import useJukebox from "@/stores/jukebox";
 import useUpnp from "@/stores/upnp";
 import { cn } from "@/utils/tailwind";
@@ -59,7 +60,8 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
   const isOnline = useIsOnline();
   const jukeboxActive = useJukebox((s) => s.active);
   const upnpConnected = useUpnp((s) => s.connected);
-  const playingRemotely = jukeboxActive || upnpConnected;
+  const casting = useCast((s) => s.active);
+  const playingRemotely = jukeboxActive || upnpConnected || casting;
   // Not gated on a playing track, unlike the player's own button: from here
   // the output is picked before anything plays, and the sheet copes with an
   // empty queue.

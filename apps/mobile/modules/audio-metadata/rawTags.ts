@@ -42,12 +42,44 @@ export type RawTagData = {
 
 // Cap how much we'll pull for a tag region, as a safety valve against a
 // corrupt/huge declared size. 4 MB comfortably covers tags with embedded art.
+// Mirrored natively in AudioMetadataModule.kt; see headReader.
 const MAX_TAG_BYTES = 4 * 1024 * 1024;
 
 // How much of a FLAC header to pull in one go before walking its metadata
 // blocks — see `readFlac`. Large enough for a seektable and a comment block,
-// small enough to stay cheaper than the round trips it replaces.
+// small enough to stay cheaper than the round trips it replaces. Mirrored
+// natively in AudioMetadataModule.kt.
 const FLAC_WINDOW_BYTES = 64 * 1024;
+
+/**
+ * A reader over the region the native extractor already read off the file (see
+ * `readHead` in AudioMetadataModule.kt), so parsing a local file needs no open
+ * of its own. Anything past that region — a FLAC comment block beyond the
+ * window — goes to `openFallback`, opened at most once and only when needed.
+ * When the region is the whole file, reads past it are short, as at EOF.
+ */
+export function headReader(
+  head: Uint8Array,
+  isWholeFile: boolean,
+  openFallback: () => Promise<ByteReader & { close(): void }>,
+): ByteReader & { close(): void } {
+  let fallback: Promise<ByteReader & { close(): void }> | undefined;
+  return {
+    read(offset: number, length: number): Promise<Uint8Array> {
+      if (offset + length <= head.length || isWholeFile) {
+        return Promise.resolve(head.subarray(offset, offset + length));
+      }
+      fallback ??= openFallback();
+      return fallback.then((reader) => reader.read(offset, length));
+    },
+    close() {
+      fallback?.then(
+        (reader) => reader.close(),
+        () => {},
+      );
+    },
+  };
+}
 
 export async function readRawTags(reader: ByteReader): Promise<RawTagData> {
   try {

@@ -5,10 +5,9 @@ import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { ScrollView } from "@/components/ui/scroll-view";
-import { usePlayingTrack } from "@/hooks/player";
+import { useIsTwoColumnPlayer, usePlayingTrack } from "@/hooks/player";
 import { useTrackBookmarks } from "@/hooks/useTrackBookmarks";
 import { seekTo } from "@/services/player";
-import useApp from "@/stores/app";
 import useBookmarks from "@/stores/bookmarks";
 import { formatSeconds } from "@/utils/date";
 import { cn } from "@/utils/tailwind";
@@ -24,7 +23,7 @@ const BOOKMARK_ROW_HEIGHT = 32;
 
 export default function PlayerBookmarks() {
   const track = usePlayingTrack();
-  const isWideLayout = useApp((s) => s.isWideLayout);
+  const isTwoColumn = useIsTwoColumnPlayer();
   const bookmarks = useTrackBookmarks(track?.id);
   const hasBookmarks = !!track?.id && bookmarks.length > 0;
 
@@ -34,7 +33,7 @@ export default function PlayerBookmarks() {
 
   return (
     <Box
-      className={cn("relative -mx-6", isWideLayout ? "mt-2" : "mt-6")}
+      className={cn("relative -mx-6", isTwoColumn ? "mt-2" : "mt-6")}
       style={{ height: BOOKMARK_ROW_HEIGHT }}
     >
       {hasBookmarks && (

@@ -21,6 +21,9 @@ jest.mock("@/config/storage", () => {
     zustandStorage: make(),
     createScopedStorage: () => make(),
     createDynamicScopedStorage: () => make(),
+    createThrottledScopedJSONStorage: () =>
+      jest.requireActual("zustand/middleware").createJSONStorage(() => make()),
+    flushPendingScopedWrites: () => {},
     getAuthScope: () => "scope",
   };
 });
@@ -60,6 +63,7 @@ jest.mock("expo-audio", () => {
     setPlaybackRate: jest.fn(),
     setActiveForLockScreen: jest.fn(),
     updateLockScreenMetadata: jest.fn(),
+    setMediaButtons: jest.fn(),
     setLockScreenControls: jest.fn(),
     clearLockScreenControls: jest.fn(),
     currentTime: 0,

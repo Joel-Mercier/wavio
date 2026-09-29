@@ -7,6 +7,7 @@ import {
 } from "expo-audio";
 import { File } from "expo-file-system";
 import { queryClient } from "@/config/queryClient";
+import { setStarred } from "@/hooks/backend/useMediaAnnotation";
 import { isIndexBacked } from "@/services/backend/dispatch";
 import { scrobble } from "@/services/backend/mediaAnnotation";
 import { isNetworkShareType } from "@/services/backend/serverTraits";
@@ -96,7 +97,11 @@ import {
   touchCachedTrack,
 } from "@/services/trackCache";
 import useActivity from "@/stores/activity";
-import { clampPodcastPlaybackRate, useAppBase } from "@/stores/app";
+import {
+  clampPodcastPlaybackRate,
+  type MediaControlsLayout,
+  useAppBase,
+} from "@/stores/app";
 import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
 import useOffline from "@/stores/offline";
 import usePlaybackNotice from "@/stores/playbackNotice";
@@ -812,7 +817,7 @@ async function upgradeLockScreenArtwork(
 function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
   lockScreenTrackId = track.id;
   const remoteArtwork = lockScreenArtworkUrl(track);
-  const cached = cachedArtworkUri(remoteArtwork);
+  const cached = cachedArtworkUri(remoteArtwork, { verify: true });
   // Prefer the mirrored file. Failing that, pass the remote URL only when it
   // would actually load — with custom headers configured the native fetch is
   // guaranteed to 403, so sending it just burns a request and logs a failure.
@@ -859,6 +864,64 @@ function clearLockScreen(p: AudioPlayer) {
   }
   lockScreenActive = false;
   lockScreenTrackId = null;
+}
+
+type MediaButton = Parameters<AudioPlayer["setMediaButtons"]>[0][number];
+
+const MEDIA_CONTROLS_BUTTONS: Record<MediaControlsLayout, MediaButton[]> = {
+  seek: ["seekBackward", "seekForward"],
+  favoriteAndSeekForward: ["favorite", "seekForward"],
+  seekBackwardAndFavorite: ["seekBackward", "favorite"],
+  favorite: ["favorite"],
+  none: [],
+};
+
+// The favorite the notification button asked for, shown until the star lands
+// in the queue so the heart flips on tap rather than after the round trip.
+let pendingFavorite: { id: string; starred: boolean } | null = null;
+let pushedMediaButtons: string | null = null;
+
+function canFavorite(track: QueueTrack | null): track is QueueTrack {
+  return !!track && !track.isRadio && !isPodcastTrack(track);
+}
+
+function isTrackFavorite(track: QueueTrack): boolean {
+  return pendingFavorite?.id === track.id
+    ? pendingFavorite.starred
+    : !!track.starred;
+}
+
+function syncMediaButtons() {
+  const track = useQueue.getState().getCurrent();
+  const favoritable = canFavorite(track);
+  const buttons = MEDIA_CONTROLS_BUTTONS[
+    useAppBase.getState().mediaControlsLayout
+  ].filter((button) => favoritable || button !== "favorite");
+  const favorite = favoritable && isTrackFavorite(track);
+  const key = `${buttons.join(",")}|${favorite}`;
+  if (key === pushedMediaButtons) return;
+  pushedMediaButtons = key;
+  try {
+    player.setMediaButtons(buttons, favorite);
+  } catch (error) {
+    logSwallowed("setMediaButtons", error);
+  }
+}
+
+async function toggleCurrentTrackFavorite() {
+  const track = useQueue.getState().getCurrent();
+  if (!canFavorite(track) || pendingFavorite?.id === track.id) return;
+  const starred = !track.starred;
+  pendingFavorite = { id: track.id, starred };
+  syncMediaButtons();
+  try {
+    await setStarred(queryClient, { id: track.id, song: track }, starred);
+  } catch (error) {
+    logSwallowed("toggleCurrentTrackFavorite", error);
+  } finally {
+    pendingFavorite = null;
+    syncMediaButtons();
+  }
 }
 
 // Put a track on the OS controls without loading anything locally. The only
@@ -1304,7 +1367,9 @@ function handlePlaybackStatus(status: AudioStatus) {
     }
   }
 
-  if (status.didJustFinish && !isLoading) {
+  // The local engine is parked while a remote target plays; whatever it says
+  // about finishing is about a track it was paused on, not the queue.
+  if (status.didJustFinish && !isLoading && !activeRemoteTarget()) {
     const previousId = useQueue.getState().getCurrent()?.id ?? null;
     const previous = useQueue.getState().getCurrent();
     // Fully played — drop any resume bookmark so it doesn't reopen at the end.
@@ -1422,12 +1487,28 @@ remoteListeners.push(
     seekTo(positionMs / 1000);
   }),
 );
+// The hardware volume keys while a remote target owns playback: the session
+// reports the remote's volume, so the OS adjusts that rather than this device's
+// media stream (see lockScreenMirror).
+remoteListeners.push(
+  player.addListener("remoteVolume", (volume: number) => {
+    activeRemoteTarget()?.setVolume?.(volume);
+  }),
+);
+remoteListeners.push(
+  player.addListener("remoteFavorite", () => {
+    void toggleCurrentTrackFavorite();
+  }),
+);
 statusListeners.push(
   player.addListener("playbackStatusUpdate", handlePlaybackStatus),
 );
 
 const appUnsub = useAppBase.subscribe((state, prev) => {
   const cur = useQueue.getState().getCurrent();
+  if (state.mediaControlsLayout !== prev.mediaControlsLayout) {
+    syncMediaButtons();
+  }
   if (
     state.replayGainMode !== prev.replayGainMode ||
     state.replayGainPreampDb !== prev.replayGainPreampDb
@@ -1456,7 +1537,9 @@ let hasHydrated = false;
 // auto-play" behaviour as cold-start hydration. This flag tells the next queue
 // subscription firing to load silently.
 let suppressAutoplayOnce = false;
+syncMediaButtons();
 const queueUnsub = useQueue.subscribe((state) => {
+  syncMediaButtons();
   const current =
     state.currentIndex != null ? state.queue[state.currentIndex] : null;
   const id = current?.id ?? null;
@@ -1471,11 +1554,16 @@ const queueUnsub = useQueue.subscribe((state) => {
       // happens further down this same callback. A skip is the only way to leave
       // an episode without reaching didJustFinish, so without this it loses up
       // to a full throttle window.
+      // While a remote target plays, the engine's own position is where it was
+      // paused before the handover; the target knows where the episode got to.
+      const remote = activeRemoteTarget();
       recordPodcastProgress(
         outgoing,
-        effectivePosition(player.currentTime ?? 0),
+        remote
+          ? remote.getCurrentTime()
+          : effectivePosition(player.currentTime ?? 0),
         {
-          duration: player.duration,
+          duration: remote ? outgoing.duration : player.duration,
           force: true,
         },
       );
@@ -1715,10 +1803,17 @@ export function playTracks(
   // / !hasHydrated) it loads the track paused and leaves playbackInitialized
   // false. An explicit user play must start playback regardless. A remote
   // target owns playback elsewhere, so never force the local engine there.
-  if (
-    current.id === previousId ||
-    (!playbackInitialized && !activeRemoteTarget())
-  ) {
+  const remote = activeRemoteTarget();
+  if (remote) {
+    // Same track again: on the remote that is "start it over", not a local load
+    // on top of it.
+    if (current.id === previousId) {
+      remote.seekTo(0);
+      remote.play();
+    }
+    return true;
+  }
+  if (current.id === previousId || !playbackInitialized) {
     loadAndPlay(current);
   }
   return true;

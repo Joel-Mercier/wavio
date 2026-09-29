@@ -15,6 +15,7 @@ import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import OfflineDownloadItem from "@/components/offline/OfflineDownloadItem";
+import OfflineDownloadItemSkeleton from "@/components/offline/OfflineDownloadItemSkeleton";
 import SortOptionsSheet, {
   useSortFieldLabel,
 } from "@/components/SortOptionsSheet";
@@ -41,22 +42,25 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import {
-  useDownloadedTracksList,
-  useOfflineDownloads,
+  useDownloadActions,
+  useDownloadedTracksCount,
+  useDownloadQueueLength,
+  useDownloadsSearch,
+  useHasDownloadedTracks,
+  useSettledDownloadedTracks,
   useTotalDownloadSize,
 } from "@/hooks/offline";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import useDebounce from "@/hooks/useDebounce";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
-import { createSearchIndex } from "@/services/searchIndex";
 import useApp from "@/stores/app";
-import type { OfflineTrack } from "@/stores/offline";
 import { niceBytes } from "@/utils/fileSize";
+import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
 import {
   availableSortFields,
   effectiveSort,
   parseSortType,
-  sortItems,
 } from "@/utils/sort";
 import { cn } from "@/utils/tailwind";
 import { TOAST_DURATION } from "@/utils/toastDuration";
@@ -65,6 +69,8 @@ import {
   OFFLINE_TRACK_SORT_SPECS,
   trackSortEnabled,
 } from "@/utils/trackSort";
+
+const SKELETON_DATA = loadingData(16);
 
 export default function OfflineDownloadsDetail() {
   const [gray500, white, primary50, primary800] = Uniwind.getCSSVariable([
@@ -81,9 +87,13 @@ export default function OfflineDownloadsDetail() {
   const isWideLayout = useApp((s) => s.isWideLayout);
   const sort = useApp((s) => s.downloadsSort);
   const setDownloadsSort = useApp((s) => s.setDownloadsSort);
-  const { removeDownloadedTrack, clearAllDownloads } = useOfflineDownloads();
-  const downloadedTracksList = useDownloadedTracksList();
-  const totalDownloadSize = useTotalDownloadSize();
+  const { removeDownloadedTrack, clearAllDownloads } = useDownloadActions();
+  const settledTracks = useSettledDownloadedTracks();
+  const downloadedTracksList = useMemo(
+    () => Object.values(settledTracks),
+    [settledTracks],
+  );
+  const hasDownloads = useHasDownloadedTracks();
 
   const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
   const listRef = useRef<LegendListRef>(null);
@@ -100,6 +110,13 @@ export default function OfflineDownloadsDetail() {
     },
   });
   const query = useSelector(form.store, (state) => state.values.query);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const debounce = useDebounce(400);
+
+  useEffect(() => {
+    debounce(() => setDebouncedQuery(query));
+  }, [query, debounce]);
+
   const handleSearchClearPress = () => {
     form.setFieldValue("query", "");
   };
@@ -121,27 +138,19 @@ export default function OfflineDownloadsDetail() {
   const activeSortField = parseSortType(activeSort).field;
   const sortFieldLabel = useSortFieldLabel();
 
-  const data = useMemo(() => {
-    const sorted = sortItems(
-      downloadedTracksList,
-      activeSort,
-      OFFLINE_TRACK_SORT_SPECS,
-    );
-    if (query.length === 0) {
-      return sorted;
-    }
-    return createSearchIndex(sorted, ["title", "artist", "album"])
-      .search(query)
-      .map((result) => result.item);
-  }, [downloadedTracksList, activeSort, query]);
+  const { data, isSearching } = useDownloadsSearch(
+    downloadedTracksList,
+    activeSort,
+    debouncedQuery,
+  );
 
   // A changed sort/query reorders the list; snap back to the top so the new
   // ordering starts in view instead of leaving the user mid-scroll.
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
-  }, [activeSort, query]);
+  }, [activeSort, debouncedQuery]);
 
-  const isEmpty = downloadedTracksList.length === 0;
+  const isEmpty = !hasDownloads;
 
   const handlePresentSortModalPress = () => {
     bottomSheetSortModalRef.current?.present();
@@ -240,18 +249,7 @@ export default function OfflineDownloadsDetail() {
           <Box className="w-6" />
         </HStack>
         <HStack className="items-center justify-between px-6 mb-4">
-          <VStack>
-            <Text className="text-white font-bold">
-              {t("app.offlineDownloads.totalTracks", {
-                count: downloadedTracksList.length,
-              })}
-            </Text>
-            <Text className="text-primary-100 text-sm">
-              {t("app.offlineDownloads.totalSize", {
-                size: niceBytes(totalDownloadSize),
-              })}
-            </Text>
-          </VStack>
+          <DownloadsSummary />
           <FadeOutScaleDown
             onPress={isEmpty ? undefined : () => setShowClearConfirm(true)}
           >
@@ -321,19 +319,25 @@ export default function OfflineDownloadsDetail() {
             <LegendList
               recycleItems
               ref={listRef}
-              data={data}
-              keyExtractor={(item) => item.id}
+              data={isSearching ? SKELETON_DATA : data}
+              keyExtractor={(item, index) =>
+                isSearching ? `skeleton-${index}` : item.id
+              }
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{
                 paddingBottom: screenBottomPadding,
               }}
               ListEmptyComponent={<EmptyDisplay />}
-              renderItem={({ item }) => (
-                <OfflineDownloadItem
-                  item={item}
-                  onRemovePress={() => handleRemovePress(item.id)}
-                />
-              )}
+              renderItem={({ item }) =>
+                isSearching ? (
+                  <OfflineDownloadItemSkeleton />
+                ) : (
+                  <OfflineDownloadItem
+                    item={item}
+                    onRemovePress={() => handleRemovePress(item.id)}
+                  />
+                )
+              }
             />
           )}
         </Box>
@@ -420,5 +424,29 @@ export default function OfflineDownloadsDetail() {
         </AlertDialogContent>
       </AlertDialog>
     </Box>
+  );
+}
+
+// Live while the list below is held, and kept out of the screen so each
+// completion re-renders these few lines rather than the whole list.
+function DownloadsSummary() {
+  const { t } = useTranslation();
+  const count = useDownloadedTracksCount();
+  const totalSize = useTotalDownloadSize();
+  const queued = useDownloadQueueLength();
+  return (
+    <VStack className="flex-1 mr-4">
+      <Text className="text-white font-bold">
+        {t("app.offlineDownloads.totalTracks", { count })}
+      </Text>
+      <Text className="text-primary-100 text-sm">
+        {t("app.offlineDownloads.totalSize", { size: niceBytes(totalSize) })}
+      </Text>
+      {queued > 0 && (
+        <Text className="text-primary-100 text-sm">
+          {t("app.offlineDownloads.downloadingHint", { count: queued })}
+        </Text>
+      )}
+    </VStack>
   );
 }

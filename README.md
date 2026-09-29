@@ -12,6 +12,7 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 [![Latest release](https://img.shields.io/github/v/release/Joel-Mercier/wavio)](https://github.com/Joel-Mercier/wavio/releases/latest)
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/O8L72659XB)
 <a href="https://crowdin.com/?utm_term=click-badge-add-on"><img src="https://badges.crowdin.net/badge/light/crowdin-on-dark.png" srcset="https://badges.crowdin.net/badge/light/crowdin-on-dark@2x.png 2x" alt="Crowdin | Agile localization for tech companies" height="28"></a>
+<a href="https://sentry.io"><img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/sentry-badge.svg" alt="Sentry" height="28"></a>
 
 [Presentation website](https://wavio-app.vercel.app) · [Get it on Google Play](https://play.google.com/store/apps/details?id=com.jmercier.wavio) · [Get it on Github](https://github.com/Joel-Mercier/wavio/releases/latest)
 
@@ -23,6 +24,7 @@ Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubs
 - [Useful links](#useful-links)
 - [Donations](#donations)
 - [Gallery](#gallery)
+- [Sponsors](#sponsors)
 
 ## How to install
 
@@ -307,3 +309,8 @@ If you like the app and absolutely want to support its development, you can dona
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/settings-en.jpg" alt="Settings screen" width="200">
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/android-auto-en.png" alt="Android Auto" width="200">
 </p>
+
+## Sponsors
+
+- [Crowdin](https://crowdin.com) through their open-source program. Access to a higher tier of Crowdin's features has been granted to the project.
+- [Sentry](https://sentry.io) through their open-source program. Access to a higher tier of Sentry's features has been granted to the project.

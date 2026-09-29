@@ -15,9 +15,11 @@ public class AudioMetadataModule: Module {
   public func definition() -> ModuleDefinition {
     Name("AudioMetadata")
 
+    // `readTagHead` is accepted so the JS call matches Android's, and ignored:
+    // no `tagHead` comes back, so the JS side reads the tag region itself.
     AsyncFunction("getAudioMetadata") {
       (uri: String, includeArtwork: Bool, artworkDir: String?,
-       headers: [String: String]?) -> [String: Any] in
+       headers: [String: String]?, _: Bool?) -> [String: Any] in
       return AudioMetadataModule.extract(
         uri: uri, includeArtwork: includeArtwork, artworkDir: artworkDir,
         headers: headers)

@@ -127,6 +127,78 @@ describe("servers store actions", () => {
     expect(users.find((u) => u.username === "drop")).toBeUndefined();
   });
 
+  it("treats usernames differing in case as one user where the server does", () => {
+    const s = useServersBase.getState().addServer({
+      name: "N",
+      url: "https://n.example.com",
+      type: "navidrome",
+    });
+    const { addOrUpdateUser } = useServersBase.getState();
+    addOrUpdateUser({ serverId: s.id, username: "joel", password: "old" });
+    addOrUpdateUser({ serverId: s.id, username: "Joel", password: "new" });
+    expect(useServersBase.getState().getUsersForServer(s.id)).toEqual([
+      { serverId: s.id, username: "Joel", password: "new" },
+    ]);
+  });
+
+  it("collapses spellings saved before case was folded", () => {
+    const s = useServersBase.getState().addServer({
+      name: "J",
+      url: "https://j.example.com",
+      type: "jellyfin",
+    });
+    useServersBase.setState((state) => ({
+      users: [
+        ...state.users,
+        { serverId: s.id, username: "joel" },
+        { serverId: s.id, username: "bob" },
+        { serverId: s.id, username: "Joel" },
+      ],
+    }));
+    useServersBase
+      .getState()
+      .addOrUpdateUser({ serverId: s.id, username: "JOEL" });
+    expect(
+      useServersBase
+        .getState()
+        .getUsersForServer(s.id)
+        .map((u) => u.username),
+    ).toEqual(["JOEL", "bob"]);
+  });
+
+  it("keeps case-distinct users apart on a generic OpenSubsonic server", () => {
+    const s = useServersBase.getState().addServer({
+      name: "O",
+      url: "https://o.example.com",
+      type: "opensubsonic",
+    });
+    const { addOrUpdateUser } = useServersBase.getState();
+    addOrUpdateUser({ serverId: s.id, username: "joel" });
+    addOrUpdateUser({ serverId: s.id, username: "Joel" });
+    expect(
+      useServersBase
+        .getState()
+        .getUsersForServer(s.id)
+        .map((u) => u.username),
+    ).toEqual(["joel", "Joel"]);
+  });
+
+  it("syncServerUsers keeps the saved spelling and password across case", () => {
+    const s = useServersBase.getState().addServer({
+      name: "N",
+      url: "https://n.example.com",
+      type: "navidrome",
+    });
+    useServersBase
+      .getState()
+      .addOrUpdateUser({ serverId: s.id, username: "Joel", password: "pw" });
+    useServersBase.getState().syncServerUsers(s.id, ["joel", "bench", "BENCH"]);
+    expect(useServersBase.getState().getUsersForServer(s.id)).toEqual([
+      { serverId: s.id, username: "Joel", password: "pw" },
+      { serverId: s.id, username: "bench" },
+    ]);
+  });
+
   it("removeServer cascades to users", () => {
     const s = useServersBase
       .getState()

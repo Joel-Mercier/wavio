@@ -2,7 +2,10 @@ import * as z from "zod";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { zustandStorage } from "@/config/storage";
-import { hasNetworkServerType } from "@/services/backend/serverTraits";
+import {
+  hasCaseInsensitiveUsernamesType,
+  hasNetworkServerType,
+} from "@/services/backend/serverTraits";
 import createSelectors from "@/utils/createSelectors";
 
 export const serverTypeSchema = z.enum([
@@ -412,6 +415,18 @@ const sameHeaders = (
 const generateId = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 
+// How a server compares usernames: case-folded where the server itself ignores
+// case, so `Joel` and `joel` are one saved user rather than two.
+function usernameKey(
+  servers: Server[],
+  serverId: string,
+): (username: string) => string {
+  const server = servers.find((s) => s.id === serverId);
+  return server && hasCaseInsensitiveUsernamesType(server.type)
+    ? (username) => username.toLowerCase()
+    : (username) => username;
+}
+
 const useServersBase = create<ServersStore>()(
   persist(
     (set, get) => ({
@@ -559,20 +574,27 @@ const useServersBase = create<ServersStore>()(
           ...(user.password !== undefined ? { password: user.password } : {}),
         };
         set((state) => {
-          const exists = state.users.some(
-            (u) =>
-              u.serverId === trimmed.serverId &&
-              u.username === trimmed.username,
-          );
-          if (!exists) return { users: [...state.users, trimmed] };
+          const key = usernameKey(state.servers, trimmed.serverId);
+          const isSame = (u: ServerUser) =>
+            u.serverId === trimmed.serverId &&
+            key(u.username) === key(trimmed.username);
+          if (!state.users.some(isSame)) {
+            return { users: [...state.users, trimmed] };
+          }
           // Existing user: overwrite the saved password with the passed value,
           // including clearing it when `password` is omitted (unchecked box).
+          // The spelling follows the sign-in too, and any other spelling of the
+          // same account saved earlier is dropped.
+          let kept = false;
           return {
-            users: state.users.map((u) =>
-              u.serverId === trimmed.serverId && u.username === trimmed.username
-                ? { ...u, password: user.password }
-                : u,
-            ),
+            users: state.users.flatMap((u) => {
+              if (!isSame(u)) return [u];
+              if (kept) return [];
+              kept = true;
+              return [
+                { ...u, username: trimmed.username, password: user.password },
+              ];
+            }),
           };
         });
       },
@@ -584,25 +606,33 @@ const useServersBase = create<ServersStore>()(
         }));
       },
       syncServerUsers: (serverId, usernames) => {
-        const unique = Array.from(
-          new Set(usernames.map((u) => u.trim()).filter(Boolean)),
-        );
         set((state) => {
+          const key = usernameKey(state.servers, serverId);
           // Preserve any saved password for usernames that survive the sync so
-          // refreshing the server's user list doesn't wipe stored credentials.
+          // refreshing the server's user list doesn't wipe stored credentials —
+          // and, where case doesn't matter, the saved spelling, which is the one
+          // this device's data for that account is stored under.
           const existingByName = new Map(
             state.users
               .filter((u) => u.serverId === serverId)
-              .map((u) => [u.username, u]),
+              .map((u) => [key(u.username), u]),
           );
+          const unique = new Map<string, string>();
+          for (const raw of usernames) {
+            const username = raw.trim();
+            if (username && !unique.has(key(username))) {
+              unique.set(key(username), username);
+            }
+          }
           return {
             users: [
               ...state.users.filter((u) => u.serverId !== serverId),
-              ...unique.map((username) => {
-                const saved = existingByName.get(username)?.password;
+              ...[...unique].map(([name, username]) => {
+                const existing = existingByName.get(name);
+                const saved = existing?.password;
                 return {
                   serverId,
-                  username,
+                  username: existing?.username ?? username,
                   ...(saved !== undefined ? { password: saved } : {}),
                 };
               }),

@@ -23,8 +23,15 @@ export type RemoteTarget = {
   getCurrentTime: () => number;
   isPlaying: () => boolean;
   // 0..1. Absent when the target has no volume of its own (the local engine
-  // has none either — device volume is the OS's business).
+  // has none either — device volume is the OS's business). With both present
+  // the OS media session reports the remote's volume and hands the hardware
+  // volume keys to it (services/playback/lockScreenMirror.ts).
   setVolume?: (volume: number) => void;
+  getVolume?: () => number;
+  // Stop the remote and forget the session without moving playback anywhere:
+  // another output is about to take over from a position the caller has
+  // already captured, so a hand-back to this device would only play a blip.
+  release: () => Promise<void>;
 
   readSnapshot: () => PlaybackSnapshot;
   // Whether the position needs interpolating between this target's own updates.

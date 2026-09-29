@@ -275,11 +275,15 @@ export const getArtistAppearances = async (
 };
 
 // Every indexed track of the artist, ordered like getArtist orders the albums
-// (year, then album name) and by disc/track number within an album.
+// (year, then album name) and by disc/track number within an album. One page:
+// it's a local database read, not a network fan-out.
 export const getArtistSongs = async (id: string) => {
   const key = parseLocalArtistId(id);
   if (key == null) throw new LocalUnsupportedError(`artist id "${id}"`);
   const rows = await queryAllSongsByArtist(key);
   const song: Child[] = rows.map(mapRowToChild);
-  return localEnvelope({ artistSongs: { song } });
+  return localEnvelope({
+    artistSongs: { song },
+    nextCursor: undefined as number | undefined,
+  });
 };

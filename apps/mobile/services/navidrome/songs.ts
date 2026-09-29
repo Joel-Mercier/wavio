@@ -124,3 +124,28 @@ export const getSongs = async ({
     },
   };
 };
+
+// One page of an artist's tracks, in album then disc/track order. Filtered on
+// `album_artist_id` — the same set of albums getArtist lists (`artists_id`
+// would also pull in every guest appearance). Paged because a compilation
+// artist can own tens of thousands of tracks: Various Artists on a 100k-track
+// library is a 42 MB response in one call.
+export const getArtistSongs = async (
+  id: string,
+  { cursor = 0, size = 500 }: { cursor?: number; size?: number } = {},
+): Promise<{ artistSongs: { song: Child[] }; nextCursor?: number }> => {
+  const rsp = await navidromeApiInstance.get<NavidromeSong[]>("/song", {
+    params: {
+      album_artist_id: id,
+      _sort: "album",
+      _order: "ASC",
+      _start: cursor,
+      _end: cursor + size,
+    },
+  });
+  const song = asList<NavidromeSong>(rsp.data).map(mapNavidromeSongToChild);
+  return {
+    artistSongs: { song },
+    nextCursor: song.length > 0 ? cursor + song.length : undefined,
+  };
+};

@@ -65,6 +65,21 @@ object BrowseTreeCache {
     }
   }
 
+  fun hasParent(parentId: String): Boolean = nodes.containsKey(parentId)
+
+  /**
+   * Add one parent's children fetched on demand, returning whether they differ
+   * from what was there. Not written to disk: JS carries these parents into
+   * every tree it pushes afterwards, and that push rewrites the snapshot.
+   */
+  fun putChildren(parentId: String, json: String): Boolean {
+    val children = runCatching { parseList(JSONArray(json)) }.getOrNull() ?: return false
+    val previous = nodes
+    if (previous[parentId] == children) return false
+    nodes = previous + (parentId to children)
+    return true
+  }
+
   fun getChildren(parentId: String): List<BrowseNode> {
     val children = nodes[parentId] ?: emptyList()
     // Remember the deepest parent that actually holds playable leaves; that's

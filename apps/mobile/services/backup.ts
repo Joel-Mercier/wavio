@@ -4,7 +4,7 @@ import { File, Paths } from "expo-file-system";
 import Share from "react-native-share";
 import * as z from "zod";
 import { getAuthScope, LOCAL_AUTH_SCOPE } from "@/config/authScope";
-import { storage } from "@/config/storage";
+import { flushPendingScopedWrites, storage } from "@/config/storage";
 import { isSingletonServerType } from "@/services/backend/serverTraits";
 import {
   BACKUP_EXCLUDED_SCOPED_STORE_NAMES,
@@ -46,6 +46,7 @@ const isBackupExcluded = (storeName: string) =>
   );
 
 function collectScopes(): string[] {
+  flushPendingScopedWrites();
   const { servers, users } = useServersBase.getState();
   const serverById = new Map(servers.map((s) => [s.id, s] as const));
   const scopes = new Set<string>();
@@ -123,6 +124,7 @@ function sanitizeGlobalForBackup(
 }
 
 export function buildBackup(): BackupFile {
+  flushPendingScopedWrites();
   const global: Record<string, string> = {};
   for (const key of GLOBAL_KEYS) {
     const value = storage.getString(key);
@@ -233,6 +235,7 @@ export async function restoreBackup(
 ): Promise<RestoreOutcome> {
   const scoped = migrateBackupScopes(backup);
   const scopes = scoped.map((s) => s.scope);
+  flushPendingScopedWrites();
   const allKeys = storage.getAllKeys();
   const keysToClear = new Set<string>(GLOBAL_KEYS);
   for (const key of allKeys) {

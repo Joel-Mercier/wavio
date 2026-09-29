@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import {
   getAlbum,
@@ -97,12 +97,17 @@ export const useArtistAppearances = (
   });
 };
 
-export const useArtistSongs = (id: string) => {
-  return useQuery({
-    queryKey: ["artistSongs", id],
-    queryFn: () => {
-      return getArtistSongs(id);
+// Paged, and never persisted (":infinite" keys are skipped by the query
+// persister): a compilation artist's full list runs to tens of thousands of
+// tracks.
+export const useInfiniteArtistSongs = (id: string) => {
+  return useInfiniteQuery({
+    queryKey: ["artistSongs:infinite", id],
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) => {
+      return getArtistSongs(id, { cursor: pageParam });
     },
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
     enabled: !!id,
   });
 };

@@ -14,6 +14,9 @@ jest.mock("@/config/storage", () => {
     zustandStorage: make(),
     createScopedStorage: () => make(),
     createDynamicScopedStorage: () => make(),
+    createThrottledScopedJSONStorage: () =>
+      jest.requireActual("zustand/middleware").createJSONStorage(() => make()),
+    flushPendingScopedWrites: () => {},
     getAuthScope: () => "scope",
   };
 });
@@ -39,10 +42,12 @@ jest.mock("@/services/network", () => ({
 }));
 
 const mockClear = jest.fn();
-const mockRemoveClient = jest.fn();
+const mockRemovePersistedQueries = jest.fn();
 jest.mock("@/config/queryClient", () => ({
   queryClient: { clear: () => mockClear() },
-  queryPersister: { removeClient: () => mockRemoveClient() },
+}));
+jest.mock("@/config/queryPersister", () => ({
+  removePersistedQueries: () => mockRemovePersistedQueries(),
 }));
 
 jest.mock("@/services/backend/streaming", () => ({
@@ -54,6 +59,10 @@ jest.mock("@/services/offline/downloadService", () => ({
   offlineDownloadService: {
     discardInFlightDownloads: () => mockDiscardInFlight(),
   },
+}));
+
+jest.mock("@/services/offline/artworkCacheService", () => ({
+  artworkCacheService: { commitLanded: () => {} },
 }));
 
 const mockDrainOfflineMutations = jest.fn();
@@ -904,7 +913,7 @@ describe("applyCanonicalIdRemap", () => {
     useOffline.setState({ downloadedTracks: { [OLD_SONG]: track(OLD_SONG) } });
     await applyCanonicalIdRemap();
     expect(mockClear).toHaveBeenCalled();
-    expect(mockRemoveClient).toHaveBeenCalled();
+    expect(mockRemovePersistedQueries).toHaveBeenCalled();
   });
 
   it("reports how many distinct ids changed", async () => {

@@ -1,4 +1,3 @@
-import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import {
   defaultShouldDehydrateQuery,
   MutationCache,
@@ -6,18 +5,13 @@ import {
   QueryCache,
   QueryClient,
 } from "@tanstack/react-query";
-import {
-  QUERY_CACHE_KEY,
-  scopedQueryCacheKey,
-  storage,
-} from "@/config/storage";
 import { hasNetworkServerType } from "@/services/backend/serverTraits";
 import {
   isNetworkNoise,
   type ReportBackend,
   reportError,
 } from "@/services/errorReporting";
-import { currentAuthScope, useAuthBase } from "@/stores/auth";
+import { useAuthBase } from "@/stores/auth";
 
 // Map the active server type to the reporting backend tag. Navidrome and
 // OpenSubsonic both speak Subsonic, so they share the `subsonic` tag.
@@ -105,38 +99,6 @@ export const queryClient = new QueryClient({
   },
 });
 
-// MMKV is synchronous, but the async persister keeps cache reads/writes off the
-// critical render path (createAsyncStoragePersister awaits these). We wrap the
-// synchronous MMKV calls in resolved promises.
-//
-// The scope is resolved at call time (see currentAuthScope): the persisted cache
-// lives under `${scope}:wavio-rq-cache`, mirroring the zustand stores' per-scope
-// namespacing. The persister uses a single logical key; this adapter routes it
-// to the current scope's bucket.
-const mmkvQueryPersisterStorage = {
-  getItem: (key: string): Promise<string | null> =>
-    Promise.resolve(storage.getString(`${currentAuthScope()}:${key}`) ?? null),
-  setItem: (key: string, value: string): Promise<void> => {
-    // A restore is preceded by `queryClient.clear()`, whose cache events reach
-    // the throttled persister *after* the scope has already flipped — writing
-    // the emptied cache into the incoming scope's blob, which restore is about
-    // to read. Nothing worth persisting exists until the restore lands.
-    if (cacheRestoring) return Promise.resolve();
-    storage.set(`${currentAuthScope()}:${key}`, value);
-    return Promise.resolve();
-  },
-  removeItem: (key: string): Promise<void> => {
-    storage.remove(`${currentAuthScope()}:${key}`);
-    return Promise.resolve();
-  },
-};
-
-export const queryPersister = createAsyncStoragePersister({
-  storage: mmkvQueryPersisterStorage,
-  key: QUERY_CACHE_KEY,
-  throttleTime: 1000,
-});
-
 // A lyrics lookup that found nothing. Worth keeping for the session (the fan-out
 // is up to seven requests), but never worth persisting: a miss is only ever a
 // snapshot of one moment — LRCLIB's edge rejecting the request, a block, tags
@@ -148,28 +110,17 @@ function isEmptyLyricsLookup(query: Query): boolean {
   return query.queryKey[0] === "lrclib" && query.state.data == null;
 }
 
-export const persistOptions = {
-  persister: queryPersister,
-  // Discard persisted cache older than 7 days.
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-  dehydrateOptions: {
-    shouldDehydrateQuery: (query: Query) =>
-      defaultShouldDehydrateQuery(query) &&
-      // Infinite-list pages don't restore cleanly; skip them.
-      !String(query.queryKey[0]).includes(":infinite") &&
-      // The manual lyrics picker's candidate list only means anything while its
-      // sheet is open — persisting a result set per track browsed would grow the
-      // cache blob for nothing.
-      query.queryKey[0] !== "lrclib:search" &&
-      !isEmptyLyricsLookup(query),
-  },
-} as const;
-
-// Byte length (UTF-8 approx) of the current scope's persisted cache blob — used
-// by the storage overview in settings.
-export function getPersistedCacheSize(): number {
-  const raw = storage.getString(scopedQueryCacheKey(currentAuthScope()));
-  return raw ? raw.length : 0;
+export function shouldPersistQuery(query: Query): boolean {
+  return (
+    defaultShouldDehydrateQuery(query) &&
+    // Infinite-list pages don't restore cleanly; skip them.
+    !String(query.queryKey[0]).includes(":infinite") &&
+    // The manual lyrics picker's candidate list only means anything while its
+    // sheet is open — persisting a result set per track browsed would grow the
+    // cache for nothing.
+    query.queryKey[0] !== "lrclib:search" &&
+    !isEmptyLyricsLookup(query)
+  );
 }
 
 // Tracks whether the persisted cache is currently being restored (initial load

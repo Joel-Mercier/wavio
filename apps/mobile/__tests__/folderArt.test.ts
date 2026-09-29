@@ -15,7 +15,7 @@ const mockDb = {
   getFirstAsync: jest.fn(),
   runAsync: (...args: unknown[]) => {
     mockRun(...args);
-    return Promise.resolve();
+    return Promise.resolve({ changes: 0, lastInsertRowId: 0 });
   },
   withTransactionAsync: (fn: () => Promise<void>) => fn(),
 };
@@ -375,7 +375,7 @@ describe("scanLibrary — sidecar artwork", () => {
     // full rescan before a new cover showed up.
     mockDb.getAllAsync.mockImplementation((sql: string) =>
       Promise.resolve(
-        sql.includes("SELECT id, uri, mtime, size, dir")
+        sql.includes("SELECT id, uri, fts_rowid, mtime, size, dir")
           ? [
               {
                 id: "t1",

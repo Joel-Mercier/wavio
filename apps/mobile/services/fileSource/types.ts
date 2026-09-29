@@ -51,8 +51,9 @@ export interface FileSource {
    * Directories listed in parallel during a scan's listing phase. Separate from
    * `extractConcurrency` because the two are bounded by different things: a
    * listing is one round trip with a small answer, an extraction is a file read
-   * plus the native reader's own ranged reads. The device source lists
-   * *synchronously*, so for it anything above 1 only interleaves blocking calls.
+   * plus the native reader's own ranged reads. The device source lists a SAF
+   * tree natively off the JS thread, but falls back to a *synchronous* listing
+   * elsewhere, where anything above 1 only interleaves blocking calls.
    */
   readonly listConcurrency: number;
   /** Canonical form for a user-configured root (e.g. adds the file:// scheme). */

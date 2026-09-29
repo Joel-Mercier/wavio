@@ -1,5 +1,13 @@
 import { Directory, File, Paths } from "expo-file-system";
+import { deleteAsync } from "expo-file-system/legacy";
+import { flushPendingScopedWrites } from "@/config/storage";
 import { offlineFileInfo } from "@/services/backend/streaming";
+import {
+  type BackgroundTimer,
+  backgroundSleep,
+  clearBackgroundTimer,
+  setBackgroundTimeout,
+} from "@/services/backgroundTimer";
 import { isTlsTrustFailure, reportError } from "@/services/errorReporting";
 import {
   getConnectionType,
@@ -30,6 +38,7 @@ import useOffline, {
   type DownloadProgress,
   type OfflineSource,
   type OfflineTrack,
+  type QueuedTrack,
 } from "@/stores/offline";
 import { logError } from "@/utils/log";
 import type { Child } from "../openSubsonic/types";
@@ -41,10 +50,32 @@ import type { Child } from "../openSubsonic/types";
 // render while the work drains.
 export type DeleteProgress = (done: number, total: number) => void;
 export const DELETE_CHUNK = 25;
-export const yieldToEventLoop = () =>
-  new Promise<void>((resolve) => setTimeout(resolve, 0));
+export const yieldToEventLoop = () => backgroundSleep(0);
+// Removals drop the tracks from the store and persist that before deleting any
+// file. The store is only written to disk every couple of seconds, so deleting
+// first let a kill in that window keep entries whose files were gone: tracks
+// the UI called downloaded that failed to play, even online. The other order
+// can only strand a file with no entry, which "clear all" reclaims.
+const REMOVE_CHUNK = 100;
+
+// The synchronous File API does its I/O on the JS thread, which was most of a
+// large removal's cost (issue #205); the legacy call runs on a native thread.
+// Falls back to the sync path for anything the legacy module can't parse.
+async function deleteDownloadedFile(path: string): Promise<void> {
+  try {
+    await deleteAsync(path, { idempotent: true });
+  } catch {
+    const file = new File(path);
+    if (file.exists) file.delete();
+  }
+}
 
 const MAX_CONCURRENT_DOWNLOADS = 3;
+
+// Finished downloads are committed to the store together at most this often:
+// each write copies the whole downloaded map, so one write per track made a
+// large drain JS-bound (issue #205).
+const LANDED_COMMIT_MS = 250;
 
 // A track is retried this many times before being given up on. Connectivity
 // state can't classify a failure on its own: NetInfo holds an OFFLINE_GRACE_MS
@@ -163,6 +194,18 @@ function downloadFailureKind(error: unknown): DownloadFailureKind {
 export class OfflineDownloadService {
   private static instance: OfflineDownloadService;
   private activeIds: Set<string> = new Set();
+  // Downloads on disk but not yet committed (see LANDED_COMMIT_MS). They count
+  // as in flight until then, so the drain never picks them up again.
+  private landed: Map<string, { track: OfflineTrack; scope: string }> =
+    new Map();
+  private landedTimer: BackgroundTimer | null = null;
+  // Tracks already dropped from the store whose files are still being deleted.
+  // They count as in flight, so a save racing the removal can't download a
+  // file the removal then deletes.
+  private deleting: Set<string> = new Set();
+  // Set while clearAllDownloads deletes files the store already forgot: a
+  // download started meanwhile would land in a directory about to be removed.
+  private clearing = false;
   private resolvers: Map<string, Resolvers> = new Map();
   // Bumped by clearAllDownloads so in-flight downloads from before the clear
   // discard their result instead of re-registering into the wiped store.
@@ -171,12 +214,14 @@ export class OfflineDownloadService {
   // failures instead of being dropped on the first one. Cleared on success.
   private attempts: Map<string, number> = new Map();
   private consecutiveFailures = 0;
-  private retryTimer: ReturnType<typeof setTimeout> | null = null;
+  private retryTimer: BackgroundTimer | null = null;
   // Set when a download failed for lack of storage; the queue stays parked
   // until then instead of failing every remaining track against a full disk.
   private storageFullUntil = 0;
   // Same, for a server certificate the device won't trust.
   private tlsBlockedUntil = 0;
+  private removingCollections: Set<string> = new Set();
+  private removingListeners: Set<() => void> = new Set();
 
   private constructor() {
     subscribeConnectionType((type) => {
@@ -196,7 +241,7 @@ export class OfflineDownloadService {
   // sized for an unknown fault.
   private resumeAfterFailures(): void {
     if (this.retryTimer) {
-      clearTimeout(this.retryTimer);
+      clearBackgroundTimer(this.retryTimer);
       this.retryTimer = null;
     }
     this.consecutiveFailures = 0;
@@ -214,7 +259,7 @@ export class OfflineDownloadService {
   private scheduleParkRetry(): void {
     if (this.retryTimer) return;
     const delay = Math.max(0, this.parkedUntil() - Date.now());
-    this.retryTimer = setTimeout(() => {
+    this.retryTimer = setBackgroundTimeout(() => {
       this.retryTimer = null;
       this.storageFullUntil = 0;
       this.tlsBlockedUntil = 0;
@@ -232,7 +277,7 @@ export class OfflineDownloadService {
       QUEUE_RETRY_BACKOFF_STEPS_MS.length - 1,
     );
     const delay = QUEUE_RETRY_BACKOFF_STEPS_MS[Math.max(0, step)];
-    this.retryTimer = setTimeout(() => {
+    this.retryTimer = setBackgroundTimeout(() => {
       this.retryTimer = null;
       this.processQueue();
     }, delay);
@@ -249,98 +294,104 @@ export class OfflineDownloadService {
     track: Child,
     opts?: { source?: OfflineSource },
   ): Promise<void> {
-    const offlineStore = useOffline.getState();
-    const source = opts?.source ?? "user";
-
-    // Ahead of every early return below: a track already on disk from an
-    // earlier save may still be missing its cover, and a saved track without
-    // one is a fallback icon in the player and on the lock screen offline.
-    cacheArtworkForTracks([track]);
-
-    if (offlineStore.isTrackDownloaded(track.id)) {
-      // An explicit save of a track the library sync already cached promotes it
-      // to user-owned so it survives disabling extended offline mode.
-      const downloaded = offlineStore.getDownloadedTrack(track.id);
-      if (source === "user" && downloaded?.source === "auto") {
-        offlineStore.addDownloadedTrack({ ...downloaded, source: "user" });
-      }
-      return;
-    }
-
-    const existing = this.resolvers.get(track.id);
-    if (existing) {
-      if (source === "user") {
-        offlineStore.setQueuedTrackSource(track.id, "user");
-      }
-      return new Promise<void>((resolve, reject) => {
-        const original = this.resolvers.get(track.id);
-        if (!original) {
-          resolve();
-          return;
-        }
-        this.resolvers.set(track.id, {
-          resolve: () => {
-            original.resolve();
-            resolve();
-          },
-          reject: (err) => {
-            original.reject(err);
-            reject(err);
-          },
-        });
-      });
-    }
-
-    offlineStore.addToDownloadQueue({ ...track, offlineSource: source });
-    offlineStore.setDownloadProgress(track.id, {
-      trackId: track.id,
-      status: "pending",
-      progress: 0,
-    });
-
-    const promise = new Promise<void>((resolve, reject) => {
-      this.resolvers.set(track.id, { resolve, reject });
-    });
-
-    this.processQueue();
-    return promise;
+    return this.downloadTracks([track], opts);
   }
 
-  async downloadTracks(tracks: Child[]): Promise<void> {
-    // Batched ahead of the per-track calls so the alias table is written once
-    // rather than once per song; the per-track calls then find nothing new.
+  // Everything here is O(1) store writes however many tracks come in: each
+  // write re-serializes the persisted store, and doing two per track made a
+  // 5000-track save freeze the JS thread for minutes before the first byte
+  // (issue #205). The returned promise resolves once every track has landed and
+  // rejects if one of them fails.
+  async downloadTracks(
+    tracks: Child[],
+    opts?: { source?: OfflineSource },
+  ): Promise<void> {
+    const source = opts?.source ?? "user";
+    // Ahead of the already-downloaded short-circuit: a track already on disk
+    // from an earlier save may still be missing its cover, and a saved track
+    // without one is a fallback icon in the player and on the lock screen
+    // offline.
     cacheArtworkForTracks(tracks);
-    await Promise.all(tracks.map((track) => this.downloadTrack(track)));
+    const queued = this.stageTracks(tracks, source);
+    const promises = queued.map((track) => this.attachResolver(track.id));
+    this.processQueue();
+    await Promise.all(promises);
   }
 
   async downloadAllStarredTracks(starredTracks: Child[]): Promise<void> {
     await this.downloadTracks(starredTracks);
   }
 
-  // Bulk enqueue for the library sync: one store write for the queue and one
-  // for progress instead of two per track — at a 200-song page each write
-  // re-serializes the whole persisted store. Fire-and-forget (no per-track
+  // Bulk enqueue for the library sync. Fire-and-forget (no per-track
   // resolvers); failures land in downloadProgress like any other download.
   enqueueTracks(tracks: Child[], source: OfflineSource): void {
-    const offlineStore = useOffline.getState();
-    const queuedIds = new Set(offlineStore.downloadQueue.map((t) => t.id));
-    const toQueue = tracks.filter(
-      (track) =>
-        !offlineStore.isTrackDownloaded(track.id) && !queuedIds.has(track.id),
-    );
-    if (toQueue.length > 0) {
-      offlineStore.addManyToDownloadQueue(
-        toQueue.map((track) => ({ ...track, offlineSource: source })),
-      );
-      offlineStore.setManyDownloadProgress(
-        toQueue.map((track) => ({
-          trackId: track.id,
-          status: "pending" as const,
-          progress: 0,
-        })),
-      );
-    }
+    this.stageTracks(tracks, source);
     this.processQueue();
+  }
+
+  // Queues whatever isn't on disk yet and returns the tracks now waiting in the
+  // queue, in one write each for the queue, the progress map and any source
+  // promotion. An explicit save of something the library sync fetched or
+  // queued promotes it to user-owned so it survives disabling extended offline
+  // mode.
+  private stageTracks(tracks: Child[], source: OfflineSource): Child[] {
+    const offlineStore = useOffline.getState();
+    const queuedById = new Map(
+      offlineStore.downloadQueue.map((t) => [t.id, t] as const),
+    );
+    const seen = new Set<string>();
+    const promotedDownloads: OfflineTrack[] = [];
+    const promotedQueued: string[] = [];
+    const additions: QueuedTrack[] = [];
+    const pending: DownloadProgress[] = [];
+    const queued: Child[] = [];
+
+    for (const track of tracks) {
+      if (seen.has(track.id)) continue;
+      seen.add(track.id);
+      const downloaded = offlineStore.downloadedTracks[track.id];
+      if (downloaded) {
+        if (source === "user" && downloaded.source === "auto") {
+          promotedDownloads.push({ ...downloaded, source: "user" });
+        }
+        continue;
+      }
+      queued.push(track);
+      const inQueue = queuedById.get(track.id);
+      if (inQueue) {
+        if (source === "user" && inQueue.offlineSource === "auto") {
+          promotedQueued.push(track.id);
+        }
+        if (this.isInFlight(track.id) || this.resolvers.has(track.id)) {
+          continue;
+        }
+      } else {
+        additions.push({ ...track, offlineSource: source });
+      }
+      pending.push({ trackId: track.id, status: "pending", progress: 0 });
+    }
+
+    offlineStore.addDownloadedTracks(promotedDownloads);
+    offlineStore.setQueuedTracksSource(promotedQueued, "user");
+    offlineStore.addManyToDownloadQueue(additions);
+    offlineStore.setManyDownloadProgress(pending);
+    return queued;
+  }
+
+  private attachResolver(trackId: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      const original = this.resolvers.get(trackId);
+      this.resolvers.set(trackId, {
+        resolve: () => {
+          original?.resolve();
+          resolve();
+        },
+        reject: (err) => {
+          original?.reject(err);
+          reject(err);
+        },
+      });
+    });
   }
 
   // Drops queued auto downloads — all of them when extended offline mode is
@@ -354,7 +405,7 @@ export class OfflineDownloadService {
       .filter(
         (queued) =>
           queued.offlineSource === "auto" &&
-          !this.activeIds.has(queued.id) &&
+          !this.isInFlight(queued.id) &&
           (!onlyIds || onlyIds.has(queued.id)),
       )
       .map((queued) => queued.id);
@@ -383,16 +434,17 @@ export class OfflineDownloadService {
     this.storageFullUntil = 0;
     this.tlsBlockedUntil = 0;
     if (this.retryTimer) {
-      clearTimeout(this.retryTimer);
+      clearBackgroundTimer(this.retryTimer);
       this.retryTimer = null;
     }
 
+    const sized: OfflineTrack[] = [];
     for (const track of offlineStore.getDownloadedTracksList()) {
       if (track.size > 0) continue;
       try {
         const file = new File(track.path);
         if (file.exists && file.size > 0) {
-          offlineStore.addDownloadedTrack({ ...track, size: file.size });
+          sized.push({ ...track, size: file.size });
         }
       } catch (error) {
         logError(
@@ -401,19 +453,26 @@ export class OfflineDownloadService {
         );
       }
     }
+    offlineStore.addDownloadedTracks(sized);
 
     // Any progress entry stuck in "downloading" or "pending" from a killed
     // session is stale: nothing is actually downloading it. Mark as failed
     // unless the track is still in the queue (in which case we'll resume it).
+    // Entries for tracks already on disk are dropped too: earlier builds kept a
+    // "completed" entry per download, which grew the store by one per track.
     const queuedIds = new Set(offlineStore.downloadQueue.map((t) => t.id));
+    const interrupted: DownloadProgress[] = [];
+    const settled: string[] = [];
     for (const [id, progress] of Object.entries(
       offlineStore.downloadProgress,
     )) {
-      if (
+      if (id in offlineStore.downloadedTracks && !queuedIds.has(id)) {
+        settled.push(id);
+      } else if (
         (progress.status === "downloading" || progress.status === "pending") &&
         !queuedIds.has(id)
       ) {
-        offlineStore.setDownloadProgress(id, {
+        interrupted.push({
           trackId: id,
           status: "failed",
           progress: 0,
@@ -421,6 +480,8 @@ export class OfflineDownloadService {
         });
       }
     }
+    offlineStore.setManyDownloadProgress(interrupted);
+    offlineStore.removeManyDownloadProgress(settled);
 
     this.processQueue();
   }
@@ -440,6 +501,9 @@ export class OfflineDownloadService {
     // in seconds, and executeDownload's permanent-failure branch would dequeue
     // the lot. subscribeEffectiveOnline above restarts it on recovery.
     if (!getIsEffectivelyOnline()) return;
+
+    // Resumed by clearAllDownloads once its deletes are done.
+    if (this.clearing) return;
 
     // The circuit breaker owns the next attempt — it must not be stepped around
     // by a drain kicked from executeDownload's finally.
@@ -461,7 +525,7 @@ export class OfflineDownloadService {
 
     while (this.activeIds.size < MAX_CONCURRENT_DOWNLOADS) {
       const next = offlineStore.downloadQueue.find(
-        (t) => !this.activeIds.has(t.id),
+        (t) => !this.isInFlight(t.id),
       );
       if (!next) return;
       this.activeIds.add(next.id);
@@ -469,33 +533,75 @@ export class OfflineDownloadService {
     }
   }
 
+  private isInFlight(trackId: string): boolean {
+    return (
+      this.activeIds.has(trackId) ||
+      this.landed.has(trackId) ||
+      this.deleting.has(trackId)
+    );
+  }
+
+  private land(track: OfflineTrack): void {
+    this.landed.set(track.id, { track, scope: currentAuthScope() });
+    this.landedTimer ??= setBackgroundTimeout(
+      () => this.commitLanded(),
+      LANDED_COMMIT_MS,
+    );
+  }
+
+  // Also called ahead of anything that deletes downloads, so a track that just
+  // landed is on the store's books before the removal looks for it. A batch
+  // that straddled a server switch keeps only the active scope's tracks; the
+  // others are still queued in their own scope and download again there.
+  commitLanded(): void {
+    if (this.landedTimer) {
+      clearBackgroundTimer(this.landedTimer);
+      this.landedTimer = null;
+    }
+    if (this.landed.size === 0) return;
+    const scope = currentAuthScope();
+    const batch = [...this.landed.values()];
+    this.landed.clear();
+    useOffline
+      .getState()
+      .completeDownloads(
+        batch.filter((entry) => entry.scope === scope).map((e) => e.track),
+      );
+    for (const entry of batch) {
+      const resolvers = this.resolvers.get(entry.track.id);
+      this.resolvers.delete(entry.track.id);
+      if (entry.scope === scope) resolvers?.resolve();
+      else resolvers?.reject(new DownloadCancelledError("Server switched"));
+    }
+  }
+
   // Marks every queued item the drain isn't currently working on as paused, so
   // the UI reflects "waiting on something" rather than a stalled download.
   private pauseQueued(): void {
     const offlineStore = useOffline.getState();
+    const paused: DownloadProgress[] = [];
     for (const track of offlineStore.downloadQueue) {
-      if (this.activeIds.has(track.id)) continue;
+      if (this.isInFlight(track.id)) continue;
       const progress = offlineStore.downloadProgress[track.id];
       if (progress?.status !== "paused") {
-        offlineStore.setDownloadProgress(track.id, {
+        paused.push({
           trackId: track.id,
           status: "paused",
           progress: progress?.progress ?? 0,
         });
       }
     }
+    offlineStore.setManyDownloadProgress(paused);
   }
 
   private async executeDownload(track: Child): Promise<void> {
     const offlineStore = useOffline.getState();
-    const resolvers = this.resolvers.get(track.id);
     const generation = this.generation;
     const storageParkAtStart = this.storageFullUntil;
     const tlsParkAtStart = this.tlsBlockedUntil;
 
     try {
-      await this.writeTrackToDisk(track, generation);
-      offlineStore.removeFromDownloadQueue(track.id);
+      this.land(await this.writeTrackToDisk(track, generation));
       this.attempts.delete(track.id);
       this.consecutiveFailures = 0;
       // A file landed, so there is space again — unless one of the downloads
@@ -511,7 +617,6 @@ export class OfflineDownloadService {
       if (this.tlsBlockedUntil === tlsParkAtStart) {
         this.tlsBlockedUntil = 0;
       }
-      resolvers?.resolve();
     } catch (error) {
       const attempts = (this.attempts.get(track.id) ?? 0) + 1;
       this.attempts.set(track.id, attempts);
@@ -547,20 +652,21 @@ export class OfflineDownloadService {
         // reflect that it's waiting, and don't report it. Dequeuing here is what
         // let a 2.5s connectivity blip burn down the whole queue: every failure
         // re-enters processQueue, and with no network they fail instantly.
-        offlineStore.setDownloadProgress(track.id, {
-          trackId: track.id,
-          status: "pending",
-          progress: 0,
-        });
+        offlineStore.failDownload(
+          { trackId: track.id, status: "pending", progress: 0 },
+          false,
+        );
       } else if (generation === this.generation) {
-        offlineStore.removeFromDownloadQueue(track.id);
         this.attempts.delete(track.id);
-        offlineStore.setDownloadProgress(track.id, {
-          trackId: track.id,
-          status: "failed",
-          progress: 0,
-          error: error instanceof Error ? error.message : "Unknown error",
-        });
+        offlineStore.failDownload(
+          {
+            trackId: track.id,
+            status: "failed",
+            progress: 0,
+            error: error instanceof Error ? error.message : "Unknown error",
+          },
+          true,
+        );
         // `endpoint` is the failure cause, not a URL: it's what reportError
         // fingerprints on, so a bad stream URL, a missing offline directory and
         // a denied permission each get their own Issue instead of sharing one
@@ -579,10 +685,12 @@ export class OfflineDownloadService {
           extra: { trackId: track.id, attempts, kind },
         });
       }
-      resolvers?.reject(error);
+      // Read at settlement, not at start: a save that joined while this was in
+      // flight chained its resolver on after the download began.
+      this.resolvers.get(track.id)?.reject(error);
+      this.resolvers.delete(track.id);
     } finally {
       this.activeIds.delete(track.id);
-      this.resolvers.delete(track.id);
       if (this.consecutiveFailures >= FAILURE_CIRCUIT_BREAK) {
         this.scheduleQueueRetry();
       } else {
@@ -594,14 +702,19 @@ export class OfflineDownloadService {
   private async writeTrackToDisk(
     track: Child,
     generation: number,
-  ): Promise<void> {
+  ): Promise<OfflineTrack> {
     const offlineStore = useOffline.getState();
 
-    offlineStore.setDownloadProgress(track.id, {
-      trackId: track.id,
-      status: "downloading",
-      progress: 0,
-    });
+    // Every reader treats "pending" like "downloading", so the write is only
+    // owed when the entry says something else (failed, paused, missing).
+    const status = offlineStore.downloadProgress[track.id]?.status;
+    if (status !== "pending" && status !== "downloading") {
+      offlineStore.setDownloadProgress(track.id, {
+        trackId: track.id,
+        status: "downloading",
+        progress: 0,
+      });
+    }
 
     const { url: authUrl, username } = useAuthBase.getState();
     if (!authUrl || !username) {
@@ -690,10 +803,10 @@ export class OfflineDownloadService {
     }
 
     // Re-read the queue entry: a user save can promote an in-flight auto
-    // download (setQueuedTrackSource), which replaces the queued object this
+    // download (setQueuedTracksSource), which replaces the queued object this
     // method holds a stale reference to.
     const source =
-      offlineStore.downloadQueue.find((t) => t.id === track.id)
+      useOffline.getState().downloadQueue.find((t) => t.id === track.id)
         ?.offlineSource ?? "user";
 
     // Extended offline mode was disabled while this auto download was in
@@ -748,11 +861,12 @@ export class OfflineDownloadService {
       downloadResult = staged;
     }
 
-    const offlineTrack: OfflineTrack = {
+    return {
       id: track.id,
       title: track.title,
       artist: track.artist,
       album: track.album,
+      albumId: track.albumId,
       duration: track.duration || 0,
       coverArt: track.coverArt,
       path: downloadResult.uri,
@@ -769,13 +883,6 @@ export class OfflineDownloadService {
       sourceBitRate: track.bitRate,
       fileSuffix: suffix,
     };
-
-    offlineStore.addDownloadedTrack(offlineTrack);
-    offlineStore.setDownloadProgress(track.id, {
-      trackId: track.id,
-      status: "completed",
-      progress: 100,
-    });
   }
 
   removeDownloadedTrack(trackId: string): void {
@@ -783,17 +890,18 @@ export class OfflineDownloadService {
     const track = offlineStore.getDownloadedTrack(trackId);
     if (!track) return;
 
+    offlineStore.removeManyDownloadedTracks([trackId]);
+    flushPendingScopedWrites();
     try {
       const file = new File(track.path);
       if (file.exists) {
         file.delete();
       }
-      offlineStore.removeDownloadedTrack(trackId);
-      offlineStore.removeDownloadProgress(trackId);
       // Fire-and-forget: an orphaned empty folder is cosmetic, and failing the
       // removal over one would leave the store and disk disagreeing.
       void pruneEmptyAlbumFolders(track).catch(() => {});
     } catch (error) {
+      useOffline.getState().addDownloadedTracks([track]);
       logError(`Error removing track ${trackId}:`, error);
       throw error;
     }
@@ -804,30 +912,115 @@ export class OfflineDownloadService {
   // delete songs shared with another. Used both when a collection goes away
   // entirely and when its membership shrinks (a smart playlist re-evaluated
   // server-side, an edited playlist).
-  removeTracksNotReferencedElsewhere(
+  async removeTracksNotReferencedElsewhere(
     collectionId: string,
     trackIds: string[],
-  ): void {
+  ): Promise<void> {
+    const scope = currentAuthScope();
+    const tracks = this.forgetTracksOnlyIn(collectionId, trackIds);
+    flushPendingScopedWrites();
+    await this.deleteTrackFiles(tracks, scope);
+  }
+
+  async removeDownloadedTracks(
+    trackIds: string[],
+    onProgress?: DeleteProgress,
+  ): Promise<void> {
+    const scope = currentAuthScope();
+    const tracks = this.forgetDownloadedTracks(trackIds);
+    flushPendingScopedWrites();
+    await this.deleteTrackFiles(tracks, scope, onProgress);
+  }
+
+  private forgetTracksOnlyIn(
+    collectionId: string,
+    trackIds: string[],
+  ): OfflineTrack[] {
     const referencedElsewhere = trackIdsReferencedByCollections(
       Object.values(useOffline.getState().downloadedCollections).filter(
         (collection) => collection.id !== collectionId,
       ),
     );
+    const orphaned = trackIds.filter((id) => !referencedElsewhere.has(id));
+    // Before the deletes, so the queue stops fetching what is being removed.
+    this.cancelQueuedDownloads(orphaned);
+    return this.forgetDownloadedTracks(orphaned);
+  }
 
-    const orphaned: string[] = [];
-    for (const trackId of trackIds) {
-      if (referencedElsewhere.has(trackId)) continue;
-      orphaned.push(trackId);
-      try {
-        this.removeDownloadedTrack(trackId);
-      } catch (error) {
-        logError(
-          `Download Manager: Error removing track ${trackId} for collection ${collectionId}:`,
-          error,
+  private forgetDownloadedTracks(trackIds: string[]): OfflineTrack[] {
+    this.commitLanded();
+    const { downloadedTracks } = useOffline.getState();
+    const tracks = trackIds
+      .map((trackId) => downloadedTracks[trackId])
+      .filter((track): track is OfflineTrack => !!track);
+    useOffline.getState().removeManyDownloadedTracks(tracks.map((t) => t.id));
+    for (const track of tracks) this.deleting.add(track.id);
+    return tracks;
+  }
+
+  // A file that couldn't be deleted is still on disk, so its entry comes back —
+  // unless the scope changed meanwhile, where it belongs to a store that is no
+  // longer loaded.
+  private async deleteTrackFiles(
+    tracks: OfflineTrack[],
+    scope: string,
+    onProgress?: DeleteProgress,
+  ): Promise<void> {
+    const external = isExternalDownloadLocation();
+    const removedTracks: OfflineTrack[] = [];
+    const total = tracks.length;
+    onProgress?.(0, total);
+    try {
+      for (let start = 0; start < total; start += REMOVE_CHUNK) {
+        const slice = tracks.slice(start, start + REMOVE_CHUNK);
+        const outcomes = await Promise.allSettled(
+          slice.map((track) => deleteDownloadedFile(track.path)),
         );
+        const kept: OfflineTrack[] = [];
+        outcomes.forEach((outcome, i) => {
+          const track = slice[i];
+          if (outcome.status === "rejected") {
+            logError(`Error removing track ${track.id}:`, outcome.reason);
+            kept.push(track);
+            return;
+          }
+          if (external) removedTracks.push(track);
+        });
+        if (kept.length > 0 && currentAuthScope() === scope) {
+          useOffline.getState().addDownloadedTracks(kept);
+        }
+        onProgress?.(Math.min(start + REMOVE_CHUNK, total), total);
+        await yieldToEventLoop();
+      }
+    } finally {
+      for (const track of tracks) this.deleting.delete(track.id);
+      const removed = new Set(tracks.map((track) => track.id));
+      if (useOffline.getState().downloadQueue.some((t) => removed.has(t.id))) {
+        this.processQueue();
       }
     }
-    this.cancelQueuedDownloads(orphaned);
+    await this.pruneAlbumFolders(removedTracks, scope);
+  }
+
+  // One pass per album, not per track: each pass costs two ContentResolver
+  // listings against a tree that may be the user's whole music library, and
+  // `pruneEmptyAlbumFolders` never suspends, so the loop has to yield by hand.
+  private async pruneAlbumFolders(
+    tracks: OfflineTrack[],
+    scope: string,
+  ): Promise<void> {
+    const pruned = new Set<string>();
+    for (const track of tracks) {
+      const album = albumSegments(track).join("/");
+      if (pruned.has(album)) continue;
+      pruned.add(album);
+      try {
+        await pruneEmptyAlbumFolders(track, scope);
+      } catch {}
+      if (pruned.size % DELETE_CHUNK === 0) {
+        await yieldToEventLoop();
+      }
+    }
   }
 
   // Deleting the files isn't enough when the collection shrinks mid-download:
@@ -841,7 +1034,7 @@ export class OfflineDownloadService {
     const offlineStore = useOffline.getState();
     const queued = new Set(offlineStore.downloadQueue.map((t) => t.id));
     const cancellable = trackIds.filter(
-      (trackId) => queued.has(trackId) && !this.activeIds.has(trackId),
+      (trackId) => queued.has(trackId) && !this.isInFlight(trackId),
     );
     if (cancellable.length === 0) return;
 
@@ -859,21 +1052,55 @@ export class OfflineDownloadService {
   // Removes a saved collection (playlist/album) and its tracks, but keeps any
   // track still referenced by another saved collection so removing one playlist
   // doesn't delete songs shared with another.
-  removeCollection(collectionId: string, trackIds: string[]): void {
-    this.removeTracksNotReferencedElsewhere(collectionId, trackIds);
+  //
+  // The collection leaves the store together with its tracks, persisted before
+  // any file is deleted, so a kill mid-removal can't strand tracks that no
+  // collection owns (see REMOVE_CHUNK). `isRemovingCollection` holds while the
+  // files go, so the UI can show it and refuse a re-save racing the deletes.
+  async removeCollection(
+    collectionId: string,
+    trackIds: string[],
+  ): Promise<void> {
+    if (this.removingCollections.has(collectionId)) return;
+    this.setRemovingCollection(collectionId, true);
+    try {
+      const scope = currentAuthScope();
+      const tracks = this.forgetTracksOnlyIn(collectionId, trackIds);
+      useOffline.getState().removeDownloadedCollection(collectionId);
+      flushPendingScopedWrites();
+      await this.deleteTrackFiles(tracks, scope);
+      // Covers the removed collection was the last reference to go with it.
+      // Deliberately not done per single-track removal: the prune walks the
+      // whole cache against every collection, so the collection-level and
+      // extended-offline-disable prunes are where it earns its cost.
+      artworkCacheService.pruneOrphaned();
+    } finally {
+      this.setRemovingCollection(collectionId, false);
+    }
+  }
 
-    useOffline.getState().removeDownloadedCollection(collectionId);
-    // Covers the removed collection was the last reference to go with it.
-    // Deliberately not done per single-track removal: the prune walks the whole
-    // cache against every collection, so the collection-level and
-    // extended-offline-disable prunes are where it earns its cost.
-    artworkCacheService.pruneOrphaned();
+  isRemovingCollection(collectionId: string): boolean {
+    return this.removingCollections.has(collectionId);
+  }
+
+  subscribeRemovingCollections = (listener: () => void): (() => void) => {
+    this.removingListeners.add(listener);
+    return () => {
+      this.removingListeners.delete(listener);
+    };
+  };
+
+  private setRemovingCollection(collectionId: string, removing: boolean) {
+    if (removing) this.removingCollections.add(collectionId);
+    else this.removingCollections.delete(collectionId);
+    for (const listener of this.removingListeners) listener();
   }
 
   // Clears downloads for the currently active server only. The offline store
   // is scoped per (server, user), so this only touches the current scope's
   // state — but we also need to wipe the per-scope file directory.
   async clearAllDownloads(onProgress?: DeleteProgress): Promise<void> {
+    this.commitLanded();
     const offlineStore = useOffline.getState();
     const tracks = offlineStore.getDownloadedTracksList();
     const { serverId, username } = useAuthBase.getState();
@@ -883,7 +1110,28 @@ export class OfflineDownloadService {
     const scope = serverId && username ? currentAuthScope() : null;
     const external = isExternalDownloadLocation();
 
+    this.clearing = true;
     try {
+      // Everything is forgotten, and that persisted, before any file goes (see
+      // REMOVE_CHUNK): a kill mid-clear can then only strand files, which the
+      // next clear reclaims, never keep entries whose files are gone.
+      artworkCacheService.reset();
+      this.generation++;
+      this.activeIds.clear();
+      this.dropLanded();
+      this.attempts.clear();
+      this.consecutiveFailures = 0;
+      if (this.retryTimer) {
+        clearBackgroundTimer(this.retryTimer);
+        this.retryTimer = null;
+      }
+      for (const { reject } of this.resolvers.values()) {
+        reject(new Error("Downloads cleared"));
+      }
+      this.resolvers.clear();
+      offlineStore.clearAllDownloads();
+      flushPendingScopedWrites();
+
       const total = tracks.length;
       onProgress?.(0, total);
       let done = 0;
@@ -914,58 +1162,30 @@ export class OfflineDownloadService {
       // emptied.
       if (external) {
         // Cached covers are app-private wherever the tracks went, and the store
-        // wipe below drops the index that makes them reachable — skipping them
+        // wipe above dropped the index that makes them reachable — skipping them
         // here would strand the bytes with nothing left able to name them.
         if (scope) {
           const artworkDir = internalArtworkDirectory(scope);
           if (artworkDir.exists) artworkDir.delete();
         }
-        // One pass per album, not per track: each pass costs two ContentResolver
-        // listings against a tree that may be the user's whole music library,
-        // and `pruneEmptyAlbumFolders` never suspends, so the loop has to yield
-        // by hand or a large library clears with the UI frozen.
-        //
         // Needs the scope for the same reason the artwork sweep above does: it
         // names the branch of the picked folder this session owns, and without
         // one there is no branch we may delete from.
-        const pruned = new Set<string>();
-        for (const track of tracks) {
-          if (!scope) break;
-          const album = albumSegments(track).join("/");
-          if (pruned.has(album)) continue;
-          pruned.add(album);
-          try {
-            await pruneEmptyAlbumFolders(track, scope);
-          } catch {}
-          if (pruned.size % DELETE_CHUNK === 0) {
-            await yieldToEventLoop();
-          }
-        }
+        if (scope) await this.pruneAlbumFolders(tracks, scope);
       } else if (scope) {
         const scopedDir = internalScopedDirectory(scope);
         if (scopedDir.exists) scopedDir.delete();
       }
 
-      // The artwork directory and the cache index are both gone by now, so any
-      // cover still in flight would re-register an entry pointing at a file
-      // that no longer has a home.
+      // A cover fetched while the files went would re-register an entry
+      // pointing at a directory that no longer exists.
       artworkCacheService.reset();
-      this.generation++;
-      this.activeIds.clear();
-      this.attempts.clear();
-      this.consecutiveFailures = 0;
-      if (this.retryTimer) {
-        clearTimeout(this.retryTimer);
-        this.retryTimer = null;
-      }
-      for (const { reject } of this.resolvers.values()) {
-        reject(new Error("Downloads cleared"));
-      }
-      this.resolvers.clear();
-      offlineStore.clearAllDownloads();
     } catch (error) {
       logError("Download Manager: Error clearing downloads:", error);
       throw error;
+    } finally {
+      this.clearing = false;
+      this.processQueue();
     }
   }
 
@@ -975,9 +1195,18 @@ export class OfflineDownloadService {
   // an orphan entry under an id no collection references. The queue entries
   // themselves are left alone, so the drain retries them once remapped.
   discardInFlightDownloads(): void {
+    this.dropLanded();
     if (this.activeIds.size === 0) return;
     this.generation++;
     this.attempts.clear();
+  }
+
+  private dropLanded(): void {
+    if (this.landedTimer) {
+      clearBackgroundTimer(this.landedTimer);
+      this.landedTimer = null;
+    }
+    this.landed.clear();
   }
 
   getDownloadProgress(trackId: string): DownloadProgress | null {

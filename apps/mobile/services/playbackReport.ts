@@ -2,6 +2,10 @@ import {
   type PlaybackReportState,
   reportPlayback,
 } from "@/services/backend/mediaAnnotation";
+import {
+  getIsEffectivelyOnline,
+  subscribeEffectiveOnline,
+} from "@/services/network";
 import { useServerExtensionsBase } from "@/stores/serverExtensions";
 
 // Client side of the OpenSubsonic `playbackReport` extension (Navidrome
@@ -34,6 +38,8 @@ let lastPositionMs = 0;
 let lastSentState: PlaybackReportState | null = null;
 let lastProgressSentAt = 0;
 let trackStartedAt = 0;
+let wasReachable = true;
+let watchingReachability = false;
 
 export function playbackReportEnabled(): boolean {
   return useServerExtensionsBase.getState().hasExtension("playbackReport");
@@ -45,6 +51,10 @@ function send(
   positionMs: number,
   ignoreScrobble?: boolean,
 ) {
+  // Each report would only wait out a connection failure. Plays of 30s+ are
+  // counted by the player's classic scrobble, which the offline queue replays;
+  // the session itself is re-announced when the server comes back.
+  if (!getIsEffectivelyOnline()) return;
   reportPlayback({
     mediaId: id,
     state,
@@ -62,7 +72,22 @@ export function notePlaybackRateChanged(rate: number) {
   send(currentId, lastSentState ?? "playing", lastPositionMs);
 }
 
+function watchReachability() {
+  if (watchingReachability) return;
+  watchingReachability = true;
+  wasReachable = getIsEffectivelyOnline();
+  subscribeEffectiveOnline(() => {
+    const reachable = getIsEffectivelyOnline();
+    if (reachable === wasReachable) return;
+    wasReachable = reachable;
+    if (reachable && currentId) {
+      send(currentId, lastSentState ?? "playing", lastPositionMs);
+    }
+  });
+}
+
 export function reportStarting(id: string, playbackRate = 1) {
+  watchReachability();
   currentId = id;
   currentRate = playbackRate;
   lastPositionMs = 0;

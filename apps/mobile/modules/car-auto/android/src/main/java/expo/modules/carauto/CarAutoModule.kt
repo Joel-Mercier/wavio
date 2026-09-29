@@ -13,11 +13,13 @@ import org.json.JSONObject
 @OptIn(UnstableApi::class)
 class CarAutoModule : Module() {
   private val mainHandler = Handler(Looper.getMainLooper())
+  // Only touched on the main thread.
+  private val pendingDelays = HashMap<Int, Runnable>()
 
   override fun definition() = ModuleDefinition {
     Name("CarAuto")
 
-    Events("play", "transport")
+    Events("play", "transport", "carConnection", "delayElapsed", "childrenRequest")
 
     OnCreate {
       instance = this@CarAutoModule
@@ -27,6 +29,11 @@ class CarAutoModule : Module() {
     OnDestroy {
       if (instance === this@CarAutoModule) instance = null
       jsReady = false
+      syncTimerHold()
+      mainHandler.post {
+        pendingDelays.values.forEach(mainHandler::removeCallbacks)
+        pendingDelays.clear()
+      }
     }
 
     // Called by services/carAuto/session.ts once its `play` / `transport`
@@ -38,6 +45,37 @@ class CarAutoModule : Module() {
       markJsReady()
     }
 
+    // Read by JS at boot as well as observed through `carConnection`: on a
+    // headless boot the car host binds before the runtime exists, so the event
+    // announcing it has already been missed.
+    Function("isCarConnected") {
+      carConnected
+    }
+
+    // Backs services/backgroundTimer.ts. RN timers fire from Choreographer frame
+    // callbacks and stop once the Activity is backgrounded — measured on MIUI
+    // with audio playing, and even with CarTimerHold's headless task held — so
+    // any JS wait that has to run in the background goes through a main-thread
+    // Handler message instead, which still arrives.
+    Function("postDelayed") { id: Int, delayMs: Double ->
+      val runnable = Runnable {
+        pendingDelays.remove(id)
+        if (instance === this@CarAutoModule) {
+          sendEvent("delayElapsed", mapOf("id" to id))
+        }
+      }
+      mainHandler.post {
+        pendingDelays.put(id, runnable)?.let(mainHandler::removeCallbacks)
+        mainHandler.postDelayed(runnable, delayMs.toLong().coerceAtLeast(0L))
+      }
+    }
+
+    Function("cancelDelayed") { id: Int ->
+      mainHandler.post {
+        pendingDelays.remove(id)?.let(mainHandler::removeCallbacks)
+      }
+    }
+
     Function("setVerbose") { enabled: Boolean ->
       CarAutoLog.verbose = enabled
     }
@@ -47,6 +85,19 @@ class CarAutoModule : Module() {
       val changed = BrowseTreeCache.setFromJson(context, json)
       CarAutoLog.d("setNodes ${BrowseTreeCache.debugSummary()} changed=${changed.size}")
       this@CarAutoModule.notifyChildrenChanged(changed)
+    }
+
+    // Answers a `childrenRequest` (see PendingChildren). A null json means JS
+    // couldn't fetch it: the waiting browse gets an empty page and nothing is
+    // stored, so opening the parent again asks again.
+    Function("setChildren") { parentId: String, json: String? ->
+      val changed = json != null && BrowseTreeCache.putChildren(parentId, json)
+      CarAutoLog.d("setChildren $parentId stored=${json != null} changed=$changed")
+      mainHandler.post {
+        PendingChildren.release(parentId)
+        // For a browse that already timed out on an empty page.
+        if (changed) this@CarAutoModule.notifyChildrenChanged(mapOf(parentId to BrowseTreeCache.childCount(parentId)))
+      }
     }
 
     // Every mirror push below records into CarPlaybackMirror *before* touching
@@ -142,6 +193,10 @@ class CarAutoModule : Module() {
     sendEvent("play", payload)
   }
 
+  fun emitChildrenRequest(parentId: String) {
+    sendEvent("childrenRequest", mapOf("parentId" to parentId))
+  }
+
   fun emitTransport(action: String, value: Double?) {
     val payload = HashMap<String, Any>(2)
     payload["action"] = action
@@ -181,7 +236,32 @@ class CarAutoModule : Module() {
     )
 
     private var pendingPlay: PendingPlay? = null
+    // Browses the car made while JS was booting. No TTL: PendingChildren has
+    // already released the host by then, and a late answer is still a useful one.
+    private val pendingChildren = LinkedHashSet<String>()
     private var pendingTransport: PendingTransport? = null
+
+    @Volatile var carConnected: Boolean = false
+      private set
+
+    fun setCarConnected(connected: Boolean) {
+      if (carConnected == connected) return
+      carConnected = connected
+      CarAutoLog.d("car connected=$connected")
+      instance?.sendEvent("carConnection", mapOf("connected" to connected))
+      syncTimerHold()
+    }
+
+    // Held only once JS is ready, because that is when the task it runs has
+    // been registered — started any earlier, AppRegistry finds no task and
+    // finishes it on the spot.
+    private fun syncTimerHold() {
+      CarTimerHold.update {
+        val context = instance?.let { it.appContext.reactContext }
+        CarAutoLog.d("timer hold: car=$carConnected ready=$jsReady context=${context != null}")
+        if (carConnected && jsReady) context else null
+      }
+    }
 
     // Deciding "deliver or park" and flipping jsReady have to be one atomic step.
     // They run on different threads — car intents arrive on a binder thread,
@@ -232,10 +312,24 @@ class CarAutoModule : Module() {
       false
     }
 
+    fun deliverChildrenRequest(parentId: String) {
+      synchronized(gate) {
+        val module = instance
+        if (module != null && jsReady) {
+          module.emitChildrenRequest(parentId)
+        } else {
+          pendingChildren.add(parentId)
+        }
+      }
+    }
+
     fun markJsReady() {
       synchronized(gate) {
         jsReady = true
+        syncTimerHold()
         val module = instance ?: return
+        pendingChildren.forEach(module::emitChildrenRequest)
+        pendingChildren.clear()
         val play = takePendingPlay()
         if (play != null) {
           CarAutoLog.d("flushing pending play ${play.mediaId}")

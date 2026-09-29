@@ -1,20 +1,23 @@
 import { requireOptionalNativeModule } from "expo";
 import { Platform } from "react-native";
-import type { BrowseTree } from "./types";
+import { backgroundSleep } from "@/services/backgroundTimer";
+import type { BrowseNode, BrowseTree } from "./types";
 
 // The Android native module is provided by `modules/car-auto` (registered as
 // CarAuto via Expo Modules). On iOS the bridge is a no-op; CarPlay is handled
 // in services/carAuto/carplay.ts via react-native-carplay.
 type CarAutoNative = {
   setNodes: (json: string) => void;
+  setChildren: (parentId: string, json: string | null) => void;
   setNowPlaying: (json: string | null) => void;
   setQueue: (json: string) => void;
   setQueueIndex: (index: number) => void;
   setPlaybackState: (json: string) => void;
   notifyReady: () => void;
   setVerbose: (enabled: boolean) => void;
+  isCarConnected: () => boolean;
   addListener: (
-    event: "play" | "transport",
+    event: "play" | "transport" | "carConnection" | "childrenRequest",
     listener: (e: Record<string, unknown>) => void,
   ) => { remove: () => void };
 };
@@ -62,6 +65,17 @@ export const CarAutoBridge = {
       NativeCarAuto.setNodes(json);
     } catch (e) {
       if (__DEV__) console.log("[carauto] setNodes threw", e);
+    }
+  },
+
+  // Answers a childrenRequest. Null means the fetch failed: native releases the
+  // waiting host with an empty page but keeps nothing, so the next open retries.
+  setChildren(parentId: string, nodes: BrowseNode[] | null) {
+    if (!NativeCarAuto) return;
+    try {
+      NativeCarAuto.setChildren(parentId, nodes ? JSON.stringify(nodes) : null);
+    } catch (e) {
+      if (__DEV__) console.log("[carauto] setChildren threw", e);
     }
   },
 
@@ -125,6 +139,29 @@ export const CarAutoBridge = {
     }
   },
 
+  // setTimeout for car code, which runs with the phone UI in the background
+  // where JS timers never fire (see services/backgroundTimer.ts).
+  delay: backgroundSleep,
+
+  // Whether an Android Auto host is bound to the browse service right now.
+  isCarConnected(): boolean {
+    if (!NativeCarAuto) return false;
+    try {
+      return NativeCarAuto.isCarConnected();
+    } catch (e) {
+      if (__DEV__) console.log("[carauto] isCarConnected threw", e);
+      return false;
+    }
+  },
+
+  onCarConnection(handler: (connected: boolean) => void): () => void {
+    if (!NativeCarAuto) return () => {};
+    const sub = NativeCarAuto.addListener("carConnection", (event) => {
+      handler(event?.connected === true);
+    });
+    return () => sub.remove();
+  },
+
   onPlay(handler: (mediaId: string, parentId?: string) => void): () => void {
     if (!NativeCarAuto) return () => {};
     const sub = NativeCarAuto.addListener("play", (event) => {
@@ -132,6 +169,17 @@ export const CarAutoBridge = {
       if (typeof id !== "string" || !id) return;
       const parent = event?.parentId;
       handler(id, typeof parent === "string" && parent ? parent : undefined);
+    });
+    return () => sub.remove();
+  },
+
+  // The car opened a parent the pushed tree doesn't hold (see
+  // loadOnDemandChildren in tree.ts).
+  onChildrenRequest(handler: (parentId: string) => void): () => void {
+    if (!NativeCarAuto) return () => {};
+    const sub = NativeCarAuto.addListener("childrenRequest", (event) => {
+      const id = event?.parentId;
+      if (typeof id === "string" && id) handler(id);
     });
     return () => sub.remove();
   },
