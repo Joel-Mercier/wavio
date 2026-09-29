@@ -1,16 +1,20 @@
 import { LegendList } from "@legendapp/list/react-native";
+import { useForm, useSelector } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import Search from "lucide-react-native/dist/esm/icons/search.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
+import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
 import AddToPlaylistListItem from "@/components/playlists/AddToPlaylistListItem";
+import AddToPlaylistListItemSkeleton from "@/components/playlists/AddToPlaylistListItemSkeleton";
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -23,13 +27,16 @@ import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { Spinner } from "@/components/ui/spinner";
+import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Toast, ToastDescription, useToast } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { usePlaylists, useUpdatePlaylist } from "@/hooks/backend/usePlaylists";
+import useDebounce from "@/hooks/useDebounce";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import { getPlaylist } from "@/services/backend/playlists";
 import type { Playlist } from "@/services/openSubsonic/types";
+import { createSearchIndex } from "@/services/searchIndex";
 import useApp from "@/stores/app";
 import usePlaylistTargets from "@/stores/playlistTargets";
 import { logError } from "@/utils/log";
@@ -40,10 +47,19 @@ import { TOAST_DURATION } from "@/utils/toastDuration";
 // with it, the way the queue screen groups its sections.
 type Row =
   | { kind: "header"; key: string; label: string }
-  | { kind: "playlist"; key: string; playlist: Playlist };
+  | { kind: "playlist"; key: string; playlist: Playlist }
+  | { kind: "skeleton"; key: string };
+
+const SKELETON_ROWS: Row[] = Array.from({ length: 8 }, (_, index) => ({
+  kind: "skeleton",
+  key: `skeleton-${index}`,
+}));
 
 export default function AddToPlaylistDetail() {
-  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
+  const [white, primary50] = Uniwind.getCSSVariable([
+    "--color-white",
+    "--color-primary-50",
+  ]) as string[];
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { ids } = useLocalSearchParams<{ ids: string }>();
@@ -66,6 +82,24 @@ export default function AddToPlaylistDetail() {
   const recentTargets = usePlaylistTargets((state) => state.recentTargets);
   const { data, isLoading, error } = usePlaylists({});
   const doUpdatePlaylist = useUpdatePlaylist();
+  const isOnline = useIsOnline();
+  const form = useForm({
+    defaultValues: {
+      query: "",
+    },
+  });
+  const query = useSelector(form.store, (state) => state.values.query);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const debounce = useDebounce(150);
+
+  useEffect(() => {
+    debounce(() => setDebouncedQuery(query));
+  }, [query, debounce]);
+
+  const handleSearchClearPress = () => {
+    form.setFieldValue("query", "");
+    setDebouncedQuery("");
+  };
 
   const handleNewPlaylistPress = () => {
     router.navigate({
@@ -260,8 +294,20 @@ export default function AddToPlaylistDetail() {
   // handful of targets gets used over and over during a curation burst
   // (issue #195). Deliberately not pre-ticked: a mis-tap on "Finished" must
   // never write to a playlist the user did not choose.
+  const searchIndex = useMemo(
+    () => createSearchIndex(playlists ?? [], ["name"]),
+    [playlists],
+  );
+
   const rows = useMemo<Row[]>(() => {
     if (!playlists) return [];
+    if (debouncedQuery.trim()) {
+      return searchIndex.search(debouncedQuery).map(({ item: playlist }) => ({
+        kind: "playlist",
+        key: playlist.id,
+        playlist,
+      }));
+    }
     const recent = recentTargets
       .map((target) => playlistById.get(target.id))
       .filter((playlist): playlist is Playlist => !!playlist);
@@ -303,7 +349,9 @@ export default function AddToPlaylistDetail() {
             }) as const,
         ),
     ];
-  }, [playlists, playlistById, recentTargets, t]);
+  }, [playlists, playlistById, recentTargets, searchIndex, debouncedQuery, t]);
+
+  const hasNoPlaylists = !isLoading && !playlists?.length;
 
   return (
     <Box className="h-full flex-1">
@@ -328,12 +376,14 @@ export default function AddToPlaylistDetail() {
       </Box>
       <LegendList
         recycleItems
-        data={rows}
+        data={isLoading ? SKELETON_ROWS : rows}
         contentContainerStyle={{
           paddingBottom: floatingPlayerTop + 96,
         }}
         renderItem={({ item, extraData }) =>
-          item.kind === "header" ? (
+          item.kind === "skeleton" ? (
+            <AddToPlaylistListItemSkeleton />
+          ) : item.kind === "header" ? (
             <Heading size="sm" className="text-gray-300 px-6 mt-2 mb-3">
               {item.label}
             </Heading>
@@ -349,6 +399,8 @@ export default function AddToPlaylistDetail() {
         getItemType={(item) => item.kind}
         extraData={{ selectedPlaylists }}
         showsVerticalScrollIndicator={false}
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
           <VStack className="px-6">
             <Center className="my-6">
@@ -361,10 +413,45 @@ export default function AddToPlaylistDetail() {
                 </Text>
               </FadeOutScaleDown>
             </Center>
-
-            {isLoading && <Spinner size="large" />}
+            {!hasNoPlaylists && (
+              <form.Field name="query">
+                {(field) => (
+                  <Input className="border-0 bg-primary-600 rounded-lg h-10 px-2 mb-6">
+                    <InputSlot className="pl-2">
+                      <InputIcon as={Search} className="text-primary-100" />
+                    </InputSlot>
+                    <InputField
+                      disableFullscreenUI
+                      className="text-white text-sm"
+                      placeholder={t(
+                        "app.playlists.searchPlaylistsPlaceholder",
+                      )}
+                      placeholderTextColor={primary50}
+                      type="text"
+                      value={field.state.value}
+                      onChangeText={field.handleChange}
+                      onBlur={field.handleBlur}
+                      enterKeyHint="search"
+                    />
+                    {field.state.value.length > 0 && (
+                      <InputSlot
+                        className="pr-2"
+                        onPress={handleSearchClearPress}
+                      >
+                        <InputIcon as={X} size="xl" />
+                      </InputSlot>
+                    )}
+                  </Input>
+                )}
+              </form.Field>
+            )}
             {error && <ErrorDisplay error={error} />}
           </VStack>
+        }
+        ListEmptyComponent={
+          !isLoading && !error ? (
+            <EmptyDisplay offline={!isOnline && !data} />
+          ) : null
         }
       />
       <LinearGradient

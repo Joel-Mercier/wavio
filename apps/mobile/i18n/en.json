@@ -366,6 +366,7 @@
 				"addToPlaylistTitle": "Add to playlist",
 				"recentPlaylists": "Recent",
 				"allPlaylists": "All playlists",
+				"searchPlaylistsPlaceholder": "Search playlists",
 				"newPlaylist": "New playlist",
 				"finished": "Finished",
 				"addTrackSuccessMessage_one": "Song successfully added to playlist",
