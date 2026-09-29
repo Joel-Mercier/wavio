@@ -366,7 +366,7 @@
 				"addToPlaylistTitle": "Añadir a la lista de reproducción",
 				"recentPlaylists": "Recientes",
 				"allPlaylists": "Todas las listas de reproducción",
-				"searchPlaylistsPlaceholder": "Search playlists",
+				"searchPlaylistsPlaceholder": "Buscar listas de reproducción",
 				"newPlaylist": "Nueva lista de reproducción",
 				"finished": "Terminado",
 				"duplicateTitle": "Ya está en la lista de reproducción",
@@ -1620,6 +1620,30 @@
 						"off": {
 							"label": "Apagado",
 							"description": "No se sincroniza. Tu cola se queda únicamente en este dispositivo y nunca se envía al servidor."
+						}
+					},
+					"mediaControlsLabel": "Botones de notificación multimedia",
+					"mediaControlsDescription": "Aparecen botones adicionales junto a «Anterior», «Reproducir/Pausa» y «Siguiente» en la notificación multimedia y en la pantalla de bloqueo. Android solo tiene espacio para dos, por lo que el botón de «Favoritos» ocupa el lugar del botón para saltar 10 segundos. Las emisoras de radio y los episodios de podcasts nunca lo muestran.",
+					"mediaControlsOptions": {
+						"seek": {
+							"label": "Ir atrás y adelante",
+							"description": "Rebobina y avanza 10 segundos."
+						},
+						"favoriteAndSeekForward": {
+							"label": "Añadir a favoritos y avanzar",
+							"description": "Añade la canción actual a tus favoritos (o elimínala) y avanza 10 segundos."
+						},
+						"seekBackwardAndFavorite": {
+							"label": "Volver atrás y añadir a favoritos",
+							"description": "Retrocede 10 segundos y añade la canción actual a tus favoritos (o elimínala)."
+						},
+						"favorite": {
+							"label": "Solo favoritos",
+							"description": "Solo el botón de «Favoritos», lo que hace que haya menos botones con los que pulsar sin querer."
+						},
+						"none": {
+							"label": "Ninguno",
+							"description": "Solo «Anterior», «Reproducir/Pausa» y «Siguiente»."
 						}
 					},
 					"waveformSeekbarLabel": "Barra de búsqueda de la forma de onda",
