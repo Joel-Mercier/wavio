@@ -366,7 +366,7 @@
 				"addToPlaylistTitle": "Zur Wiedergabeliste hinzufügen",
 				"recentPlaylists": "Aktuell",
 				"allPlaylists": "Alle Wiedergabelisten",
-				"searchPlaylistsPlaceholder": "Search playlists",
+				"searchPlaylistsPlaceholder": "Playlists suchen",
 				"newPlaylist": "Neue Wiedergabeliste",
 				"finished": "Fertig",
 				"duplicateTitle": "Bereits in der Wiedergabeliste",
@@ -1620,6 +1620,30 @@
 						"off": {
 							"label": "Aus",
 							"description": "Keine Synchronisierung. Deine Warteschlange bleibt ausschließlich auf diesem Gerät gespeichert und wird niemals an den Server gesendet."
+						}
+					},
+					"mediaControlsLabel": "Schaltflächen für Medienbenachrichtigungen",
+					"mediaControlsDescription": "In der Medienbenachrichtigung und auf dem Sperrbildschirm werden neben den Schaltflächen „Zurück“, „Wiedergabe/Pause“ und „Weiter“ zusätzliche Schaltflächen angezeigt. Da Android nur Platz für zwei Schaltflächen bietet, ersetzt die Favoriten-Schaltfläche die Schaltfläche zum 10-Sekunden-Sprung. Bei Radiosendern und Podcast-Folgen wird sie nie angezeigt.",
+					"mediaControlsOptions": {
+						"seek": {
+							"label": "Zurück- und Vorwärtssprung",
+							"description": "10 Sekunden zurückspulen und vorspulen."
+						},
+						"favoriteAndSeekForward": {
+							"label": "Zu den Favoriten hinzufügen und weiterblättern",
+							"description": "Füge den aktuellen Titel zu deinen Favoriten hinzu (oder entferne ihn) und spule 10 Sekunden vor."
+						},
+						"seekBackwardAndFavorite": {
+							"label": "Zurück springen und als Favorit speichern",
+							"description": "Spule 10 Sekunden zurück und füge den aktuellen Titel zu deinen Favoriten hinzu (oder entferne ihn)."
+						},
+						"favorite": {
+							"label": "Nur Favoriten",
+							"description": "Nur die Favoriten-Schaltfläche – so gibt es weniger Schaltflächen, die man versehentlich anklicken könnte."
+						},
+						"none": {
+							"label": "Keine",
+							"description": "Nur „Zurück“, „Wiedergabe/Pause“ und „Weiter“."
 						}
 					},
 					"waveformSeekbarLabel": "Wellenform-Suchleiste",
