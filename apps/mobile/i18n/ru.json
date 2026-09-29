@@ -81,10 +81,10 @@
 				"allTracks": "Все треки",
 				"allAlbumsSubtitle": "Альбомы",
 				"allArtistsSubtitle": "Исполнители",
-				"emptyHint": "Your library only shows what you've favorited (albums, artists, podcasts, radio stations), your playlists and your downloads. Tap the heart on something and it will appear here.",
+				"emptyHint": "В вашей библиотеке отображаются только добавленные в избранное элементы (альбомы, исполнители, подкасты, радиостанции), ваши плейлисты и загруженные файлы. Нажмите на значок в виде сердечка рядом с каким-либо элементом — и он появится здесь.",
 				"search": {
 					"inputPlaceholder": "Поиск в медиатеке",
-					"emptyHint": "This only searches your library: favorited albums, artists, radio stations and your playlists. To search your whole collection, including songs, use the Search tab."
+					"emptyHint": "При этом выполняется поиск только по вашей библиотеке: добавленным в избранное альбомам, исполнителям, радиостанциям и вашим плейлистам. Чтобы выполнить поиск по всей вашей коллекции, включая песни, воспользуйтесь вкладкой «Поиск»."
 				}
 			},
 			"create": {
@@ -378,6 +378,7 @@
 				"addToPlaylistTitle": "Добавить в плейлист",
 				"recentPlaylists": "Недавние",
 				"allPlaylists": "Все плейлисты",
+				"searchPlaylistsPlaceholder": "Поиск плейлистов",
 				"newPlaylist": "Новый плейлист",
 				"finished": "Готово",
 				"duplicateTitle": "Уже есть в плейлисте",
@@ -1687,6 +1688,8 @@
 					"title": "Воспроизведение",
 					"endlessPlaybackLabel": "Музыка нон-стоп",
 					"endlessPlaybackDescription": "Включать что-нибудь похожее, когда контент заканчивается.",
+					"playerAudioQualityLabel": "Качество звука в плеере",
+					"playerAudioQualityDescription": "Отображать формат исходного файла, битрейт и частоту дискретизации текущего трека на экране воспроизведения, в том числе и в том случае, если сервер осуществляет его транскодирование.",
 					"playerRatingLabel": "Оценка звездами в плеере",
 					"playerRatingDescription": "Отображайте пятизвездочную шкалу оценки рядом с показателем качества звука на экране «Воспроизведение», чтобы можно было оценить текущий трек, не открывая меню.",
 					"equalizerLabel": "Эквалайзер",
@@ -1707,6 +1710,30 @@
 						"off": {
 							"label": "Выкл.",
 							"description": "Без синхронизации. Очередь хранится только на этом устройстве и не отправляется на сервер."
+						}
+					},
+					"mediaControlsLabel": "Кнопки уведомлений в приложениях",
+					"mediaControlsDescription": "Дополнительные кнопки отображаются рядом с кнопками «Назад», «Воспроизведение/Пауза» и «Вперед» в уведомлении о мультимедиа и на экране блокировки. В Android хватает места только для двух кнопок, поэтому кнопка «Избранное» занимает место кнопки «Перейти на 10 секунд вперед». На радиостанциях и в эпизодах подкастов она никогда не отображается.",
+					"mediaControlsOptions": {
+						"seek": {
+							"label": "Перейти назад и вперёд",
+							"description": "Перемотайте назад и вперёд на 10 секунд."
+						},
+						"favoriteAndSeekForward": {
+							"label": "Добавить в избранное и перейти дальше",
+							"description": "Добавьте текущий трек в избранное (или удалите его) и перемотайте вперед на 10 секунд."
+						},
+						"seekBackwardAndFavorite": {
+							"label": "Вернуться назад и добавить в избранное",
+							"description": "Перемотайте назад на 10 секунд и добавьте текущий трек в избранное (или удалите его)."
+						},
+						"favorite": {
+							"label": "Только избранное",
+							"description": "Только кнопка «Избранное» — так меньше шансов нажать что-то случайно."
+						},
+						"none": {
+							"label": "Нет",
+							"description": "Только предыдущий, воспроизведение/пауза и следующий."
 						}
 					},
 					"waveformSeekbarLabel": "Полоса прокрутки формы сигнала",
@@ -1898,7 +1925,11 @@
 				"totalTracks_one": "{{count}} трек",
 				"totalTracks_few": "{{count}} трека",
 				"totalTracks_many": "{{count}} треков",
-				"totalTracks_other": "{{count}} треков"
+				"totalTracks_other": "{{count}} треков",
+				"downloadingHint_one": "{{count}} продолжается загрузка треков. Список обновится, когда загрузка завершится.",
+				"downloadingHint_few": "{{count}} Загрузка других треков продолжается. Список обновится, когда загрузка завершится.",
+				"downloadingHint_many": "{{count}} Загрузка других треков продолжается. Список обновится, когда загрузка завершится.",
+				"downloadingHint_other": "{{count}} Загрузка других треков продолжается. Список обновится, когда загрузка завершится."
 			},
 			"pendingChanges": {
 				"title": "Ожидающие изменения",
@@ -1914,6 +1945,7 @@
 					"setRating": "Оценить на {{rating}}/5",
 					"playlistEdit": "Изменить сведения о плейлисте",
 					"playlistDelete": "Удалить плейлист",
+					"scrobble": "Воспроизвести отчет",
 					"playlistAddSongs_one": "Добавить {{count}} трек в плейлист",
 					"playlistAddSongs_few": "Добавить {{count}} трека в плейлист",
 					"playlistAddSongs_many": "Добавить {{count}} треков в плейлист",
@@ -2059,7 +2091,9 @@
 			"player": {
 				"title": "Играет сейчас",
 				"notices": {
-					"sourceUnavailable": "Не удалось воспроизвести этот трек — файл недоступен. Убедитесь, что ваш сервер включен и находится в той же сети."
+					"sourceUnavailable": "Не удалось воспроизвести этот трек — файл недоступен. Убедитесь, что ваш сервер включен и находится в той же сети.",
+					"remoteTrackRefused": "{{name}} Не удалось воспроизвести «{{track}}». Выберите другой трек или воспроизведите его на этом устройстве.",
+					"remoteLost": "Потеряна связь с {{name}}. На этом устройстве воспроизведение снова работает."
 				},
 				"original": "Оригинал",
 				"playingFrom": {
@@ -2128,16 +2162,17 @@
 				"jukeboxResumeMessage": "Сессия Jukebox все еще активна на сервере. Возобновить управление или начать воспроизведение на этом устройстве?",
 				"jukeboxResumeResume": "Возобновить управление",
 				"jukeboxResumePlayHere": "Воспроизвести здесь",
-				"upnpResumeTitle": "Resume on {{name}}?",
-				"upnpResumeMessage": "{{name}} still has your music. Resume control or play on this device?",
+				"upnpResumeTitle": "Разместить резюме на сайте {{name}}?",
+				"upnpResumeMessage": "{{name}} На этом устройстве по-прежнему хранится ваша музыка. Возобновить управление или воспроизведение на этом устройстве?",
 				"output": "Вывод",
 				"outputSpeakersAndTvs": "Акустические системы и телевизоры (UPnP/DLNA)",
 				"outputScanning": "Ищу устройства…",
 				"outputNoDevices": "В этой сети не обнаружено никаких устройств",
-				"outputUnverified": "Возможно, воспроизведение не будет поддерживаться",
 				"outputChromecast": "Chromecast",
 				"outputChromecastConnected": "Подключено",
 				"outputChromecastUnavailable": "Функция выбора устройства Chromecast недоступна.",
+				"outputChromecastNoPlayServices": "Для работы Chromecast требуются службы Google Play, которых на этом устройстве нет.",
+				"outputChromecastNoPlayServicesHint": "Требуется наличие сервисов Google Play",
 				"outputConnectErrorMessage": "Не удалось воспроизвести файл по адресу {{name}}.",
 				"sleepTimerMinutes_one": "{{count}} минута",
 				"sleepTimerMinutes_few": "{{count}} минуты",
@@ -2288,7 +2323,14 @@
 					"saveSuccessMessage": "Сохранено для офлайн-прослушивания",
 					"saveErrorMessage": "Произошла ошибка при сохранении для офлайн-прослушивания",
 					"removeSuccessMessage": "Удалено из загрузок",
-					"removeErrorMessage": "Произошла ошибка при удалении загрузок"
+					"removeErrorMessage": "Произошла ошибка при удалении загрузок",
+					"removingDownloads": "Удаление загруженных файлов…",
+					"removeConfirmTitle": "Удалить загрузки в автономном режиме?",
+					"removeConfirmAction": "Удалить",
+					"removeConfirmDescription_one": "{{count}} Загруженная композиция будет удалена с этого устройства. Композиции, сохраненные также в других альбомах или плейлистах, останутся на устройстве.",
+					"removeConfirmDescription_few": "{{count}} Загруженные песни будут удалены с этого устройства. Песни, сохраненные также в другом альбоме или плейлисте, останутся.",
+					"removeConfirmDescription_many": "{{count}} Загруженные композиции будут удалены с этого устройства. Композиции, сохраненные также в другом альбоме или плейлисте, останутся на устройстве.",
+					"removeConfirmDescription_other": "{{count}} Загруженные песни будут удалены с этого устройства. Песни, сохраненные также в другом альбоме или плейлисте, останутся."
 				},
 				"favorites": "Любимые треки",
 				"filters": {
