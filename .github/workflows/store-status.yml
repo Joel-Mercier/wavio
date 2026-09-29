@@ -21,6 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          # A release event checks out the tag (detached HEAD), which
+          # create-pull-request can't base a PR on, and the tag may be behind main.
+          ref: ${{ github.event.repository.default_branch }}
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
@@ -42,6 +46,7 @@ jobs:
       - uses: peter-evans/create-pull-request@v7
         with:
           branch: chore/store-status
+          base: ${{ github.event.repository.default_branch }}
           # Never commit anything else that lands in the workspace.
           add-paths: |
             README.md
