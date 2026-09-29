@@ -12,9 +12,20 @@ import { Platform } from "react-native";
  *
  * `Native` is null on iOS, on web, and in Expo Go, so every call is guarded.
  */
+export type DocumentRecord = {
+  /** Child document URI; directories carry a trailing `/`. */
+  uri: string;
+  isDirectory: boolean;
+  /** Bytes, 0 when the provider reports none. */
+  size: number;
+  /** Epoch ms, 0 when the provider reports none. */
+  mtime: number;
+};
+
 type ScanServiceModule = {
   start(title: string, text: string): boolean;
   stop(): boolean;
+  listDocuments(uri: string): Promise<DocumentRecord[]>;
 };
 
 const Native =
@@ -23,6 +34,25 @@ const Native =
     : null;
 
 export const isScanServiceAvailable = (): boolean => Native != null;
+
+/**
+ * Whether SAF tree listings can go through the native lister. False on iOS, on
+ * web, in Expo Go, and on a binary built before `listDocuments` existed.
+ */
+export const isSafListAvailable = (): boolean =>
+  typeof Native?.listDocuments === "function";
+
+/**
+ * The children of a SAF `content://` tree or tree-document URI, in one provider
+ * query run off the JS thread. Rejects rather than resolving empty when the
+ * provider can't answer.
+ */
+export function listDocuments(uri: string): Promise<DocumentRecord[]> {
+  if (!Native) {
+    return Promise.reject(new Error("ScanService native module unavailable"));
+  }
+  return Native.listDocuments(uri);
+}
 
 /**
  * Show the ongoing scan notification and keep the process alive.

@@ -4,8 +4,8 @@ import {
   type SQLiteDatabase,
 } from "expo-sqlite";
 import { getAuthScope } from "@/config/authScope";
+import { insertFtsRow } from "@/services/local/ftsRows";
 import { localTrackId } from "@/services/local/keys";
-import { searchVariants } from "@/services/searchText";
 import { currentAuthScope } from "@/stores/auth";
 import { logError } from "@/utils/log";
 
@@ -18,7 +18,7 @@ import { logError } from "@/utils/log";
 // never mixes one account's local library into another's. The handle follows the
 // active scope automatically (see `getLocalLibraryDb`).
 
-const SCHEMA_VERSION = 8;
+const SCHEMA_VERSION = 9;
 
 const currentScope = currentAuthScope;
 
@@ -676,6 +676,8 @@ async function migrate(db: SQLiteDatabase): Promise<void> {
   // fail on a database that doesn't have them yet.
   await ensureColumn(db, "tracks", "resolved_album_key", "TEXT");
   await ensureColumn(db, "tracks", "resolved_artist_key", "TEXT");
+  // The rowid of the track's `tracks_fts` row (see services/local/ftsRows.ts).
+  await ensureColumn(db, "tracks", "fts_rowid", "INTEGER");
 
   await db.execAsync(SCHEMA_V6);
   await db.execAsync(SCHEMA_V7);
@@ -752,6 +754,10 @@ async function migrate(db: SQLiteDatabase): Promise<void> {
       // ALTER and the extra spellings only exist in JS.
       await rebuildTracksFts(db);
     }
+    if (version > 0 && version < 9) {
+      // v9: record each track's FTS rowid so deletes stop scanning the table.
+      await backfillFtsRowids(db);
+    }
     await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION}`);
   });
 }
@@ -763,23 +769,49 @@ async function migrate(db: SQLiteDatabase): Promise<void> {
 async function rebuildTracksFts(db: SQLiteDatabase): Promise<void> {
   await db.execAsync("DROP TABLE IF EXISTS tracks_fts");
   await db.execAsync(TRACKS_FTS_SCHEMA);
+  await insertMissingFtsRows(db, "SELECT id FROM tracks");
+}
+
+// Map every track onto the FTS row that already holds it, set-based: one pass
+// over the FTS table instead of one scan per track. Rows no track maps to are
+// orphans or duplicates left by past bugs; they are derived data, so they go.
+// Tracks with no FTS row at all get one.
+async function backfillFtsRowids(db: SQLiteDatabase): Promise<void> {
+  await db.execAsync(`
+    CREATE TEMP TABLE fts_map AS SELECT rowid AS r, id FROM tracks_fts;
+    CREATE INDEX temp.fts_map_id ON fts_map(id);
+    UPDATE tracks SET fts_rowid =
+      (SELECT MIN(r) FROM fts_map WHERE fts_map.id = tracks.id);
+    DELETE FROM tracks_fts WHERE rowid NOT IN
+      (SELECT fts_rowid FROM tracks WHERE fts_rowid IS NOT NULL);
+    DROP TABLE temp.fts_map;
+  `);
+  await insertMissingFtsRows(
+    db,
+    "SELECT id FROM tracks WHERE fts_rowid IS NULL",
+  );
+}
+
+async function insertMissingFtsRows(
+  db: SQLiteDatabase,
+  idsSql: string,
+): Promise<void> {
   const rows = await db.getAllAsync<{
     id: string;
     title: string | null;
     artist: string | null;
     album: string | null;
     album_artist: string | null;
-  }>("SELECT id, title, artist, album, album_artist FROM tracks_resolved");
+  }>(
+    `SELECT id, title, artist, album, album_artist FROM tracks_resolved
+     WHERE id IN (${idsSql})`,
+  );
   for (const r of rows) {
+    const rowid = await insertFtsRow(db, r);
     await db.runAsync(
-      `INSERT INTO tracks_fts (id, title, artist, album, album_artist, normalized)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      "UPDATE tracks SET fts_rowid = ? WHERE id = ?",
+      rowid,
       r.id,
-      r.title,
-      r.artist,
-      r.album,
-      r.album_artist,
-      searchVariants([r.title, r.artist, r.album, r.album_artist]),
     );
   }
 }

@@ -1,4 +1,3 @@
-import { searchVariants } from "@/services/searchText";
 import {
   type AlbumTagMatchRow,
   type AlbumTagMatchStatus,
@@ -6,6 +5,7 @@ import {
   REFRESH_RESOLVED_KEYS_SQL,
   type TrackTagOverrideRow,
 } from "./db";
+import { replaceFtsRow } from "./ftsRows";
 
 // Data access for MusicBrainz tag corrections. Reads of *corrected* tracks go
 // through the `tracks_resolved` view (see repository.ts); this file is only the
@@ -105,16 +105,11 @@ async function refreshFtsRow(
     trackId,
   );
   if (!row) return;
-  await db.runAsync("DELETE FROM tracks_fts WHERE id = ?", trackId);
+  const ftsRowid = await replaceFtsRow(db, row);
   await db.runAsync(
-    `INSERT INTO tracks_fts (id, title, artist, album, album_artist, normalized)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    row.id,
-    row.title,
-    row.artist,
-    row.album,
-    row.album_artist,
-    searchVariants([row.title, row.artist, row.album, row.album_artist]),
+    "UPDATE tracks SET fts_rowid = ? WHERE id = ?",
+    ftsRowid,
+    trackId,
   );
 }
 

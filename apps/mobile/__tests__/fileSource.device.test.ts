@@ -55,15 +55,51 @@ jest.mock("expo-file-system", () => {
       return entries;
     }
   }
+  // The real path helpers, not a stand-in: the SAF lister is only correct if it
+  // normalizes exactly the way `File` / `Directory` do. Resolved by path because
+  // the package's `exports` map doesn't expose them.
+  const { dirname, join } = require("node:path");
+  const { PathUtilities } = jest.requireActual(
+    join(
+      dirname(require.resolve("expo-file-system/package.json")),
+      "src/pathUtilities",
+    ),
+  );
   return {
     File: MockFile,
     Directory: MockDirectory,
     FileMode: { ReadOnly: "r" },
+    Paths: PathUtilities,
+  };
+});
+
+type SafState = {
+  available: boolean;
+  listings: Map<string, unknown[]>;
+  failure: Error | null;
+};
+
+// The state lives inside the factory because device.ts asks whether the lister
+// is available at import time, which runs before this file's own top level.
+jest.mock("@/modules/scan-service", () => {
+  const saf: SafState = { available: true, listings: new Map(), failure: null };
+  return {
+    __saf: saf,
+    isSafListAvailable: () => saf.available,
+    listDocuments: (uri: string) => {
+      if (saf.failure) return Promise.reject(saf.failure);
+      const records = saf.listings.get(uri);
+      if (!records) throw new Error(`no SAF listing stubbed for ${uri}`);
+      return Promise.resolve(records);
+    },
   };
 });
 
 import { Directory, File } from "expo-file-system";
 import { deviceFileSource } from "@/services/fileSource/device";
+import { FileSourceError } from "@/services/fileSource/errors";
+
+const mockSaf: SafState = jest.requireMock("@/modules/scan-service").__saf;
 
 // `entry instanceof File` is how the source tells files from directories, so the
 // fixtures have to be real instances of the mocked classes.
@@ -81,6 +117,9 @@ beforeEach(() => {
   mockState.listings.clear();
   mockState.existing.clear();
   mockState.handle = null;
+  mockSaf.available = true;
+  mockSaf.listings.clear();
+  mockSaf.failure = null;
 });
 
 describe("deviceFileSource.normalizeRoot", () => {
@@ -135,6 +174,115 @@ describe("deviceFileSource.list", () => {
     const [entry] = await deviceFileSource.list("file:///Music");
     expect(entry.size).toBe(0);
     expect(entry.mtime).toBe(0);
+  });
+});
+
+describe("deviceFileSource.list over a SAF tree", () => {
+  const TREE =
+    "content://com.android.externalstorage.documents/tree/primary%3AMusic";
+  const DOC = `${TREE}/document/primary%3AMusic`;
+
+  it("maps native records onto the entries Directory.list() produced", async () => {
+    // What `tracks.uri` and every track id already hold for this layout: a
+    // file's URI as the provider built it, a directory's with a trailing slash,
+    // and names read off the decoded document id.
+    mockSaf.listings.set(TREE, [
+      {
+        uri: `${DOC}%2F01%20Intro.flac`,
+        isDirectory: false,
+        size: 4096,
+        mtime: 1700000000000,
+      },
+      {
+        uri: `${DOC}%2FLive%20Sets/`,
+        isDirectory: true,
+        size: 0,
+        mtime: 1700000000500,
+      },
+    ]);
+
+    expect(await deviceFileSource.list(TREE)).toEqual([
+      {
+        name: "01 Intro.flac",
+        isDirectory: false,
+        size: 4096,
+        mtime: 1700000000000,
+        path: `${DOC}%2F01%20Intro.flac`,
+      },
+      {
+        name: "Live Sets",
+        isDirectory: true,
+        size: 0,
+        mtime: 0,
+        path: `${DOC}%2FLive%20Sets/`,
+      },
+    ]);
+  });
+
+  it("lists a subdirectory by the path the walk was handed", async () => {
+    const sub = `${DOC}%2FLive%20Sets/`;
+    mockSaf.listings.set(sub, [
+      {
+        uri: `${DOC}%2FLive%20Sets%2Fa.mp3`,
+        isDirectory: false,
+        size: 0,
+        mtime: 0,
+      },
+    ]);
+
+    const [entry] = await deviceFileSource.list(sub);
+    expect(entry).toMatchObject({
+      name: "a.mp3",
+      path: `${DOC}%2FLive%20Sets%2Fa.mp3`,
+      size: 0,
+      mtime: 0,
+    });
+  });
+
+  it("classifies a failed listing instead of reporting an empty folder", async () => {
+    // An empty result reads as "every file here was deleted" and the prune acts
+    // on it; a classified failure marks the scan incomplete instead.
+    mockSaf.failure = new Error("Permission Denial");
+    const listing = deviceFileSource.list(TREE);
+    await expect(listing).rejects.toBeInstanceOf(FileSourceError);
+    await expect(listing).rejects.toMatchObject({ code: "ERR_FS_SERVER" });
+  });
+
+  it("falls back to Directory.list() without the native lister", async () => {
+    mockSaf.available = false;
+    mockState.listings.set(TREE, [
+      fileEntry("a.flac", `${DOC}%2Fa.flac`, 1, 2),
+    ]);
+    const [entry] = await deviceFileSource.list(TREE);
+    expect(entry.path).toBe(`${DOC}%2Fa.flac`);
+  });
+
+  it("never routes a file:// directory through the SAF lister", async () => {
+    mockState.listings.set("file:///Music", [
+      fileEntry("a.flac", "file:///Music/a.flac", 1, 2),
+    ]);
+    const [entry] = await deviceFileSource.list("file:///Music");
+    expect(entry.path).toBe("file:///Music/a.flac");
+  });
+});
+
+describe("deviceFileSource.listConcurrency", () => {
+  const load = (available: boolean): number => {
+    mockSaf.available = available;
+    let concurrency = 0;
+    jest.isolateModules(() => {
+      concurrency = require("@/services/fileSource/device").deviceFileSource
+        .listConcurrency;
+    });
+    return concurrency;
+  };
+
+  it("overlaps native listings, matching LIST_THREADS in ScanServiceModule.kt", () => {
+    expect(load(true)).toBe(4);
+  });
+
+  it("stays serial when every listing blocks the JS thread", () => {
+    expect(load(false)).toBe(1);
   });
 });
 

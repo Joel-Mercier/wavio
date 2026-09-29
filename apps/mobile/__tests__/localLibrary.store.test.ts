@@ -199,6 +199,54 @@ describe("localLibrary store — hidden-folders notice", () => {
   });
 });
 
+describe("localLibrary store — partial-scan notice", () => {
+  const finish = (
+    outcome: { cancelled?: boolean; unreadable?: number },
+    silent = false,
+  ) => {
+    const cancelled = outcome.cancelled ?? false;
+    const unreadable = outcome.unreadable ?? 0;
+    get().setScanFinished(
+      {
+        indexed: 0,
+        skipped: 0,
+        removed: 0,
+        failed: 0,
+        cancelled,
+        incomplete: cancelled || unreadable > 0,
+        unreadable,
+        ignoredDirectories: 0,
+        sidecarCovers: 0,
+        artChanged: 0,
+      },
+      silent,
+    );
+  };
+
+  it("warns when folders couldn't be read", () => {
+    finish({ unreadable: 3 });
+    expect(get().incompleteScanNotice).toBe(true);
+  });
+
+  it("stays quiet when the user stopped the scan", () => {
+    // Incomplete so it resumes later, but nothing went unread: the warning
+    // used to say "0 folders couldn't be read".
+    finish({ cancelled: true });
+    expect(get().lastScanResult?.incomplete).toBe(true);
+    expect(get().incompleteScanNotice).toBe(false);
+  });
+
+  it("still warns for unreadable folders on a scan that was then stopped", () => {
+    finish({ cancelled: true, unreadable: 1 });
+    expect(get().incompleteScanNotice).toBe(true);
+  });
+
+  it("stays quiet for a silent scan", () => {
+    finish({ unreadable: 2 }, true);
+    expect(get().incompleteScanNotice).toBe(false);
+  });
+});
+
 describe("localLibrary store — clearLocalLibraryData (server deletion)", () => {
   it("wipes favourites, ratings and the scan stamp but keeps ready", () => {
     get().setReady();

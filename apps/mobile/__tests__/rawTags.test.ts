@@ -5,6 +5,7 @@
 // records which ranges were requested.
 import {
   type ByteReader,
+  headReader,
   parseId3Frames,
   parseVorbisComments,
   readRawTags,
@@ -424,5 +425,133 @@ describe("readRawTags", () => {
       read: () => Promise.reject(new Error("connection reset")),
     };
     expect(await readRawTags(reader)).toEqual({});
+  });
+});
+
+// ---------------------------------------------------------------------------
+// headReader — parsing the region the native extractor already read
+// ---------------------------------------------------------------------------
+
+/**
+ * The region `readHead` in AudioMetadataModule.kt hands back: the whole ID3v2
+ * tag, FLAC's 64 KB window, otherwise the 10-byte header — cut short, and
+ * flagged, when the file ends first.
+ */
+const nativeHead = (file: Uint8Array) => {
+  const isId3 = file[0] === 0x49 && file[1] === 0x44 && file[2] === 0x33;
+  const isFlac =
+    file[0] === 0x66 &&
+    file[1] === 0x4c &&
+    file[2] === 0x61 &&
+    file[3] === 0x43;
+  const id3Size =
+    ((file[6] & 0x7f) << 21) |
+    ((file[7] & 0x7f) << 14) |
+    ((file[8] & 0x7f) << 7) |
+    (file[9] & 0x7f);
+  const wanted = isId3
+    ? id3Size > 0 && id3Size <= 4 * 1024 * 1024
+      ? 10 + id3Size
+      : 10
+    : isFlac
+      ? 64 * 1024
+      : 10;
+  const head = file.slice(0, wanted);
+  return { head, isWholeFile: head.length < wanted };
+};
+
+/** A fallback that counts its opens and closes and records its reads. */
+const trackedFallback = (file: Uint8Array) => {
+  const stats = { opened: 0, closed: 0, ranges: [] as [number, number][] };
+  const open = () => {
+    stats.opened++;
+    return Promise.resolve({
+      read(offset: number, length: number) {
+        stats.ranges.push([offset, length]);
+        return Promise.resolve(file.subarray(offset, offset + length));
+      },
+      close() {
+        stats.closed++;
+      },
+    });
+  };
+  return { open, stats };
+};
+
+describe("headReader", () => {
+  it("parses a whole ID3 tag without opening the file", async () => {
+    const file = buildId3File([
+      id3Frame(
+        "TPE1",
+        [0x03, ...utf8("Artist A"), NUL, ...utf8("Artist B")],
+        4,
+      ),
+    ]);
+    const { head, isWholeFile } = nativeHead(file);
+    const { open, stats } = trackedFallback(file);
+
+    const reader = headReader(head, isWholeFile, open);
+    const result = await readRawTags(reader);
+    reader.close();
+
+    expect(result).toEqual(await readRawTags(fakeReader(file).reader));
+    expect(result.artists).toEqual(["Artist A", "Artist B"]);
+    expect(stats.opened).toBe(0);
+    expect(stats.closed).toBe(0);
+  });
+
+  it("parses a FLAC comment block inside the window without opening the file", async () => {
+    const comment = buildVorbis("ref", [
+      "ARTIST=A",
+      "REPLAYGAIN_TRACK_GAIN=-6.6 dB",
+    ]);
+    // Longer than the window, so the head is a true prefix, not the whole file.
+    const file = buildFlacFile(comment, 128 * 1024);
+    const { head, isWholeFile } = nativeHead(file);
+    const { open, stats } = trackedFallback(file);
+
+    expect(isWholeFile).toBe(false);
+    const result = await readRawTags(headReader(head, isWholeFile, open));
+
+    expect(result).toEqual(await readRawTags(fakeReader(file).reader));
+    expect(result.replayGain?.trackGain).toBeCloseTo(-6.6);
+    expect(stats.opened).toBe(0);
+  });
+
+  it("opens the file once for a comment block past the window, then closes it", async () => {
+    const comment = buildVorbis("ref", ["ARTIST=Far Out"]);
+    const seektable = 70 * 1024;
+    const file = buildFlacFile(comment, 4096, seektable);
+    const { head, isWholeFile } = nativeHead(file);
+    const { open, stats } = trackedFallback(file);
+
+    const reader = headReader(head, isWholeFile, open);
+    const result = await readRawTags(reader);
+    reader.close();
+    await Promise.resolve();
+
+    expect(result.artists).toEqual(["Far Out"]);
+    expect(stats.opened).toBe(1);
+    expect(stats.closed).toBe(1);
+    // Only the reads the window couldn't serve went to the file.
+    const commentHeader = 4 + 4 + seektable;
+    expect(stats.ranges).toEqual([
+      [commentHeader, 4],
+      [commentHeader + 4, comment.length],
+    ]);
+  });
+
+  it("answers past the end of a whole-file head as EOF, never opening the file", async () => {
+    // A FLAC file smaller than the window: the head is all of it.
+    const comment = buildVorbis("ref", ["ARTIST=Tiny"]);
+    const file = buildFlacFile(comment, 16);
+    const { head, isWholeFile } = nativeHead(file);
+    const { open, stats } = trackedFallback(file);
+
+    expect(isWholeFile).toBe(true);
+    const reader = headReader(head, isWholeFile, open);
+    expect(await readRawTags(reader)).toEqual({ artists: ["Tiny"] });
+    expect(await reader.read(head.length + 10, 4)).toHaveLength(0);
+    expect(stats.opened).toBe(0);
   });
 });

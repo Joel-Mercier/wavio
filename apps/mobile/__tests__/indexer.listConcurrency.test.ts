@@ -13,7 +13,7 @@ const mockDb = {
   getFirstAsync: jest.fn(),
   runAsync: (...args: unknown[]) => {
     mockRun(...args);
-    return Promise.resolve();
+    return Promise.resolve({ changes: 0, lastInsertRowId: 0 });
   },
   withTransactionAsync: (fn: () => Promise<void>) => fn(),
 };
@@ -32,7 +32,7 @@ jest.mock("@/services/local/artworkRefs", () => ({
 }));
 
 jest.mock("@/modules/audio-metadata", () => ({
-  getAudioMetadata: () => Promise.resolve({ title: "t" }),
+  getAudioMetadata: () => mockExtract.run(),
 }));
 
 jest.mock("@/services/errorReporting", () => ({
@@ -60,6 +60,19 @@ jest.mock("expo-file-system", () => ({
     }
   },
 }));
+
+// Counts extractions in flight, each held for a tick so the pool can fill.
+const mockExtract = {
+  active: 0,
+  peak: 0,
+  async run() {
+    this.active++;
+    this.peak = Math.max(this.peak, this.active);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    this.active--;
+    return { title: "t" };
+  },
+};
 
 const mockFsError = (code: string) => Object.assign(new Error(code), { code });
 
@@ -117,6 +130,7 @@ jest.mock("@/services/fileSource", () => ({
   activeFileSource: () => mockSource,
 }));
 
+import { reportBreadcrumb } from "@/services/errorReporting";
 import { createScanController, scanLibrary } from "@/services/local/indexer";
 
 /** uris the scan wrote a track row for, in the order it wrote them. */
@@ -165,7 +179,10 @@ beforeEach(() => {
   mockSource.active = 0;
   mockSource.peak = 0;
   mockSource.listConcurrency = 4;
+  mockExtract.active = 0;
+  mockExtract.peak = 0;
   mockDb.getAllAsync.mockResolvedValue([]);
+  jest.mocked(reportBreadcrumb).mockClear();
 });
 
 describe("the listing pool", () => {
@@ -366,5 +383,60 @@ describe.each([1, 4])("ignore scopes at listConcurrency %i", (limit) => {
       "webdav:/music/rock/live/a.mp3",
       "webdav:/music/rock/studio/b.mp3",
     ]);
+  });
+});
+
+describe("extraction concurrency", () => {
+  it("runs the source's own figure at once", async () => {
+    siblings(12);
+    const result = await scanLibrary(["webdav:/music"], { enrich: false });
+    expect(mockExtract.peak).toBe(4);
+    expect(result.timings?.extractConcurrency).toBe(4);
+  });
+});
+
+describe("scan timings", () => {
+  it("records each phase and reports them in one breadcrumb", async () => {
+    siblings(4);
+    const result = await scanLibrary(["webdav:/music"], { enrich: false });
+
+    const timings = result.timings;
+    expect(timings).toBeDefined();
+    for (const phase of ["listingMs", "extractMs", "finishingMs"] as const) {
+      expect(timings?.[phase]).toBeGreaterThanOrEqual(0);
+    }
+    expect(timings?.totalMs).toBeGreaterThanOrEqual(
+      (timings?.listingMs ?? 0) +
+        (timings?.extractMs ?? 0) +
+        (timings?.finishingMs ?? 0) -
+        1,
+    );
+    expect(reportBreadcrumb).toHaveBeenCalledWith(
+      "local-library",
+      "scan finished",
+      expect.objectContaining({
+        source: "webdav",
+        indexed: 4,
+        extractConcurrency: 4,
+        totalMs: timings?.totalMs,
+      }),
+    );
+  });
+
+  it("still records timings for a scan stopped during listing", async () => {
+    siblings(4);
+    const controller = createScanController();
+    controller.cancel();
+    const result = await scanLibrary(["webdav:/music"], {
+      enrich: false,
+      controller,
+    });
+    expect(result.cancelled).toBe(true);
+    expect(result.timings?.extractMs).toBe(0);
+    expect(reportBreadcrumb).toHaveBeenCalledWith(
+      "local-library",
+      "scan finished",
+      expect.objectContaining({ cancelled: true }),
+    );
   });
 });

@@ -1,5 +1,6 @@
 package expo.modules.audiometadata
 
+import android.content.res.AssetFileDescriptor
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
@@ -8,6 +9,10 @@ import expo.modules.kotlin.Promise
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import java.io.File
+import java.io.FileInputStream
+import java.io.RandomAccessFile
+import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 import java.security.MessageDigest
 import java.util.concurrent.Executors
 
@@ -28,10 +33,10 @@ class AudioMetadataModule : Module() {
 
     AsyncFunction("getAudioMetadata") {
       uri: String, includeArtwork: Boolean, artworkDir: String?,
-      headers: Map<String, String>?, promise: Promise ->
+      headers: Map<String, String>?, readTagHead: Boolean, promise: Promise ->
       executor.execute {
         try {
-          promise.resolve(extract(uri, includeArtwork, artworkDir, headers))
+          promise.resolve(extract(uri, includeArtwork, artworkDir, headers, readTagHead))
         } catch (e: Exception) {
           promise.reject("ERR_AUDIO_METADATA", e.message ?: "Extraction failed", e)
         }
@@ -48,12 +53,23 @@ class AudioMetadataModule : Module() {
     includeArtwork: Boolean,
     artworkDir: String?,
     headers: Map<String, String>?,
+    readTagHead: Boolean,
   ): Map<String, Any?> {
     val retriever = MediaMetadataRetriever()
+    var asset: AssetFileDescriptor? = null
     try {
       val parsed = Uri.parse(uri)
+      var head: TagHead? = null
       when (parsed.scheme) {
-        null, "file" -> retriever.setDataSource(parsed.path ?: uri)
+        null, "file" -> {
+          val path = parsed.path ?: uri
+          if (readTagHead) {
+            head = runCatching {
+              RandomAccessFile(path, "r").use { readHead(it.channel, 0L, -1L) }
+            }.getOrNull()
+          }
+          retriever.setDataSource(path)
+        }
         // A network file share (WebDAV, or SMB via its loopback bridge) is read
         // over HTTP. The ContentResolver overload below cannot open one, so it
         // needs the URL+headers overload — which is also the only way to carry
@@ -62,11 +78,37 @@ class AudioMetadataModule : Module() {
         else -> {
           val context = appContext.reactContext
             ?: throw RuntimeException("AudioMetadata: no React context available")
-          retriever.setDataSource(context, parsed)
+          // What setDataSource(context, uri) does internally, opened here so the
+          // tag region below is read off the same descriptor. Each open of a SAF
+          // document is a Binder round trip to its provider, and doing the second
+          // one from JS blocked the JS thread for most of a scan (issue #211).
+          val afd = context.contentResolver.openAssetFileDescriptor(parsed, "r")
+            ?: throw RuntimeException("AudioMetadata: no descriptor for \"$uri\"")
+          asset = afd
+          if (readTagHead) {
+            // Not closed: the descriptor is the asset's, and closing this
+            // stream would close it under the retriever below.
+            head = runCatching {
+              readHead(
+                FileInputStream(afd.fileDescriptor).channel,
+                afd.startOffset,
+                afd.declaredLength,
+              )
+            }.getOrNull()
+          }
+          if (afd.declaredLength < 0) {
+            retriever.setDataSource(afd.fileDescriptor)
+          } else {
+            retriever.setDataSource(afd.fileDescriptor, afd.startOffset, afd.declaredLength)
+          }
         }
       }
 
       val result = HashMap<String, Any?>()
+      head?.let {
+        result["tagHead"] = it.bytes
+        result["tagHeadIsWholeFile"] = it.isWholeFile
+      }
 
       fun raw(key: Int): String? =
         retriever.extractMetadata(key)?.takeIf { it.isNotBlank() }
@@ -132,11 +174,12 @@ class AudioMetadataModule : Module() {
       )
     } finally {
       retriever.release()
+      runCatching { asset?.close() }
     }
   }
 
   private companion object {
-    // The JS side bounds concurrency per file source (4 on device, 6 for SMB,
+    // The JS side bounds concurrency per file source (8 on device, 6 for SMB,
     // 12 for WebDAV); this only has to be wide enough not to become the new
     // bottleneck under the largest of them.
     const val EXTRACT_THREADS = 12
@@ -194,4 +237,49 @@ private fun splitNumber(value: String): Pair<Int?, Int?> {
   val n = parts.getOrNull(0)?.trim()?.toIntOrNull()
   val total = parts.getOrNull(1)?.trim()?.toIntOrNull()
   return n to total
+}
+
+// Must equal MAX_TAG_BYTES and FLAC_WINDOW_BYTES in rawTags.ts. A mismatch only
+// costs the JS parser a fallback read past the head, never a result.
+private const val MAX_TAG_BYTES = 4 * 1024 * 1024
+private const val FLAC_WINDOW_BYTES = 64 * 1024
+
+/** The front of a file, as much as readRawTags asks for on its first reads. */
+private class TagHead(val bytes: ByteArray, val isWholeFile: Boolean)
+
+/**
+ * Read the region readRawTags parses: the whole ID3v2 tag, or FLAC's opening
+ * window. Positional reads only, so the descriptor's offset — which the
+ * retriever may share — never moves. [start] and [declared] locate this file
+ * within the channel, since an asset descriptor can be a window onto a larger
+ * one; [declared] is negative when the length is unknown. Callers treat a throw
+ * as "no head", and the JS side then opens the file itself as before.
+ */
+private fun readHead(channel: FileChannel, start: Long, declared: Long): TagHead {
+  fun read(length: Int): ByteArray {
+    val limit = if (declared >= 0) minOf(length.toLong(), declared).toInt() else length
+    val buffer = ByteBuffer.allocate(maxOf(limit, 0))
+    while (buffer.hasRemaining()) {
+      if (channel.read(buffer, start + buffer.position()) < 0) break
+    }
+    return buffer.array().copyOf(buffer.position())
+  }
+
+  val header = read(10)
+  val wanted = when {
+    header.size >= 10 && header[0] == 'I'.code.toByte() &&
+      header[1] == 'D'.code.toByte() && header[2] == '3'.code.toByte() -> {
+      val size = ((header[6].toInt() and 0x7f) shl 21) or
+        ((header[7].toInt() and 0x7f) shl 14) or
+        ((header[8].toInt() and 0x7f) shl 7) or
+        (header[9].toInt() and 0x7f)
+      if (size in 1..MAX_TAG_BYTES) 10 + size else 10
+    }
+    header.size >= 4 && header[0] == 'f'.code.toByte() &&
+      header[1] == 'L'.code.toByte() && header[2] == 'a'.code.toByte() &&
+      header[3] == 'C'.code.toByte() -> FLAC_WINDOW_BYTES
+    else -> 10
+  }
+  val bytes = if (wanted <= header.size) header else read(wanted)
+  return TagHead(bytes, bytes.size < wanted)
 }

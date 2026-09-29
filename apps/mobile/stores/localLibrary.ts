@@ -179,7 +179,11 @@ const useLocalLibraryBase = create<LocalLibraryStore>()(
           // instant `lastScanAt` is stamped — it never gets to say anything.
           // One-shot and ephemeral: the warning is about what just happened, and
           // re-announcing it on every cold start would be noise.
-          incompleteScanNotice: result.incomplete && !silent,
+          //
+          // Keyed on unreadable folders, not `incomplete`: a stopped scan is
+          // incomplete too (so it resumes later), but the user just asked for
+          // that, and the warning's copy is about folders that couldn't be read.
+          incompleteScanNotice: result.unreadable > 0 && !silent,
           // Only a *rise* is news. A library that has always had one `.nomedia`
           // in it shouldn't nag after every scan; a folder that just went
           // missing should be traceable to the marker that took it.

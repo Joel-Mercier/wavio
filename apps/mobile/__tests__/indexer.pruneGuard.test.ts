@@ -15,7 +15,7 @@ const mockDb = {
   getFirstAsync: jest.fn(),
   runAsync: (...args: unknown[]) => {
     mockRun(...args);
-    return Promise.resolve();
+    return Promise.resolve({ changes: 0, lastInsertRowId: 0 });
   },
   withTransactionAsync: (fn: () => Promise<void>) => fn(),
 };
