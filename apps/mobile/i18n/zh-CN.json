@@ -360,7 +360,7 @@
 				"addToPlaylistTitle": "加入歌单",
 				"recentPlaylists": "最近",
 				"allPlaylists": "所有播放列表",
-				"searchPlaylistsPlaceholder": "Search playlists",
+				"searchPlaylistsPlaceholder": "搜索播放列表",
 				"newPlaylist": "新建歌单",
 				"finished": "完成",
 				"duplicateTitle": "已在歌单中",
@@ -1575,6 +1575,30 @@
 						"off": {
 							"label": "关闭",
 							"description": "不同步。队列仅保留在本设备，不会上传至服务器。"
+						}
+					},
+					"mediaControlsLabel": "媒体通知按钮",
+					"mediaControlsDescription": "在媒体通知和锁屏界面中，“上一首”、“播放/暂停”和“下一首”按钮旁边会显示额外的按钮。由于 Android 界面只能容纳两个按钮，因此“收藏”按钮取代了“快进 10 秒”按钮。收音机电台和播客剧集则不会显示该按钮。",
+					"mediaControlsOptions": {
+						"seek": {
+							"label": "向前和向后跳转",
+							"description": "倒带并快进10秒。"
+						},
+						"favoriteAndSeekForward": {
+							"label": "加入收藏和跳过",
+							"description": "将当前曲目添加到收藏夹（或从收藏夹中移除），并快进10秒。"
+						},
+						"seekBackwardAndFavorite": {
+							"label": "返回上一页并添加到收藏夹",
+							"description": "倒退10秒，并将当前歌曲添加到收藏夹（或从收藏夹中移除）。"
+						},
+						"favorite": {
+							"label": "仅收藏",
+							"description": "只有“收藏”按钮，这样就减少了误触按钮的可能性。"
+						},
+						"none": {
+							"label": "无",
+							"description": "仅“上一首”、“播放/暂停”和“下一首”。"
 						}
 					},
 					"waveformSeekbarLabel": "波形寻址条",
