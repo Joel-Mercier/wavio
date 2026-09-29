@@ -366,7 +366,7 @@
 				"addToPlaylistTitle": "Aggiungi alla playlist",
 				"recentPlaylists": "Recenti",
 				"allPlaylists": "Tutte le playlist",
-				"searchPlaylistsPlaceholder": "Search playlists",
+				"searchPlaylistsPlaceholder": "Cerca playlist",
 				"newPlaylist": "Nuova playlist",
 				"finished": "Fine",
 				"duplicateTitle": "Già presente nella playlist",
@@ -1620,6 +1620,30 @@
 						"off": {
 							"label": "Spento",
 							"description": "Non sincronizzare. La tua coda rimane solo su questo dispositivo e non viene mai inviata al server."
+						}
+					},
+					"mediaControlsLabel": "Pulsanti di notifica multimediali",
+					"mediaControlsDescription": "Nella notifica multimediale e nella schermata di blocco vengono visualizzati pulsanti aggiuntivi accanto a “Precedente”, “Riproduci/Pausa” e “Successivo”. Android ha spazio solo per due pulsanti, quindi il pulsante “Preferiti” sostituisce quello per saltare 10 secondi. Nelle stazioni radio e negli episodi dei podcast non viene mai visualizzato.",
+					"mediaControlsOptions": {
+						"seek": {
+							"label": "Vai indietro e avanti",
+							"description": "Riavvolgi e vai avanti di 10 secondi."
+						},
+						"favoriteAndSeekForward": {
+							"label": "Aggiungi ai preferiti e vai avanti",
+							"description": "Aggiungi il brano in riproduzione ai tuoi preferiti (o rimuovilo) e vai avanti di 10 secondi."
+						},
+						"seekBackwardAndFavorite": {
+							"label": "Torna indietro e aggiungi ai preferiti",
+							"description": "Torna indietro di 10 secondi e aggiungi il brano corrente ai preferiti (o rimuovilo)."
+						},
+						"favorite": {
+							"label": "Solo preferiti",
+							"description": "Solo il pulsante dei preferiti: così ci sono meno pulsanti che si possono premere per sbaglio."
+						},
+						"none": {
+							"label": "Nessuno",
+							"description": "Solo il brano precedente, riproduzione/pausa e il brano successivo."
 						}
 					},
 					"waveformSeekbarLabel": "Barra di ricerca della forma d'onda",
