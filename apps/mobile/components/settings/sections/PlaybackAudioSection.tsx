@@ -2,6 +2,7 @@ import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import * as Application from "expo-application";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Platform } from "react-native";
 import ConfirmActionDialog from "@/components/settings/ConfirmActionDialog";
 import OptionsBottomSheetModal from "@/components/settings/OptionsBottomSheetModal";
 import {
@@ -25,6 +26,7 @@ import { clearWaveformMemory } from "@/services/waveform";
 import { clearWaveforms } from "@/services/waveform/cache";
 import useApp, {
   type CellularStreamFormat,
+  MEDIA_CONTROLS_LAYOUTS,
   type StreamFormat,
 } from "@/stores/app";
 
@@ -81,6 +83,7 @@ export default function PlaybackAudioSection() {
   const bottomSheetReplayGainModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetQueueSyncModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetLyricsSourceModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetMediaControlsModalRef = useRef<BottomSheetModal>(null);
 
   const maxBitRate = useApp((store) => store.maxBitRate);
   const setMaxBitRate = useApp((store) => store.setMaxBitRate);
@@ -112,6 +115,10 @@ export default function PlaybackAudioSection() {
   );
   const showPlayerRating = useApp((store) => store.showPlayerRating);
   const setShowPlayerRating = useApp((store) => store.setShowPlayerRating);
+  const mediaControlsLayout = useApp((store) => store.mediaControlsLayout);
+  const setMediaControlsLayout = useApp(
+    (store) => store.setMediaControlsLayout,
+  );
   const queueSyncPriority = useApp((store) => store.queueSyncPriority);
   const setQueueSyncPriority = useApp((store) => store.setQueueSyncPriority);
   const lyricsSource = useApp((store) => store.lyricsSource);
@@ -189,6 +196,25 @@ export default function PlaybackAudioSection() {
             }))}
             selectedValue={queueSyncPriority}
             onSelect={setQueueSyncPriority}
+            dismissOnSelect
+          />
+          <OptionsBottomSheetModal
+            modalRef={bottomSheetMediaControlsModalRef}
+            header={t("app.settings.playbackSettings.mediaControlsLabel")}
+            headerDescription={t(
+              "app.settings.playbackSettings.mediaControlsDescription",
+            )}
+            options={MEDIA_CONTROLS_LAYOUTS.map((option) => ({
+              value: option,
+              label: t(
+                `app.settings.playbackSettings.mediaControlsOptions.${option}.label`,
+              ),
+              description: t(
+                `app.settings.playbackSettings.mediaControlsOptions.${option}.description`,
+              ),
+            }))}
+            selectedValue={mediaControlsLayout}
+            onSelect={setMediaControlsLayout}
             dismissOnSelect
           />
           <OptionsBottomSheetModal
@@ -357,6 +383,18 @@ export default function PlaybackAudioSection() {
             )}
             value={showPlayerRating}
             onToggle={(value) => setShowPlayerRating(value)}
+          />
+        )}
+        {Platform.OS === "android" && (
+          <SettingsSelectRow
+            label={t("app.settings.playbackSettings.mediaControlsLabel")}
+            description={t(
+              "app.settings.playbackSettings.mediaControlsDescription",
+            )}
+            badgeText={t(
+              `app.settings.playbackSettings.mediaControlsOptions.${mediaControlsLayout}.label`,
+            )}
+            onPress={() => bottomSheetMediaControlsModalRef.current?.present()}
           />
         )}
         {isAudioWaveformAvailable() && (

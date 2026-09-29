@@ -38,6 +38,18 @@ export type TrackCacheCount = (typeof TRACK_CACHE_COUNTS)[number];
 export const TRACK_CACHE_BUDGETS_MB = [250, 500, 1000, 2000] as const;
 export type TrackCacheBudgetMb = (typeof TRACK_CACHE_BUDGETS_MB)[number];
 
+// The optional buttons of the Android media notification, beside previous /
+// play / next. The system only has room for two, so a favorite button always
+// costs one of the 10-second skips.
+export const MEDIA_CONTROLS_LAYOUTS = [
+  "seek",
+  "favoriteAndSeekForward",
+  "seekBackwardAndFavorite",
+  "favorite",
+  "none",
+] as const;
+export type MediaControlsLayout = (typeof MEDIA_CONTROLS_LAYOUTS)[number];
+
 // Genre tag rows shown on the internet radio stations home screen, used when
 // the user hasn't customized them.
 export const DEFAULT_INTERNET_RADIO_FEED_TAGS = ["jazz", "rock", "news"];
@@ -248,6 +260,8 @@ interface AppStore {
   setShowPlayerAudioQuality: (enabled: boolean) => void;
   showPlayerRating: boolean;
   setShowPlayerRating: (enabled: boolean) => void;
+  mediaControlsLayout: MediaControlsLayout;
+  setMediaControlsLayout: (mediaControlsLayout: MediaControlsLayout) => void;
   // See services/playQueueSync.ts.
   queueSyncPriority: "server" | "local" | "off";
   setQueueSyncPriority: (priority: "server" | "local" | "off") => void;
@@ -489,6 +503,10 @@ export const useAppBase = create<AppStore>()(
       showPlayerRating: false,
       setShowPlayerRating: (showPlayerRating: boolean) => {
         set({ showPlayerRating });
+      },
+      mediaControlsLayout: "seek",
+      setMediaControlsLayout: (mediaControlsLayout: MediaControlsLayout) => {
+        set({ mediaControlsLayout });
       },
       queueSyncPriority: "off",
       setQueueSyncPriority: (queueSyncPriority: "server" | "local" | "off") => {

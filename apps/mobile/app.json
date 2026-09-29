@@ -99,6 +99,7 @@
       "./plugins/withAndroidAuto",
       "./plugins/withWidgets",
       "./plugins/withShortcuts",
+      "./plugins/withMediaControlIcons",
       "./plugins/withDependenciesInfo",
       "./plugins/withSslTrust",
       "./plugins/withInstallApkPermission",

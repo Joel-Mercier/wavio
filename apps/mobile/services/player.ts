@@ -7,6 +7,7 @@ import {
 } from "expo-audio";
 import { File } from "expo-file-system";
 import { queryClient } from "@/config/queryClient";
+import { setStarred } from "@/hooks/backend/useMediaAnnotation";
 import { isIndexBacked } from "@/services/backend/dispatch";
 import { scrobble } from "@/services/backend/mediaAnnotation";
 import { isNetworkShareType } from "@/services/backend/serverTraits";
@@ -96,7 +97,11 @@ import {
   touchCachedTrack,
 } from "@/services/trackCache";
 import useActivity from "@/stores/activity";
-import { clampPodcastPlaybackRate, useAppBase } from "@/stores/app";
+import {
+  clampPodcastPlaybackRate,
+  type MediaControlsLayout,
+  useAppBase,
+} from "@/stores/app";
 import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
 import useOffline from "@/stores/offline";
 import usePlaybackNotice from "@/stores/playbackNotice";
@@ -861,6 +866,64 @@ function clearLockScreen(p: AudioPlayer) {
   lockScreenTrackId = null;
 }
 
+type MediaButton = Parameters<AudioPlayer["setMediaButtons"]>[0][number];
+
+const MEDIA_CONTROLS_BUTTONS: Record<MediaControlsLayout, MediaButton[]> = {
+  seek: ["seekBackward", "seekForward"],
+  favoriteAndSeekForward: ["favorite", "seekForward"],
+  seekBackwardAndFavorite: ["seekBackward", "favorite"],
+  favorite: ["favorite"],
+  none: [],
+};
+
+// The favorite the notification button asked for, shown until the star lands
+// in the queue so the heart flips on tap rather than after the round trip.
+let pendingFavorite: { id: string; starred: boolean } | null = null;
+let pushedMediaButtons: string | null = null;
+
+function canFavorite(track: QueueTrack | null): track is QueueTrack {
+  return !!track && !track.isRadio && !isPodcastTrack(track);
+}
+
+function isTrackFavorite(track: QueueTrack): boolean {
+  return pendingFavorite?.id === track.id
+    ? pendingFavorite.starred
+    : !!track.starred;
+}
+
+function syncMediaButtons() {
+  const track = useQueue.getState().getCurrent();
+  const favoritable = canFavorite(track);
+  const buttons = MEDIA_CONTROLS_BUTTONS[
+    useAppBase.getState().mediaControlsLayout
+  ].filter((button) => favoritable || button !== "favorite");
+  const favorite = favoritable && isTrackFavorite(track);
+  const key = `${buttons.join(",")}|${favorite}`;
+  if (key === pushedMediaButtons) return;
+  pushedMediaButtons = key;
+  try {
+    player.setMediaButtons(buttons, favorite);
+  } catch (error) {
+    logSwallowed("setMediaButtons", error);
+  }
+}
+
+async function toggleCurrentTrackFavorite() {
+  const track = useQueue.getState().getCurrent();
+  if (!canFavorite(track) || pendingFavorite?.id === track.id) return;
+  const starred = !track.starred;
+  pendingFavorite = { id: track.id, starred };
+  syncMediaButtons();
+  try {
+    await setStarred(queryClient, { id: track.id, song: track }, starred);
+  } catch (error) {
+    logSwallowed("toggleCurrentTrackFavorite", error);
+  } finally {
+    pendingFavorite = null;
+    syncMediaButtons();
+  }
+}
+
 // Put a track on the OS controls without loading anything locally. The only
 // caller is the remote-playback mirror: a jukebox or renderer owns the audio, so
 // loadTrack (the local path into applyLockScreen) never runs and the controls
@@ -1432,12 +1495,20 @@ remoteListeners.push(
     activeRemoteTarget()?.setVolume?.(volume);
   }),
 );
+remoteListeners.push(
+  player.addListener("remoteFavorite", () => {
+    void toggleCurrentTrackFavorite();
+  }),
+);
 statusListeners.push(
   player.addListener("playbackStatusUpdate", handlePlaybackStatus),
 );
 
 const appUnsub = useAppBase.subscribe((state, prev) => {
   const cur = useQueue.getState().getCurrent();
+  if (state.mediaControlsLayout !== prev.mediaControlsLayout) {
+    syncMediaButtons();
+  }
   if (
     state.replayGainMode !== prev.replayGainMode ||
     state.replayGainPreampDb !== prev.replayGainPreampDb
@@ -1466,7 +1537,9 @@ let hasHydrated = false;
 // auto-play" behaviour as cold-start hydration. This flag tells the next queue
 // subscription firing to load silently.
 let suppressAutoplayOnce = false;
+syncMediaButtons();
 const queueUnsub = useQueue.subscribe((state) => {
+  syncMediaButtons();
   const current =
     state.currentIndex != null ? state.queue[state.currentIndex] : null;
   const id = current?.id ?? null;

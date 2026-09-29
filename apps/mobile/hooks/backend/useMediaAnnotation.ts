@@ -1,4 +1,8 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  type QueryClient,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   scrobble,
   setRating,
@@ -135,33 +139,59 @@ const relayLove = (params: StarParams, loved: boolean) => {
   enqueueLove(params.song.artist, params.song.title, loved);
 };
 
+const requestStar = async (
+  queryClient: QueryClient,
+  params: StarParams,
+  starred: boolean,
+) => {
+  if (!params.id && !params.albumId && !params.artistId) {
+    throw new Error(
+      `${starred ? "star" : "unstar"} requires an id, albumId or artistId`,
+    );
+  }
+  if (!getIsEffectivelyOnline()) {
+    return enqueueOfflineMutation(queryClient, {
+      type: "star",
+      target: toStarTarget(params),
+      starred,
+    });
+  }
+  return starred ? star(params) : unstar(params);
+};
+
+const applyStarResult = (
+  queryClient: QueryClient,
+  data: Awaited<ReturnType<typeof requestStar>>,
+  params: StarParams,
+  starred: boolean,
+) => {
+  relayLove(params, starred);
+  if (isQueuedResult(data)) return;
+  if (params.id && !params.albumId && !params.artistId) {
+    useQueue.getState().updateTrack(params.id, {
+      starred: starred ? new Date().toISOString() : undefined,
+    });
+  }
+  invalidateKeys(queryClient, STARRED_AFFECTED_KEYS);
+};
+
+// For callers outside React, such as the media notification's favorite button.
+export const setStarred = async (
+  queryClient: QueryClient,
+  params: StarParams,
+  starred: boolean,
+) => {
+  const data = await requestStar(queryClient, params, starred);
+  applyStarResult(queryClient, data, params, starred);
+};
+
 export const useStar = () => {
   const queryClient = useQueryClient();
   const query = useMutation({
     networkMode: "always",
-    mutationFn: async (params: StarParams) => {
-      if (!params.id && !params.albumId && !params.artistId) {
-        throw new Error("star requires an id, albumId or artistId");
-      }
-      if (!getIsEffectivelyOnline()) {
-        return enqueueOfflineMutation(queryClient, {
-          type: "star",
-          target: toStarTarget(params),
-          starred: true,
-        });
-      }
-      return star(params);
-    },
-    onSuccess: (data, params) => {
-      relayLove(params, true);
-      if (isQueuedResult(data)) return;
-      if (params.id && !params.albumId && !params.artistId) {
-        useQueue
-          .getState()
-          .updateTrack(params.id, { starred: new Date().toISOString() });
-      }
-      invalidateKeys(queryClient, STARRED_AFFECTED_KEYS);
-    },
+    mutationFn: (params: StarParams) => requestStar(queryClient, params, true),
+    onSuccess: (data, params) =>
+      applyStarResult(queryClient, data, params, true),
   });
 
   return query;
@@ -171,27 +201,9 @@ export const useUnstar = () => {
   const queryClient = useQueryClient();
   const query = useMutation({
     networkMode: "always",
-    mutationFn: async (params: StarParams) => {
-      if (!params.id && !params.albumId && !params.artistId) {
-        throw new Error("unstar requires an id, albumId or artistId");
-      }
-      if (!getIsEffectivelyOnline()) {
-        return enqueueOfflineMutation(queryClient, {
-          type: "star",
-          target: toStarTarget(params),
-          starred: false,
-        });
-      }
-      return unstar(params);
-    },
-    onSuccess: (data, params) => {
-      relayLove(params, false);
-      if (isQueuedResult(data)) return;
-      if (params.id && !params.albumId && !params.artistId) {
-        useQueue.getState().updateTrack(params.id, { starred: undefined });
-      }
-      invalidateKeys(queryClient, STARRED_AFFECTED_KEYS);
-    },
+    mutationFn: (params: StarParams) => requestStar(queryClient, params, false),
+    onSuccess: (data, params) =>
+      applyStarResult(queryClient, data, params, false),
   });
 
   return query;
