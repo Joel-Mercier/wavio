@@ -366,7 +366,7 @@
 				"addToPlaylistTitle": "Ajouter à la playlist",
 				"recentPlaylists": "Récent",
 				"allPlaylists": "Toutes les playlists",
-				"searchPlaylistsPlaceholder": "Search playlists",
+				"searchPlaylistsPlaceholder": "Rechercher des playlists",
 				"newPlaylist": "Nouvelle playlist",
 				"finished": "Terminé",
 				"duplicateTitle": "Déjà dans la playlist",
@@ -1620,6 +1620,30 @@
 						"off": {
 							"label": "Désactivée",
 							"description": "Aucune synchronisation. Votre file reste uniquement sur cet appareil et n'est jamais envoyée au serveur."
+						}
+					},
+					"mediaControlsLabel": "Boutons de la notification multimédia",
+					"mediaControlsDescription": "Des boutons supplémentaires s'affichent à côté des boutons « Précédent », « Lecture/Pause » et « Suivant » dans la notification multimédia et sur l'écran de verrouillage. Android ne pouvant en afficher que deux, le bouton « Favoris » remplace le bouton permettant d'avancer de 10 secondes. Les stations de radio et les épisodes de podcasts ne l'affichent jamais.",
+					"mediaControlsOptions": {
+						"seek": {
+							"label": "Aller en arrière et avancer",
+							"description": "Rembobiner et avancer rapidement 10 secondes."
+						},
+						"favoriteAndSeekForward": {
+							"label": "Ajouter aux favoris et passer à la suite",
+							"description": "Ajouter aux favoris et avancer rapidement de 10 secondes."
+						},
+						"seekBackwardAndFavorite": {
+							"label": "Revenir en arrière et ajouter aux favoris",
+							"description": "Rembobiner rapidement de 10 secondes et ajouter aux favoris."
+						},
+						"favorite": {
+							"label": "Ajouter aux favoris uniquement",
+							"description": "Juste le bouton « Favoris », ce qui réduit le risque d'appuyer accidentellement sur d'autres boutons."
+						},
+						"none": {
+							"label": "Aucun",
+							"description": "Uniquement « Précédent », « Lecture/Pause » et « Suivant »."
 						}
 					},
 					"waveformSeekbarLabel": "Barre de progression en forme d'onde",
