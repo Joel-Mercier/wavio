@@ -4,10 +4,23 @@ import { requireOptionalNativeModule } from "expo";
 export type UpnpDevice = {
   /** The device's UDN, or its address when it did not give one. Stable across scans. */
   id: string;
+  /** User-facing room/zone name (Sonos) or device name. */
   name: string;
+  /** For debugging/display: the hardware-level friendly name. */
+  friendlyName?: string;
+  /** Sonos-specific zone name (if available). */
+  zoneName?: string;
+  /** Sonos room name from device description. */
+  roomName?: string;
+  /** Device model name. */
+  modelName?: string;
+  /** Device manufacturer. */
+  manufacturer?: string;
   address: string;
   /** The device description URL, which is how a session finds it again after a restart. */
   location: string;
+  /** True if this is a Sonos player. */
+  isSonos?: boolean;
   /** A guess from the device's name, used only to pick an icon. */
   isTV: boolean;
 };
@@ -81,6 +94,12 @@ export type UpnpPauseResult = {
   stoppedInstead: boolean;
 };
 
+export type UpnpMultiConnectResult = {
+  ok: boolean;
+  deviceIds: string[];
+  coordinatorId?: string;
+};
+
 type UpnpCastNativeModule = {
   /**
    * Searches every local network for this long. Each renderer is reported as a
@@ -103,7 +122,13 @@ type UpnpCastNativeModule = {
   describe(deviceId: string, location: string): Promise<UpnpDevice | null>;
   /** What a known renderer is doing, asked without becoming its controller. */
   probe(deviceId: string): Promise<UpnpState | null>;
+  /** Connect to a single device (existing single-device API). */
   connect(deviceId: string): Promise<boolean>;
+  /**
+   * Connect to multiple Sonos devices as a synchronized group.
+   * All supplied devices must be Sonos players.
+   */
+  connectMultiple(deviceIds: string[]): Promise<UpnpMultiConnectResult>;
   /**
    * Hands a track over: stops the renderer, sets the URI, starts or parks it, then
    * checks what it is actually holding. Not resolved until the renderer has settled,
@@ -127,6 +152,7 @@ type UpnpCastNativeModule = {
   pollNow(): Promise<void>;
   /** 0..100, the range UPnP uses. */
   setVolume(volume: number): Promise<boolean>;
+  setDeviceVolume(deviceId: string, percent: number): Promise<boolean>;
   getVolume(): Promise<number | null>;
   disconnect(): Promise<boolean>;
   addListener(
@@ -140,7 +166,7 @@ type UpnpCastNativeModule = {
   /** The renderer stopped answering for good; polling has already stopped. */
   addListener(
     event: "lost",
-    listener: (event: { deviceId: string }) => void,
+    listener: (event: { deviceId: string } | { deviceIds: string[]; coordinatorId?: string }) => void,
   ): { remove: () => void };
 };
 

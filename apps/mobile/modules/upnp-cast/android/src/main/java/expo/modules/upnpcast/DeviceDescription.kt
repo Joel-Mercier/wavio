@@ -6,70 +6,116 @@ import java.io.StringReader
 import java.net.URL
 
 /**
- * A device's own account of itself, fetched from the LOCATION that discovery gave us.
- *
- * Parsed rather than pattern-matched because the interesting part — where to send
- * commands — is a path the manufacturer chose freely, and every device puts its
- * services somewhere different. Guessing `/AVTransport/control` is how a renderer
- * that answers everything else turns out to be unable to play anything.
+ * A device's own account of itself, fetched from the LOCATION supplied by SSDP.
  */
 class DeviceDescription private constructor(
   val friendlyName: String?,
+  val roomName: String?,
   val modelName: String?,
   val manufacturer: String?,
+  val deviceType: String?,
   val udn: String?,
   private val urlBase: String?,
   private val location: String,
   private val services: List<Service>
 ) {
-  data class Service(val type: String, val controlUrl: String)
+
+  data class Service(
+    val type: String,
+    val controlUrl: String
+  )
 
   /**
-   * Where to send actions for a service, absolute.
-   *
-   * Matched on a fragment of the service type rather than the whole string so a
-   * device advertising AVTransport:2 still resolves. Nesting is deliberately
-   * ignored: on Sonos the AVTransport belongs to a MediaRenderer buried inside a
-   * ZonePlayer, and which ancestor it hangs from changes nothing about where the
-   * commands go.
+   * Returns an absolute control URL for a UPnP service.
    */
   fun controlUrl(serviceType: String): String? {
-    val service = services.firstOrNull { it.type.contains(serviceType, ignoreCase = true) }
-      ?: return null
-    if (service.controlUrl.isEmpty()) return null
-    // Relative to <URLBase> when the device gives one, and to wherever the
-    // description itself was fetched from otherwise.
-    val base = urlBase?.takeIf { it.isNotEmpty() } ?: location
-    return runCatching { URL(URL(base), service.controlUrl).toString() }.getOrNull()
+    val service = services.firstOrNull {
+      it.type.contains(
+        serviceType,
+        ignoreCase = true
+      )
+    } ?: return null
+
+    if (service.controlUrl.isEmpty()) {
+      return null
+    }
+
+    val base = urlBase
+      ?.takeIf { it.isNotEmpty() }
+      ?: location
+
+    return runCatching {
+      URL(
+        URL(base),
+        service.controlUrl
+      ).toString()
+    }.getOrNull()
   }
 
-  val isRenderer: Boolean get() = controlUrl(Services.AV_TRANSPORT) != null
-
-  val isSonos: Boolean
-    get() = manufacturer?.contains("Sonos", ignoreCase = true) == true ||
-      modelName?.contains("Sonos", ignoreCase = true) == true
+  val isRenderer: Boolean
+    get() = controlUrl(Services.AV_TRANSPORT) != null
 
   /**
-   * A guess, used only to pick an icon.
-   *
-   * There is no field for this: a TV and a speaker both call themselves a
-   * MediaRenderer. The name is the only hint that costs nothing, and being wrong
-   * shows the wrong glyph and nothing worse.
+   * Sonos devices normally identify themselves through the manufacturer,
+   * but ZonePlayer device types are also a reliable fallback.
+   */
+  val isSonos: Boolean
+    get() =
+      manufacturer?.contains(
+        "Sonos",
+        ignoreCase = true
+      ) == true ||
+      modelName?.contains(
+        "Sonos",
+        ignoreCase = true
+      ) == true ||
+      deviceType?.contains(
+        "ZonePlayer",
+        ignoreCase = true
+      ) == true
+
+  /**
+   * A heuristic used only for choosing the UI icon.
    */
   val isTv: Boolean
-    get() = listOfNotNull(friendlyName, modelName).any { name ->
-      TV_HINTS.any { name.contains(it, ignoreCase = true) }
+    get() = listOfNotNull(
+      friendlyName,
+      modelName,
+      manufacturer
+    ).any { name ->
+      TV_HINTS.any {
+        name.contains(
+          it,
+          ignoreCase = true
+        )
+      }
     }
 
   companion object {
-    private val TV_HINTS = listOf("TV", "Television", "Bravia", "Chromecast", "Roku", "Fire", "Kodi")
 
-    fun parse(xml: String, location: String): DeviceDescription? {
+    private val TV_HINTS = listOf(
+      "TV",
+      "Television",
+      "Bravia",
+      "Chromecast",
+      "Roku",
+      "Fire",
+      "Kodi"
+    )
+
+    fun parse(
+      xml: String,
+      location: String
+    ): DeviceDescription? {
+
       var friendlyName: String? = null
+      var roomName: String? = null
       var modelName: String? = null
       var manufacturer: String? = null
+      var deviceType: String? = null
       var udn: String? = null
       var urlBase: String? = null
+
       val services = mutableListOf<Service>()
 
       var serviceType: String? = null
@@ -78,45 +124,138 @@ class DeviceDescription private constructor(
 
       try {
         val parser = Xml.newPullParser()
-        parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
-        parser.setInput(StringReader(xml))
+
+        parser.setFeature(
+          XmlPullParser.FEATURE_PROCESS_NAMESPACES,
+          false
+        )
+
+        parser.setInput(
+          StringReader(xml)
+        )
+
         var event = parser.eventType
+
         while (event != XmlPullParser.END_DOCUMENT) {
+
           if (event == XmlPullParser.START_TAG) {
-            when (parser.name.substringAfter(':').lowercase()) {
+
+            when (
+              parser.name
+                .substringAfter(':')
+                .lowercase()
+            ) {
+
               "service" -> {
                 inService = true
                 serviceType = null
                 controlUrl = null
               }
-              // The first of each belongs to the root device; nested devices
-              // repeat them and would otherwise overwrite the name the user picked.
-              "friendlyname" -> friendlyName = friendlyName ?: parser.nextText().trim()
-              "modelname" -> modelName = modelName ?: parser.nextText().trim()
-              "manufacturer" -> manufacturer = manufacturer ?: parser.nextText().trim()
-              "udn" -> udn = udn ?: parser.nextText().trim().removePrefix("uuid:")
-              "urlbase" -> urlBase = urlBase ?: parser.nextText().trim()
-              "servicetype" -> if (inService) serviceType = parser.nextText().trim()
-              "controlurl" -> if (inService) controlUrl = parser.nextText().trim()
+
+              "friendlyname" -> {
+                friendlyName =
+                  friendlyName
+                    ?: parser.nextText().trim()
+              }
+
+              "roomname" -> {
+                roomName =
+                  roomName
+                    ?: parser.nextText().trim()
+              }
+
+              "modelname" -> {
+                modelName =
+                  modelName
+                    ?: parser.nextText().trim()
+              }
+
+              "manufacturer" -> {
+                manufacturer =
+                  manufacturer
+                    ?: parser.nextText().trim()
+              }
+
+              "devicetype" -> {
+                deviceType =
+                  deviceType
+                    ?: parser.nextText().trim()
+              }
+
+              "udn" -> {
+                udn =
+                  udn
+                    ?: parser.nextText()
+                      .trim()
+                      .removePrefix("uuid:")
+              }
+
+              "urlbase" -> {
+                urlBase =
+                  urlBase
+                    ?: parser.nextText().trim()
+              }
+
+              "servicetype" -> {
+                if (inService) {
+                  serviceType =
+                    parser.nextText().trim()
+                }
+              }
+
+              "controlurl" -> {
+                if (inService) {
+                  controlUrl =
+                    parser.nextText().trim()
+                }
+              }
             }
-          } else if (event == XmlPullParser.END_TAG &&
-            parser.name.substringAfter(':').equals("service", ignoreCase = true)
+
+          } else if (
+            event == XmlPullParser.END_TAG &&
+            parser.name
+              .substringAfter(':')
+              .equals(
+                "service",
+                ignoreCase = true
+              )
           ) {
+
             inService = false
+
             val type = serviceType
             val url = controlUrl
-            if (type != null && url != null) services.add(Service(type, url))
+
+            if (
+              type != null &&
+              url != null
+            ) {
+              services.add(
+                Service(
+                  type,
+                  url
+                )
+              )
+            }
           }
+
           event = parser.next()
         }
+
       } catch (_: Exception) {
-        // A description we cannot parse is a device we cannot drive: there is
-        // nowhere to send a command without it.
         return null
       }
 
       return DeviceDescription(
-        friendlyName, modelName, manufacturer, udn, urlBase, location, services
+        friendlyName = friendlyName,
+        roomName = roomName,
+        modelName = modelName,
+        manufacturer = manufacturer,
+        deviceType = deviceType,
+        udn = udn,
+        urlBase = urlBase,
+        location = location,
+        services = services
       )
     }
   }
