@@ -49,6 +49,23 @@ export function childToTrack(child: Child) {
     track: child.track,
     musicBrainzId: child.musicBrainzId,
     replayGain: child.replayGain,
+    // Read only by the track info screen, which the player opens with this
+    // queue track rather than the Child. playCount and played are a snapshot
+    // from when the track was queued; nothing updates them afterwards.
+    path: child.path,
+    discNumber: child.discNumber,
+    year: child.year,
+    genres: child.genres,
+    groupings: child.groupings,
+    displayComposer: child.displayComposer,
+    works: child.works,
+    movements: child.movements,
+    moods: child.moods,
+    bpm: child.bpm,
+    comment: child.comment,
+    channelCount: child.channelCount,
+    playCount: child.playCount,
+    played: child.played,
     // Add offline indicator
     isOffline: !!offlineTrack,
   };
