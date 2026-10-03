@@ -43,4 +43,62 @@ describe("childToTrack", () => {
     // exact branch is supposed to be the exception to.
     expect(childToTrack(child()).size).toBeUndefined();
   });
+
+  // The player hands TrackInfoModal the queue track, so a field dropped here
+  // renders as an empty row there while the same track opened from a list
+  // shows it.
+  test("carries everything the track info screen reads", () => {
+    const info: Partial<Child> = {
+      path: "Artist/Album/01 - Title.flac",
+      artist: "Artist",
+      artists: [{ id: "ar1", name: "Artist" }],
+      album: "Album",
+      discNumber: 2,
+      track: 1,
+      year: 1997,
+      genre: "Rock",
+      genres: [{ name: "Rock" }, { name: "Alternative" }],
+      groupings: "Grouping",
+      displayComposer: "Composer",
+      works: [{ name: "Work" }],
+      movements: [{ name: "Movement", number: 1 }],
+      moods: ["Calm"],
+      bpm: 120,
+      comment: "Comment",
+      duration: 200,
+      suffix: "flac",
+      bitRate: 1016,
+      samplingRate: 44_100,
+      channelCount: 2,
+      size: 41_943_040,
+      starred: new Date("2026-01-01T00:00:00Z"),
+      playCount: 7,
+      played: new Date("2026-02-01T00:00:00Z"),
+      replayGain: { trackPeak: 0.98, albumPeak: 1 },
+    };
+
+    expect(childToTrack(child(info))).toMatchObject(info);
+  });
+
+  test("leaves the info fields undefined when the server omits them", () => {
+    const track = childToTrack(child());
+    for (const field of [
+      "path",
+      "discNumber",
+      "year",
+      "genres",
+      "groupings",
+      "displayComposer",
+      "works",
+      "movements",
+      "moods",
+      "bpm",
+      "comment",
+      "channelCount",
+      "playCount",
+      "played",
+    ] as const) {
+      expect(track[field]).toBeUndefined();
+    }
+  });
 });
