@@ -2282,7 +2282,7 @@
 				"advancedSettings": "Расширенные настройки",
 				"fallbackUrlHelp": "Используется, если основной URL недоступен. Должен указывать на тот же сервер.",
 				"plainPasswordAuth": "Legacy password authentication",
-				"plainPasswordAuthHelp": "Sends your password with every request instead of a token. Only enable this if signing in works but the app keeps signing you out.",
+				"plainPasswordAuthHelp": "Отправляет ваш пароль с каждым запросом вместо токена. Используйте только если вход в систему проходит, но приложение постоянно вас разлогинивает.",
 				"cancel": "Отмена",
 				"close": "Закрыть",
 				"create": "Создать",
