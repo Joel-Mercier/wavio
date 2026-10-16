@@ -3,7 +3,7 @@
 		"homeTitle": "Wavio. Your music, your player, your way.",
 		"homeDescription": "A open-source Android music player for Navidrome, Jellyfin and OpenSubsonic servers or a local library. No ads, no tracking, fully offline-ready.",
 		"privacyTitle": "Privacy Policy. Wavio",
-		"privacyDescription": "Wavio runs entirely on your device and talks only to the music server and the third party services you configure. We don't collect, sell, or share your data."
+		"privacyDescription": "O Wavio é executado inteiramente no seu dispositivo e se comunica apenas com o servidor de música e com os serviços de terceiros que você configurar. Não coletamos, vendemos nem compartilhamos seus dados."
 	},
 	"nav": {
 		"features": "Features",
@@ -26,14 +26,14 @@
 		"lead": "A Android music player for Navidrome, Jellyfin and OpenSubsonic servers or a local library. Built for people who own their library and want it to feel like home."
 	},
 	"cta": {
-		"getItOn": "GET IT ON",
+		"getItOn": "VAI LÁ!",
 		"googlePlay": "Google Play",
-		"githubRelease": "Get it on GitHub"
+		"githubRelease": "Baixe no GitHub"
 	},
 	"versions": {
 		"github": "GitHub",
 		"playStore": "Play Store",
-		"inReview": "In review"
+		"inReview": "Em resumo"
 	},
 	"highlightsLabel": "What you get",
 	"highlights": [
@@ -112,42 +112,42 @@
 		}
 	},
 	"integrations": {
-		"tag": "Plugs into",
-		"headingPre": "Bring the rest of",
-		"headingEm": "your rack.",
-		"sub": "Wavio connects to the services you already run. Your tags, your listens, your downloads and your recommendations, all handled without leaving the app.",
+		"tag": "Conecta-se a",
+		"headingPre": "Traga o restante de",
+		"headingEm": "seu rack.",
+		"sub": "O Wavio se conecta aos serviços que você já utiliza. Suas tags, suas playlists, seus downloads e suas recomendações: tudo isso é gerenciado sem precisar sair do aplicativo.",
 		"items": {
 			"musicbrainz": {
-				"role": "Metadata",
-				"desc": "Fix the tags on a local album without leaving the app. Review every change before it is written to disk, or set a confidence threshold and let Wavio apply the ones it is sure about."
+				"role": "Metadados",
+				"desc": "Corrija as tags de um álbum local sem sair do aplicativo. Revise todas as alterações antes que sejam gravadas no disco ou defina um limite de confiança e deixe que o Wavio aplique apenas as alterações das quais tem certeza."
 			},
 			"listenbrainz": {
-				"role": "Listening history",
-				"desc": "Scrobble what you play, then get it back as listening stats and as the daily jams, weekly jams and weekly exploration playlists built from them."
+				"role": "Histórico de reprodução",
+				"desc": "Registre o que você ouvir e, em seguida, veja os resultados na forma de estatísticas de audição e nas playlists “Jams do dia”, “Jams da semana” e “Exploração da semana”, criadas a partir desses dados."
 			},
 			"lastfm": {
-				"role": "Listening history",
-				"desc": "Scrobble every play and read your own charts without leaving the app. Loved tracks stay in step with your favourites, and similar artists turn into recommendations of what to listen to next."
+				"role": "Histórico de reprodução",
+				"desc": "Registre cada reprodução e consulte suas próprias paradas sem sair do aplicativo. As faixas que você curtiu ficam na lista de favoritos, e artistas semelhantes se transformam em sugestões do que ouvir a seguir."
 			},
 			"lidarr": {
 				"role": "Downloads",
-				"desc": "Search for an album and send it to Lidarr from the app. Follow the download in the Downloaders screen and play it once it lands in your library."
+				"desc": "Procure um álbum e envie-o para o Lidarr pelo aplicativo. Acompanhe o download na tela “Downloaders” e reproduza-o assim que ele for adicionado à sua biblioteca."
 			},
 			"soulsync": {
 				"role": "Downloads",
-				"desc": "Pull individual tracks straight into your music library, with live progress and a full download history alongside your other downloaders."
+				"desc": "Adicione faixas individuais diretamente à sua biblioteca de músicas, com acompanhamento em tempo real do andamento do download e um histórico completo de downloads, junto com seus outros programas de download."
 			},
 			"tidarr": {
 				"role": "Downloads",
-				"desc": "Browse the Tidal catalogue through your Tidarr instance, then queue a track, an album or a whole discography and watch it download."
+				"desc": "Navegue pelo catálogo do Tidal através da sua instância do Tidarr, coloque uma faixa, um álbum ou uma discografia inteira na fila e acompanhe o download."
 			},
 			"audiomuse-ai": {
-				"role": "Recommendations",
-				"desc": "Sonic similarity across your own library. Describe a mood and get a playlist, build a fingerprint from what you play, or start at one song and follow where it leads."
+				"role": "Recomendações",
+				"desc": "Semelhanças sonoras em sua própria biblioteca. Descreva um clima e receba uma lista de reprodução, crie uma “impressão digital” com base no que você ouve ou comece por uma música e veja aonde ela te leva."
 			},
 			"octo-fiesta": {
 				"role": "Streaming",
-				"desc": "Play a song your server does not have. Octo-Fiesta fetches it on the fly through your Navidrome or OpenSubsonic library, so the gap fills itself in."
+				"desc": "Toque uma música que não esteja no seu servidor. O Octo-Fiesta a busca na hora, por meio da sua biblioteca do Navidrome ou do OpenSubsonic, e assim a lacuna é preenchida automaticamente."
 			}
 		}
 	},
@@ -165,7 +165,7 @@
 		"tagline": "A open-source music player for Android. Compatible with Navidrome, Jellyfin and OpenSubsonic or a local library.",
 		"product": "Product",
 		"features": "Features",
-		"integrations": "Integrations",
+		"integrations": "Integrações",
 		"download": "Download",
 		"changelog": "Changelog",
 		"openSource": "Open Source",
@@ -179,10 +179,10 @@
 		"back": "Back to home",
 		"titlePre": "Privacy, the",
 		"titleEm": "boring kind.",
-		"updated": "Last updated September 1, 2026",
-		"readTime": "6 minute read",
+		"updated": "Última atualização em 1º de setembro de 2026",
+		"readTime": "Leitura de 6 minutos",
 		"summaryLabel": "In one sentence",
-		"summary": "Wavio runs entirely on your device and talks only to the music server and the third party services you configure. We don't collect, sell, or share your data, because we don't have it.",
+		"summary": "O Wavio é executado inteiramente no seu dispositivo e se comunica apenas com o servidor de música e com os serviços de terceiros que você configurar. Não coletamos, vendemos nem compartilhamos seus dados, pois não os possuímos.",
 		"sections": [
 			{
 				"num": "01",
@@ -197,27 +197,27 @@
 			{
 				"num": "03",
 				"title": "What stays on your device",
-				"body": "<p>To work as a music player, Wavio stores the following locally, on your phone only:</p>\n\t\t\t\t\t<ul>\n\t\t\t\t\t\t<li>Server connection details (URL, username, and an encrypted password or token) for each server you add.</li>\n\t\t\t\t\t\t<li>Your playback queue, recently played and recently searched items, sleep timer and equalizer settings, and other app preferences.</li>\n\t\t\t\t\t\t<li>Tracks you choose to download for offline listening, plus cached album art and metadata fetched from your server.</li>\n\t\t\t\t\t\t\t<li>Podcast API credentials (Taddy) if you enable podcasts.</li>\n\t\t\t\t\t</ul>\n\t\t\t\t\t<p>This information lives in app-private storage, and uninstalling Wavio removes all of it. The one exception is a track you explicitly save to your device: that file is written to your phone's shared Music folder, so it stays there after the app is gone, until you delete it yourself.</p>"
+				"body": "<p>Para funcionar como reprodutor de música, o Wavio armazena os seguintes dados localmente, apenas no seu celular:</p>\n\t\t\t\t\t<ul>\n\t\t\t\t\t\t<li>Detalhes de conexão com o servidor (URL, nome de usuário e uma senha ou token criptografado) para cada servidor que você adicionar.</li>\n\t\t\t\t\t\t<li>Sua fila de reprodução, itens reproduzidos e pesquisados recentemente, configurações do temporizador de desligamento automático e do equalizador, além de outras preferências do aplicativo.</li>\n\t\t\t\t\t\t<li>Faixas que você optar por baixar para ouvir offline, além de capas de álbuns armazenadas em cache e metadados obtidos do seu servidor.</li>\n\t\t\t\t\t\t\t<li>Credenciais da API de podcasts (Taddy), caso você habilite os podcasts.</li>\n\t\t\t\t\t</ul>\n\t\t\t\t\t<p>Essas informações ficam armazenadas no armazenamento privado do aplicativo, e a desinstalação do Wavio remove todas elas. A única exceção é uma faixa que você salvar explicitamente no seu dispositivo: esse arquivo é gravado na pasta “Música” compartilhada do seu celular, portanto permanece lá após a remoção do aplicativo, até que você mesmo o exclua.</p>"
 			},
 			{
 				"num": "04",
 				"title": "What your music server sees",
-				"body": "<p>When you connect Wavio to a Navidrome, Jellyfin, or OpenSubsonic instance, the app communicates directly with that server using the credentials you provide. The server will typically log your IP address, the requests you make, and your listening activity, just like any other client would.</p>\n\t\t\t\t\t<p>Wavio can also play music without any such server. A local library is read straight from your phone's own storage, and nothing about it leaves the device. An SMB or WebDAV network share is contacted directly, on your network, with the credentials you enter, and whatever that machine logs is between you and it.</p>\n\t\t\t\t\t<p>Wavio's contributors do not operate any of these servers or shares and have no access to what they log. Please consult the privacy policy of whatever you connect to.</p>"
+				"body": "<p>Quando você conecta o Wavio a uma instância do Navidrome, Jellyfin ou OpenSubsonic, o aplicativo se comunica diretamente com esse servidor usando as credenciais que você fornece. Normalmente, o servidor registra seu endereço IP, as solicitações que você faz e sua atividade de reprodução, assim como qualquer outro cliente faria.</p>\n\t\t\t\t\t<p>O Wavio também pode reproduzir músicas sem a necessidade de nenhum servidor desse tipo. Uma biblioteca local é lida diretamente do armazenamento do seu celular, e nenhuma informação sai do dispositivo. Um compartilhamento de rede SMB ou WebDAV é acessado diretamente, na sua rede, com as credenciais que você inserir, e tudo o que essa máquina registrar fica entre você e ela.</p>\n\t\t\t\t\t<p>Os colaboradores do Wavio não operam nenhum desses servidores ou compartilhamentos e não têm acesso ao que eles registram. Consulte a política de privacidade de qualquer serviço ao qual você se conectar.</p>"
 			},
 			{
 				"num": "05",
 				"title": "Crash and error reporting",
-				"body": "<p>Production builds of Wavio use <a href=\"https://sentry.io/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Sentry</a> to report crashes and unexpected errors so we can fix them. Each report includes technical context such as a stack trace, the app version, the device model, the Android version, and the IP address that delivered the report.</p>\n\t\t\t\t\t\t<p>Reports carry one identifier: a one-way hash of your username and Wavio's internal id for that server, so related reports can be grouped and two of your servers told apart. It cannot be reversed, never includes the server's address, and there is no other identifier — no name, no email, no advertising or device id. We do not track which screens you visit, do not log what you listen to, and do not build a profile of you. Reports are used only to diagnose bugs and are retained according to <a href=\"https://sentry.io/privacy/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Sentry's data retention policy</a>.</p>"
+				"body": "<p>As versões de produção do Wavio utilizam <a href=\"https://sentry.io/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">o Sentry</a> para relatar falhas e erros inesperados, para que possamos corrigi-los. Cada relatório inclui informações técnicas, como um rastreamento de pilha, a versão do aplicativo, o modelo do dispositivo, a versão do Android e o endereço IP que enviou o relatório.</p>\n\t\t\t\t\t\t<p>Os relatórios contêm um identificador: um hash unidirecional do seu nome de usuário e do ID interno do Wavio para aquele servidor, para que relatórios relacionados possam ser agrupados e dois de seus servidores possam ser diferenciados. Esse hash não pode ser revertido, nunca inclui o endereço do servidor e não há nenhum outro identificador — nem nome, nem e-mail, nem ID de publicidade ou de dispositivo. Não rastreamos quais telas você visita, não registramos o que você ouve e não criamos um perfil seu. Os relatórios são usados apenas para diagnosticar bugs e são retidos de acordo com <a href=\"https://sentry.io/privacy/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">a política de retenção de dados do Sentry</a>.</p>"
 			},
 			{
 				"num": "06",
 				"title": "Android permissions",
-				"body": "<p>Wavio requests only the permissions it needs to play music:</p>\n\t\t\t\t\t<ul>\n\t\t\t\t\t\t<li><strong>Internet, network and Wi-Fi state</strong> to reach your music server and the third-party services listed below, and to tell “you are offline” apart from “your server is unreachable”.</li>\n\t\t\t\t\t\t<li><strong>Foreground service and media playback</strong> to keep audio playing when the screen is off.</li>\n\t\t\t\t\t\t<li><strong>Foreground service data sync</strong> to keep scanning a local or network library while you do something else.</li>\n\t\t\t\t\t\t<li><strong>Notifications</strong> to display playback controls on the lock screen and in the notification shade, and to show scan progress.</li>\n\t\t\t\t\t\t<li><strong>Modify audio settings</strong> to apply the system equalizer.</li>\n\t\t\t\t\t\t<li><strong>Read media audio and storage</strong> to save and read downloaded tracks for offline playback, and to index a library stored on the device.</li>\n\t\t\t\t\t\t<li><strong>Wake lock</strong> so the system does not suspend playback or a download part-way through.</li>\n\t\t\t\t\t\t<li><strong>Vibration</strong> for subtle haptic feedback on certain controls.</li>\n\t\t\t\t\t\t<li><strong>Install packages</strong>, in the build distributed on GitHub only, so the in-app updater can hand a downloaded release to Android's own installer. The Google Play build does not request this and updates through Play instead.</li>\n\t\t\t\t\t</ul>\n\t\t\t\t\t<p>Wavio does not request access to your contacts, your location, the microphone, the camera, or any other sensitive data.</p>"
+				"body": "<p>O Wavio solicita apenas as permissões necessárias para reproduzir músicas:</p>\n\t\t\t\t\t<ul>\n\t\t\t\t\t\t<li><strong>Internet, rede e status do Wi-Fi</strong> para acessar seu servidor de música e os serviços de terceiros listados abaixo, e para distinguir entre “você está offline” e “seu servidor está inacessível”.</li>\n\t\t\t\t\t\t<li><strong>Serviço em primeiro plano e reprodução de mídia</strong> para manter o áudio tocando quando a tela estiver desligada.</li>\n\t\t\t\t\t\t<li><strong>Sincronização de dados do serviço em primeiro plano</strong> para continuar a varredura de uma biblioteca local ou de rede enquanto você realiza outras tarefas.</li>\n\t\t\t\t\t\t<li><strong>Notificações</strong> para exibir controles de reprodução na tela de bloqueio e na barra de notificações, além de mostrar o andamento da varredura.</li>\n\t\t\t\t\t\t<li><strong>Modificar configurações de áudio</strong> para aplicar o equalizador do sistema.</li>\n\t\t\t\t\t\t<li><strong>Acesso ao áudio e ao armazenamento de mídia</strong> para salvar e ler faixas baixadas para reprodução offline e para indexar uma biblioteca armazenada no dispositivo.</li>\n\t\t\t\t\t\t<li><strong>Bloqueio de ativação</strong> para que o sistema não suspenda a reprodução ou um download no meio do processo.</li>\n\t\t\t\t\t\t<li><strong>Vibração</strong> para fornecer um feedback tátil sutil em determinados controles.</li>\n\t\t\t\t\t\t<li><strong>Instalar pacotes</strong>, apenas na versão distribuída no GitHub, para que o atualizador do aplicativo possa repassar uma versão baixada ao instalador do próprio Android. A versão do Google Play não solicita isso e, em vez disso, realiza as atualizações por meio do Play.</li>\n\t\t\t\t\t</ul>\n\t\t\t\t\t<p>O Wavio não solicita acesso aos seus contatos, à sua localização, ao microfone, à câmera ou a quaisquer outros dados confidenciais.</p>"
 			},
 			{
 				"num": "07",
 				"title": "Third-party services",
-				"body": "<p>Beyond your music server and Sentry, Wavio talks to a number of external services. Each is contacted only when you use the feature that needs it, and those requiring an account are contacted only once you have connected one yourself.</p>\n\t\t\t\t\t<ul>\n\t\t\t\t\t\t<li><strong><a href=\"https://lrclib.net/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">LRCLib</a></strong> is queried for synchronised lyrics when you open the lyrics view for a track.</li>\n\t\t\t\t\t\t<li><strong><a href=\"https://taddy.org/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Taddy</a></strong> powers podcast search and metadata, and is only contacted if you provide your own Taddy API key and user ID in the settings.</li>\n\t\t\t\t\t\t<li><strong><a href=\"https://www.radio-browser.info/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Radio Browser</a></strong> provides the internet radio station directory, and is queried when you browse or search for radio stations.</li>\n\t\t\t\t\t\t<li><strong><a href=\"https://musicbrainz.org/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">MusicBrainz</a></strong> and <strong><a href=\"https://coverartarchive.org/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Cover Art Archive</a></strong> are queried when you use tag correction on a local album, to look up release metadata and cover art.</li>\n\t\t\t\t\t\t<li><strong><a href=\"https://listenbrainz.org/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">ListenBrainz</a></strong> receives what you listen to, if you connect an account and switch scrobbling on. This is listening history leaving your device by design: it is off until you enable it, and it goes to the ListenBrainz server you choose. Artwork on the resulting statistics screens is fetched from the <a href=\"https://archive.org/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Internet Archive</a>.</li>\n\t\t\t\t\t\t<li><strong><a href=\"https://www.last.fm/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Last.fm</a></strong> also receives what you listen to, if you connect an account and switch scrobbling on. Connecting opens Last.fm in your browser to approve Wavio, and you can withdraw that approval at any time from your Last.fm account settings. Loving a track is sent as well when loved-track sync is on, and the statistics, similar-artist recommendations and cover art you see in the app are read back from Last.fm.</li>\n\t\t\t\t\t\t<li><strong>Podcast feeds</strong> are fetched straight from whichever host publishes them when you follow a show on a local library, which exposes your IP address to that host.</li>\n\t\t\t\t\t\t<li><strong><a href=\"https://github.com/Joel-Mercier/wavio\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">GitHub</a></strong> is asked for the latest release when the in-app updater checks for one, and serves the APK if you install it. This applies to the build distributed on GitHub, not the one from Google Play.</li>\n\t\t\t\t\t\t<li><strong>Google Cast</strong> is used when you cast playback to a Chromecast-compatible device. Google's terms then apply to that session.</li>\n\t\t\t\t\t\t<li><strong>Cloudflare, Apple, Google and Yandex</strong> each publish a small “are you online” endpoint. When your server stops answering, Wavio pings them to work out whether the internet is down or only your server is; whichever replies first sees your IP address and nothing else.</li>\n\t\t\t\t\t</ul>\n\t\t\t\t\t<p>Some features connect to software you run yourself: <strong><a href=\"https://lidarr.audio/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Lidarr</a></strong>, <strong><a href=\"https://ssync.net/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">SoulSync</a></strong> and <strong><a href=\"https://github.com/cstaelen/tidarr\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Tidarr</a></strong> for downloads, and <strong><a href=\"https://github.com/NeptuneHub/AudioMuse-AI\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">AudioMuse-AI</a></strong> for recommendations. Wavio only ever contacts the address you enter, with the credentials you enter, exactly as it does with your music server. Browsing the Tidal catalogue through Tidarr additionally loads cover art from Tidal's own image servers.</p>\n\t\t\t\t\t<p>Casting to a DLNA or UPnP device hands the stream address to that device on your local network, so it can fetch the audio itself.</p>\n\t\t\t\t\t<p>No advertising network, no analytics provider, and no social tracker is integrated into Wavio.</p>"
+				"body": "<p>Além do seu servidor de música e do Sentry, o Wavio se comunica com diversos serviços externos. Cada um deles é acionado somente quando você usa o recurso que o requer, e aqueles que exigem uma conta só são acionados depois que você mesmo tiver criado uma.</p>\n\t\t\t\t\t<ul>\n\t\t\t\t\t\t<li><strong><a href=\"https://lrclib.net/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">A LRCLib</a></strong> é consultada para obter letras sincronizadas quando você abre a visualização das letras de uma faixa.</li>\n\t\t\t\t\t\t<li><strong><a href=\"https://taddy.org/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">O Taddy</a></strong> fornece a pesquisa de podcasts e os metadados, e só é acionado se você fornecer sua própria chave de API e ID de usuário do Taddy nas configurações.</li>\n\t\t\t\t\t\t<li><strong><a href=\"https://www.radio-browser.info/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">O Radio Browser</a></strong> fornece o diretório de estações de rádio da internet e é consultado quando você navega ou pesquisa por estações de rádio.</li>\n\t\t\t\t\t\t<li><strong><a href=\"https://musicbrainz.org/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">MusicBrainz</a></strong> e <strong><a href=\"https://coverartarchive.org/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Cover Art Archive</a></strong> são consultados quando você corrige tags em um álbum local, para consultar metadados do lançamento e a capa.</li>\n\t\t\t\t\t\t<li><strong><a href=\"https://listenbrainz.org/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">O ListenBrainz</a></strong> recebe o que você ouve, caso você conecte uma conta e ative o scrobbling. Esse histórico de audição sai do seu dispositivo por padrão: ele fica desativado até que você o habilite e é enviado para o servidor do ListenBrainz que você escolher. As capas exibidas nas telas de estatísticas resultantes são obtidas do <a href=\"https://archive.org/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Internet Archive</a>.</li>\n\t\t\t\t\t\t<li><strong><a href=\"https://www.last.fm/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">O Last.fm</a></strong> também recebe o que você ouve, caso você conecte uma conta e ative o scrobbling. Ao conectar, o Last.fm é aberto no seu navegador para que você autorize o Wavio, e você pode revogar essa autorização a qualquer momento nas configurações da sua conta do Last.fm. Quando a sincronização de faixas favoritas está ativada, as faixas marcadas como favoritas também são enviadas, e as estatísticas, recomendações de artistas semelhantes e capas de álbuns exibidas no aplicativo são obtidas do Last.fm.</li>\n\t\t\t\t\t\t<li><strong>Os feeds de podcast</strong> são obtidos diretamente do servidor que os publica quando você segue um programa em uma biblioteca local, o que expõe seu endereço IP a esse servidor.</li>\n\t\t\t\t\t\t<li><strong><a href=\"https://github.com/Joel-Mercier/wavio\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">O GitHub</a></strong> é consultado quanto à versão mais recente quando o atualizador do aplicativo verifica se há uma disponível e fornece o APK caso você o instale. Isso se aplica à versão distribuída no GitHub, não à do Google Play.</li>\n\t\t\t\t\t\t<li><strong>O Google Cast</strong> é usado quando você transmite a reprodução para um dispositivo compatível com Chromecast. Os termos do Google se aplicam a essa sessão.</li>\n\t\t\t\t\t\t<li><strong>Cloudflare, Apple, Google e Yandex</strong> publicam, cada um, um pequeno endpoint do tipo “você está online?”. Quando seu servidor para de responder, o Wavio envia um ping a eles para determinar se a internet está fora do ar ou se é apenas o seu servidor; quem responder primeiro vê apenas seu endereço IP e nada mais.</li>\n\t\t\t\t\t</ul>\n\t\t\t\t\t<p>Alguns recursos se conectam a softwares que você mesmo executa: <strong><a href=\"https://lidarr.audio/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Lidarr</a></strong>, <strong><a href=\"https://ssync.net/\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">SoulSync</a></strong> e <strong><a href=\"https://github.com/cstaelen/tidarr\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">Tidarr</a></strong> para downloads, e <strong><a href=\"https://github.com/NeptuneHub/AudioMuse-AI\" target=\"_blank\" rel=\"noopener\" class=\"text-accent hover:underline\">AudioMuse-AI</a></strong> para recomendações. O Wavio sempre se conecta apenas ao endereço que você inserir, com as credenciais que você fornecer, exatamente como faz com o seu servidor de música. Ao navegar pelo catálogo do Tidal através do Tidarr, as capas dos álbuns também são carregadas dos próprios servidores de imagens do Tidal.</p>\n\t\t\t\t\t<p>Ao transmitir para um dispositivo DLNA ou UPnP, o endereço do stream é repassado para esse dispositivo na sua rede local, para que ele mesmo possa buscar o áudio.</p>\n\t\t\t\t\t<p>Nenhuma rede de publicidade, nenhum provedor de análise e nenhum rastreador de redes sociais está integrado ao Wavio.</p>"
 			},
 			{
 				"num": "08",
