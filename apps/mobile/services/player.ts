@@ -1135,7 +1135,10 @@ async function describeFailedSource(resolved: {
     // the body is never read and the request is aborted as soon as the headers
     // land, so a server that ignores Range doesn't stream a whole file either.
     const response = await fetch(resolved.url, {
-      headers: mergeCustomHeaders(resolved.url, { Range: "bytes=0-1" }),
+      headers: mergeCustomHeaders(resolved.url, {
+        "User-Agent": USER_AGENT,
+        Range: "bytes=0-1",
+      }),
       signal: controller.signal,
     });
     return {

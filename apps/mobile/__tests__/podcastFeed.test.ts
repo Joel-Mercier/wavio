@@ -127,4 +127,17 @@ describe("podcastFeed fetchAndParseFeed", () => {
     const feed = await fetchAndParseFeed("https://x/feed");
     expect(feed.title).toBe("My Show");
   });
+
+  it("identifies the app instead of sending okhttp's default agent (#215)", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => null },
+      text: async () => FEED,
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    await fetchAndParseFeed("https://x/feed");
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init.headers["User-Agent"]).toMatch(/^Wavio\//);
+  });
 });
