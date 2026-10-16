@@ -16,6 +16,7 @@ import {
   getMusicFolders,
   getSimilarSongs,
   getSimilarSongs2,
+  getSong,
   getVideoInfo,
   getVideos,
 } from "@/services/backend/browsing";
@@ -192,6 +193,18 @@ export const useMusicDirectory = (id: string) => {
       return getMusicDirectory(id);
     },
     enabled: !!id,
+  });
+
+  return query;
+};
+
+export const useSong = (id: string, options?: { enabled?: boolean }) => {
+  const query = useQuery({
+    queryKey: ["song", id],
+    queryFn: () => {
+      return getSong(id);
+    },
+    enabled: !!id && (options?.enabled ?? true),
   });
 
   return query;

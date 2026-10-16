@@ -1,4 +1,3 @@
-import { secondsToMinutes } from "date-fns/secondsToMinutes";
 import Check from "lucide-react-native/dist/esm/icons/check.mjs";
 import X from "lucide-react-native/dist/esm/icons/x.mjs";
 import { useTranslation } from "react-i18next";
@@ -19,7 +18,7 @@ import { VStack } from "@/components/ui/vstack";
 import type { Child } from "@/services/openSubsonic/types";
 import type { QueueTrack } from "@/stores/queue";
 import { formatSampleRate } from "@/utils/audioQuality";
-import { formatDistanceToNow } from "@/utils/date";
+import { format, formatDistanceToNow, formatSeconds } from "@/utils/date";
 import { niceBytes } from "@/utils/fileSize";
 
 export default function TrackInfoModal({
@@ -189,7 +188,7 @@ export default function TrackInfoModal({
                 </Text>
                 <Text className="text-white">
                   {track.duration
-                    ? `${secondsToMinutes(track?.duration)}:${track?.duration % 60}`
+                    ? formatSeconds(track.duration)
                     : t("app.tracks.infoModal.unknownDuration")}
                 </Text>
               </VStack>
@@ -257,12 +256,26 @@ export default function TrackInfoModal({
                     : t("app.tracks.infoModal.neverPlayed")}
                 </Text>
               </VStack>
-              <VStack className="border-b border-primary-600 py-2">
-                <Text className="text-primary-100 text-sm">
-                  {t("app.tracks.infoModal.modified")}
-                </Text>
-                <Text className="text-white">{track.genre}</Text>
-              </VStack>
+              {track.created ? (
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.added")}
+                  </Text>
+                  <Text className="text-white">
+                    {format(new Date(track.created), "PP")}
+                  </Text>
+                </VStack>
+              ) : null}
+              {track.modified ? (
+                <VStack className="border-b border-primary-600 py-2">
+                  <Text className="text-primary-100 text-sm">
+                    {t("app.tracks.infoModal.modified")}
+                  </Text>
+                  <Text className="text-white">
+                    {format(new Date(track.modified), "PP")}
+                  </Text>
+                </VStack>
+              ) : null}
               <VStack className="border-b border-primary-600 py-2">
                 <Text className="text-primary-100 text-sm">
                   {t("app.tracks.infoModal.albumPeak")}
