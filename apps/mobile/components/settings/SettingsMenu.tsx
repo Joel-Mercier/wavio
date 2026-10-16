@@ -1,6 +1,7 @@
 import type { Href } from "expo-router";
 import Archive from "lucide-react-native/dist/esm/icons/archive.mjs";
 import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
+import Car from "lucide-react-native/dist/esm/icons/car.mjs";
 import CloudDownload from "lucide-react-native/dist/esm/icons/cloud-download.mjs";
 import Download from "lucide-react-native/dist/esm/icons/download.mjs";
 import HardDrive from "lucide-react-native/dist/esm/icons/hard-drive.mjs";
@@ -13,6 +14,7 @@ import ShieldCheck from "lucide-react-native/dist/esm/icons/shield-check.mjs";
 import Workflow from "lucide-react-native/dist/esm/icons/workflow.mjs";
 import type { ComponentType } from "react";
 import { useTranslation } from "react-i18next";
+import { Platform } from "react-native";
 import { Uniwind } from "uniwind";
 import SettingsLinkRow from "@/components/settings/SettingsLinkRow";
 import SettingsScreenScaffold from "@/components/settings/SettingsScreenScaffold";
@@ -33,8 +35,11 @@ const MENU_ENTRIES: {
   // Hidden unless the active backend advertises this capability, so a section
   // never opens onto features the server can't honour.
   requiresCapability?: keyof BackendCapabilities;
+  // Hidden on iOS, where there is no Android Auto to configure.
+  androidOnly?: boolean;
 }[] = [
   { key: "playback", icon: AudioLines },
+  { key: "androidAuto", icon: Car, androidOnly: true },
   { key: "library", icon: Library },
   { key: "downloads", icon: Download, hideWhenFilesOnDevice: true },
   { key: "appearance", icon: Palette },
@@ -66,6 +71,7 @@ export default function SettingsMenu() {
       <VStack>
         {MENU_ENTRIES.filter(
           (entry) =>
+            !(entry.androidOnly && Platform.OS !== "android") &&
             !(entry.hideWhenFilesOnDevice && filesOnDevice) &&
             (!entry.requiresCapability ||
               capabilities[entry.requiresCapability]),

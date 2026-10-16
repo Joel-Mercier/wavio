@@ -6,10 +6,12 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.session.CommandButton
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaConstants
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
+import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
@@ -46,7 +48,21 @@ class WavioCarBrowserService : MediaLibraryService() {
     session = MediaLibrarySession.Builder(this, player, LibraryCallback())
       .setId("WavioCarBrowserSession")
       .build()
-      .also { activeSession = it }
+      .also {
+        activeSession = it
+        // Seeded like the player: JS may have pushed the heart and the modes
+        // long before a car bound this service.
+        it.setMediaButtonPreferences(mediaButtons(player))
+      }
+    // The shuffle and repeat buttons show the current mode, and repeat's
+    // carries the mode a tap moves to, so both are rebuilt when it changes.
+    player.addListener(
+      object : Player.Listener {
+        override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) = refreshMediaButtons()
+
+        override fun onRepeatModeChanged(repeatMode: Int) = refreshMediaButtons()
+      },
+    )
     CarAutoLog.d("browser service created")
   }
 
@@ -93,7 +109,33 @@ class WavioCarBrowserService : MediaLibraryService() {
       if (controller.packageName in CAR_HOST_PACKAGES) {
         CarAutoModule.setCarConnected(true)
       }
-      return super.onConnect(session, controller)
+      // What super grants, plus the heart. Granted to every controller, not
+      // just the car host: Android Auto reads its buttons off the platform
+      // session, and media3 fills that only with commands the media
+      // notification controller was granted.
+      return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
+        .setAvailableSessionCommands(
+          MediaSession.ConnectionResult.DEFAULT_SESSION_AND_LIBRARY_COMMANDS.buildUpon()
+            .add(TOGGLE_FAVORITE)
+            .build(),
+        )
+        .build()
+    }
+
+    override fun onCustomCommand(
+      session: MediaSession,
+      controller: MediaSession.ControllerInfo,
+      customCommand: SessionCommand,
+      args: Bundle,
+    ): ListenableFuture<SessionResult> {
+      if (customCommand.customAction != TOGGLE_FAVORITE.customAction) {
+        return super.onCustomCommand(session, controller, customCommand, args)
+      }
+      CarAutoLog.d("favorite by ${controller.packageName}")
+      // Never parked: the heart only shows once JS has pushed one, so a cold
+      // process has nothing to toggle.
+      CarAutoModule.deliverTransport("favorite")
+      return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
     }
 
     /**
@@ -371,6 +413,73 @@ class WavioCarBrowserService : MediaLibraryService() {
     // user navigates, which never happens for the screen they are already on.
     @Volatile var activeSession: MediaLibrarySession? = null
       private set
+
+    private val TOGGLE_FAVORITE =
+      SessionCommand("expo.modules.carauto.action.TOGGLE_FAVORITE", Bundle.EMPTY)
+
+    // Called on the main thread: by the player listener in onCreate, and once
+    // JS pushes a new heart.
+    fun refreshMediaButtons() {
+      val session = activeSession ?: return
+      session.setMediaButtonPreferences(mediaButtons(session.player))
+    }
+
+    // Never SLOT_FORWARD or SLOT_BACK: media3 then drops skip next / previous
+    // from the platform session, which is where Android Auto draws those
+    // buttons from (see the expo-audio patch's updateSessionCustomLayout).
+    // Older controllers, Android Auto among them, only see buttons that
+    // include SLOT_OVERFLOW, in list order. Each one can be switched off in
+    // the settings' Android Auto section.
+    private fun mediaButtons(player: Player): List<CommandButton> = buildList {
+      // Player commands rather than custom ones: media3 applies them to
+      // JsProxyPlayer, whose handlers already forward shuffle and repeat to JS.
+      if (CarPlaybackMirror.showShuffle) {
+        val shuffle = player.shuffleModeEnabled
+        add(
+          CommandButton.Builder(
+            if (shuffle) CommandButton.ICON_SHUFFLE_ON else CommandButton.ICON_SHUFFLE_OFF,
+          )
+            .setDisplayName(if (shuffle) "Turn shuffle off" else "Turn shuffle on")
+            .setPlayerCommand(Player.COMMAND_SET_SHUFFLE_MODE, !shuffle)
+            .setSlots(CommandButton.SLOT_BACK_SECONDARY, CommandButton.SLOT_OVERFLOW)
+            .build(),
+        )
+      }
+      if (CarPlaybackMirror.showRepeat) {
+        // Off, all, one, then off again: the cycle other players use.
+        val (repeatIcon, repeatName, nextRepeat) = when (player.repeatMode) {
+          Player.REPEAT_MODE_ALL ->
+            Triple(CommandButton.ICON_REPEAT_ALL, "Repeat one", Player.REPEAT_MODE_ONE)
+          Player.REPEAT_MODE_ONE ->
+            Triple(CommandButton.ICON_REPEAT_ONE, "Turn repeat off", Player.REPEAT_MODE_OFF)
+          else ->
+            Triple(CommandButton.ICON_REPEAT_OFF, "Repeat all", Player.REPEAT_MODE_ALL)
+        }
+        add(
+          CommandButton.Builder(repeatIcon)
+            .setDisplayName(repeatName)
+            .setPlayerCommand(Player.COMMAND_SET_REPEAT_MODE, nextRepeat)
+            .setSlots(CommandButton.SLOT_OVERFLOW)
+            .build(),
+        )
+      }
+      if (!CarPlaybackMirror.showFavorite) return@buildList
+      val favorite = CarPlaybackMirror.favorite ?: return@buildList
+      add(
+        (
+          if (favorite) {
+            CommandButton.Builder(CommandButton.ICON_HEART_FILLED)
+              .setDisplayName("Remove from favorites")
+          } else {
+            CommandButton.Builder(CommandButton.ICON_HEART_UNFILLED)
+              .setDisplayName("Add to favorites")
+          }
+        )
+          .setSessionCommand(TOGGLE_FAVORITE)
+          .setSlots(CommandButton.SLOT_FORWARD_SECONDARY, CommandButton.SLOT_OVERFLOW)
+          .build(),
+      )
+    }
 
     // Controllers we treat as "the user is in the car". Other binders (system
     // media resumption, assistants) still work — their first play just pays the

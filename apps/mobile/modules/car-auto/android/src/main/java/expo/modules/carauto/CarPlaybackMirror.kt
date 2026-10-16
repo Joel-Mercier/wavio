@@ -35,6 +35,21 @@ object CarPlaybackMirror {
   @Volatile private var shuffle: Boolean = false
   @Volatile private var repeatMode: Int = Player.REPEAT_MODE_OFF
 
+  // The heart on the car's player screen, null while the current track can't be
+  // favorited. A session button rather than player state, so it isn't part of
+  // [seed]: WavioCarBrowserService reads it whenever it builds its buttons.
+  @Volatile var favorite: Boolean? = null
+    private set
+
+  // Which buttons the settings' Android Auto section shows. All on until JS
+  // says otherwise, matching the settings' defaults.
+  @Volatile var showFavorite: Boolean = true
+    private set
+  @Volatile var showShuffle: Boolean = true
+    private set
+  @Volatile var showRepeat: Boolean = true
+    private set
+
   // Whether there is anything worth seeding a player with. A play arriving on an
   // empty session is the one case that still has to go through JS rehydration.
   val hasContent: Boolean
@@ -69,6 +84,16 @@ object CarPlaybackMirror {
     positionMs = posMs.coerceAtLeast(0L)
     shuffle = shuf
     repeatMode = repeat
+  }
+
+  fun setFavorite(value: Boolean?) {
+    favorite = value
+  }
+
+  fun setButtons(favorite: Boolean, shuffle: Boolean, repeat: Boolean) {
+    showFavorite = favorite
+    showShuffle = shuffle
+    showRepeat = repeat
   }
 
   /**
