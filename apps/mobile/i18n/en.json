@@ -2068,7 +2068,20 @@
 				"outputChromecastUnavailable": "The Chromecast device picker is unavailable.",
 				"outputChromecastNoPlayServices": "Chromecast needs Google Play services, which this device does not have.",
 				"outputChromecastNoPlayServicesHint": "Needs Google Play services",
-				"outputConnectErrorMessage": "Could not play to {{name}}."
+				"outputConnectErrorMessage": "Could not play to {{name}}.",
+				"outputConnect": "Connect",
+				"outputConnecting": "Connecting...",
+				"outputDisconnect": "Disconnect",
+				"outputDisconnecting": "Disconnecting...",
+				"outputDisconnectErrorMessage": "Failed to disconnect from device",
+				"outputMaster": "Master",
+				"outputCancel": "Cancel",
+				"sonosMultiRoom": "Multi-Room Sonos",
+				"sonosConnect": "Connect {{count}} speakers",
+				"sonosSelectMultiple": "Select at least 2 Sonos speakers",
+				"sonosCoordinator": "Group coordinator",
+				"sonosGroupInfo": "{{count}}-speaker group",
+				"outputOtherDevices": "Other Devices"
 			},
 			"shares": {
 				"title": "Shares",
@@ -2459,6 +2472,19 @@
 				"ACCESS_NOT_ALLOWED": "You are not allowed to access this query or mutation.",
 				"TADDY_SERVER_ERROR": "Something is wrong on our end. We have systems in place to monitor this but also feel free to reach out to danny@taddy.org if you are getting this error."
 			}
-		}
+		},
+		"app.player.outputConnect": "Connect",
+		"app.player.outputConnecting": "Connecting...",
+		"app.player.outputDisconnect": "Disconnect",
+		"app.player.outputDisconnecting": "Disconnecting...",
+		"app.player.outputDisconnectErrorMessage": "Failed to disconnect from device",
+		"app.player.outputMaster": "Master",
+		"app.player.outputCancel": "Cancel",
+		"app.player.sonosMultiRoom": "Multi-Room Sonos",
+		"app.player.sonosConnect": "Connect {{count}} speakers",
+		"app.player.sonosSelectMultiple": "Select at least 2 Sonos speakers",
+		"app.player.sonosCoordinator": "Group coordinator",
+		"app.player.sonosGroupInfo": "{{count}}-speaker group",
+		"app.player.outputOtherDevices": "Other Devices"
 	}
 }

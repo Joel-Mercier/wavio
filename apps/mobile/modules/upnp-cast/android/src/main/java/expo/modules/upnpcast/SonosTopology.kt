@@ -6,76 +6,382 @@ import org.xmlpull.v1.XmlPullParser
 import java.io.StringReader
 
 /**
- * Sonos speakers that are grouped, and the two halves of a stereo pair, are driven
- * through whichever one is the group's coordinator. The others discover normally,
- * report their volume happily, and then refuse to be handed a track — with a
- * generic "transition not available" that says nothing about why.
+ * Sonos topology and room-name support.
  *
- * So: only consulted after a refusal, and only on a device that says it is a Sonos.
- * A speaker that took the track never pays for any of this.
+ * Sonos transport is coordinator based. A grouped member may answer transport
+ * queries differently or refuse operations which must be sent to its coordinator.
+ *
+ * The topology service gives us the current coordinator/member relationship.
  */
 object SonosTopology {
-  /**
-   * The AVTransport control URL for the group this speaker belongs to, or null when
-   * there is nothing to redirect to — not a Sonos, on its own, already in charge, or
-   * simply not telling us.
-   */
-  suspend fun coordinatorControlUrl(description: DeviceDescription): String? {
-    if (!description.isSonos) return null
-    val ownUuid = description.udn ?: return null
-    val topology = description.controlUrl(Services.ZONE_GROUP_TOPOLOGY) ?: return null
 
-    val response = Soap.call(topology, Services.ZONE_GROUP_TOPOLOGY, "GetZoneGroupState")
-    // The whole topology travels as an escaped document inside the response, so it
-    // has to come back out before anything can be read from it.
-    val state = Soap.argument(response.body, "ZoneGroupState") ?: return null
+  data class ZoneAttributes(
+    val zoneName: String?,
+    val targetRoomName: String?,
+    val icon: String?,
+    val configuration: String?
+  )
 
-    val group = groupContaining(state, ownUuid) ?: return null
-    if (group.coordinator == ownUuid) return null
-    val location = group.members[group.coordinator] ?: return null
+  data class Member(
+    val uuid: String,
+    val location: String,
+    val invisible: Boolean,
+    val zoneName: String?
+  )
 
-    Log.w(Soap.TAG, "${description.friendlyName} is not its group's coordinator; using $location")
-    val coordinator = Soap.fetch(location)?.let { DeviceDescription.parse(it, location) } ?: return null
-    return coordinator.controlUrl(Services.AV_TRANSPORT)
+  data class Group(
+    val coordinator: String,
+    val members: Map<String, Member>
+  )
+
+  data class Topology(
+    val groups: List<Group>
+  ) {
+
+    fun groupContaining(
+      uuid: String
+    ): Group? {
+      return groups.firstOrNull {
+        it.members.containsKey(uuid)
+      }
+    }
+
+    fun coordinatorFor(
+      uuid: String
+    ): String? {
+      return groupContaining(uuid)?.coordinator
+    }
+
+    fun coordinatorLocationFor(
+      uuid: String
+    ): String? {
+      val group = groupContaining(uuid)
+        ?: return null
+
+      return group.members[
+        group.coordinator
+      ]?.location
+    }
+
+    fun membersOf(
+      uuid: String
+    ): List<Member> {
+      return groupContaining(uuid)
+        ?.members
+        ?.values
+        ?.toList()
+        ?: emptyList()
+    }
   }
 
-  private data class Group(val coordinator: String, val members: Map<String, String>)
+  /**
+   * Gets the current zone/room name.
+   *
+   * CurrentZoneName is the authoritative Sonos room name.
+   */
+  suspend fun zoneAttributes(
+    description: DeviceDescription
+  ): ZoneAttributes? {
 
-  /** The group this UUID is a member of, with each member's description URL. */
-  private fun groupContaining(state: String, uuid: String): Group? {
-    try {
-      val parser = Xml.newPullParser()
-      parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
-      parser.setInput(StringReader(state))
-
-      var coordinator: String? = null
-      var members = mutableMapOf<String, String>()
-      var holdsUuid = false
-      var event = parser.eventType
-      while (event != XmlPullParser.END_DOCUMENT) {
-        when {
-          event == XmlPullParser.START_TAG && parser.name.equals("ZoneGroup", true) -> {
-            coordinator = parser.getAttributeValue(null, "Coordinator")
-            members = mutableMapOf()
-            holdsUuid = false
-          }
-          event == XmlPullParser.START_TAG && parser.name.equals("ZoneGroupMember", true) -> {
-            val member = parser.getAttributeValue(null, "UUID")
-            val location = parser.getAttributeValue(null, "Location")
-            if (member != null) {
-              if (member == uuid) holdsUuid = true
-              if (location != null) members[member] = Soap.unescape(location)
-            }
-          }
-          event == XmlPullParser.END_TAG && parser.name.equals("ZoneGroup", true) -> {
-            if (holdsUuid && coordinator != null) return Group(coordinator, members)
-          }
-        }
-        event = parser.next()
-      }
-    } catch (_: Exception) {
+    if (!description.isSonos) {
       return null
     }
-    return null
+
+    val control =
+      description.controlUrl(
+        Services.DEVICE_PROPERTIES
+      ) ?: return null
+
+    val response = Soap.call(
+      control,
+      Services.DEVICE_PROPERTIES,
+      "GetZoneAttributes"
+    )
+
+    if (!response.ok) {
+      return null
+    }
+
+    return ZoneAttributes(
+      zoneName =
+        Soap.argument(
+          response.body,
+          "CurrentZoneName"
+        )?.takeIf { it.isNotBlank() },
+
+      targetRoomName =
+        Soap.argument(
+          response.body,
+          "CurrentTargetRoomName"
+        )?.takeIf { it.isNotBlank() },
+
+      icon =
+        Soap.argument(
+          response.body,
+          "CurrentIcon"
+        )?.takeIf { it.isNotBlank() },
+
+      configuration =
+        Soap.argument(
+          response.body,
+          "CurrentConfiguration"
+        )?.takeIf { it.isNotBlank() }
+    )
+  }
+
+  /**
+   * Gets the actual Sonos room name.
+   *
+   * Priority:
+   *
+   * 1. DeviceProperties CurrentZoneName
+   * 2. DeviceProperties CurrentTargetRoomName
+   * 3. roomName from device_description.xml
+   * 4. friendlyName
+   */
+  suspend fun zoneName(
+    description: DeviceDescription
+  ): String? {
+
+    if (!description.isSonos) {
+      return null
+    }
+
+    val attributes =
+      zoneAttributes(description)
+
+    return attributes?.zoneName
+      ?: attributes?.targetRoomName
+      ?: description.roomName
+      ?: description.friendlyName
+  }
+
+  /**
+   * Reads the complete Sonos topology from GetZoneGroupState.
+   */
+  suspend fun topology(
+    description: DeviceDescription
+  ): Topology? {
+
+    if (!description.isSonos) {
+      return null
+    }
+
+    val control =
+      description.controlUrl(
+        Services.ZONE_GROUP_TOPOLOGY
+      ) ?: return null
+
+    val response = Soap.call(
+      control,
+      Services.ZONE_GROUP_TOPOLOGY,
+      "GetZoneGroupState"
+    )
+
+    val state =
+      Soap.argument(
+        response.body,
+        "ZoneGroupState"
+      ) ?: return null
+
+    return parseTopology(state)
+  }
+
+  /**
+   * Returns the coordinator's AVTransport control URL when the supplied
+   * device is currently a non-coordinator member.
+   */
+  suspend fun coordinatorControlUrl(
+    description: DeviceDescription
+  ): String? {
+
+    if (!description.isSonos) {
+      return null
+    }
+
+    val ownUuid =
+      description.udn
+        ?: return null
+
+    val topology =
+      topology(description)
+        ?: return null
+
+    val coordinator =
+      topology.coordinatorFor(ownUuid)
+        ?: return null
+
+    if (coordinator == ownUuid) {
+      return null
+    }
+
+    val location =
+      topology.coordinatorLocationFor(ownUuid)
+        ?: return null
+
+    Log.w(
+      Soap.TAG,
+      "${description.friendlyName} is not its group's coordinator; " +
+        "using $location"
+    )
+
+    val coordinatorDescription =
+      Soap.fetch(location)
+        ?.let {
+          DeviceDescription.parse(
+            it,
+            location
+          )
+        }
+        ?: return null
+
+    return coordinatorDescription.controlUrl(
+      Services.AV_TRANSPORT
+    )
+  }
+
+  private fun parseTopology(
+    state: String
+  ): Topology? {
+
+    return try {
+
+      val parser = Xml.newPullParser()
+
+      parser.setFeature(
+        XmlPullParser.FEATURE_PROCESS_NAMESPACES,
+        false
+      )
+
+      parser.setInput(
+        StringReader(state)
+      )
+
+      val groups = mutableListOf<Group>()
+
+      var currentCoordinator: String? = null
+      var currentMembers =
+        mutableMapOf<String, Member>()
+
+      var event = parser.eventType
+
+      while (
+        event != XmlPullParser.END_DOCUMENT
+      ) {
+
+        if (
+          event == XmlPullParser.START_TAG &&
+          parser.name.equals(
+            "ZoneGroup",
+            ignoreCase = true
+          )
+        ) {
+
+          currentCoordinator =
+            parser.getAttributeValue(
+              null,
+              "Coordinator"
+            )
+
+          currentMembers =
+            mutableMapOf()
+
+        } else if (
+          event == XmlPullParser.START_TAG &&
+          parser.name.equals(
+            "ZoneGroupMember",
+            ignoreCase = true
+          )
+        ) {
+
+          val uuid =
+            parser.getAttributeValue(
+              null,
+              "UUID"
+            )
+
+          val rawLocation =
+            parser.getAttributeValue(
+              null,
+              "Location"
+            )
+
+          if (
+            uuid != null &&
+            rawLocation != null
+          ) {
+
+            val location =
+              Soap.unescape(
+                rawLocation
+              )
+
+            val invisible =
+              parser.getAttributeValue(
+                null,
+                "Invisible"
+              )?.equals(
+                "1",
+                ignoreCase = true
+              ) == true
+
+            val zoneName =
+              parser.getAttributeValue(
+                null,
+                "ZoneName"
+              )?.takeIf {
+                it.isNotBlank()
+              }
+
+            currentMembers[uuid] =
+              Member(
+                uuid = uuid,
+                location = location,
+                invisible = invisible,
+                zoneName = zoneName
+              )
+          }
+
+        } else if (
+          event == XmlPullParser.END_TAG &&
+          parser.name.equals(
+            "ZoneGroup",
+            ignoreCase = true
+          )
+        ) {
+
+          val coordinator =
+            currentCoordinator
+
+          if (
+            coordinator != null &&
+            currentMembers.isNotEmpty()
+          ) {
+            groups.add(
+              Group(
+                coordinator = coordinator,
+                members = currentMembers.toMap()
+              )
+            )
+          }
+
+          currentCoordinator = null
+          currentMembers = mutableMapOf()
+        }
+
+        event = parser.next()
+      }
+
+      Topology(groups)
+
+    } catch (e: Exception) {
+
+      Log.w(
+        Soap.TAG,
+        "Failed to parse Sonos topology: ${e.message}"
+      )
+
+      null
+    }
   }
 }

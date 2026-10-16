@@ -13,6 +13,8 @@ import createSelectors from "@/utils/createSelectors";
 export type UpnpPersistedSession = {
   deviceId: string;
   deviceName: string;
+  deviceIds?: string[];
+  deviceNames?: string[];
   address: string;
   location: string;
   trackId: string;
@@ -23,6 +25,12 @@ type State = {
   connected: boolean;
   deviceId: string | null;
   deviceName: string | null;
+  /**
+   * All currently selected UPnP renderers in the output picker.
+   * This is the multi-select state used by the picker and by connectMultiple.
+   */
+  deviceIds: string[];
+  deviceNames: string[];
   /**
    * Renderers seen this session, merged across scans rather than replaced.
    *
@@ -60,6 +68,10 @@ const MAX_SEEN = 8;
 
 type Actions = {
   setConnected: (deviceId: string | null, deviceName: string | null) => void;
+  setConnectedDevices: (
+    deviceIds: string[],
+    deviceNames?: string[],
+  ) => void;
   mergeDevices: (found: UpnpDevice[]) => void;
   forgetDevice: (id: string) => void;
   setScanning: (scanning: boolean) => void;
@@ -74,6 +86,8 @@ const initialState: State = {
   connected: false,
   deviceId: null,
   deviceName: null,
+  deviceIds: [],
+  deviceNames: [],
   devices: [],
   scanning: false,
   volume: 0.3,
@@ -106,7 +120,57 @@ const useUpnpBase = create<State & Actions>()(
     (set) => ({
       ...initialState,
       setConnected: (deviceId, deviceName) =>
-        set({ connected: deviceId != null, deviceId, deviceName }),
+        set((state) => {
+          if (!deviceId) {
+            return {
+              connected: false,
+              deviceId: null,
+              deviceName: null,
+              deviceIds: [],
+              deviceNames: [],
+            };
+          }
+
+          // If a background service calls setConnected for a device that is already 
+          // in our multi-device array, update the master status but DO NOT wipe the array.
+          if (state.deviceIds.includes(deviceId)) {
+            return {
+              connected: true,
+              deviceId,
+              deviceName: deviceName ?? state.deviceName,
+              deviceIds: state.deviceIds,
+              deviceNames: state.deviceNames,
+            };
+          }
+
+          // Standard single connection
+          return {
+            connected: true,
+            deviceId,
+            deviceName,
+            deviceIds: [deviceId],
+            deviceNames: deviceName ? [deviceName] : [],
+          };
+        }),
+      setConnectedDevices: (deviceIds, deviceNames = []) =>
+        set(() => {
+          const ids = Array.from(
+            new Set(
+              deviceIds.filter((id): id is string => typeof id === "string" && !!id),
+            ),
+          );
+          const names = ids.map((id, index) => {
+            const provided = deviceNames[index];
+            return provided ?? deviceNames.find((name) => name && name.length > 0) ?? "";
+          });
+          return {
+            connected: ids.length > 0,
+            deviceId: ids[0] ?? null,
+            deviceName: ids[0] ? names[0] ?? null : null,
+            deviceIds: ids,
+            deviceNames: names,
+          };
+        }),
       mergeDevices: (found) =>
         set((state) => {
           const byId = new Map(

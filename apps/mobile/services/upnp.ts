@@ -235,20 +235,20 @@ function onRendererError() {
   });
 }
 
-// ── Loading tracks ───────────────────────────────────────────────────────────
+// ── Loading tracks ────────────────────────────────────────────────────────
 
-/**
- * Hand a track to the renderer.
- *
- * Returns false for anything the renderer cannot fetch — a local-library file or a
- * download resolves to a `file://` URI that exists only on this phone. The
- * capability flag keeps UPnP off the output list for a local server entirely; this
- * is the backstop for a single unreachable track on a server that is otherwise fine.
- *
- * A refusal is reported to the listener and the queue stays where it is (see
- * `handleRemoteLoadFailure`); a load overtaken by a newer one before it reached the
- * renderer is neither a success nor a failure, and says nothing.
- */
+// /**
+//  * Hand a track to the renderer.
+//  *
+//  * Returns false for anything the renderer cannot fetch — a local-library file or a
+//  * download resolves to a `file://` URI that exists only on this phone. The
+//  * capability flag keeps UPnP off the output list for a local server entirely; this
+//  * is the backstop for a single unreachable track on a server that is otherwise fine.
+//  *
+//  * A refusal is reported to the listener and the queue stays where it is (see
+//  * `handleRemoteLoadFailure`); a load overtaken by a newer one before it reached the
+//  * renderer is neither a success nor a failure, and says nothing.
+//  */
 async function loadOnRenderer(
   track: QueueTrack,
   autoplay: boolean,
@@ -363,7 +363,7 @@ function subscribeQueue() {
   });
 }
 
-// ── Session ──────────────────────────────────────────────────────────────────
+// ── Session ───────────────────────────────────────────────────────────
 
 // Every renderer the native side finds — mid-search, or announcing itself while
 // the picker is open — lands in the list the moment its description is in.
@@ -461,7 +461,7 @@ async function probeKnownRenderers(): Promise<void> {
 }
 
 /**
- * Move playback to a renderer, picking up where this device left off.
+ * Move playback to a single renderer, picking up where this device left off.
  */
 export async function upnpConnect(device: UpnpDevice): Promise<boolean> {
   if (!Native) return false;
@@ -486,6 +486,7 @@ export async function upnpConnect(device: UpnpDevice): Promise<boolean> {
     return false;
   }
 
+  useUpnpBase.getState().setConnectedDevices([device.id], [device.name]);
   attach(device, { trackId: "", trackUrl: "" });
   const current = useQueue.getState().getCurrent();
   if (current) {
@@ -503,6 +504,70 @@ export async function upnpConnect(device: UpnpDevice): Promise<boolean> {
       return false;
     }
   }
+  await adoptRendererVolume();
+  return true;
+}
+
+/**
+ * Move playback to multiple renderers at once. This is the new UI path used when
+ * the output picker selects more than one UPnP/DLNA device.
+ *
+ * The existing app playback engine is still single-target in most places, so the
+ * primary renderer is the first selected device and is the one we attach to the
+ * current output state. The native side receives the full list and handles the
+ * grouped multi-device connection.
+ */
+export async function upnpConnectMultiple(devices: UpnpDevice[]): Promise<boolean> {
+  if (!Native || devices.length === 0) return false;
+
+  if (devices.length === 1) {
+    return upnpConnect(devices[0]);
+  }
+
+  const position = getLocalTime();
+  const wasLocallyPlaying = isLocalPlaying();
+  pauseLocal();
+
+  const ids = devices.map((device) => device.id);
+  const names = devices.map((device) => device.name);
+
+  let connected = false;
+  try {
+    connected = await Native.connectMultiple(ids);
+  } catch (error) {
+    reportError(error, { area: "player", endpoint: "upnp.connectMultiple" });
+  }
+
+  if (!connected) {
+    for (const device of devices) {
+      useUpnpBase.getState().forgetDevice(device.id);
+    }
+    if (wasLocallyPlaying) {
+      const current = useQueue.getState().getCurrent();
+      if (current) takeOverFromRemote(position, true);
+    }
+    return false;
+  }
+
+  useUpnpBase.getState().setConnectedDevices(ids, names);
+  const primary = devices[0];
+  attach(primary, { trackId: "", trackUrl: "" });
+
+  const current = useQueue.getState().getCurrent();
+  if (current) {
+    const loaded = await loadOnRenderer(current, wasLocallyPlaying, position);
+    if (!loaded) {
+      detach();
+      try {
+        await Native.disconnect();
+      } catch (error) {
+        reportError(error, { area: "player", endpoint: "upnp.disconnect" });
+      }
+      takeOverFromRemote(position, wasLocallyPlaying);
+      return false;
+    }
+  }
+
   await adoptRendererVolume();
   return true;
 }
@@ -839,7 +904,117 @@ export async function takeOverLocally(): Promise<void> {
   );
 }
 
-// ── Transport ────────────────────────────────────────────────────────────────
+
+
+
+
+/**
+ * Disconnect a single renderer from the group.
+ *
+ * The master (or the last remaining device) triggers a full teardown, matching
+ * the output sheet's expectation that dropping the master drops the group.
+ *
+ * For a non-master device this reconnects with the remaining devices, since the
+ * native module only offers connect-many / disconnect-all. That briefly stops
+ * and resumes playback, and picks up where the renderer was. If the native side
+ * later exposes a true per-device disconnect, this becomes a one-liner.
+ */
+export async function upnpDisconnectDevice(deviceId: string): Promise<void> {
+  const store = useUpnpBase.getState();
+  if (!store.connected) return;
+
+  const connectedIds =
+    store.deviceIds.length > 0
+      ? store.deviceIds
+      : store.deviceId
+        ? [store.deviceId]
+        : [];
+
+  // Master, or the only device left: full teardown.
+  if (deviceId === store.deviceId || connectedIds.length <= 1) {
+    await upnpDisconnect();
+    return;
+  }
+
+  const remainingIds = connectedIds.filter((id) => id !== deviceId);
+  const remainingDevices = remainingIds
+    .map((id) => store.devices.find((d) => d.id === id))
+    .filter((d): d is UpnpDevice => !!d);
+
+  if (remainingDevices.length === 0) {
+    await upnpDisconnect();
+    return;
+  }
+
+  // Snapshot what the group was doing before we tear the connection down, so
+  // the reconnect can put playback back where it was on the surviving devices.
+  const position = interpolatedPosition();
+  const shouldPlay = wasPlaying;
+
+  detach();
+  try {
+    await Native?.disconnect();
+  } catch (error) {
+    reportError(error, { area: "player", endpoint: "upnp.disconnect" });
+  }
+
+  const connected =
+    remainingDevices.length > 1
+      ? await upnpConnectMultiple(remainingDevices)
+      : await upnpConnect(remainingDevices[0]);
+
+  if (!connected) return;
+
+  // upnpConnect/upnpConnectMultiple captured the *local* player's position, not
+  // the renderer's. Push ours once the new group has attached.
+  try {
+    const native = Native;
+    if (native) {
+      await native.seek(Math.round(position * 1000));
+      if (shouldPlay) await native.play(Math.round(position * 1000));
+    }
+  } catch (error) {
+    reportError(error, { area: "player", endpoint: "upnp.seek" });
+  }
+}
+
+/**
+ * Set one renderer's volume independently of the group.
+ *
+ * The native module today exposes a group setVolume only. If the module grows a
+ * per-device method (expected name: `setDeviceVolume(id, percent)`), this
+ * becomes a one-liner and the fallback path is dead code. Until then, dragging a
+ * device slider sets the whole group, so the output sheet hides the per-device
+ * sliders when this build has no native support (see `upnpSupportsDeviceVolume`).
+ */
+export function upnpSetDeviceVolume(deviceId: string, volume: number): void {
+  const clamped = Math.max(0, Math.min(1, volume));
+  const native = Native as unknown as
+    | { setDeviceVolume?: (id: string, percent: number) => void }
+    | null;
+  if (native && typeof native.setDeviceVolume === "function") {
+    native.setDeviceVolume(deviceId, Math.round(clamped * 100));
+    return;
+  }
+  // Fallback: no per-device volume on this build. Push the group value so the
+  // UI stays honest about what actually happened.
+  upnpSetVolume(clamped);
+}
+
+/**
+ * Whether this build can set a renderer's volume on its own. The output sheet
+ * uses this to decide whether to render per-device sliders.
+ */
+export const upnpSupportsDeviceVolume = (): boolean => {
+  const native = Native as unknown as
+    | { setDeviceVolume?: unknown }
+    | null;
+  return !!native && typeof native.setDeviceVolume === "function";
+};
+
+
+
+// ── Transport ──────────────────────────────────────────────────────────
 
 // Commands take effect on the phone's side of the story at once, and the
 // renderer is expected to agree by the next poll. Polls are ignored while a
@@ -921,7 +1096,57 @@ export function upnpSetVolume(volume: number) {
   void Native?.setVolume(Math.round(Math.max(0, Math.min(1, volume)) * 100));
 }
 
-// ── Remote target ────────────────────────────────────────────────────────────
+// ── Remote target ─────────────────────────────────────────────────────────
+
+// registerRemoteTarget({
+//   id: "upnp",
+//   isActive: isUpnpConnected,
+//   play: upnpPlay,
+//   pause: upnpPause,
+//   togglePlayPause: () => {
+//     if (wasPlaying) upnpPause();
+//     else upnpPlay();
+//   },
+//   seekTo: upnpSeek,
+//   // The renderer knows nothing of a queue, so skipping is a queue move here and
+//   // the track-change subscription pushes the new URI to the device.
+//   skipNext: () => {
+//     useQueue.getState().next();
+//   },
+//   skipPrevious: () => {
+//     if (interpolatedPosition() > RESTART_BEFORE_SECONDS) {
+//       upnpSeek(0);
+//       return;
+//     }
+//     const queue = useQueue.getState();
+//     const atStart =
+//       queue.repeatMode !== "all" && (queue.currentIndex ?? 0) <= 0;
+//     if (atStart) {
+//       upnpSeek(0);
+//       return;
+//     }
+//     queue.previous();
+//   },
+//   getCurrentTime: () => interpolatedPosition(),
+//   isPlaying: () => wasPlaying,
+//   setVolume: upnpSetVolume,
+//   getVolume: () => useUpnpBase.getState().volume,
+//   release: upnpRelease,
+//   isInterpolating: () => isUpnpConnected() && wasPlaying,
+//   readSnapshot: (): PlaybackSnapshot => {
+//     const duration =
+//       lastDurationSec || (useQueue.getState().getCurrent()?.duration ?? 0);
+//     let currentTime = interpolatedPosition();
+//     if (duration > 0) currentTime = Math.min(currentTime, duration);
+//     return { playing: wasPlaying, buffering: loading, currentTime, duration };
+//   },
+//   subscribe: (onChange) => {
+//     changeListeners.add(onChange);
+//     return () => {
+//       changeListeners.delete(onChange);
+//     };
+//   },
+// });
 
 registerRemoteTarget({
   id: "upnp",
