@@ -6,6 +6,7 @@ import { enUS as en } from "date-fns/locale/en-US";
 import { es } from "date-fns/locale/es";
 import { fr } from "date-fns/locale/fr";
 import { it } from "date-fns/locale/it";
+import { ptBR } from "date-fns/locale/pt-BR";
 import { ru } from "date-fns/locale/ru";
 import { zhCN } from "date-fns/locale/zh-CN";
 import i18n from "@/config/i18n";
@@ -18,6 +19,7 @@ const locales: Record<string, Locale> = {
   de,
   it,
   es,
+  "pt-BR": ptBR,
 };
 
 export const formatDistanceToNow = (date: Date) => {

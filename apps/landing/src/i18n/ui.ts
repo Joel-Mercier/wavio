@@ -4,6 +4,7 @@ import fr from "./fr.json";
 import it from "./it.json";
 import ru from "./ru.json";
 import es from "./es.json";
+import ptBr from "./pt-BR.json";
 import zhCn from "./zh-CN.json";
 
 export const languages = {
@@ -13,6 +14,7 @@ export const languages = {
   de: "Deutsch",
   it: "Italiano",
   es: "Español",
+  "pt-br": "Português (Brasil)",
   "zh-cn": "简体中文",
 } as const;
 
@@ -49,5 +51,6 @@ export const ui: Record<Lang, UiStrings> = {
   de: withFallback(de),
   it: withFallback(it),
   es: withFallback(es),
+  "pt-br": withFallback(ptBr),
   "zh-cn": withFallback(zhCn),
 };

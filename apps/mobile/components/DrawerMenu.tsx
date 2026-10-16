@@ -130,7 +130,10 @@ export default function DrawerMenu({ onClose }: DrawerMenuProps) {
   };
 
   const handlePrivacyPolicyPress = () => {
-    const path = i18n.language.startsWith("fr") ? "/fr/privacy" : "/privacy";
+    const path =
+      i18n.language === "en"
+        ? "/privacy"
+        : `/${i18n.language.toLowerCase()}/privacy`;
     Linking.openURL(`https://wavio-app.vercel.app${path}`);
   };
 

@@ -13,6 +13,7 @@ const I18N_DIR = path.join(__dirname, "..", "i18n");
 // a new region-qualified locale needs an entry).
 const LOCALE_QUALIFIERS = {
   "zh-CN": "zh-rCN",
+  "pt-BR": "pt-rBR",
 };
 
 // Reuses the labels already shown on the tab bar and in the drawer, so the

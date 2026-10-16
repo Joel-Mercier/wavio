@@ -85,7 +85,7 @@ jest.mock("@/config/i18n", () => ({
   __esModule: true,
   default: { changeLanguage: mockChangeLanguage },
   applyZodLocale: mockApplyZodLocale,
-  SupportedLanguages: ["en", "fr", "de", "it", "es", "zh-CN", "ru"],
+  SupportedLanguages: ["en", "fr", "de", "it", "es", "pt-BR", "zh-CN", "ru"],
 }));
 
 let mockLocales: { languageCode: string | null }[] = [];
@@ -189,8 +189,20 @@ describe("applyStartupLocale", () => {
     expect(mockSetLocale).toHaveBeenCalledWith("zh-CN");
   });
 
-  test("falls back to English for an unsupported device locale", () => {
+  test("maps any Portuguese base code onto the region-qualified pt-BR", () => {
     mockLocales = [{ languageCode: "pt" }];
+    load().applyStartupLocale(null);
+    expect(mockSetLocale).toHaveBeenCalledWith("pt-BR");
+  });
+
+  test("honours device locale order for region-qualified locales", () => {
+    mockLocales = [{ languageCode: "zh" }, { languageCode: "en" }];
+    load().applyStartupLocale(null);
+    expect(mockSetLocale).toHaveBeenCalledWith("zh-CN");
+  });
+
+  test("falls back to English for an unsupported device locale", () => {
+    mockLocales = [{ languageCode: "ja" }];
     load().applyStartupLocale(null);
     expect(mockSetLocale).toHaveBeenCalledWith("en");
   });

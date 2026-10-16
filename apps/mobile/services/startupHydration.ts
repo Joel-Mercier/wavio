@@ -25,21 +25,24 @@ import useRecentPlays from "@/stores/recentPlays";
 // tree's radio nodes from, and no downloads to resolve offline file paths.
 // services/carAuto/session.ts runs this before it answers the car.
 
+// Some locales only ship region-qualified, so a device reporting the bare base
+// code ("zh" for zh-Hans/zh-TW, "pt" for pt-PT) would otherwise fall back to
+// English. Map each such base code onto the variant we ship.
+const REGIONAL_LOCALES: Record<string, TSupportedLanguages> = {
+  zh: "zh-CN",
+  pt: "pt-BR",
+};
+
 export function resolveDeviceLocale(): TSupportedLanguages {
-  const userLocales = getLocales();
-  const matching = userLocales.find(
-    (userLocale) =>
-      userLocale.languageCode &&
-      (SupportedLanguages as string[]).includes(userLocale.languageCode),
-  );
-  // SupportedLanguages only holds the region-qualified "zh-CN", so a device
-  // reporting a bare "zh" (or "zh-Hans", "zh-TW", …) never matches above and
-  // would wrongly fall back to English. Map any Chinese base code to zh-CN.
-  const zhMatch = userLocales.find((userLocale) =>
-    userLocale.languageCode?.toLowerCase().startsWith("zh"),
-  );
-  return (matching?.languageCode ??
-    (zhMatch ? "zh-CN" : "en")) as TSupportedLanguages;
+  for (const { languageCode } of getLocales()) {
+    const base = languageCode?.toLowerCase();
+    if (!base) continue;
+    if ((SupportedLanguages as string[]).includes(base)) {
+      return base as TSupportedLanguages;
+    }
+    if (REGIONAL_LOCALES[base]) return REGIONAL_LOCALES[base];
+  }
+  return "en";
 }
 
 // The saved locale is passed in so the React caller can key an effect off it;
