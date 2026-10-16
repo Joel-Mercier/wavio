@@ -50,6 +50,7 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { useSong } from "@/hooks/backend/useBrowsing";
 import { useCreateShare } from "@/hooks/backend/useSharing";
 import {
   useIsCollectionAvailableOffline,
@@ -165,6 +166,9 @@ export default function PlayerSheets({
 
   const isRadio = !!playingTrack?.isRadio;
   const isPodcast = playingTrack?.source === "podcast";
+  const { data: songData } = useSong(playingTrack?.id ?? "", {
+    enabled: showInfoModal && !isRadio && !isPodcast,
+  });
   const podcastSeries = isPodcast ? playingTrack?.podcastSeries : null;
   const isPodcastFavorite = usePodcasts((store) =>
     podcastSeries
@@ -1047,7 +1051,7 @@ export default function PlayerSheets({
       <TrackInfoModal
         isOpen={showInfoModal}
         onClose={handleCloseInfoModal}
-        track={playingTrack}
+        track={songData?.song ?? playingTrack}
       />
     </>
   );

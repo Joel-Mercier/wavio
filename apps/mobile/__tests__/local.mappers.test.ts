@@ -84,3 +84,18 @@ describe("local mapRowToChild with missing metadata", () => {
     expect(child.duration).toBeUndefined();
   });
 });
+
+describe("local mapRowToChild modified date", () => {
+  it("maps the file mtime to modified", () => {
+    const mtime = Date.UTC(2026, 0, 2, 3, 4, 5);
+    expect(mapRowToChild({ ...bareRow, mtime }).modified).toEqual(
+      new Date(mtime),
+    );
+  });
+
+  it("leaves modified undefined when the source reported no mtime", () => {
+    // WebDAV stores 0 when a listing omits getlastmodified.
+    expect(mapRowToChild({ ...bareRow, mtime: 0 }).modified).toBeUndefined();
+    expect(mapRowToChild(bareRow).modified).toBeUndefined();
+  });
+});

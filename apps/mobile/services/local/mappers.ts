@@ -81,6 +81,7 @@ export function mapRowToChild(row: TrackRow): Child {
     path: row.path ?? undefined,
     discNumber: row.disc_number ?? undefined,
     created: new Date(row.indexed_at),
+    modified: row.mtime ? new Date(row.mtime) : undefined,
     type: "music",
     musicBrainzId: row.music_brainz_id ?? undefined,
     displayAlbumArtist: row.album_artist ?? undefined,

@@ -1,4 +1,5 @@
 import { XMLParser } from "fast-xml-parser";
+import { USER_AGENT } from "@/utils/userAgent";
 
 // Backend-agnostic RSS podcast-feed fetcher + parser. Deliberately free of any
 // backend's concerns (no SQLite, no Subsonic envelope, no local id encoding): it
@@ -58,10 +59,13 @@ const parser = new XMLParser({
 });
 
 export async function fetchAndParseFeed(url: string): Promise<ParsedFeed> {
+  // Hosts behind Cloudflare (Buzzsprout, issue #215) answer React Native's
+  // default `okhttp/<version>` agent with a 403 block page.
   const res = await fetch(url, {
     headers: {
       Accept:
         "application/rss+xml, application/atom+xml, application/xml, text/xml",
+      "User-Agent": USER_AGENT,
     },
   });
   if (!res.ok) {

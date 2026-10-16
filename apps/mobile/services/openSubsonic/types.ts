@@ -153,6 +153,7 @@ export interface Child {
   id: string;
   isDir: boolean;
   isVideo?: boolean;
+  modified?: Date;
   originalHeight?: number;
   originalWidth?: number;
   parent?: string;
