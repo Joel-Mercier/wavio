@@ -12,6 +12,7 @@ import usePlaybackNotice, {
 // component turns it into a toast. See stores/playbackNotice.ts.
 const NOTICE_KEY: Record<PlaybackNoticeCode, string> = {
   PLAYBACK_SOURCE_UNAVAILABLE: "app.player.notices.sourceUnavailable",
+  PLAYBACK_FORMAT_UNSUPPORTED: "app.player.notices.formatUnsupported",
   REMOTE_TRACK_REFUSED: "app.player.notices.remoteTrackRefused",
   REMOTE_LOST: "app.player.notices.remoteLost",
 };

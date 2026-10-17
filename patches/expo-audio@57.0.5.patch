@@ -92,10 +92,18 @@ index 992239ba7631ce0c97c0b41c5fbf61cc842386fe..c5938daf783c5e65af1bdcb8a043089f
          runOnMain {
            player.setSamplingEnabled(enabled)
 diff --git a/android/src/main/java/expo/modules/audio/AudioPlayer.kt b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
-index c76a9fd2a53743a691782e0f67d0d71401df58f6..76a79e057f07331ebc3bbc5c5228cb0219d6eedf 100644
+index c76a9fd2a53743a691782e0f67d0d71401df58f6..c3c4a848dbe37fa0067cb87bfb95da6b87ef9dfe 100644
 --- a/android/src/main/java/expo/modules/audio/AudioPlayer.kt
 +++ b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
-@@ -24,6 +24,13 @@ import java.lang.ref.WeakReference
+@@ -11,6 +11,7 @@ import androidx.media3.common.C
+ import androidx.media3.common.PlaybackException
+ import androidx.media3.common.PlaybackParameters
+ import androidx.media3.common.Player
++import androidx.media3.common.Tracks
+ import androidx.media3.common.util.UnstableApi
+ import androidx.media3.exoplayer.DefaultLoadControl
+ import androidx.media3.exoplayer.ExoPlayer
+@@ -24,6 +25,14 @@ import java.lang.ref.WeakReference
  
  private const val PLAYBACK_STATUS_UPDATE = "playbackStatusUpdate"
  private const val AUDIO_SAMPLE_UPDATE = "audioSampleUpdate"
@@ -106,10 +114,11 @@ index c76a9fd2a53743a691782e0f67d0d71401df58f6..76a79e057f07331ebc3bbc5c5228cb02
 +private const val REMOTE_SEEK = "remoteSeek"
 +private const val REMOTE_VOLUME = "remoteVolume"
 +private const val REMOTE_FAVORITE = "remoteFavorite"
++private const val UNSUPPORTED_AUDIO_FORMAT_ERROR = "Unsupported audio format"
  private const val SEEK_JUMP_INTERVAL_MS: Long = 10_000
  
  @UnstableApi
-@@ -37,6 +44,8 @@ class AudioPlayer(
+@@ -37,6 +46,8 @@ class AudioPlayer(
    player = ExoPlayer.Builder(context)
      .setLooper(context.mainLooper)
      .setAudioAttributes(AudioAttributes.DEFAULT, false)
@@ -118,7 +127,7 @@ index c76a9fd2a53743a691782e0f67d0d71401df58f6..76a79e057f07331ebc3bbc5c5228cb02
      .setSeekForwardIncrementMs(SEEK_JUMP_INTERVAL_MS)
      .setSeekBackIncrementMs(SEEK_JUMP_INTERVAL_MS)
      .apply {
-@@ -63,6 +72,12 @@ class AudioPlayer(
+@@ -63,6 +74,12 @@ class AudioPlayer(
    // Lock screen controls
    var isActiveForLockScreen = false
    internal var metadata: Metadata? = null
@@ -131,7 +140,41 @@ index c76a9fd2a53743a691782e0f67d0d71401df58f6..76a79e057f07331ebc3bbc5c5228cb02
    internal var lockScreenOptions: AudioLockScreenOptions? = null
    internal var mediaSession: MediaSession = buildBasicMediaSession(context, ref)
    val serviceConnection = AudioPlaybackServiceConnection(WeakReference(this), appContext)
-@@ -97,6 +112,59 @@ class AudioPlayer(
+@@ -83,8 +100,27 @@ class AudioPlayer(
+       ?: throw Exceptions.ReactContextLost()
+   }
+ 
++  // Audio this device has no decoder for (ALAC on most non-Qualcomm phones) is
++  // never selected, so the player runs a silent clock and raises no error at
++  // all. Report it like a playback error, once per source, and stop the clock.
++  private var unsupportedAudioReported = false
++  private val unsupportedAudioListener = object : Player.Listener {
++    override fun onTracksChanged(tracks: Tracks) {
++      if (unsupportedAudioReported || !tracks.containsType(C.TRACK_TYPE_AUDIO)) return
++      if (tracks.isTypeSupported(C.TRACK_TYPE_AUDIO, /* allowExceedsCapabilities= */ true)) return
++      unsupportedAudioReported = true
++      val mimeType = tracks.groups
++        .firstOrNull { it.type == C.TRACK_TYPE_AUDIO }
++        ?.getTrackFormat(0)
++        ?.sampleMimeType
++      sendStatusUpdate(mapOf("error" to "$UNSUPPORTED_AUDIO_FORMAT_ERROR: ${mimeType ?: "unknown"}"))
++      ref.stop()
++    }
++  }
++
+   init {
+     installPlayerListeners()
++    ref.addListener(unsupportedAudioListener)
+     source?.let {
+       setMediaSource(source)
+     }
+@@ -92,11 +128,65 @@ class AudioPlayer(
+ 
+   fun setMediaSource(source: MediaSource) {
+     previousPlaybackState = Player.STATE_IDLE
++    unsupportedAudioReported = false
+     ref.setMediaSource(source)
+     ref.prepare()
      startUpdating()
    }
  
