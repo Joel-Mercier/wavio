@@ -19,10 +19,7 @@ import SettingsScreenScaffold from "@/components/settings/SettingsScreenScaffold
 import { VStack } from "@/components/ui/vstack";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import type { BackendCapabilities } from "@/services/backend/capabilities";
-import {
-  filesAreOnDeviceType,
-  isIndexBackedType,
-} from "@/services/backend/serverTraits";
+import { filesAreOnDeviceType } from "@/services/backend/serverTraits";
 import { useAuthBase } from "@/stores/auth";
 
 type IconProps = { size?: number; color?: string };
@@ -36,12 +33,6 @@ const MENU_ENTRIES: {
   // Hidden unless the active backend advertises this capability, so a section
   // never opens onto features the server can't honour.
   requiresCapability?: keyof BackendCapabilities;
-  // For the one section whose contents aren't a single capability. Same purpose
-  // as the two flags above: never offer a row that opens onto an empty screen.
-  isEmpty?: (ctx: {
-    capabilities: BackendCapabilities;
-    indexBacked: boolean;
-  }) => boolean;
 }[] = [
   { key: "playback", icon: AudioLines },
   { key: "library", icon: Library },
@@ -51,17 +42,10 @@ const MENU_ENTRIES: {
   { key: "radio", icon: Radio },
   { key: "storage", icon: HardDrive },
   { key: "downloaders", icon: CloudDownload, hideWhenFilesOnDevice: true },
-  // No single capability covers this one — the section decides per integration
-  // (MusicBrainz needs tag writing, AudioMuse-AI needs a remote media server),
-  // so the rule here mirrors IntegrationsSection's own two conditions. A network
-  // file share satisfies neither, which used to open the entry onto a screen
-  // holding nothing but its description.
-  {
-    key: "integrations",
-    icon: Workflow,
-    isEmpty: ({ capabilities, indexBacked }) =>
-      !capabilities.tagWriting && indexBacked,
-  },
+  // Always offered: the section gates MusicBrainz and AudioMuse-AI per backend,
+  // but ListenBrainz and Last.fm are submitted by the app itself, so every
+  // backend has at least those two.
+  { key: "integrations", icon: Workflow },
   { key: "backup", icon: Archive },
   { key: "security", icon: ShieldCheck },
   { key: "updates", icon: RefreshCw },
@@ -75,9 +59,6 @@ export default function SettingsMenu() {
   const filesOnDevice = useAuthBase((store) =>
     filesAreOnDeviceType(store.serverType),
   );
-  const indexBacked = useAuthBase((store) =>
-    isIndexBackedType(store.serverType),
-  );
   const capabilities = useCapabilities();
 
   return (
@@ -87,8 +68,7 @@ export default function SettingsMenu() {
           (entry) =>
             !(entry.hideWhenFilesOnDevice && filesOnDevice) &&
             (!entry.requiresCapability ||
-              capabilities[entry.requiresCapability]) &&
-            !entry.isEmpty?.({ capabilities, indexBacked }),
+              capabilities[entry.requiresCapability]),
         ).map((entry) => {
           const Icon = entry.icon;
           return (
