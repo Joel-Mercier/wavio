@@ -600,6 +600,7 @@ let baseAt = Date.now();
 registerRemoteTarget({
   id: "jukebox",
   isActive: () => useJukebox.getState().active,
+  playsOnServer: true,
   play: () => {
     jukeboxPlay().catch(() => {});
   },
