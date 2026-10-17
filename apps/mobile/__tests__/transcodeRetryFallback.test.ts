@@ -105,6 +105,7 @@ jest.mock("@/config/i18n", () => ({
 
 import { playTracks } from "@/services/player";
 import useOffline from "@/stores/offline";
+import usePlaybackNotice from "@/stores/playbackNotice";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 
 const { __player: player } = jest.requireMock("expo-audio") as {
@@ -191,5 +192,53 @@ describe("transcode retry on an engine playback failure", () => {
     // hasTranscodeRetried, not the report dedupe.
     emitStatus("Unexpected runtime error");
     expect(loadCount()).toBe(afterFirst);
+  });
+});
+
+// A device with no decoder for the source (ALAC on a Pixel) never gets a media3
+// error at all: the track is just never selected and a silent clock runs. The
+// expo-audio patch reports that as "Unsupported audio format: <mime>".
+describe("audio format the device cannot decode", () => {
+  const unsupported = "Unsupported audio format: audio/alac";
+  const currentId = () => useQueue.getState().getCurrent()?.id;
+
+  beforeEach(() => {
+    usePlaybackNotice.getState().clear();
+  });
+
+  it("reloads through a transcode first", () => {
+    playTracks([track("u1"), track("u1-next")]);
+    const before = loadCount();
+    emitStatus(unsupported);
+    expect(loadCount()).toBe(before + 1);
+    expect(player.replace.mock.calls.at(-1)?.[0].uri).toContain("format=");
+    expect(currentId()).toBe("u1");
+  });
+
+  it("skips to the next track and says why once the transcode is spent", () => {
+    playTracks([track("u2"), track("u2-next")]);
+    emitStatus(unsupported);
+    emitStatus(unsupported);
+    expect(currentId()).toBe("u2-next");
+    expect(usePlaybackNotice.getState().notice).toBe(
+      "PLAYBACK_FORMAT_UNSUPPORTED",
+    );
+    expect(usePlaybackNotice.getState().params).toEqual({ track: "u2" });
+  });
+
+  it("stops instead of cycling a repeat-all queue it can't play", () => {
+    playTracks([track("u3a"), track("u3b")]);
+    useQueue.setState({ repeatMode: "all", removePlayed: false });
+    const failCurrent = () => {
+      emitStatus(unsupported);
+      emitStatus(null);
+    };
+    for (let i = 0; i < 4; i += 1) failCurrent();
+    expect(currentId()).toBe("u3a");
+    const before = loadCount();
+    failCurrent();
+    failCurrent();
+    expect(currentId()).toBe("u3a");
+    expect(loadCount()).toBe(before);
   });
 });

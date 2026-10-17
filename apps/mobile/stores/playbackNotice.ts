@@ -14,6 +14,8 @@ import createSelectors from "@/utils/createSelectors";
 export type PlaybackNoticeCode =
   /** The source couldn't be opened and there is no fallback left to try. */
   | "PLAYBACK_SOURCE_UNAVAILABLE"
+  /** This device can't decode the track's format and no transcode is left to try. */
+  | "PLAYBACK_FORMAT_UNSUPPORTED"
   /** A remote output (renderer, Cast receiver) would not take the track. */
   | "REMOTE_TRACK_REFUSED"
   /** A remote output stopped answering; playback came back to this device. */

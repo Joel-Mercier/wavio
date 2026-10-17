@@ -1986,6 +1986,7 @@
 				"title": "Playing now",
 				"notices": {
 					"sourceUnavailable": "Couldn't play that track — the file wasn't reachable. Check that your server is switched on and on the same network.",
+					"formatUnsupported": "This device can't play the audio format of “{{track}}”.",
 					"remoteTrackRefused": "{{name}} couldn't play “{{track}}”. Pick another track, or play on this device.",
 					"remoteLost": "Lost contact with {{name}}. Playback is back on this device."
 				},

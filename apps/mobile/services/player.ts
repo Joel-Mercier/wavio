@@ -184,6 +184,10 @@ let wasPlaying = false;
 // The last playback error string reported, so a non-null `status.error` that
 // repeats across status ticks is only sent to Sentry once.
 let lastReportedPlaybackError: string | null = null;
+// Tracks skipped because this device can't decode them and no transcode was left
+// to try. Cleared once anything plays, so a queue made only of such tracks (or a
+// repeat-all loop over one) stops instead of cycling through them forever.
+const unsupportedSkippedIds = new Set<string>();
 
 function isScrobblable(track: QueueTrack): boolean {
   return track.source !== "podcast";
@@ -564,8 +568,19 @@ function isDecodeError(message: string): boolean {
 const ENGINE_GENERIC_FAILURE_RE =
   /source error|unexpected runtime error|renderer error/i;
 
+// Raised by the expo-audio patch when the device has no decoder for the source's
+// audio at all (ALAC on most non-Qualcomm phones). media3 itself stays silent in
+// that case: it skips the track, plays nothing, and reports no error.
+function isUnsupportedFormatError(message: string): boolean {
+  return /^unsupported audio format/i.test(message);
+}
+
 function canRetryAsTranscode(message: string): boolean {
-  return isDecodeError(message) || ENGINE_GENERIC_FAILURE_RE.test(message);
+  return (
+    isDecodeError(message) ||
+    isUnsupportedFormatError(message) ||
+    ENGINE_GENERIC_FAILURE_RE.test(message)
+  );
 }
 
 // Backends that stream a server-side transcode without a seekable length.
@@ -1189,10 +1204,11 @@ function handlePlaybackStatus(status: AudioStatus) {
     // delete under them — a cache entry is ours to throw away, and leaving it
     // would keep isPlayableNow promising a file that cannot decode. Dropping it
     // also lets the prefetcher fetch a fresh one.
+    const unsupportedFormat = isUnsupportedFormatError(status.error);
     if (
       current &&
       resolved?.isOffline &&
-      isDecodeError(status.error) &&
+      (isDecodeError(status.error) || unsupportedFormat) &&
       !useOffline.getState().isTrackDownloaded(current.id)
     ) {
       evictTracks([current.id]);
@@ -1230,7 +1246,19 @@ function handlePlaybackStatus(status: AudioStatus) {
     // the library is indexed on this device, so it browses perfectly while the
     // share itself is gone, and playback just silently stops on a track the UI
     // still shows as present. Say so.
-    if (
+    //
+    // A format this device can't decode is different: the engine would otherwise
+    // sit on a track that never makes a sound (a local ALAC file, or a server
+    // whose transcode was already tried). Name it and move on to the next one.
+    if (current && !current.isRadio && unsupportedFormat) {
+      usePlaybackNotice.getState().raise("PLAYBACK_FORMAT_UNSUPPORTED", {
+        track: current.title ?? "",
+      });
+      if (!unsupportedSkippedIds.has(current.id)) {
+        unsupportedSkippedIds.add(current.id);
+        skipNext();
+      }
+    } else if (
       !current?.isRadio &&
       isNetworkShareType(useAuthBase.getState().serverType)
     ) {
@@ -1322,6 +1350,7 @@ function handlePlaybackStatus(status: AudioStatus) {
     }
   }
   if (status.playing) {
+    unsupportedSkippedIds.clear();
     // Advance an in-progress sleep fade off the native tick (works backgrounded).
     // Ramp volume toward zero; once the window elapses, restore the volume for
     // the next play and pause.
