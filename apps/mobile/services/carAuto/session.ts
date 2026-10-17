@@ -33,17 +33,21 @@ import {
 } from "@/services/network";
 import {
   configurePlayback,
+  getCurrentFavorite,
   pause,
   play,
   seekTo,
   skipNext,
   skipPrevious,
+  subscribeCurrentFavorite,
+  toggleCurrentTrackFavorite,
   togglePlayPause,
 } from "@/services/player";
 import {
   applyStartupLocale,
   hydratePlaybackStores,
 } from "@/services/startupHydration";
+import { useAppBase } from "@/stores/app";
 import {
   currentAuthScope,
   registerLogoutHandler,
@@ -480,6 +484,32 @@ async function wire() {
   // Unconditional, unlike the pulse below: the native mirror seeds the car
   // session from these pushes when a host binds later (issue #161).
   subscribePlaybackState(pushPlaybackState);
+  // Same for the heart, which follows the notification's — tap included — so
+  // it flips the moment it's pressed in the car rather than after the star
+  // round trip.
+  CarAutoBridge.setFavorite(getCurrentFavorite());
+  subscribeCurrentFavorite((favorite) => CarAutoBridge.setFavorite(favorite));
+
+  // Which of those buttons the settings' Android Auto section shows, kept the
+  // same way.
+  const pushButtons = () => {
+    const app = useAppBase.getState();
+    CarAutoBridge.setButtons({
+      favorite: app.showCarFavoriteButton,
+      shuffle: app.showCarShuffleButton,
+      repeat: app.showCarRepeatButton,
+    });
+  };
+  pushButtons();
+  useAppBase.subscribe((state, prev) => {
+    if (
+      state.showCarFavoriteButton !== prev.showCarFavoriteButton ||
+      state.showCarShuffleButton !== prev.showCarShuffleButton ||
+      state.showCarRepeatButton !== prev.showCarRepeatButton
+    ) {
+      pushButtons();
+    }
+  });
 
   // Position pulse so the car's timeline keeps advancing even though we don't
   // drive a real Player. Bumping `pulseRun` ends the running loop.
@@ -543,6 +573,9 @@ async function wire() {
         break;
       case "repeat":
         useQueue.getState().setRepeatMode(event.value);
+        break;
+      case "favorite":
+        void toggleCurrentTrackFavorite();
         break;
       default:
         // Defensive — togglePlayPause for unknown signals if AA ever sends a

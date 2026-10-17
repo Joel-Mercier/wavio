@@ -881,6 +881,26 @@ const MEDIA_CONTROLS_BUTTONS: Record<MediaControlsLayout, MediaButton[]> = {
 let pendingFavorite: { id: string; starred: boolean } | null = null;
 let pushedMediaButtons: string | null = null;
 
+// The same heart for controls that draw their own (the Android Auto player):
+// null when the current track can't be favorited. Unlike the notification's, it
+// doesn't follow mediaControlsLayout, which is a choice about the notification's
+// two spare slots.
+let currentFavorite: boolean | null = null;
+const favoriteListeners = new Set<(favorite: boolean | null) => void>();
+
+export function getCurrentFavorite(): boolean | null {
+  return currentFavorite;
+}
+
+export function subscribeCurrentFavorite(
+  listener: (favorite: boolean | null) => void,
+): () => void {
+  favoriteListeners.add(listener);
+  return () => {
+    favoriteListeners.delete(listener);
+  };
+}
+
 function canFavorite(track: QueueTrack | null): track is QueueTrack {
   return !!track && !track.isRadio && !isPodcastTrack(track);
 }
@@ -898,6 +918,11 @@ function syncMediaButtons() {
     useAppBase.getState().mediaControlsLayout
   ].filter((button) => favoritable || button !== "favorite");
   const favorite = favoritable && isTrackFavorite(track);
+  const heart = favoritable ? favorite : null;
+  if (heart !== currentFavorite) {
+    currentFavorite = heart;
+    for (const listener of favoriteListeners) listener(heart);
+  }
   const key = `${buttons.join(",")}|${favorite}`;
   if (key === pushedMediaButtons) return;
   pushedMediaButtons = key;
@@ -908,7 +933,7 @@ function syncMediaButtons() {
   }
 }
 
-async function toggleCurrentTrackFavorite() {
+export async function toggleCurrentTrackFavorite() {
   const track = useQueue.getState().getCurrent();
   if (!canFavorite(track) || pendingFavorite?.id === track.id) return;
   const starred = !track.starred;

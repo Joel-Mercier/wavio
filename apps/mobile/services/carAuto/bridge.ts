@@ -13,6 +13,8 @@ type CarAutoNative = {
   setQueue: (json: string) => void;
   setQueueIndex: (index: number) => void;
   setPlaybackState: (json: string) => void;
+  setFavorite: (favorite: boolean | null) => void;
+  setButtons: (favorite: boolean, shuffle: boolean, repeat: boolean) => void;
   notifyReady: () => void;
   setVerbose: (enabled: boolean) => void;
   isCarConnected: () => boolean;
@@ -44,11 +46,18 @@ export type PlaybackStatePayload = {
 };
 
 export type TransportEvent =
-  | { action: "play" | "pause" | "next" | "previous" }
+  | { action: "play" | "pause" | "next" | "previous" | "favorite" }
   | { action: "seek"; value: number }
   | { action: "seekToIndex"; value: number }
   | { action: "shuffle"; value: number }
   | { action: "repeat"; value: "off" | "all" | "one" };
+
+// Which buttons the car's player screen shows beside play/pause.
+export type CarButtonsPayload = {
+  favorite: boolean;
+  shuffle: boolean;
+  repeat: boolean;
+};
 
 export type QueuePayload = {
   tracks: NowPlayingPayload[];
@@ -112,6 +121,30 @@ export const CarAutoBridge = {
       NativeCarAuto.setPlaybackState(JSON.stringify(state));
     } catch (e) {
       if (__DEV__) console.log("[carauto] setPlaybackState threw", e);
+    }
+  },
+
+  // The heart on the car's player screen. Null hides it: nothing is playing, or
+  // the track can't be favorited (radio, podcasts).
+  setFavorite(favorite: boolean | null) {
+    if (!NativeCarAuto) return;
+    try {
+      NativeCarAuto.setFavorite(favorite);
+    } catch (e) {
+      if (__DEV__) console.log("[carauto] setFavorite threw", e);
+    }
+  },
+
+  setButtons(buttons: CarButtonsPayload) {
+    if (!NativeCarAuto) return;
+    try {
+      NativeCarAuto.setButtons(
+        buttons.favorite,
+        buttons.shuffle,
+        buttons.repeat,
+      );
+    } catch (e) {
+      if (__DEV__) console.log("[carauto] setButtons threw", e);
     }
   },
 

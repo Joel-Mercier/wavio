@@ -106,7 +106,11 @@ jest.mock("@/config/i18n", () => ({
 }));
 
 import { setStarred } from "@/hooks/backend/useMediaAnnotation";
-import "@/services/player";
+import {
+  getCurrentFavorite,
+  subscribeCurrentFavorite,
+  toggleCurrentTrackFavorite,
+} from "@/services/player";
 import { useAppBase } from "@/stores/app";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 
@@ -214,5 +218,37 @@ describe("media notification buttons", () => {
     await flush();
     expect(lastPush()).toEqual([["favorite"], false]);
     warn.mockRestore();
+  });
+});
+
+// The same heart, for controls that draw their own (the Android Auto player).
+describe("current favorite", () => {
+  test("follows the track whatever the notification layout", () => {
+    // The default layout has no heart in the notification.
+    expect(getCurrentFavorite()).toBe(false);
+
+    useQueue.getState().updateTrack("a", { starred: "2026-01-01T00:00:00Z" });
+    expect(getCurrentFavorite()).toBe(true);
+
+    playing(track("radio", { isRadio: true }));
+    expect(getCurrentFavorite()).toBeNull();
+  });
+
+  test("tells listeners the moment a tap flips it, and only once", async () => {
+    mockSetStarred.mockImplementation(async () => {
+      useQueue.getState().updateTrack("a", { starred: "2026-01-01T00:00:00Z" });
+    });
+    const seen: (boolean | null)[] = [];
+    const unsubscribe = subscribeCurrentFavorite((favorite) =>
+      seen.push(favorite),
+    );
+
+    void toggleCurrentTrackFavorite();
+    expect(seen).toEqual([true]);
+
+    await flush();
+    expect(seen).toEqual([true]);
+    expect(getCurrentFavorite()).toBe(true);
+    unsubscribe();
   });
 });
