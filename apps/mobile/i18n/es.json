@@ -1985,6 +1985,7 @@
 				"title": "Reproduciéndose ahora",
 				"notices": {
 					"sourceUnavailable": "No se ha podido reproducir esa pista: no se ha podido acceder al archivo. Comprueba que tu servidor esté encendido y conectado a la misma red.",
+					"formatUnsupported": "This device can't play the audio format of “{{track}}”.",
 					"remoteTrackRefused": "{{name}} No se ha podido reproducir «{{track}}». Elige otra canción o reprodúcela en este dispositivo.",
 					"remoteLost": "Se ha perdido el contacto con {{name}}. La reproducción vuelve a funcionar en este dispositivo."
 				},

@@ -1985,6 +1985,7 @@
 				"title": "In riproduzione",
 				"notices": {
 					"sourceUnavailable": "Non è stato possibile riprodurre quel brano: il file non era accessibile. Verifica che il tuo server sia acceso e che si trovi sulla stessa rete.",
+					"formatUnsupported": "This device can't play the audio format of “{{track}}”.",
 					"remoteTrackRefused": "{{name}} Non è stato possibile riprodurre “{{track}}”. Scegli un altro brano oppure riproducilo su questo dispositivo.",
 					"remoteLost": "Il contatto con {{name}}è stato perso. La riproduzione è nuovamente attiva su questo dispositivo."
 				},

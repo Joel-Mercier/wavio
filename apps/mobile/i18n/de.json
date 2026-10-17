@@ -1985,6 +1985,7 @@
 				"title": "Wird gerade abgespielt",
 				"notices": {
 					"sourceUnavailable": "Der Titel konnte nicht abgespielt werden – die Datei war nicht erreichbar. Bitte überprüfen Sie, ob Ihr Server eingeschaltet ist und sich im selben Netzwerk befindet.",
+					"formatUnsupported": "This device can't play the audio format of “{{track}}”.",
 					"remoteTrackRefused": "{{name}} „{{track}}“ konnte nicht abgespielt werden. Wähle einen anderen Titel aus oder spiele ihn auf diesem Gerät ab.",
 					"remoteLost": "Der Kontakt zu {{name}}ist unterbrochen. Die Wiedergabe auf diesem Gerät funktioniert wieder."
 				},

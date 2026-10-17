@@ -1931,6 +1931,7 @@
 				"title": "正在播放",
 				"notices": {
 					"sourceUnavailable": "无法播放该音轨——无法访问该文件。请检查您的服务器是否已开启，并且是否处于同一网络中。",
+					"formatUnsupported": "This device can't play the audio format of “{{track}}”.",
 					"remoteTrackRefused": "{{name}} 无法播放“{{track}}”。请选择另一首歌曲，或在此设备上播放。",
 					"remoteLost": "已与 {{name}}失去联系。该设备已恢复播放功能。"
 				},

@@ -1985,6 +1985,7 @@
 				"title": "Em exibição agora",
 				"notices": {
 					"sourceUnavailable": "Não foi possível reproduzir essa faixa — o arquivo não estava acessível. Verifique se o seu servidor está ligado e na mesma rede.",
+					"formatUnsupported": "This device can't play the audio format of “{{track}}”.",
 					"remoteTrackRefused": "{{name}} Não foi possível reproduzir “{{track}}”. Escolha outra faixa ou reproduza neste aparelho.",
 					"remoteLost": "Perdeu contato com {{name}}. A reprodução voltou a funcionar neste dispositivo."
 				},

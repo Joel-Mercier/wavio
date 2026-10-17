@@ -1985,6 +1985,7 @@
 				"title": "En cours de lecture",
 				"notices": {
 					"sourceUnavailable": "Impossible de lire ce morceau : le fichier n'était pas accessible. Vérifiez que votre serveur est allumé et qu'il se trouve sur le même réseau.",
+					"formatUnsupported": "Cet appareil ne peut pas lire le format audio de «{{track}}».",
 					"remoteTrackRefused": "{{name}} n'a pas pu jouer «{{track}}». Choisissez un autre titre, ou lancez la lecture  sur cet appareil.",
 					"remoteLost": "Le contact avec {{name}} a été perdu. La lecture se fait désormais sur cet appareil."
 				},
