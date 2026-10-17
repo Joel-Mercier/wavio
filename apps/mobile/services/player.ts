@@ -172,12 +172,8 @@ let submittedScrobbleId: string | null = null;
 // server answered and refused, so that play falls back to the stopped-count.
 let earlyScrobbledId: string | null = null;
 let scrobbleStartedAt: number | null = null;
-// ListenBrainz and Last.fm submit on their own schedule (half the track / 4
-// minutes), which is much later than the server scrobble at
-// COUNT_PLAY_AFTER_SECONDS — so they need their own "already submitted this
-// track" marker rather than sharing `submittedScrobbleId`.
-//
-// One marker per provider, not one shared between them: they are enabled
+// ListenBrainz and Last.fm each get their own "already submitted this track"
+// marker rather than sharing `submittedScrobbleId`: they are enabled
 // independently, and a single marker would let whichever ran first suppress the
 // other for the rest of the track.
 let listenBrainzSubmittedId: string | null = null;
@@ -339,15 +335,21 @@ type ServerScrobbleOutcome = "landed" | "queued" | "refused";
 async function submitServerScrobble(
   id: string,
   time: number,
+  positionSeconds: number,
 ): Promise<ServerScrobbleOutcome> {
   const park = (): ServerScrobbleOutcome => {
-    enqueueOfflineMutation(queryClient, { type: "scrobble", id, time });
+    enqueueOfflineMutation(queryClient, {
+      type: "scrobble",
+      id,
+      time,
+      positionSeconds,
+    });
     return "queued";
   };
   const needsServer = !isIndexBacked();
   if (needsServer && !getIsEffectivelyOnline()) return park();
   try {
-    await scrobble(id, { submission: true, time });
+    await scrobble(id, { submission: true, time, positionSeconds });
     return "landed";
   } catch (error) {
     if (!needsServer || !isNetworkNoise(error)) return "refused";
@@ -359,24 +361,31 @@ async function submitServerScrobble(
   }
 }
 
-// Count a play — and reorder the server's "recently played" — this many seconds
-// into playback, rather than at the classic Last.fm halfway/4-min mark, so the
-// server (and other clients / the widget) reflect it almost immediately. A quick
-// skip before this window doesn't count (nor scrobble to Last.fm/ListenBrainz).
-const COUNT_PLAY_AFTER_SECONDS = 5;
+// Every counted play — the server scrobble, ListenBrainz and Last.fm — waits
+// for half the track or four minutes. The server forwards a counted play to its
+// own linked scrobblers straight away (issue #222), so counting it any earlier
+// would scrobble skipped tracks there.
+//
+// Jellyfin's scrobbler plugins re-check the reported position against the
+// server's own runtime, which the engine's duration and the whole-second
+// metadata duration can both undershoot slightly. Landing exactly on the
+// halfway mark would then read as 49.99% and be dropped.
+const THRESHOLD_MARGIN_SECONDS = 1;
 
-// ListenBrainz and Last.fm both ask for a play once half the track (or four
-// minutes) has been heard, which is deliberately much later than
-// COUNT_PLAY_AFTER_SECONDS above: that early mark exists to reorder the server's
-// "recently played" quickly, and submitting it to either would over-report
-// skipped tracks. Queued rather than sent, so it survives being offline.
+function reachedSubmissionThreshold(position: number, duration: number) {
+  return (
+    isSubmittableDuration(duration) &&
+    position >= submissionThresholdSeconds(duration) + THRESHOLD_MARGIN_SECONDS
+  );
+}
+
+// Queued rather than sent, so it survives being offline.
 function maybeSubmitListen(
   current: QueueTrack,
   position: number,
   duration: number,
 ) {
-  if (!isSubmittableDuration(duration)) return;
-  if (position < submissionThresholdSeconds(duration)) return;
+  if (!reachedSubmissionThreshold(position, duration)) return;
   const startedAt = scrobbleStartedAt ?? Date.now();
   if (listenBrainzSubmittedId !== current.id) {
     listenBrainzSubmittedId = current.id;
@@ -393,10 +402,11 @@ function maybeSubmitScrobble(status: AudioStatus) {
   if (!current) return;
   if (!isScrobblable(current)) return;
   const position = effectivePosition(status.currentTime ?? 0);
-  // `||`, not `??`: a transcoded or chunked stream of unknown length reports a
-  // duration of 0, which is no more usable than undefined — fall through to the
-  // track's own metadata rather than letting the 0 stick.
-  const duration = status.duration || current.duration || 0;
+  // The longer of the engine's and the server's idea of the length, so a play is
+  // never counted before the server would agree half of it was heard. A
+  // transcoded or chunked stream of unknown length reports 0, which simply
+  // loses to the metadata.
+  const duration = Math.max(status.duration || 0, current.duration || 0);
 
   // Before the playbackReport branch below, which returns early: ListenBrainz
   // submission is independent of how the *server* counts a play, so it must run
@@ -408,14 +418,13 @@ function maybeSubmitScrobble(status: AudioStatus) {
     // actually playing, so a paused tick doesn't flip the server back to playing.
     if (status.playing) reportProgress(position * 1000);
     // The server would otherwise only count the play on "stopped" (i.e. at track
-    // end), so count it ourselves a few seconds in with a classic scrobble for an
-    // instant "recently played" reorder. resetScrobbleState() then finalises the
-    // track with ignoreScrobble so the server doesn't count it a second time.
+    // end, and never if the app dies first), so count it ourselves with a classic
+    // scrobble once the threshold is reached. resetScrobbleState() then finalises
+    // the track with ignoreScrobble so the server doesn't count it a second time.
     if (
       status.playing &&
       submittedScrobbleId !== current.id &&
-      duration >= 30 &&
-      position >= COUNT_PLAY_AFTER_SECONDS
+      reachedSubmissionThreshold(position, duration)
     ) {
       const id = current.id;
       submittedScrobbleId = id;
@@ -425,29 +434,32 @@ function maybeSubmitScrobble(status: AudioStatus) {
       // the final "stopped" must still carry ignoreScrobble or connectivity
       // returning mid-track would count it twice. The current-track guard keeps
       // a late refusal from clearing the marker of whatever plays next.
-      void submitServerScrobble(id, scrobbleStartedAt ?? Date.now()).then(
-        (outcome) => {
-          if (outcome === "refused") {
-            if (nowPlayingScrobbledId === id) earlyScrobbledId = null;
-            return;
-          }
-          if (outcome === "landed") scheduleRecentlyPlayedRefresh();
-        },
-      );
+      void submitServerScrobble(
+        id,
+        scrobbleStartedAt ?? Date.now(),
+        position,
+      ).then((outcome) => {
+        if (outcome === "refused") {
+          if (nowPlayingScrobbledId === id) earlyScrobbledId = null;
+          return;
+        }
+        if (outcome === "landed") scheduleRecentlyPlayedRefresh();
+      });
     }
     return;
   }
 
   if (submittedScrobbleId === current.id) return;
-  if (duration < 30) return;
-  if (position < COUNT_PLAY_AFTER_SECONDS) return;
+  if (!reachedSubmissionThreshold(position, duration)) return;
   submittedScrobbleId = current.id;
   notePlayCounted(current);
-  void submitServerScrobble(current.id, scrobbleStartedAt ?? Date.now()).then(
-    (outcome) => {
-      if (outcome === "landed") scheduleRecentlyPlayedRefresh();
-    },
-  );
+  void submitServerScrobble(
+    current.id,
+    scrobbleStartedAt ?? Date.now(),
+    position,
+  ).then((outcome) => {
+    if (outcome === "landed") scheduleRecentlyPlayedRefresh();
+  });
 }
 
 function resetScrobbleState() {
@@ -1383,6 +1395,8 @@ function handlePlaybackStatus(status: AudioStatus) {
     // episode has no known duration (with one, the flush hits the end guard and
     // clears anyway) — but that is exactly the RSS-feed case.
     finishedPodcastId = previousId;
+    const played =
+      effectivePosition(status.currentTime ?? 0) || previous?.duration || 0;
     if (
       !playbackReportEnabled() &&
       previousId &&
@@ -1395,6 +1409,7 @@ function handlePlaybackStatus(status: AudioStatus) {
       void submitServerScrobble(
         previousId,
         scrobbleStartedAt ?? Date.now(),
+        played,
       ).then((outcome) => {
         if (outcome === "landed") scheduleRecentlyPlayedRefresh();
       });
@@ -1404,8 +1419,6 @@ function handlePlaybackStatus(status: AudioStatus) {
     // long it played *is* its duration. Runs on both scrobble paths, and
     // maybeSubmitListen's own id guard makes a second call a no-op.
     if (previous && isScrobblable(previous)) {
-      const played =
-        effectivePosition(status.currentTime ?? 0) || previous.duration || 0;
       maybeSubmitListen(previous, played, played);
     }
     if (consumeSleepEndOfTrack()) {

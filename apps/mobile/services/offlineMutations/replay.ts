@@ -181,7 +181,11 @@ async function executeAction(item: QueuedMutation): Promise<void> {
       return;
     }
     case "scrobble": {
-      await scrobble(action.id, { submission: true, time: action.time });
+      await scrobble(action.id, {
+        submission: true,
+        time: action.time,
+        positionSeconds: action.positionSeconds,
+      });
       return;
     }
   }

@@ -245,6 +245,18 @@ describe("drainOfflineMutations - scrobbles", () => {
     expect(invalidateKeysMock).not.toHaveBeenCalled();
   });
 
+  test("replays the position the play was counted at", async () => {
+    setQueue([
+      seed({ type: "scrobble", id: "s1", time: 1, positionSeconds: 106.5 }),
+    ]);
+    await drain();
+    expect(scrobbleMock).toHaveBeenCalledWith("s1", {
+      submission: true,
+      time: 1,
+      positionSeconds: 106.5,
+    });
+  });
+
   test("a track the server no longer knows is dropped silently", async () => {
     // A play is bookkeeping the user never asked for: no Sentry report, no
     // "change couldn't be synced" toast, and no starred/rating/playlist

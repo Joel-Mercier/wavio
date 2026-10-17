@@ -1,8 +1,13 @@
 import { subsonicRequest } from "@/services/openSubsonic/index";
 
+// `positionSeconds` is only read by Jellyfin; the Subsonic scrobble has no
+// position parameter.
 export const scrobble = async (
   id: string,
-  { time, submission }: { time?: number; submission?: boolean },
+  {
+    time,
+    submission,
+  }: { time?: number; submission?: boolean; positionSeconds?: number },
 ) =>
   // Best-effort playback telemetry. Code 70 ("data not found") just means the
   // server no longer has this track id — expected, not a reportable bug.

@@ -62,14 +62,21 @@ export const reportPlayback = async (_params: {
   return fakeEnvelope({});
 };
 
+// Jellyfin itself counts the play on /Sessions/Playing; the scrobbler plugins
+// (Last.fm, ListenBrainz) only submit on Stopped when PositionTicks shows half
+// the track or four minutes were heard, so the real position must be sent.
 export const scrobble = async (
   id: string,
-  { time: _time, submission }: { time?: number; submission?: boolean },
+  {
+    time: _time,
+    submission,
+    positionSeconds = 0,
+  }: { time?: number; submission?: boolean; positionSeconds?: number },
 ) => {
   if (submission) {
     await jellyfinApiInstance.post("/Sessions/Playing/Stopped", {
       ItemId: id,
-      PositionTicks: 0,
+      PositionTicks: Math.round(positionSeconds * 10_000_000),
     });
   } else {
     await jellyfinApiInstance.post("/Sessions/Playing", {

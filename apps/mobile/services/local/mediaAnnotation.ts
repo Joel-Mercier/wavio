@@ -29,7 +29,10 @@ export const setRating = async (id: string, rating: number) => {
 
 export const scrobble = async (
   id: string,
-  { time, submission }: { time?: number; submission?: boolean } = {},
+  {
+    time,
+    submission,
+  }: { time?: number; submission?: boolean; positionSeconds?: number } = {},
 ) => {
   // Mirror Subsonic semantics: only a submission counts as a play; submission:
   // false is the now-playing ping. time is when playback started (epoch-ms).

@@ -27,7 +27,14 @@ export type OfflineAction =
   | { type: "playlistDelete"; playlistId: string }
   // `time` is when the track started (epoch ms), replayed as the Subsonic
   // `time` param so the server records the play when it actually happened.
-  | { type: "scrobble"; id: string; time: number };
+  // `positionSeconds` is how far in the play was counted; Jellyfin's scrobbler
+  // plugins need it. Absent on items queued before it existed.
+  | {
+      type: "scrobble";
+      id: string;
+      time: number;
+      positionSeconds?: number;
+    };
 
 export type QueuedMutation = {
   id: string;

@@ -139,12 +139,6 @@ describe("submission threshold", () => {
     expect(submissionThresholdSeconds(1200)).toBe(240);
   });
 
-  it("is far later than the server scrobble at 5s", () => {
-    // Guards the reason this gate exists at all: reusing the app's
-    // COUNT_PLAY_AFTER_SECONDS would over-report skipped tracks.
-    expect(submissionThresholdSeconds(213)).toBeGreaterThan(5);
-  });
-
   it("rejects tracks shorter than 30 seconds", () => {
     expect(isSubmittableDuration(29)).toBe(false);
     expect(isSubmittableDuration(30)).toBe(true);
