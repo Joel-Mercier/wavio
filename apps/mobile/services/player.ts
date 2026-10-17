@@ -54,6 +54,11 @@ import {
   noteStreamOverOffline,
   noteTranscodeRetried,
 } from "@/services/playback/decodeFallback";
+import { onRemoteTrackEnd } from "@/services/playback/remoteAdvance";
+// Not through targets.ts: that imports cast/upnp/jukebox, which import this
+// file, so at boot its exports are still undefined when the subscription
+// below runs. remoteTarget.ts imports nothing.
+import { subscribeRemoteChange } from "@/services/playback/remoteTarget";
 import { activeRemoteTarget } from "@/services/playback/targets";
 import {
   notePlaybackRateChanged,
@@ -401,32 +406,35 @@ function maybeSubmitListen(
   }
 }
 
-function maybeSubmitScrobble(status: AudioStatus) {
+function maybeSubmitScrobble(
+  playing: boolean,
+  position: number,
+  reportedDuration: number,
+) {
   const current = useQueue.getState().getCurrent();
   if (!current) return;
   if (!isScrobblable(current)) return;
-  const position = effectivePosition(status.currentTime ?? 0);
   // The longer of the engine's and the server's idea of the length, so a play is
   // never counted before the server would agree half of it was heard. A
   // transcoded or chunked stream of unknown length reports 0, which simply
   // loses to the metadata.
-  const duration = Math.max(status.duration || 0, current.duration || 0);
+  const duration = Math.max(reportedDuration || 0, current.duration || 0);
 
   // Before the playbackReport branch below, which returns early: ListenBrainz
   // submission is independent of how the *server* counts a play, so it must run
   // on both paths.
-  if (status.playing) maybeSubmitListen(current, position, duration);
+  if (playing) maybeSubmitListen(current, position, duration);
 
   if (playbackReportEnabled()) {
     // Progress reports keep the server's now-playing session alive. Only while
     // actually playing, so a paused tick doesn't flip the server back to playing.
-    if (status.playing) reportProgress(position * 1000);
+    if (playing) reportProgress(position * 1000);
     // The server would otherwise only count the play on "stopped" (i.e. at track
     // end, and never if the app dies first), so count it ourselves with a classic
     // scrobble once the threshold is reached. resetScrobbleState() then finalises
     // the track with ignoreScrobble so the server doesn't count it a second time.
     if (
-      status.playing &&
+      playing &&
       submittedScrobbleId !== current.id &&
       reachedSubmissionThreshold(position, duration)
     ) {
@@ -493,6 +501,59 @@ function resetScrobbleState() {
   listenBrainzSubmittedId = null;
   lastFmSubmittedId = null;
 }
+
+// A track that played to its end counts even if it never crossed the threshold
+// while playing: a stream of unknown length has nothing to halve, so how long
+// it played *is* its duration. maybeSubmitListen's own id guard makes a second
+// call a no-op.
+function countFinishedPlay(track: QueueTrack, played: number) {
+  if (!isScrobblable(track)) return;
+  if (!playbackReportEnabled() && submittedScrobbleId !== track.id) {
+    submittedScrobbleId = track.id;
+    notePlayCounted(track);
+    void submitServerScrobble(
+      track.id,
+      scrobbleStartedAt ?? Date.now(),
+      played,
+    ).then((outcome) => {
+      if (outcome === "landed") scheduleRecentlyPlayedRefresh();
+    });
+  }
+  maybeSubmitListen(track, played, played);
+}
+
+// A renderer or Cast receiver fetches the stream itself, which no server counts
+// as a play (issue #237), and the local engine is parked meanwhile, so its ticks
+// say nothing. Drive the same announce/count pipeline from the target's state.
+subscribeRemoteChange(() => {
+  const remote = activeRemoteTarget();
+  if (!remote || remote.playsOnServer) return;
+  const current = useQueue.getState().getCurrent();
+  if (!current) return;
+  const { playing, buffering, currentTime, duration } = remote.readSnapshot();
+  if (!playing) {
+    if (wasPlaying && !buffering) reportPaused(currentTime * 1000);
+    wasPlaying = false;
+    // A play is only counted while it plays. A stopped renderer still reports
+    // the position it ended at, and once the track end has reset the state
+    // that would read as a fresh play already past its threshold.
+    return;
+  }
+  reportNowPlaying(current);
+  wasPlaying = true;
+  maybeSubmitScrobble(true, currentTime, duration);
+});
+
+onRemoteTrackEnd((track) => {
+  if (activeRemoteTarget()?.playsOnServer) return;
+  countFinishedPlay(
+    track,
+    track.duration || activeRemoteTarget()?.getCurrentTime() || 0,
+  );
+  // Repeat-one reloads the same track without a queue move, so nothing else
+  // would start the next play over.
+  resetScrobbleState();
+});
 
 // A counted play reorders the server-side "recent"/"frequent" lists, so nudge
 // React Query to refetch them — reconciling the optimistic track bump in
@@ -1029,8 +1090,13 @@ function loadTrack(track: QueueTrack | null, autoplay: boolean) {
   isLoading = false;
 }
 
-function loadAndPlay(track: QueueTrack | null) {
-  resetScrobbleState();
+function loadAndPlay(
+  track: QueueTrack | null,
+  options: { continuingPlay?: boolean } = {},
+) {
+  if (!options.continuingPlay || track?.id !== nowPlayingScrobbledId) {
+    resetScrobbleState();
+  }
   if (track && !isPlayableNow(track)) {
     // Offline and this track isn't downloaded — hop forward to one that is.
     // Setting currentIndex re-fires the queue subscription which lands us
@@ -1382,13 +1448,26 @@ function handlePlaybackStatus(status: AudioStatus) {
         recordResumePosition(cur, effectivePosition(status.currentTime ?? 0));
       }
     }
-  } else if (wasPlaying && !status.didJustFinish && !isLoading) {
+  } else if (
+    wasPlaying &&
+    !status.didJustFinish &&
+    !isLoading &&
+    !activeRemoteTarget()
+  ) {
     // Playback paused (UI, lock-screen or OS control). Report it for the
     // playbackReport path; no-op when the extension is off.
     reportPaused(effectivePosition(status.currentTime ?? 0) * 1000);
   }
-  wasPlaying = status.playing;
-  maybeSubmitScrobble(status);
+  // The engine parked for a handover says nothing about the play, which the
+  // remote target reports from here on.
+  if (!activeRemoteTarget()) {
+    wasPlaying = status.playing;
+    maybeSubmitScrobble(
+      status.playing,
+      effectivePosition(status.currentTime ?? 0),
+      status.duration,
+    );
+  }
 
   // Endless playback: while the queue is parked on its last track and it's near
   // the end, prefetch similar tracks and append them so the end-of-track advance
@@ -1426,30 +1505,7 @@ function handlePlaybackStatus(status: AudioStatus) {
     finishedPodcastId = previousId;
     const played =
       effectivePosition(status.currentTime ?? 0) || previous?.duration || 0;
-    if (
-      !playbackReportEnabled() &&
-      previousId &&
-      submittedScrobbleId !== previousId &&
-      previous &&
-      isScrobblable(previous)
-    ) {
-      submittedScrobbleId = previousId;
-      notePlayCounted(previous);
-      void submitServerScrobble(
-        previousId,
-        scrobbleStartedAt ?? Date.now(),
-        played,
-      ).then((outcome) => {
-        if (outcome === "landed") scheduleRecentlyPlayedRefresh();
-      });
-    }
-    // Rescue for a stream that never reported a duration: nothing could clear
-    // the halfway threshold while it played, but it has now finished, so how
-    // long it played *is* its duration. Runs on both scrobble paths, and
-    // maybeSubmitListen's own id guard makes a second call a no-op.
-    if (previous && isScrobblable(previous)) {
-      maybeSubmitListen(previous, played, played);
-    }
+    if (previous) countFinishedPlay(previous, played);
     if (consumeSleepEndOfTrack()) {
       player.pause();
       return;
@@ -1952,7 +2008,9 @@ export function takeOverFromRemote(positionSeconds: number, shouldPlay = true) {
   const current = useQueue.getState().getCurrent();
   if (!current) return;
   if (shouldPlay) {
-    loadAndPlay(current);
+    // The play the remote announced (and may already have counted) carries on
+    // here; starting it over would count it twice.
+    loadAndPlay(current, { continuingPlay: true });
   } else {
     loadTrack(current, false);
   }

@@ -13,6 +13,11 @@ import type { PlaybackSnapshot } from "@/hooks/player/playbackSnapshot";
 export type RemoteTarget = {
   id: string;
   isActive: () => boolean;
+  // The server itself is the one playing (the jukebox), so whether the play
+  // counts is its call: some servers count jukebox plays on their own. Every
+  // other target only fetches a stream, which no server counts, so the player
+  // announces and scrobbles those plays the way it does its own.
+  playsOnServer?: boolean;
 
   play: () => void;
   pause: () => void;

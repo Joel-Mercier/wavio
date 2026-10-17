@@ -25,10 +25,25 @@ let automaticAdvancePending = false;
 // means something is wrong with the receiver, not the track.
 let failedAutomaticAdvances = 0;
 
+// The player counts the finished play here. The queue move that follows can't
+// tell a track that ended from one that was skipped, and repeat-one makes no
+// move at all.
+const trackEndListeners = new Set<(track: QueueTrack) => void>();
+
+export function onRemoteTrackEnd(listener: (track: QueueTrack) => void) {
+  trackEndListeners.add(listener);
+  return () => {
+    trackEndListeners.delete(listener);
+  };
+}
+
 export function advanceAfterTrackEnd(handlers: Handlers) {
   const state = useQueue.getState();
+  const current = state.getCurrent();
+  if (current) {
+    for (const listener of trackEndListeners) listener(current);
+  }
   if (state.repeatMode === "one") {
-    const current = state.getCurrent();
     if (current) handlers.reload(current);
     return;
   }
