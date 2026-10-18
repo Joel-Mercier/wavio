@@ -86,6 +86,7 @@ import {
   notePlaybackTrack,
   recordResumePosition,
 } from "@/services/resumePositions";
+import { maybeRequestReview, noteCountedPlay } from "@/services/reviewPrompt";
 import { isActiveServerUrl, rewriteQueueRoutes } from "@/services/routeSwap";
 import {
   customHeadersForUrl,
@@ -325,6 +326,7 @@ function notePlayCounted(track: QueueTrack) {
   hoistAlbumToRecent(track);
   bumpMostPlayedTracks(track.id);
   usePlayHistory.getState().recordPlay(track);
+  noteCountedPlay();
 }
 
 type ServerScrobbleOutcome = "landed" | "queued" | "refused";
@@ -1534,6 +1536,7 @@ function handlePlaybackStatus(status: AudioStatus) {
         } catch (error) {
           logSwallowed("stop at queue end", error);
         }
+        void maybeRequestReview();
         return;
       }
       // The tail finished before the extension landed (prefetch still running,

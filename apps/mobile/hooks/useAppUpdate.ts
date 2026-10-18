@@ -13,6 +13,7 @@ import {
   isStoreUpdateAvailable,
   startStoreUpdate,
 } from "@/services/appUpdate";
+import { noteUpdateOffered } from "@/services/reviewPrompt";
 import useApp from "@/stores/app";
 
 export type UpdateStatus =
@@ -92,6 +93,7 @@ export function useAppUpdate({ autoCheck = false } = {}) {
     setStatus("checking");
     const available = await isStoreUpdateAvailable();
     if (available) {
+      noteUpdateOffered();
       await startStoreUpdate();
       setStatus("idle");
     } else {

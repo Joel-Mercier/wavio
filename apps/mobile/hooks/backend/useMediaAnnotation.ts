@@ -15,6 +15,7 @@ import {
   enqueueOfflineMutation,
   isQueuedResult,
 } from "@/services/offlineMutations/enqueue";
+import { maybeRequestReview } from "@/services/reviewPrompt";
 import type { StarTarget } from "@/stores/offlineMutations";
 import useQueue from "@/stores/queue";
 import { invalidateKeys } from "@/utils/invalidateKeys";
@@ -190,8 +191,10 @@ export const useStar = () => {
   const query = useMutation({
     networkMode: "always",
     mutationFn: (params: StarParams) => requestStar(queryClient, params, true),
-    onSuccess: (data, params) =>
-      applyStarResult(queryClient, data, params, true),
+    onSuccess: (data, params) => {
+      applyStarResult(queryClient, data, params, true);
+      void maybeRequestReview();
+    },
   });
 
   return query;

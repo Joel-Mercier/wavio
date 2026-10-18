@@ -1,6 +1,7 @@
 import * as Application from "expo-application";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { Linking, Platform } from "react-native";
 import {
   SettingsActionRow,
   SettingsSectionTitle,
@@ -10,9 +11,23 @@ import SettingsScreenScaffold from "@/components/settings/SettingsScreenScaffold
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import UpdateAvailableDialog from "@/components/update/UpdateAvailableDialog";
+import { isStoreDistribution } from "@/config/distribution";
 import { useAppUpdate } from "@/hooks/useAppUpdate";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
 import useApp from "@/stores/app";
+
+const canRateOnPlayStore = isStoreDistribution && Platform.OS === "android";
+
+// A direct link to the listing, never the in-app review card: Play may silently
+// skip the card once its quota is spent, which would make the row look broken.
+const openPlayStoreListing = () => {
+  const id = Application.applicationId;
+  Linking.openURL(`market://details?id=${id}`)
+    .catch(() =>
+      Linking.openURL(`https://play.google.com/store/apps/details?id=${id}`),
+    )
+    .catch(() => {});
+};
 
 export default function UpdatesSection() {
   const { t } = useTranslation();
@@ -66,6 +81,14 @@ export default function UpdatesSection() {
           onPress={() => check()}
           disabled={status === "checking"}
         />
+        {canRateOnPlayStore && (
+          <SettingsActionRow
+            label={t("app.settings.updatesSettings.rateLabel")}
+            description={t("app.settings.updatesSettings.rateDescription")}
+            actionLabel={t("app.settings.updatesSettings.rateAction")}
+            onPress={openPlayStoreListing}
+          />
+        )}
         <SettingsSectionTitle
           title={t("app.settings.updatesSettings.currentVersionLabel")}
         />
