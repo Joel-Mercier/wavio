@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect } from "react";
+import AndroidAutoSection from "@/components/settings/sections/AndroidAutoSection";
 import AppearanceSection from "@/components/settings/sections/AppearanceSection";
 import BackupRestoreSection from "@/components/settings/sections/BackupRestoreSection";
 import DownloadersSection from "@/components/settings/sections/DownloadersSection";
@@ -15,6 +16,7 @@ import UpdatesSection from "@/components/settings/sections/UpdatesSection";
 
 const SECTIONS: Record<string, React.ComponentType> = {
   playback: PlaybackAudioSection,
+  androidAuto: AndroidAutoSection,
   library: MusicLibrarySection,
   downloads: DownloadsOfflineSection,
   downloaders: DownloadersSection,

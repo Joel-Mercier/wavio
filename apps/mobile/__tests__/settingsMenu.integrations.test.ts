@@ -33,6 +33,7 @@ jest.mock(
   "lucide-react-native/dist/esm/icons/audio-lines.mjs",
   () => () => null,
 );
+jest.mock("lucide-react-native/dist/esm/icons/car.mjs", () => () => null);
 jest.mock(
   "lucide-react-native/dist/esm/icons/cloud-download.mjs",
   () => () => null,

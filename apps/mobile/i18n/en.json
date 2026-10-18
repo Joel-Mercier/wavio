@@ -769,6 +769,10 @@
 						"title": "Playback & audio",
 						"description": "Audio quality, replay gain, equalizer"
 					},
+					"androidAuto": {
+						"title": "Android Auto",
+						"description": "Buttons on the car's player screen"
+					},
 					"library": {
 						"title": "Music library",
 						"description": "Scan your library and view its status"
@@ -1723,6 +1727,15 @@
 					"restartRequiredTitle": "Backup restored",
 					"restartRequiredDescription": "Your data has been restored. Sign in to your server to finish.",
 					"restartRequiredAction": "Continue"
+				},
+				"androidAutoSettings": {
+					"playerButtonsTitle": "Player buttons",
+					"favoriteButtonLabel": "Favorite",
+					"favoriteButtonDescription": "A heart that adds the current track to your favorites, or removes it.",
+					"shuffleButtonLabel": "Shuffle",
+					"shuffleButtonDescription": "Turns shuffle on and off.",
+					"repeatButtonLabel": "Repeat",
+					"repeatButtonDescription": "Cycles through repeat all, repeat one and off."
 				},
 				"securitySettings": {
 					"title": "Security",

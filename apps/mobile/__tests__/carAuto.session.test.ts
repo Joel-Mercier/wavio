@@ -21,6 +21,26 @@ const mockSetChildren = jest.fn();
 const mockNotifyReady = jest.fn();
 const mockLoadOnDemandChildren = jest.fn();
 let mockChildrenListener: ((parentId: string) => void) | null = null;
+let mockCurrentFavorite: boolean | null = null;
+let mockFavoriteListener: ((favorite: boolean | null) => void) | null = null;
+const mockSetFavorite = jest.fn();
+const mockToggleFavorite = jest.fn();
+const mockTogglePlayPause = jest.fn();
+let mockTransportListener: ((event: { action: string }) => void) | null = null;
+type MockCarButtons = {
+  showCarFavoriteButton: boolean;
+  showCarShuffleButton: boolean;
+  showCarRepeatButton: boolean;
+};
+let mockCarButtons: MockCarButtons = {
+  showCarFavoriteButton: true,
+  showCarShuffleButton: true,
+  showCarRepeatButton: true,
+};
+let mockAppListener:
+  | ((state: MockCarButtons, prev: MockCarButtons) => void)
+  | null = null;
+const mockSetButtons = jest.fn();
 
 jest.mock("react-native", () => ({
   Platform: { OS: "android" },
@@ -68,6 +88,8 @@ jest.mock("@/services/carAuto/bridge", () => ({
     setQueue: jest.fn(),
     setQueueIndex: jest.fn(),
     setPlaybackState: (state: unknown) => mockSetPlaybackState(state),
+    setFavorite: (favorite: boolean | null) => mockSetFavorite(favorite),
+    setButtons: (buttons: unknown) => mockSetButtons(buttons),
     isCarConnected: () => mockCarConnected,
     delay: (ms: number) =>
       new Promise<void>((resolve) => setTimeout(resolve, ms)),
@@ -76,7 +98,10 @@ jest.mock("@/services/carAuto/bridge", () => ({
       return () => mockCarListeners.delete(listener);
     },
     onPlay: jest.fn(),
-    onTransport: jest.fn(),
+    onTransport: (listener: (event: { action: string }) => void) => {
+      mockTransportListener = listener;
+      return () => {};
+    },
   },
 }));
 jest.mock("@/services/carAuto/carplay", () => ({
@@ -103,16 +128,33 @@ jest.mock("@/services/network", () => ({
 }));
 jest.mock("@/services/player", () => ({
   configurePlayback: jest.fn(async () => {}),
+  getCurrentFavorite: () => mockCurrentFavorite,
   pause: jest.fn(),
   play: jest.fn(),
   seekTo: jest.fn(),
   skipNext: jest.fn(),
   skipPrevious: jest.fn(),
-  togglePlayPause: jest.fn(),
+  subscribeCurrentFavorite: (listener: (favorite: boolean | null) => void) => {
+    mockFavoriteListener = listener;
+    return () => {};
+  },
+  toggleCurrentTrackFavorite: () => mockToggleFavorite(),
+  togglePlayPause: () => mockTogglePlayPause(),
 }));
 jest.mock("@/services/startupHydration", () => ({
   applyStartupLocale: jest.fn(),
   hydratePlaybackStores: jest.fn(async () => {}),
+}));
+jest.mock("@/stores/app", () => ({
+  useAppBase: {
+    getState: () => mockCarButtons,
+    subscribe: (
+      listener: (state: MockCarButtons, prev: MockCarButtons) => void,
+    ) => {
+      mockAppListener = listener;
+      return () => {};
+    },
+  },
 }));
 jest.mock("@/stores/auth", () => ({
   currentAuthScope: () => "scope",
@@ -176,6 +218,19 @@ beforeEach(() => {
   mockNotifyReady.mockReset();
   mockLoadOnDemandChildren.mockReset();
   mockChildrenListener = null;
+  mockCurrentFavorite = null;
+  mockFavoriteListener = null;
+  mockSetFavorite.mockReset();
+  mockToggleFavorite.mockReset();
+  mockTogglePlayPause.mockReset();
+  mockTransportListener = null;
+  mockCarButtons = {
+    showCarFavoriteButton: true,
+    showCarShuffleButton: true,
+    showCarRepeatButton: true,
+  };
+  mockAppListener = null;
+  mockSetButtons.mockReset();
 });
 
 afterEach(() => {
@@ -274,5 +329,61 @@ describe("on-demand children", () => {
     await flush();
 
     expect(mockSetChildren).toHaveBeenCalledWith("album:a1", null);
+  });
+});
+
+describe("favorite button", () => {
+  it("pushes the heart at boot, car or not, and every change after", async () => {
+    // Native keeps it for a car that binds later, like the playback state.
+    mockCurrentFavorite = false;
+    await startSession();
+    expect(mockSetFavorite).toHaveBeenCalledWith(false);
+
+    mockFavoriteListener?.(true);
+    expect(mockSetFavorite).toHaveBeenLastCalledWith(true);
+
+    mockFavoriteListener?.(null);
+    expect(mockSetFavorite).toHaveBeenLastCalledWith(null);
+  });
+
+  it("toggles the favorite when the car's heart is tapped", async () => {
+    await startSession();
+
+    mockTransportListener?.({ action: "favorite" });
+
+    expect(mockToggleFavorite).toHaveBeenCalledTimes(1);
+    // Actions without a case fall through to play/pause.
+    expect(mockTogglePlayPause).not.toHaveBeenCalled();
+  });
+});
+
+describe("player buttons setting", () => {
+  it("pushes the Android Auto section's buttons at boot, car or not", async () => {
+    mockCarButtons = { ...mockCarButtons, showCarShuffleButton: false };
+    await startSession();
+
+    expect(mockSetButtons).toHaveBeenCalledWith({
+      favorite: true,
+      shuffle: false,
+      repeat: true,
+    });
+  });
+
+  it("pushes again when a toggle changes, and only then", async () => {
+    await startSession();
+    mockSetButtons.mockClear();
+    const prev = mockCarButtons;
+
+    // Some other app setting changed.
+    mockAppListener?.({ ...prev }, prev);
+    expect(mockSetButtons).not.toHaveBeenCalled();
+
+    mockCarButtons = { ...prev, showCarRepeatButton: false };
+    mockAppListener?.(mockCarButtons, prev);
+    expect(mockSetButtons).toHaveBeenCalledWith({
+      favorite: true,
+      shuffle: true,
+      repeat: false,
+    });
   });
 });

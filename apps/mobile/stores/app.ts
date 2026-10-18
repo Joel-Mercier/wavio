@@ -262,6 +262,14 @@ interface AppStore {
   setShowPlayerRating: (enabled: boolean) => void;
   mediaControlsLayout: MediaControlsLayout;
   setMediaControlsLayout: (mediaControlsLayout: MediaControlsLayout) => void;
+  // The buttons beside play/pause on the Android Auto player screen (see
+  // services/carAuto/session.ts).
+  showCarFavoriteButton: boolean;
+  setShowCarFavoriteButton: (enabled: boolean) => void;
+  showCarShuffleButton: boolean;
+  setShowCarShuffleButton: (enabled: boolean) => void;
+  showCarRepeatButton: boolean;
+  setShowCarRepeatButton: (enabled: boolean) => void;
   // See services/playQueueSync.ts.
   queueSyncPriority: "server" | "local" | "off";
   setQueueSyncPriority: (priority: "server" | "local" | "off") => void;
@@ -507,6 +515,18 @@ export const useAppBase = create<AppStore>()(
       mediaControlsLayout: "seek",
       setMediaControlsLayout: (mediaControlsLayout: MediaControlsLayout) => {
         set({ mediaControlsLayout });
+      },
+      showCarFavoriteButton: true,
+      setShowCarFavoriteButton: (showCarFavoriteButton: boolean) => {
+        set({ showCarFavoriteButton });
+      },
+      showCarShuffleButton: true,
+      setShowCarShuffleButton: (showCarShuffleButton: boolean) => {
+        set({ showCarShuffleButton });
+      },
+      showCarRepeatButton: true,
+      setShowCarRepeatButton: (showCarRepeatButton: boolean) => {
+        set({ showCarRepeatButton });
       },
       queueSyncPriority: "off",
       setQueueSyncPriority: (queueSyncPriority: "server" | "local" | "off") => {

@@ -156,6 +156,17 @@ class CarAutoModule : Module() {
       CarPlaybackMirror.setPlaybackState(isPlaying, posMs, shuf, repeat)
       WavioCarBrowserService.activePlayer?.applyPlaybackState(isPlaying, posMs, shuf, repeat)
     }
+
+    // Null hides the heart. media3 wants session calls on the main thread.
+    Function("setFavorite") { favorite: Boolean? ->
+      CarPlaybackMirror.setFavorite(favorite)
+      mainHandler.post { WavioCarBrowserService.refreshMediaButtons() }
+    }
+
+    Function("setButtons") { favorite: Boolean, shuffle: Boolean, repeat: Boolean ->
+      CarPlaybackMirror.setButtons(favorite, shuffle, repeat)
+      mainHandler.post { WavioCarBrowserService.refreshMediaButtons() }
+    }
   }
 
   /**
