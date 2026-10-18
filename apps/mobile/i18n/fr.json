@@ -1466,8 +1466,8 @@
 					"checking": "Vérification en cours…",
 					"upToDate": "Vous avez la dernière version",
 					"checkFailed": "Impossible de vérifier la présence de mises à jour. Vérifiez votre connexion et réessayez.",
-					"rateLabel": "Rate Wavio",
-					"rateDescription": "Enjoying Wavio? A rating on Google Play helps other people find it",
+					"rateLabel": "Noter Wavio",
+					"rateDescription": "Vous appréciez Wavio ? Laissez une note sur Google Play pour aider d'autres utilisateurs à découvrir cette application",
 					"rateAction": "Noter",
 					"currentVersionLabel": "Version actuelle"
 				},
