@@ -1163,7 +1163,7 @@
 							"unreachable": "Impossibile connettersi a Last.fm.",
 							"noData": "In questo periodo non è stato ancora registrato nulla.",
 							"scrobbles_one": "{{formattedCount}} scrobble",
-							"scrobbles_other": "{{formattedCount}} scrobble"
+							"scrobbles_other": "{{formattedCount}} scrobbles"
 						},
 						"queue": {
 							"pendingLabel": "In attesa di essere inviato",
