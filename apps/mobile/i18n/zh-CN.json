@@ -1423,6 +1423,9 @@
 					"checking": "查看…",
 					"upToDate": "您正在使用最新版本",
 					"checkFailed": "无法检查更新。请检查网络连接，然后重试。",
+					"rateLabel": "Rate Wavio",
+					"rateDescription": "Enjoying Wavio? A rating on Google Play helps other people find it",
+					"rateAction": "评分",
 					"currentVersionLabel": "当前版本"
 				},
 				"storageSettings": {
