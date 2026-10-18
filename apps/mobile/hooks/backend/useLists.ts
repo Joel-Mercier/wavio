@@ -11,6 +11,7 @@ import {
   getStarred,
   getStarred2,
 } from "@/services/backend/lists";
+import { adoptDownloadedAlbums } from "@/services/offline/collectionAdoption";
 import type { SongSortType } from "@/utils/songSort";
 import type { SortDirection } from "@/utils/sort";
 
@@ -250,8 +251,10 @@ export const useStarred2 = (
 ) => {
   return useQuery({
     queryKey: ["starred2"],
-    queryFn: () => {
-      return getStarred2();
+    queryFn: async () => {
+      const response = await getStarred2();
+      void adoptDownloadedAlbums(response?.starred2?.album ?? []);
+      return response;
     },
     enabled: options?.enabled,
   });

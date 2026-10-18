@@ -43,6 +43,7 @@ import {
   probeServerPreferringPrimary,
   subscribeEffectiveOnline,
 } from "@/services/network";
+import { subscribeCollectionAdoption } from "@/services/offline/collectionAdoption";
 import { initOrientation } from "@/services/orientation";
 import { configurePlayback } from "@/services/player";
 import { initSentryScope } from "@/services/sentryScope";
@@ -189,6 +190,7 @@ export default sentryWrap(function RootLayout() {
     const unsubscribeConnectionType = initConnectionType();
     const unsubscribeSentryScope = initSentryScope();
     const unsubscribeOrientation = initOrientation();
+    const unsubscribeCollectionAdoption = subscribeCollectionAdoption();
     const onIdle = () => {
       void configurePlayback().catch((error) => {
         logError("[app] Failed to configure playback", error);
@@ -210,6 +212,7 @@ export default sentryWrap(function RootLayout() {
       unsubscribeConnectionType();
       unsubscribeSentryScope();
       unsubscribeOrientation();
+      unsubscribeCollectionAdoption();
       unsubscribePersist();
     };
   }, []);
