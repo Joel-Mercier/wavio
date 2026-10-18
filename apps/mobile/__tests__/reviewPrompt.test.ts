@@ -1,17 +1,10 @@
 const mockMem = new Map<string, string>();
-const mockCreateMMKV = jest.fn((_config: { id: string; path?: string }) => ({
+const mockGetNoBackupStorage = jest.fn((_id: string) => ({
   set: (k: string, v: string) => mockMem.set(k, v),
   getString: (k: string) => mockMem.get(k),
 }));
-jest.mock("react-native-mmkv", () => ({
-  createMMKV: (config: { id: string; path?: string }) => mockCreateMMKV(config),
-}));
-jest.mock("expo-file-system", () => ({
-  Paths: {
-    document: {
-      parentDirectory: { uri: "file:///data/user/0/com.jmercier.wavio/" },
-    },
-  },
+jest.mock("@/config/storage", () => ({
+  getNoBackupStorage: (id: string) => mockGetNoBackupStorage(id),
 }));
 
 const mockDistribution = { isStoreDistribution: true };
@@ -145,10 +138,7 @@ describe("noteCountedPlay", () => {
   it("stores its state outside Android Auto Backup", () => {
     const { prompt } = load();
     prompt.noteCountedPlay();
-    expect(mockCreateMMKV).toHaveBeenCalledWith({
-      id: "reviewPrompt",
-      path: "/data/user/0/com.jmercier.wavio/no_backup",
-    });
+    expect(mockGetNoBackupStorage).toHaveBeenCalledWith("reviewPrompt");
   });
 
   it("stops counting once the cap is reached", () => {

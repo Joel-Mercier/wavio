@@ -1,5 +1,6 @@
+import { Paths } from "expo-file-system";
 import { AppState } from "react-native";
-import { createMMKV } from "react-native-mmkv";
+import { createMMKV, type MMKV } from "react-native-mmkv";
 import type {
   PersistStorage,
   StateStorage,
@@ -14,6 +15,26 @@ import {
 export const storage = createMMKV({
   id: "wavio",
 });
+
+// Android's getNoBackupFilesDir(), a sibling of the files dir: kept out of
+// Android Auto Backup, unlike the default files/mmkv root.
+function noBackupPath(): string {
+  const dataDir = decodeURIComponent(
+    Paths.document.parentDirectory.uri.replace(/^file:\/\//, ""),
+  ).replace(/\/$/, "");
+  return `${dataDir}/no_backup`;
+}
+
+const noBackupStorages = new Map<string, MMKV>();
+
+export function getNoBackupStorage(id: string): MMKV {
+  let instance = noBackupStorages.get(id);
+  if (!instance) {
+    instance = createMMKV({ id, path: noBackupPath() });
+    noBackupStorages.set(id, instance);
+  }
+  return instance;
+}
 
 export const zustandStorage: StateStorage = {
   setItem: (name, value) => {

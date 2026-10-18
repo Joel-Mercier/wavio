@@ -1,9 +1,8 @@
 import * as Application from "expo-application";
-import { Paths } from "expo-file-system";
 import * as StoreReview from "expo-store-review";
 import { AppState, Platform } from "react-native";
-import { createMMKV, type MMKV } from "react-native-mmkv";
 import { isStoreDistribution } from "@/config/distribution";
+import { getNoBackupStorage } from "@/config/storage";
 import { CarAutoBridge } from "@/services/carAuto/bridge";
 import { getIsEffectivelyOnline } from "@/services/network";
 import { activeRemoteTarget } from "@/services/playback/remoteTarget";
@@ -47,27 +46,12 @@ let troubledThisSession = false;
 let updateOfferedThisSession = false;
 let pending = false;
 
-let reviewStorage: MMKV | undefined;
-
-// Android's getNoBackupFilesDir(), a sibling of the files dir.
-function noBackupPath(): string {
-  const dataDir = decodeURIComponent(
-    Paths.document.parentDirectory.uri.replace(/^file:\/\//, ""),
-  ).replace(/\/$/, "");
-  return `${dataDir}/no_backup`;
-}
-
-function getStorage(): MMKV {
-  reviewStorage ??= createMMKV({ id: "reviewPrompt", path: noBackupPath() });
-  return reviewStorage;
-}
-
 usePlaybackNotice.subscribe((state) => {
   if (state.notice) troubledThisSession = true;
 });
 
 export function readReviewPromptState(): ReviewPromptState {
-  const raw = getStorage().getString(STORAGE_KEY);
+  const raw = getNoBackupStorage(STORAGE_KEY).getString(STORAGE_KEY);
   if (!raw) return INITIAL_STATE;
   try {
     return { ...INITIAL_STATE, ...JSON.parse(raw) };
@@ -77,7 +61,7 @@ export function readReviewPromptState(): ReviewPromptState {
 }
 
 function writeState(state: ReviewPromptState) {
-  getStorage().set(STORAGE_KEY, JSON.stringify(state));
+  getNoBackupStorage(STORAGE_KEY).set(STORAGE_KEY, JSON.stringify(state));
 }
 
 function dayKey(date: Date): string {
