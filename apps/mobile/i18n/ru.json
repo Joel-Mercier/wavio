@@ -1552,6 +1552,9 @@
 					"checking": "Проверяем...",
 					"upToDate": "Установлена последняя версия",
 					"checkFailed": "Не удалось проверить наличие обновлений. Проверь интернет соединение и попробуй снова.",
+					"rateLabel": "Rate Wavio",
+					"rateDescription": "Enjoying Wavio? A rating on Google Play helps other people find it",
+					"rateAction": "Оценить",
 					"currentVersionLabel": "Текущая версия"
 				},
 				"storageSettings": {
