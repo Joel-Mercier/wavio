@@ -16,7 +16,7 @@
     "test": "bunx jest",
     "lint": "biome check .",
     "lint:fix": "biome check . --write",
-    "typecheck": "bunx tsc --noEmit",
+    "typecheck": "bun check",
     "prebuild:github": "EXPO_PUBLIC_DISTRIBUTION=github bunx expo prebuild -p android",
     "prebuild:store": "EXPO_PUBLIC_DISTRIBUTION=store bunx expo prebuild -p android",
     "prebuild:development": "APP_VARIANT=development bun run prebuild:github",
@@ -144,7 +144,7 @@
     "react-native-svg-transformer": "^1.5.3",
     "react-test-renderer": "19.3.0",
     "tailwindcss": "^4.3.1",
-    "typescript": "~6.0.3"
+    "typescript": "~7.0.2"
   },
   "private": true,
   "expo": {

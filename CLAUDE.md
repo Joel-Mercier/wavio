@@ -28,7 +28,7 @@ Run from the **repo root** (delegate to a workspace via `--cwd`):
 - `bun run mobile:start` / `mobile:android` / `mobile:ios` / `mobile:web` — Expo dev client (sets `DARK_MODE=media`)
 - `bun run mobile:lint` / `mobile:lint:fix` — Biome check (formatter + linter, replaces ESLint/Prettier)
 - `bun run mobile:test` — `jest` (preset `jest-expo`)
-- `bun run mobile:typecheck` — `tsc --noEmit`
+- `bun run mobile:typecheck` — `bun check` (Bun ≥ 1.4.3's built-in port of the TypeScript 7 checker; reads `apps/mobile/tsconfig.json`, same diagnostics as `tsc --noEmit`). `typescript` stays a devDependency anyway: Expo CLI refuses to start a TS project without it, and editors use it. TS 7's package exposes no classic compiler API (`require("typescript")` returns only version info), so never add a `.ts` config file or plugin that Expo would transpile through it (`app.config.ts`, `plugins/*.ts`).
 - `bun run mobile:prebuild` — regenerate `apps/mobile/android/` and `apps/mobile/ios/`
 - `bun run landing:dev` / `landing:build` / `landing:preview` — Astro marketing site
 
