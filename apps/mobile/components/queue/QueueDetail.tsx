@@ -5,12 +5,12 @@ import {
 import { LegendList } from "@legendapp/list/react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import Check from "lucide-react-native/dist/esm/icons/check.mjs";
-import ListOrdered from "lucide-react-native/dist/esm/icons/list-ordered.mjs";
-import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
-import Timer from "lucide-react-native/dist/esm/icons/timer.mjs";
-import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
+import ArrowLeft from "lucide-react-native/icons/arrow-left";
+import Check from "lucide-react-native/icons/check";
+import ListOrdered from "lucide-react-native/icons/list-ordered";
+import ListPlus from "lucide-react-native/icons/list-plus";
+import Timer from "lucide-react-native/icons/timer";
+import Trash from "lucide-react-native/icons/trash";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

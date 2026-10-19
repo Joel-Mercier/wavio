@@ -1,8 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "expo-router";
-import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
-import Cast from "lucide-react-native/dist/esm/icons/cast.mjs";
-import SkipForward from "lucide-react-native/dist/esm/icons/skip-forward.mjs";
+import AudioLines from "lucide-react-native/icons/audio-lines";
+import Cast from "lucide-react-native/icons/cast";
+import SkipForward from "lucide-react-native/icons/skip-forward";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {

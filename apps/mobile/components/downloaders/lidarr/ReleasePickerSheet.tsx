@@ -1,6 +1,6 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import Ban from "lucide-react-native/dist/esm/icons/ban.mjs";
+import Ban from "lucide-react-native/icons/ban";
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";

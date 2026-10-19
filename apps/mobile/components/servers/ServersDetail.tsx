@@ -1,8 +1,8 @@
 import { LegendList } from "@legendapp/list/react-native";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
-import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import Plus from "lucide-react-native/dist/esm/icons/plus.mjs";
+import ArrowLeft from "lucide-react-native/icons/arrow-left";
+import Plus from "lucide-react-native/icons/plus";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Platform } from "react-native";

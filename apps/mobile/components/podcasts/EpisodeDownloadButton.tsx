@@ -1,5 +1,5 @@
-import CircleCheckBig from "lucide-react-native/dist/esm/icons/circle-check-big.mjs";
-import Download from "lucide-react-native/dist/esm/icons/download.mjs";
+import CircleCheckBig from "lucide-react-native/icons/circle-check-big";
+import Download from "lucide-react-native/icons/download";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";

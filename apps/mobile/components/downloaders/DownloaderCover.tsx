@@ -1,5 +1,5 @@
-import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
-import User from "lucide-react-native/dist/esm/icons/user.mjs";
+import Disc3 from "lucide-react-native/icons/disc-3";
+import User from "lucide-react-native/icons/user";
 import { Uniwind } from "uniwind";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import { Box } from "@/components/ui/box";

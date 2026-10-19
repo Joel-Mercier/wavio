@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
+import ChevronRight from "lucide-react-native/icons/chevron-right";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";

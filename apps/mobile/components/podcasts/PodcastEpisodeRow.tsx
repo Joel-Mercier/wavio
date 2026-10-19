@@ -1,6 +1,6 @@
 import { secondsToMinutes } from "date-fns/secondsToMinutes";
-import Podcast from "lucide-react-native/dist/esm/icons/mic-signal.mjs";
-import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
+import Podcast from "lucide-react-native/icons/mic-signal";
+import Trash from "lucide-react-native/icons/trash";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";

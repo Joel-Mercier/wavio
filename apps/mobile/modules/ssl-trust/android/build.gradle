@@ -26,8 +26,11 @@ dependencies {
   implementation project(':expo-modules-core')
   // OkHttp is provided by React Native at runtime; compileOnly avoids bundling a
   // second copy and keeps the reflection-based OkHttpClientProvider hook honest.
-  // No version pin: React Native enforces a strict OkHttp version via consistent
-  // resolution, so let the version be inherited from the runtime classpath
-  // (pinning a different version fails the build).
+  // No version pin: react-android carries OkHttp as an `api` dependency, so
+  // compiling against it yields exactly the version React Native ships (pinning a
+  // different one fails the build). Its own version comes from the
+  // `com.facebook.react.rootproject` plugin, as in car-auto. Since React Native
+  // 0.88 nothing else puts OkHttp's version on this module's compile classpath.
+  compileOnly "com.facebook.react:react-android"
   compileOnly 'com.squareup.okhttp3:okhttp'
 }

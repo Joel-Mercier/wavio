@@ -1,10 +1,10 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { LegendList, type LegendListRef } from "@legendapp/list/react-native";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
-import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import Search from "lucide-react-native/dist/esm/icons/search.mjs";
-import Settings2 from "lucide-react-native/dist/esm/icons/settings-2.mjs";
-import X from "lucide-react-native/dist/esm/icons/x.mjs";
+import ArrowLeft from "lucide-react-native/icons/arrow-left";
+import Search from "lucide-react-native/icons/search";
+import Settings2 from "lucide-react-native/icons/settings-2";
+import X from "lucide-react-native/icons/x";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";

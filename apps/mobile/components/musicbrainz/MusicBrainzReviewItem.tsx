@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
+import ChevronRight from "lucide-react-native/icons/chevron-right";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";

@@ -2,8 +2,8 @@ import {
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import Check from "lucide-react-native/dist/esm/icons/check.mjs";
-import Languages from "lucide-react-native/dist/esm/icons/languages.mjs";
+import Check from "lucide-react-native/icons/check";
+import Languages from "lucide-react-native/icons/languages";
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

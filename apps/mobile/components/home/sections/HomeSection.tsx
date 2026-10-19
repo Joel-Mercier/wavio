@@ -1,5 +1,5 @@
 import type { Href } from "expo-router";
-import User from "lucide-react-native/dist/esm/icons/user.mjs";
+import User from "lucide-react-native/icons/user";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

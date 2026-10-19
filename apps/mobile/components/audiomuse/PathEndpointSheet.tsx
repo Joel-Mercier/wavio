@@ -3,7 +3,7 @@ import {
   useBottomSheetScrollableCreator,
 } from "@gorhom/bottom-sheet";
 import { LegendList } from "@legendapp/list/react-native";
-import Anchor from "lucide-react-native/dist/esm/icons/anchor.mjs";
+import Anchor from "lucide-react-native/icons/anchor";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

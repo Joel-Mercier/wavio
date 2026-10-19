@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
+import ChevronRight from "lucide-react-native/icons/chevron-right";
 import { memo } from "react";
 import { Uniwind } from "uniwind";
 import DownloaderCover from "@/components/downloaders/DownloaderCover";

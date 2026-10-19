@@ -6,10 +6,10 @@ import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
-import Podcast from "lucide-react-native/dist/esm/icons/mic-signal.mjs";
-import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
+import ArrowLeft from "lucide-react-native/icons/arrow-left";
+import EllipsisVertical from "lucide-react-native/icons/ellipsis-vertical";
+import Podcast from "lucide-react-native/icons/mic-signal";
+import Trash from "lucide-react-native/icons/trash";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Animated, {

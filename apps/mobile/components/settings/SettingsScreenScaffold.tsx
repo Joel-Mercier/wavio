@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
-import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
+import ArrowLeft from "lucide-react-native/icons/arrow-left";
 import type { ReactNode, RefObject } from "react";
-import type { ScrollView as RNScrollView } from "react-native";
+import type { ScrollViewInstance } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
@@ -25,7 +25,7 @@ export default function SettingsScreenScaffold({
   // root Box level) so they overlay the whole screen.
   overlays?: ReactNode;
   // Lets a section scroll itself to one of its rows (deep link into a setting).
-  scrollRef?: RefObject<RNScrollView | null>;
+  scrollRef?: RefObject<ScrollViewInstance | null>;
 }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();

@@ -1,5 +1,5 @@
 import type { AnyFieldApi } from "@tanstack/react-form";
-import AlertCircleIcon from "lucide-react-native/dist/esm/icons/circle-alert.mjs";
+import AlertCircleIcon from "lucide-react-native/icons/circle-alert";
 import {
   FormControlError,
   FormControlErrorIcon,

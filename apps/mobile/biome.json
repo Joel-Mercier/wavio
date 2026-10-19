@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.9/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
   "extends": "//",
   "files": {
     "ignoreUnknown": true,
@@ -20,7 +20,8 @@
           "level": "error",
           "options": {
             "paths": {
-              "lucide-react-native": "Import icons from \"lucide-react-native/dist/esm/icons/<kebab-name>.mjs\" instead. Metro can't tree-shake the barrel, so a single root import pulls all ~1750 icons (~3MB) into the bundle."
+              "lucide-react-native": "Import icons from \"lucide-react-native/icons/<kebab-name>\" instead. Metro can't tree-shake the barrel, so a single root import pulls all ~1750 icons (~3MB) into the bundle.",
+              "lucide-react-native/icons": "Import icons from \"lucide-react-native/icons/<kebab-name>\" instead. This is the icons barrel: Metro can't tree-shake it, so it pulls all ~1750 icons (~3MB) into the bundle."
             }
           }
         }

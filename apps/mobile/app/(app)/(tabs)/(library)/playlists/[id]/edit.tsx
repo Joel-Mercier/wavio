@@ -1,8 +1,8 @@
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
-import X from "lucide-react-native/dist/esm/icons/x.mjs";
+import ListMusic from "lucide-react-native/icons/list-music";
+import X from "lucide-react-native/icons/x";
 import { useTranslation } from "react-i18next";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

@@ -1,9 +1,9 @@
-import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
-import ChevronDown from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
-import ChevronUp from "lucide-react-native/dist/esm/icons/chevron-up.mjs";
-import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
-import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
-import User from "lucide-react-native/dist/esm/icons/user.mjs";
+import AudioLines from "lucide-react-native/icons/audio-lines";
+import ChevronDown from "lucide-react-native/icons/chevron-down";
+import ChevronUp from "lucide-react-native/icons/chevron-up";
+import Disc3 from "lucide-react-native/icons/disc-3";
+import ListMusic from "lucide-react-native/icons/list-music";
+import User from "lucide-react-native/icons/user";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";

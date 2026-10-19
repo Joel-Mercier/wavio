@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { LayoutChangeEvent, ScrollView } from "react-native";
+import type { LayoutChangeEvent, ScrollViewInstance } from "react-native";
 
 // Leaves the rows above the target on screen, so the scroll reads as landing on
 // a row within the section rather than as a different screen.
@@ -13,7 +13,7 @@ const SCROLL_MARGIN = 48;
  */
 export function useHighlightedSetting(key: string) {
   const { highlight } = useLocalSearchParams<{ highlight?: string }>();
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const [rowY, setRowY] = useState<number | null>(null);
   const highlighted = highlight === key;
 

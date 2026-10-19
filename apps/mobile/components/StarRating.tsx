@@ -1,4 +1,4 @@
-import Star from "lucide-react-native/dist/esm/icons/star.mjs";
+import Star from "lucide-react-native/icons/star";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ViewStyle } from "react-native";
 import {

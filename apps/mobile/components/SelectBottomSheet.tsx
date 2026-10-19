@@ -1,7 +1,7 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useBottomSheetScrollableCreator } from "@gorhom/bottom-sheet";
 import { LegendList } from "@legendapp/list/react-native";
-import Check from "lucide-react-native/dist/esm/icons/check.mjs";
+import Check from "lucide-react-native/icons/check";
 import { type RefObject, useMemo, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";

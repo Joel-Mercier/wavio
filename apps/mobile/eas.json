@@ -14,7 +14,8 @@
         "EXPO_PUBLIC_ENV": "development",
         "APP_VARIANT": "development",
         "EXPO_PUBLIC_DISTRIBUTION": "github"
-      }
+      },
+      "node": "26.12.0"
     },
     "preview": {
       "android": {
@@ -29,7 +30,8 @@
         "EXPO_PUBLIC_ENV": "preview",
         "APP_VARIANT": "preview",
         "EXPO_PUBLIC_DISTRIBUTION": "github"
-      }
+      },
+      "node": "26.12.0"
     },
     "production": {
       "autoIncrement": true,
@@ -40,7 +42,8 @@
         "EXPO_PUBLIC_ENV": "production",
         "APP_VARIANT": "production",
         "EXPO_PUBLIC_DISTRIBUTION": "store"
-      }
+      },
+      "node": "26.12.0"
     },
     "production-apk": {
       "extends": "production",

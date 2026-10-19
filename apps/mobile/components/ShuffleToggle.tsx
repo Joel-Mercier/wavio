@@ -1,4 +1,4 @@
-import Shuffle from "lucide-react-native/dist/esm/icons/shuffle.mjs";
+import Shuffle from "lucide-react-native/icons/shuffle";
 import { type ComponentProps, useEffect } from "react";
 import { StyleSheet } from "react-native";
 import Animated, {

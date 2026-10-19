@@ -1,4 +1,4 @@
-import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
+import Disc3 from "lucide-react-native/icons/disc-3";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";

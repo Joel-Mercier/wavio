@@ -6,6 +6,7 @@ import {
   setAudioModeAsync,
 } from "expo-audio";
 import { File } from "expo-file-system";
+import { Platform } from "react-native";
 import { queryClient } from "@/config/queryClient";
 import { setStarred } from "@/hooks/backend/useMediaAnnotation";
 import { isIndexBacked } from "@/services/backend/dispatch";
@@ -1869,7 +1870,10 @@ export async function configurePlayback() {
   playbackConfigured ??= setAudioModeAsync({
     playsInSilentMode: true,
     shouldPlayInBackground: true,
-    interruptionMode: "doNotMix",
+    // Persistent focus on Android: a music player takes the output until the
+    // user moves elsewhere, rather than lending it to whatever played before.
+    interruptionMode:
+      Platform.OS === "android" ? "doNotMixPersistent" : "doNotMix",
   }).catch((e) => {
     playbackConfigured = null;
     throw e;

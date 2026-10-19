@@ -1,8 +1,8 @@
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import EyeIcon from "lucide-react-native/dist/esm/icons/eye.mjs";
-import EyeOffIcon from "lucide-react-native/dist/esm/icons/eye-off.mjs";
-import X from "lucide-react-native/dist/esm/icons/x.mjs";
+import EyeIcon from "lucide-react-native/icons/eye";
+import EyeOffIcon from "lucide-react-native/icons/eye-off";
+import X from "lucide-react-native/icons/x";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";

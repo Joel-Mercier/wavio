@@ -1,4 +1,4 @@
-import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
+import ArrowDown from "lucide-react-native/icons/arrow-down";
 import { Uniwind } from "uniwind";
 import { Box } from "@/components/ui/box";
 import { cn } from "@/utils/tailwind";

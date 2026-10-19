@@ -34,8 +34,8 @@ dependencies {
   // android/build.gradle) — both end up in one app, and Gradle resolves the
   // conflict by taking the highest, so a stale pin here doesn't get us the old
   // version: it gets us compiling against one API and running against another.
-  // expo-audio 57.x is on 1.9.0.
-  implementation "androidx.media3:media3-session:1.9.0"
-  implementation "androidx.media3:media3-common:1.9.0"
-  implementation "androidx.media3:media3-exoplayer:1.9.0"
+  // expo-audio 58.x is on 1.9.1.
+  implementation "androidx.media3:media3-session:1.9.1"
+  implementation "androidx.media3:media3-common:1.9.1"
+  implementation "androidx.media3:media3-exoplayer:1.9.1"
 }

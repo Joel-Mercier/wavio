@@ -1,0 +1,57 @@
+diff --git a/src/components/index.ts b/src/components/index.ts
+index 6fcad21b91dae2d029671aca1a6588a031831236..da0627038863cfd0df4b5b71e90eafc26ab05724 100644
+--- a/src/components/index.ts
++++ b/src/components/index.ts
+@@ -307,4 +307,52 @@ module.exports = {
+     get XamlHost() {
+         return require('react-native').XamlHost
+     },
++    // Exported by React Native 0.87+ but missing from this list, which the Metro
++    // resolver substitutes for every `react-native` import (expo-asset reads
++    // AssetRegistry through it).
++    get AssetRegistry() {
++        return require('react-native').AssetRegistry
++    },
++    get EventEmitter() {
++        return require('react-native').EventEmitter
++    },
++    get PushNotificationIOS() {
++        return require('react-native').PushNotificationIOS
++    },
++    get unstable_DEFAULT_INITIAL_NUM_TO_RENDER() {
++        return require('react-native').unstable_DEFAULT_INITIAL_NUM_TO_RENDER
++    },
++    get unstable_NativeText() {
++        return require('react-native').unstable_NativeText
++    },
++    get unstable_NativeView() {
++        return require('react-native').unstable_NativeView
++    },
++    get unstable_VirtualArray() {
++        return require('react-native').unstable_VirtualArray
++    },
++    get unstable_VirtualColumn() {
++        return require('react-native').unstable_VirtualColumn
++    },
++    get unstable_VirtualColumnGenerator() {
++        return require('react-native').unstable_VirtualColumnGenerator
++    },
++    get unstable_VirtualRow() {
++        return require('react-native').unstable_VirtualRow
++    },
++    get unstable_createVirtualCollectionView() {
++        return require('react-native').unstable_createVirtualCollectionView
++    },
++    get unstable_getScrollParent() {
++        return require('react-native').unstable_getScrollParent
++    },
++    get useAnimatedColor() {
++        return require('react-native').useAnimatedColor
++    },
++    get useAnimatedValueXY() {
++        return require('react-native').useAnimatedValueXY
++    },
++    get usePressability() {
++        return require('react-native').usePressability
++    },
+ }

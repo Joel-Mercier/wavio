@@ -1,6 +1,6 @@
 import type { Href } from "expo-router";
-import Plus from "lucide-react-native/dist/esm/icons/plus.mjs";
-import Search from "lucide-react-native/dist/esm/icons/search.mjs";
+import Plus from "lucide-react-native/icons/plus";
+import Search from "lucide-react-native/icons/search";
 import { type ReactElement, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

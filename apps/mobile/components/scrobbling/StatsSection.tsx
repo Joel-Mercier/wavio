@@ -1,6 +1,6 @@
-import CircleX from "lucide-react-native/dist/esm/icons/circle-x.mjs";
-import Clock from "lucide-react-native/dist/esm/icons/clock.mjs";
-import WifiOff from "lucide-react-native/dist/esm/icons/wifi-off.mjs";
+import CircleX from "lucide-react-native/icons/circle-x";
+import Clock from "lucide-react-native/icons/clock";
+import WifiOff from "lucide-react-native/icons/wifi-off";
 import type { ComponentType, ReactNode } from "react";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";

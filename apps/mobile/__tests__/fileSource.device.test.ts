@@ -30,7 +30,7 @@ jest.mock("expo-file-system", () => {
         set offset(value: number) {
           handle.offset = value;
         },
-        readBytes(length: number) {
+        readBytesSync(length: number) {
           handle.reads.push(length);
           return new Uint8Array(length);
         },

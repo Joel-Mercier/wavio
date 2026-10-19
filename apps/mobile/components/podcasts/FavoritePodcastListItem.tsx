@@ -1,4 +1,4 @@
-import Podcast from "lucide-react-native/dist/esm/icons/mic-signal.mjs";
+import Podcast from "lucide-react-native/icons/mic-signal";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";

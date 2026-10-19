@@ -3,7 +3,7 @@ import {
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
-import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
+import ChevronRight from "lucide-react-native/icons/chevron-right";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

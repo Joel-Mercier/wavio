@@ -1,4 +1,4 @@
-import User from "lucide-react-native/dist/esm/icons/user.mjs";
+import User from "lucide-react-native/icons/user";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

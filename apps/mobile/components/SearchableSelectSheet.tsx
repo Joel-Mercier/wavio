@@ -3,7 +3,7 @@ import {
   useBottomSheetScrollableCreator,
 } from "@gorhom/bottom-sheet";
 import { LegendList } from "@legendapp/list/react-native";
-import Check from "lucide-react-native/dist/esm/icons/check.mjs";
+import Check from "lucide-react-native/icons/check";
 import { useMemo, useState } from "react";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";

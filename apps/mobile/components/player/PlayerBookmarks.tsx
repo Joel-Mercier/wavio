@@ -1,5 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
-import Bookmark from "lucide-react-native/dist/esm/icons/bookmark.mjs";
+import Bookmark from "lucide-react-native/icons/bookmark";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { Box } from "@/components/ui/box";

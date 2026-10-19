@@ -1,6 +1,6 @@
 import { Redirect } from "expo-router";
-import RefreshCw from "lucide-react-native/dist/esm/icons/refresh-cw.mjs";
-import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
+import RefreshCw from "lucide-react-native/icons/refresh-cw";
+import Trash from "lucide-react-native/icons/trash";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
 import { Uniwind } from "uniwind";

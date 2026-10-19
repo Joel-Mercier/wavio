@@ -1,9 +1,9 @@
 import { type Href, router } from "expo-router";
-import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
-import Clock from "lucide-react-native/dist/esm/icons/clock.mjs";
-import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
-import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
-import User from "lucide-react-native/dist/esm/icons/user.mjs";
+import AudioLines from "lucide-react-native/icons/audio-lines";
+import Clock from "lucide-react-native/icons/clock";
+import Disc3 from "lucide-react-native/icons/disc-3";
+import ListMusic from "lucide-react-native/icons/list-music";
+import User from "lucide-react-native/icons/user";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

@@ -1,10 +1,10 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useRouter } from "expo-router";
-import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
-import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
-import Search from "lucide-react-native/dist/esm/icons/search.mjs";
+import ArrowDown from "lucide-react-native/icons/arrow-down";
+import ArrowLeft from "lucide-react-native/icons/arrow-left";
+import ArrowUp from "lucide-react-native/icons/arrow-up";
+import Search from "lucide-react-native/icons/search";
 import { useCallback, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import Animated, {

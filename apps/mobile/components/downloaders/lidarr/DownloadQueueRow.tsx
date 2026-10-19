@@ -1,4 +1,4 @@
-import X from "lucide-react-native/dist/esm/icons/x.mjs";
+import X from "lucide-react-native/icons/x";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import DownloaderCover from "@/components/downloaders/DownloaderCover";

@@ -1,5 +1,5 @@
 import { secondsToMinutes } from "date-fns/secondsToMinutes";
-import CircleCheck from "lucide-react-native/dist/esm/icons/circle-check.mjs";
+import CircleCheck from "lucide-react-native/icons/circle-check";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";

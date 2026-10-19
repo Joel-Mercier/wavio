@@ -1,8 +1,8 @@
 import { secondsToMinutes } from "date-fns/secondsToMinutes";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import Podcast from "lucide-react-native/dist/esm/icons/mic-signal.mjs";
+import ArrowLeft from "lucide-react-native/icons/arrow-left";
+import Podcast from "lucide-react-native/icons/mic-signal";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import Animated, {

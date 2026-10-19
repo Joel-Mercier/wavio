@@ -1,5 +1,5 @@
-import RotateCcw from "lucide-react-native/dist/esm/icons/rotate-ccw.mjs";
-import RotateCw from "lucide-react-native/dist/esm/icons/rotate-cw.mjs";
+import RotateCcw from "lucide-react-native/icons/rotate-ccw";
+import RotateCw from "lucide-react-native/icons/rotate-cw";
 import { useTranslation } from "react-i18next";
 import FadeOut from "@/components/FadeOut";
 import { Box } from "@/components/ui/box";

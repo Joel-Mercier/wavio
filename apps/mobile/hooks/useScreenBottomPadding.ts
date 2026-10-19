@@ -1,5 +1,5 @@
 import { usePathname } from "expo-router";
-import { BottomTabBarHeightContext } from "expo-router/build/react-navigation/bottom-tabs";
+import { BottomTabBarHeightContext } from "expo-router/js-tabs";
 import { useContext } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";

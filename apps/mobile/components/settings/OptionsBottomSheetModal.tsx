@@ -2,7 +2,7 @@ import {
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import Check from "lucide-react-native/dist/esm/icons/check.mjs";
+import Check from "lucide-react-native/icons/check";
 import type { RefObject } from "react";
 import { Uniwind } from "uniwind";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";

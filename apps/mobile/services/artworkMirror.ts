@@ -327,7 +327,7 @@ export function createArtworkMirror(
           } catch {}
         }
         target.create();
-        target.write(bytes);
+        target.writeSync(bytes);
         entries().set(key, Date.now());
 
         prune();

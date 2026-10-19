@@ -1,4 +1,4 @@
-import ChevronDownIcon from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
+import ChevronDownIcon from "lucide-react-native/icons/chevron-down";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { HStack } from "@/components/ui/hstack";

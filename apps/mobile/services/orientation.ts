@@ -2,7 +2,7 @@ import {
   addOrientationChangeListener,
   getOrientationAsync,
 } from "expo-screen-orientation";
-import { Dimensions } from "react-native";
+import { Dimensions, type ScaledSize } from "react-native";
 import { useAppBase } from "@/stores/app";
 
 // Seeds the orientation + window-width store with the current values and keeps
@@ -20,7 +20,7 @@ export function initOrientation() {
   });
   const dimensionsSubscription = Dimensions.addEventListener(
     "change",
-    ({ window }) => {
+    ({ window }: { window: ScaledSize }) => {
       useAppBase.getState().setWindowWidth(window.width);
     },
   );

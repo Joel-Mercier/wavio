@@ -4,7 +4,7 @@
   "private": true,
   "version": "0.0.1",
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=26.12.0"
   },
   "scripts": {
     "dev": "astro dev",
@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
-    "astro": "7.3.2",
+    "astro": "7.4.0",
     "tailwindcss": "^4.3.3"
   }
 }

@@ -4,15 +4,19 @@ import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
-import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
-import LayoutGrid from "lucide-react-native/dist/esm/icons/layout-grid.mjs";
-import List from "lucide-react-native/dist/esm/icons/list.mjs";
-import Plus from "lucide-react-native/dist/esm/icons/plus.mjs";
-import Search from "lucide-react-native/dist/esm/icons/search.mjs";
+import ArrowDown from "lucide-react-native/icons/arrow-down";
+import ArrowUp from "lucide-react-native/icons/arrow-up";
+import LayoutGrid from "lucide-react-native/icons/layout-grid";
+import List from "lucide-react-native/icons/list";
+import Plus from "lucide-react-native/icons/plus";
+import Search from "lucide-react-native/icons/search";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { type LayoutChangeEvent, useWindowDimensions } from "react-native";
+import {
+  type LayoutChangeEvent,
+  type ScrollViewInstance,
+  useWindowDimensions,
+} from "react-native";
 import Animated, {
   Extrapolation,
   interpolate,
@@ -163,7 +167,7 @@ export default function LibraryScreen() {
       : 1;
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetModalSortRef = useRef<BottomSheetModal>(null);
-  const filterScrollRef = useRef<ScrollView>(null);
+  const filterScrollRef = useRef<ScrollViewInstance>(null);
   const listRef = useRef<LegendListRef>(null);
   const musicFolderId = useCurrentMusicFolderId();
   const isOnline = useIsOnline();

@@ -1,5 +1,5 @@
-import Pause from "lucide-react-native/dist/esm/icons/pause.mjs";
-import Play from "lucide-react-native/dist/esm/icons/play.mjs";
+import Pause from "lucide-react-native/icons/pause";
+import Play from "lucide-react-native/icons/play";
 import { type ComponentProps, useEffect } from "react";
 import { StyleSheet } from "react-native";
 import Animated, {

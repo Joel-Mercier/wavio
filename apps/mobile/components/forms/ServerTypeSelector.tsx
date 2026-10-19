@@ -1,4 +1,4 @@
-import LibraryIcon from "lucide-react-native/dist/esm/icons/library.mjs";
+import LibraryIcon from "lucide-react-native/icons/library";
 import { type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

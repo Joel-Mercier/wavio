@@ -1,5 +1,5 @@
-import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
-import CircleMinus from "lucide-react-native/dist/esm/icons/circle-minus.mjs";
+import AudioLines from "lucide-react-native/icons/audio-lines";
+import CircleMinus from "lucide-react-native/icons/circle-minus";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";

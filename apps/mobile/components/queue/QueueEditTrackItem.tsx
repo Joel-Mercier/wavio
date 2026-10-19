@@ -1,6 +1,6 @@
-import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
-import CircleMinus from "lucide-react-native/dist/esm/icons/circle-minus.mjs";
-import GripVertical from "lucide-react-native/dist/esm/icons/grip-vertical.mjs";
+import AudioLines from "lucide-react-native/icons/audio-lines";
+import CircleMinus from "lucide-react-native/icons/circle-minus";
+import GripVertical from "lucide-react-native/icons/grip-vertical";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";

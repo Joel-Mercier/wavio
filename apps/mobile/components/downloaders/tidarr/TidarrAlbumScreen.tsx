@@ -1,6 +1,6 @@
 import { Redirect, useLocalSearchParams } from "expo-router";
-import CircleCheck from "lucide-react-native/dist/esm/icons/circle-check.mjs";
-import Download from "lucide-react-native/dist/esm/icons/download.mjs";
+import CircleCheck from "lucide-react-native/icons/circle-check";
+import Download from "lucide-react-native/icons/download";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
 import { Uniwind } from "uniwind";

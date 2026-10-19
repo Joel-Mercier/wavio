@@ -1,6 +1,6 @@
 import { LegendList } from "@legendapp/list/react-native";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
-import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
+import ArrowLeft from "lucide-react-native/icons/arrow-left";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";

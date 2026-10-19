@@ -1,4 +1,4 @@
-import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
+import AudioLines from "lucide-react-native/icons/audio-lines";
 import { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

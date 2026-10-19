@@ -2,12 +2,12 @@ import {
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import Cast from "lucide-react-native/dist/esm/icons/cast.mjs";
-import Check from "lucide-react-native/dist/esm/icons/check.mjs";
-import RefreshCw from "lucide-react-native/dist/esm/icons/refresh-cw.mjs";
-import Smartphone from "lucide-react-native/dist/esm/icons/smartphone.mjs";
-import Speaker from "lucide-react-native/dist/esm/icons/speaker.mjs";
-import Tv from "lucide-react-native/dist/esm/icons/tv.mjs";
+import Cast from "lucide-react-native/icons/cast";
+import Check from "lucide-react-native/icons/check";
+import RefreshCw from "lucide-react-native/icons/refresh-cw";
+import Smartphone from "lucide-react-native/icons/smartphone";
+import Speaker from "lucide-react-native/icons/speaker";
+import Tv from "lucide-react-native/icons/tv";
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";

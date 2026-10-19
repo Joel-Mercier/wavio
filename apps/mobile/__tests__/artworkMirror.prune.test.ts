@@ -24,7 +24,7 @@ jest.mock("expo-file-system", () => {
     create() {
       mockFiles.set(this.uri, new Uint8Array());
     }
-    write(bytes: Uint8Array) {
+    writeSync(bytes: Uint8Array) {
       mockFiles.set(this.uri, bytes);
     }
     delete() {

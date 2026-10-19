@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import Radar from "lucide-react-native/dist/esm/icons/radar.mjs";
+import ArrowLeft from "lucide-react-native/icons/arrow-left";
+import Radar from "lucide-react-native/icons/radar";
 import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";

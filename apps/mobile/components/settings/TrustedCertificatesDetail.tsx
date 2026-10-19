@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
-import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
+import ArrowLeft from "lucide-react-native/icons/arrow-left";
+import Trash from "lucide-react-native/icons/trash";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

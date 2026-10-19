@@ -1,8 +1,8 @@
 import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import LayoutGrid from "lucide-react-native/dist/esm/icons/layout-grid.mjs";
-import List from "lucide-react-native/dist/esm/icons/list.mjs";
+import ArrowLeft from "lucide-react-native/icons/arrow-left";
+import LayoutGrid from "lucide-react-native/icons/layout-grid";
+import List from "lucide-react-native/icons/list";
 import { useMemo } from "react";
 import { useWindowDimensions } from "react-native";
 import Animated, {
