@@ -54,6 +54,12 @@ describe("playHistory store", () => {
     expect(entry.playedAt).toBeGreaterThanOrEqual(before);
   });
 
+  it("keeps the replay gain so replaying from history stays normalized", () => {
+    const replayGain = { trackGain: -10.38, trackPeak: 0.98 };
+    get().recordPlay(track("t1", { replayGain }));
+    expect(get().history[0].replayGain).toEqual(replayGain);
+  });
+
   it("does not persist the stream url", () => {
     get().recordPlay(track("t1"));
     expect(get().history[0]).not.toHaveProperty("url");

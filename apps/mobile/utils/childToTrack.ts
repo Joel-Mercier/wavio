@@ -2,6 +2,7 @@ import i18n from "@/config/i18n";
 import { streamUrl } from "@/services/backend/streaming";
 import type { Child } from "@/services/openSubsonic/types";
 import useOffline from "@/stores/offline";
+import type { QueueTrack } from "@/stores/queue";
 import { artworkUrl } from "@/utils/artwork";
 
 export function childToTrack(child: Child) {
@@ -52,4 +53,33 @@ export function childToTrack(child: Child) {
     // Add offline indicator
     isOffline: !!offlineTrack,
   };
+}
+
+// The inverse of childToTrack, for rows that render queue tracks through
+// Child-based components. Their actions ("Play next", "Add to queue") rebuild
+// the track with childToTrack, so anything dropped here is lost from the copy
+// they insert — replayGain was, and the copy played at full volume (#244).
+export function trackToChild(track: QueueTrack): Child {
+  return {
+    id: track.id,
+    title: track.title,
+    artist: track.artist,
+    album: track.album,
+    coverArt: track.coverArt,
+    genre: track.genre,
+    duration: track.duration,
+    contentType: track.contentType,
+    suffix: track.suffix,
+    bitRate: track.bitRate,
+    size: track.size,
+    samplingRate: track.samplingRate,
+    starred: track.starred,
+    userRating: track.userRating,
+    artistId: track.artistId,
+    artists: track.artists,
+    albumId: track.albumId,
+    track: track.track,
+    musicBrainzId: track.musicBrainzId,
+    replayGain: track.replayGain,
+  } as Child;
 }

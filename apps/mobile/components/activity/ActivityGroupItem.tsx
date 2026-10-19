@@ -36,6 +36,7 @@ const entryToChild = (entry: ActivityEntry): Child =>
     artistId: entry.artistId,
     albumId: entry.albumId,
     coverArt: entry.coverArt,
+    replayGain: entry.replayGain,
   }) as Child;
 
 function SourceIcon({
