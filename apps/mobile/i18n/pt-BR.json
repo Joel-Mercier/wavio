@@ -622,7 +622,7 @@
 				"successMessage": "Perfil atualizado",
 				"errorMessage": "Ocorreu um erro ao atualizar o perfil",
 				"roleLabels": {
-					"admin": "Admin",
+					"admin": "Administrador",
 					"settings": "Configurações",
 					"stream": "Transmissão",
 					"jukebox": "Jukebox",
@@ -1580,7 +1580,7 @@
 					"homeSectionsCount_other": "{{count}} mostrado"
 				},
 				"hapticsSettings": {
-					"title": "Haptics",
+					"title": "Feedback tátil",
 					"enabledLabel": "Retroalimentação tátil",
 					"enabledDescription": "Vibrar em interações como rolar o índice alfabético"
 				},
