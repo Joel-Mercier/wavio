@@ -249,6 +249,8 @@ The landing page is a static [Astro](https://astro.build/) site (Tailwind v4, `e
 
 For Astro CLI commands, run them inside the workspace: `cd apps/landing && bun run astro ...`.
 
+The site is deployed on Vercel, which doesn't offer Node 26 yet, so `apps/landing/package.json` declares `engines.node: "24.x"` instead of the repo-wide 26.12.0 pin. It builds fine on either version locally.
+
 ### E2E tests
 
 The mobile app has E2E tests that are powered by [Maestro](https://docs.maestro.dev/).
