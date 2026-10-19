@@ -1581,28 +1581,16 @@
 						}
 					},
 					"mediaControlsLabel": "媒体通知按钮",
-					"mediaControlsDescription": "在媒体通知和锁屏界面中，“上一首”、“播放/暂停”和“下一首”按钮旁边会显示额外的按钮。由于 Android 界面只能容纳两个按钮，因此“收藏”按钮取代了“快进 10 秒”按钮。收音机电台和播客剧集则不会显示该按钮。",
-					"mediaControlsOptions": {
-						"seek": {
-							"label": "向前和向后跳转",
-							"description": "倒带并快进10秒。"
-						},
-						"favoriteAndSeekForward": {
-							"label": "加入收藏和跳过",
-							"description": "将当前曲目添加到收藏夹（或从收藏夹中移除），并快进10秒。"
-						},
-						"seekBackwardAndFavorite": {
-							"label": "返回上一页并添加到收藏夹",
-							"description": "倒退10秒，并将当前歌曲添加到收藏夹（或从收藏夹中移除）。"
-						},
-						"favorite": {
-							"label": "仅收藏",
-							"description": "只有“收藏”按钮，这样就减少了误触按钮的可能性。"
-						},
-						"none": {
-							"label": "无",
-							"description": "仅“上一首”、“播放/暂停”和“下一首”。"
-						}
+					"mediaControlsDescription": "Pick the buttons shown on each side of previous, play/pause and next in the media notification and on the lock screen. If you pick only one button, Android shows it on the left. Favorite, shuffle and repeat are hidden for radio stations and podcast episodes.",
+					"mediaControlsLeftLabel": "Left button",
+					"mediaControlsRightLabel": "Right button",
+					"mediaControlsButtons": {
+						"none": "None",
+						"seekBackward": "Back 10 s",
+						"seekForward": "Forward 10 s",
+						"favorite": "收藏",
+						"shuffle": "Shuffle",
+						"repeat": "Repeat"
 					},
 					"waveformSeekbarLabel": "波形寻址条",
 					"waveformSeekbarDescription": "显示歌曲的波形，而非普通的进度条。每个波形会在歌曲开始后几秒钟内分析一次，之后会重复使用。流媒体歌曲会为此额外下载一份低质量副本，因此会消耗更多数据——但绝不会通过蜂窝网络下载。播客、广播以及时长超过15分钟的歌曲将跳过此步骤。",
