@@ -78,7 +78,7 @@ import useApp from "@/stores/app";
 import useCast from "@/stores/cast";
 import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
-import useQueue, { type QueueTrack } from "@/stores/queue";
+import useQueue, { nextRepeatMode, type QueueTrack } from "@/stores/queue";
 import useUpnp from "@/stores/upnp";
 import { formatAudioQuality } from "@/utils/audioQuality";
 import { HEADER_TINT_COLOR } from "@/utils/headerGradient";
@@ -881,13 +881,7 @@ export default function PlayerScreen() {
                     mode={repeatMode}
                     hitSlop={ICON_HIT_SLOP}
                     onPress={() =>
-                      handleRepeatModePress(
-                        repeatMode === "off"
-                          ? "all"
-                          : repeatMode === "all"
-                            ? "one"
-                            : "off",
-                      )
+                      handleRepeatModePress(nextRepeatMode(repeatMode))
                     }
                   />
                 )}

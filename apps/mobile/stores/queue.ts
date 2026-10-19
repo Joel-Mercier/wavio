@@ -117,6 +117,13 @@ interface QueueStore {
 // than refusing (see makeRoomFor).
 export const MAX_QUEUE_TRACKS = 1000;
 
+// The order a repeat button steps through, wherever it lives.
+export function nextRepeatMode(
+  mode: QueueStore["repeatMode"],
+): QueueStore["repeatMode"] {
+  return mode === "off" ? "all" : mode === "all" ? "one" : "off";
+}
+
 // Window of at most MAX_QUEUE_TRACKS containing `startIndex`. The window starts
 // at the requested track so everything ahead of it survives; near the tail it
 // is pulled back so the window stays full. Entries dropped behind the start are

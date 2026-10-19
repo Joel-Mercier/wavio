@@ -1626,28 +1626,16 @@
 						}
 					},
 					"mediaControlsLabel": "Media notification buttons",
-					"mediaControlsDescription": "Extra buttons shown next to previous, play/pause and next in the media notification and on the lock screen. Android only has room for two, so the favorite button takes the place of a 10-second skip button. Radio stations and podcast episodes never show it.",
-					"mediaControlsOptions": {
-						"seek": {
-							"label": "Skip back and forward",
-							"description": "Rewind and fast-forward 10 seconds."
-						},
-						"favoriteAndSeekForward": {
-							"label": "Favorite and skip forward",
-							"description": "Add the current track to your favorites (or remove it), and fast-forward 10 seconds."
-						},
-						"seekBackwardAndFavorite": {
-							"label": "Skip back and favorite",
-							"description": "Rewind 10 seconds, and add the current track to your favorites (or remove it)."
-						},
-						"favorite": {
-							"label": "Favorite only",
-							"description": "Just the favorite button, which leaves fewer buttons to hit by accident."
-						},
-						"none": {
-							"label": "None",
-							"description": "Only previous, play/pause and next."
-						}
+					"mediaControlsDescription": "Pick the buttons shown on each side of previous, play/pause and next in the media notification and on the lock screen. If you pick only one button, Android shows it on the left. Favorite, shuffle and repeat are hidden for radio stations and podcast episodes.",
+					"mediaControlsLeftLabel": "Left button",
+					"mediaControlsRightLabel": "Right button",
+					"mediaControlsButtons": {
+						"none": "None",
+						"seekBackward": "Back 10 s",
+						"seekForward": "Forward 10 s",
+						"favorite": "Favorite",
+						"shuffle": "Shuffle",
+						"repeat": "Repeat"
 					},
 					"waveformSeekbarLabel": "Waveform seek bar",
 					"waveformSeekbarDescription": "Show the track's waveform instead of a plain progress bar. Each waveform is analyzed once, a few seconds after a track starts, then reused. Streamed tracks download an extra low-quality copy to do it, so this uses more data — never over cellular. Skipped for podcasts, radio, and tracks longer than 15 minutes.",

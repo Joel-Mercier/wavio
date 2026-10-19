@@ -278,7 +278,7 @@ describe("app store", () => {
     await useAppBase.persist.rehydrate();
     expect(useAppBase.getState().autoSignOutOnServerUnreachable).toBe(false);
     const persisted = JSON.parse(storage.getItem("app") as string);
-    expect(persisted.version).toBe(2);
+    expect(persisted.version).toBe(3);
     expect(persisted.state.autoSignOutOnServerUnreachable).toBe(false);
   });
 

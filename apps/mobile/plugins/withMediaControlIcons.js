@@ -3,12 +3,20 @@ const path = require("node:path");
 const { withDangerousMod } = require("expo/config-plugins");
 
 // Icons for the optional buttons of the media notification, which the expo-audio
-// patch looks up by name (AudioControlsService.customIconResId). media3's own
+// patch looks up by name (AudioControlsService.MEDIA_BUTTON_SPECS). media3's own
 // Material Symbols glyphs fill their 24dp box, while the system draws previous /
 // next at roughly half of it, so beside those they read oversized. These are the
-// same paths (media3 1.9.0, Apache 2.0) shrunk around the centre until the heart
+// same paths (media3 1.9, Apache 2.0) shrunk around the centre until the heart
 // matches the previous / next glyphs.
 const SCALE = 0.66;
+
+const SHUFFLE =
+  "M560,800L560,720L664,720L537,593L594,536L720,662L720,560L800,560L800,800L560,800ZM216,800L160,744L664,240L560,240L560,160L800,160L800,400L720,400L720,296L216,800ZM367,423L160,216L216,160L423,367L367,423Z";
+const REPEAT =
+  "M280,880L120,720L280,560L336,618L274,680L680,680L680,520L760,520L760,760L274,760L336,822L280,880ZM200,440L200,200L686,200L624,138L680,80L840,240L680,400L624,342L686,280L280,280L280,440L200,440Z";
+
+// media3 draws a mode that is off as its "on" glyph at 30% opacity.
+const off = (pathData) => ({ pathData, alpha: 0.3 });
 
 const ICONS = {
   media_control_heart_filled:
@@ -19,9 +27,17 @@ const ICONS = {
     "M480,880Q405,880 339.5,851.5Q274,823 225.5,774.5Q177,726 148.5,660.5Q120,595 120,520L200,520Q200,637 281.5,718.5Q363,800 480,800Q597,800 678.5,718.5Q760,637 760,520Q760,403 678.5,321.5Q597,240 480,240L474,240L536,302L480,360L320,200L480,40L536,98L474,160L480,160Q555,160 620.5,188.5Q686,217 734.5,265.5Q783,314 811.5,379.5Q840,445 840,520Q840,595 811.5,660.5Q783,726 734.5,774.5Q686,823 620.5,851.5Q555,880 480,880ZM360,640L360,460L300,460L300,400L420,400L420,640L360,640ZM500,640Q483,640 471.5,628.5Q460,617 460,600L460,440Q460,423 471.5,411.5Q483,400 500,400L580,400Q597,400 608.5,411.5Q620,423 620,440L620,600Q620,617 608.5,628.5Q597,640 580,640L500,640ZM520,580L560,580L560,460L520,460L520,580Z",
   media_control_skip_forward_10:
     "M360,640L360,460L300,460L300,400L420,400L420,640L360,640ZM500,640Q483,640 471.5,628.5Q460,617 460,600L460,440Q460,423 471.5,411.5Q483,400 500,400L580,400Q597,400 608.5,411.5Q620,423 620,440L620,600Q620,617 608.5,628.5Q597,640 580,640L500,640ZM520,580L560,580L560,460L520,460L520,580ZM480,880Q405,880 339.5,851.5Q274,823 225.5,774.5Q177,726 148.5,660.5Q120,595 120,520Q120,445 148.5,379.5Q177,314 225.5,265.5Q274,217 339.5,188.5Q405,160 480,160L486,160L424,98L480,40L640,200L480,360L424,302L486,240L480,240Q363,240 281.5,321.5Q200,403 200,520Q200,637 281.5,718.5Q363,800 480,800Q597,800 678.5,718.5Q760,637 760,520L840,520Q840,595 811.5,660.5Q783,726 734.5,774.5Q686,823 620.5,851.5Q555,880 480,880Z",
+  media_control_shuffle_on: SHUFFLE,
+  media_control_shuffle_off: off(SHUFFLE),
+  media_control_repeat_all: REPEAT,
+  media_control_repeat_off: off(REPEAT),
+  media_control_repeat_one: `M460,600L460,420L400,420L400,360L520,360L520,600L460,600Z${REPEAT}`,
 };
 
-const vector = (pathData) => `<?xml version="1.0" encoding="utf-8"?>
+const vector = ({
+  pathData,
+  alpha = 1,
+}) => `<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
@@ -33,6 +49,7 @@ const vector = (pathData) => `<?xml version="1.0" encoding="utf-8"?>
       android:scaleX="${SCALE}"
       android:scaleY="${SCALE}">
     <path
+        android:fillAlpha="${alpha}"
         android:fillColor="@android:color/white"
         android:pathData="${pathData}"/>
   </group>
@@ -52,10 +69,10 @@ const withMediaControlIcons = (config) =>
         "drawable",
       );
       fs.mkdirSync(drawableDir, { recursive: true });
-      for (const [name, pathData] of Object.entries(ICONS)) {
+      for (const [name, icon] of Object.entries(ICONS)) {
         fs.writeFileSync(
           path.join(drawableDir, `${name}.xml`),
-          vector(pathData),
+          vector(typeof icon === "string" ? { pathData: icon } : icon),
         );
       }
       return cfg;
