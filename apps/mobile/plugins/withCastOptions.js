@@ -35,6 +35,7 @@ const META_PROVIDER_CLASS =
 const KT_OPTIONS_PROVIDER = `package com.jmercier.wavio.cast
 
 import android.content.Context
+import androidx.annotation.Keep
 import com.google.android.gms.cast.MediaMetadata
 import com.google.android.gms.cast.framework.CastOptions
 import com.google.android.gms.cast.framework.media.CastMediaOptions
@@ -44,6 +45,9 @@ import com.reactnative.googlecast.GoogleCastOptionsProvider
 
 // The app owns the media session and the notification while casting; the SDK
 // keeps only the device picker and its dialog, which still shows the artwork.
+// @Keep: the Cast SDK instantiates it from a manifest meta-data string, which
+// R8 does not trace.
+@Keep
 class WavioCastOptionsProvider : GoogleCastOptionsProvider() {
   override fun getCastOptions(context: Context): CastOptions {
     val mediaOptions = CastMediaOptions.Builder()

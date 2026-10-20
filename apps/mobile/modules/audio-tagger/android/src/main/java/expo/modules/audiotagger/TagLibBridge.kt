@@ -1,9 +1,13 @@
 package expo.modules.audiotagger
 
+import androidx.annotation.Keep
+
 // Thin JNI surface over the vendored libaudiotagger.so (see native/tagger.cpp).
 // The library is prebuilt and committed under jniLibs, so nothing here triggers
 // a native build — rebuild it with native/build.sh only when the shim or the
-// pinned TagLib version changes.
+// pinned TagLib version changes. @Keep because JNI binds writeTags through the
+// class name (Java_expo_modules_audiotagger_TagLibBridge_writeTags).
+@Keep
 internal object TagLibBridge {
   @Volatile
   private var loaded = false

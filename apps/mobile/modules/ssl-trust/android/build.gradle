@@ -16,6 +16,7 @@ android {
   defaultConfig {
     minSdkVersion rootProject.ext.minSdkVersion ?: 26
     targetSdkVersion rootProject.ext.targetSdkVersion ?: 36
+    consumerProguardFiles "consumer-rules.pro"
   }
   buildFeatures {
     buildConfig true

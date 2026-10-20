@@ -62,7 +62,9 @@
             "minSdkVersion": 26,
             "compileSdkVersion": 37,
             "targetSdkVersion": 36,
-            "enableMinifyInReleaseBuilds": false
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "-keep class com.facebook.react.modules.network.OkHttpClientProvider { *; }"
           }
         }
       ],
@@ -105,6 +107,7 @@
       "./plugins/withSslTrust",
       "./plugins/withInstallApkPermission",
       "./plugins/withProfileable",
+      "./plugins/withGradleTuning",
       [
         "@sentry/react-native/expo",
         {

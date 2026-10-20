@@ -56,19 +56,31 @@ const vector = ({
 </vector>
 `;
 
+// The patch resolves these with getIdentifier(), which the resource shrinker
+// cannot follow, so they are kept explicitly.
+const keepXml = () => `<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="${Object.keys(ICONS)
+      .map((name) => `@drawable/${name}`)
+      .join(",")}"/>
+`;
+
 const withMediaControlIcons = (config) =>
   withDangerousMod(config, [
     "android",
     async (cfg) => {
-      const drawableDir = path.join(
+      const resDir = path.join(
         cfg.modRequest.platformProjectRoot,
         "app",
         "src",
         "main",
         "res",
-        "drawable",
       );
+      const drawableDir = path.join(resDir, "drawable");
+      const rawDir = path.join(resDir, "raw");
       fs.mkdirSync(drawableDir, { recursive: true });
+      fs.mkdirSync(rawDir, { recursive: true });
+      fs.writeFileSync(path.join(rawDir, "media_control_keep.xml"), keepXml());
       for (const [name, icon] of Object.entries(ICONS)) {
         fs.writeFileSync(
           path.join(drawableDir, `${name}.xml`),
