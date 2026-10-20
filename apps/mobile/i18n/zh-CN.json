@@ -2005,6 +2005,9 @@
 				"outputChromecastNoPlayServices": "Chromecast 需要 Google Play 服务，而该设备并未安装该服务。",
 				"outputChromecastNoPlayServicesHint": "需要 Google Play 服务",
 				"outputConnectErrorMessage": "无法播放 {{name}}。",
+				"outputAddRooms": "Also play on",
+				"outputGroupVolume": "Group volume",
+				"outputGroupErrorMessage": "Could not change the group on {{name}}.",
 				"sleepTimerMinutes_other": "{{count}}分钟"
 			},
 			"shares": {
