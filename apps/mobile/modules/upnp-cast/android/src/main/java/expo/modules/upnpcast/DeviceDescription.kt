@@ -15,6 +15,9 @@ import java.net.URL
  */
 class DeviceDescription private constructor(
   val friendlyName: String?,
+  /** Sonos only: the room the speaker is in, which is what its owner calls it. */
+  val roomName: String?,
+  val deviceType: String?,
   val modelName: String?,
   val manufacturer: String?,
   val udn: String?,
@@ -47,7 +50,16 @@ class DeviceDescription private constructor(
 
   val isSonos: Boolean
     get() = manufacturer?.contains("Sonos", ignoreCase = true) == true ||
-      modelName?.contains("Sonos", ignoreCase = true) == true
+      modelName?.contains("Sonos", ignoreCase = true) == true ||
+      deviceType?.contains("ZonePlayer", ignoreCase = true) == true
+
+  /**
+   * What to call the device in a list. A Sonos friendlyName is "<ip> - <model> -
+   * RINCON_…", which nobody recognises; the room is what the Sonos app shows.
+   */
+  val displayName: String?
+    get() = (if (isSonos) roomName else null)?.takeIf { it.isNotEmpty() }
+      ?: friendlyName?.takeIf { it.isNotEmpty() }
 
   /**
    * A guess, used only to pick an icon.
@@ -66,6 +78,8 @@ class DeviceDescription private constructor(
 
     fun parse(xml: String, location: String): DeviceDescription? {
       var friendlyName: String? = null
+      var roomName: String? = null
+      var deviceType: String? = null
       var modelName: String? = null
       var manufacturer: String? = null
       var udn: String? = null
@@ -92,6 +106,8 @@ class DeviceDescription private constructor(
               // The first of each belongs to the root device; nested devices
               // repeat them and would otherwise overwrite the name the user picked.
               "friendlyname" -> friendlyName = friendlyName ?: parser.nextText().trim()
+              "roomname" -> roomName = roomName ?: parser.nextText().trim()
+              "devicetype" -> deviceType = deviceType ?: parser.nextText().trim()
               "modelname" -> modelName = modelName ?: parser.nextText().trim()
               "manufacturer" -> manufacturer = manufacturer ?: parser.nextText().trim()
               "udn" -> udn = udn ?: parser.nextText().trim().removePrefix("uuid:")
@@ -116,7 +132,7 @@ class DeviceDescription private constructor(
       }
 
       return DeviceDescription(
-        friendlyName, modelName, manufacturer, udn, urlBase, location, services
+        friendlyName, roomName, deviceType, modelName, manufacturer, udn, urlBase, location, services
       )
     }
   }

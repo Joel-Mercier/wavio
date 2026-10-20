@@ -98,7 +98,12 @@
         }
       ],
       "./plugins/withCastOptions",
-      "react-native-google-cast",
+      [
+        "react-native-google-cast",
+        {
+          "androidPlayServicesCastFrameworkVersion": "22.3.1"
+        }
+      ],
       "./plugins/withAndroidAuto",
       "./plugins/withWidgets",
       "./plugins/withShortcuts",

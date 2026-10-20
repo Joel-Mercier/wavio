@@ -1,6 +1,10 @@
 import { AppState } from "react-native";
 import type { PlaybackSnapshot } from "@/hooks/player/playbackSnapshot";
-import Native, { type UpnpDevice, type UpnpState } from "@/modules/upnp-cast";
+import Native, {
+  type UpnpDevice,
+  type UpnpGroup,
+  type UpnpState,
+} from "@/modules/upnp-cast";
 import { getCapabilities } from "@/services/backend/capabilities";
 import { reportError } from "@/services/errorReporting";
 import { getConnectionType, subscribeConnectionType } from "@/services/network";
@@ -563,6 +567,7 @@ function detach() {
   queueUnsubscribe = null;
   useUpnpBase.getState().setConnected(null, null);
   useUpnpBase.getState().setSession(null);
+  useUpnpBase.getState().setGroup(null);
   notifyChange();
 }
 
@@ -919,6 +924,133 @@ function upnpSeek(seconds: number) {
 export function upnpSetVolume(volume: number) {
   useUpnpBase.getState().setVolume(volume);
   void Native?.setVolume(Math.round(Math.max(0, Math.min(1, volume)) * 100));
+}
+
+/**
+ * The end of a volume gesture. On a Sonos group it moved every room, each by its
+ * own share, so the rooms are read back once it has landed.
+ */
+export async function upnpCommitVolume(volume: number): Promise<void> {
+  const clamped = Math.max(0, Math.min(1, volume));
+  useUpnpBase.getState().setVolume(clamped);
+  try {
+    await Native?.setVolume(Math.round(clamped * 100));
+  } catch (error) {
+    reportError(error, { area: "player", endpoint: "upnp.setVolume" });
+  }
+  if ((useUpnpBase.getState().group?.members.length ?? 0) > 1) {
+    await upnpRefreshGroup();
+  }
+}
+
+// ── Sonos groups ─────────────────────────────────────────────────────────────
+
+// The device speaks 0..100; the store keeps 0..1, like every other volume.
+function toStoreGroup(group: UpnpGroup): UpnpGroup {
+  return {
+    ...group,
+    members: group.members.map((member) => ({
+      ...member,
+      volume: member.volume == null ? null : member.volume / 100,
+    })),
+  };
+}
+
+/**
+ * Reads the connected speaker's Sonos group into the store, along with the
+ * volume of the whole. Asked when the output sheet opens and after each change
+ * made from it — never on a schedule: the rooms' volumes cost a request each.
+ */
+export async function upnpRefreshGroup(): Promise<void> {
+  if (!Native || !isUpnpConnected()) return;
+  try {
+    const group = await Native.groupState();
+    if (!isUpnpConnected()) return;
+    useUpnpBase.getState().setGroup(group ? toStoreGroup(group) : null);
+  } catch (error) {
+    reportError(error, { area: "player", endpoint: "upnp.groupState" });
+    return;
+  }
+  await adoptRendererVolume();
+}
+
+/**
+ * Moves a room into or out of the group. Shown at once, put back if the speaker
+ * refuses, and read back from the household either way — Sonos may have moved
+ * more than asked (a stereo pair goes as one).
+ */
+async function changeGroup(deviceId: string, join: boolean): Promise<boolean> {
+  const before = useUpnpBase.getState().group;
+  if (!Native || !before) return false;
+  const room = join
+    ? before.candidates.find((candidate) => candidate.id === deviceId)
+    : before.members.find((member) => member.id === deviceId);
+  if (!room) return false;
+  useUpnpBase.getState().setGroup(
+    join
+      ? {
+          ...before,
+          members: [...before.members, { ...room, volume: null }],
+          candidates: before.candidates.filter((c) => c.id !== deviceId),
+        }
+      : {
+          ...before,
+          members: before.members.filter((m) => m.id !== deviceId),
+          candidates: [...before.candidates, { id: room.id, name: room.name }],
+        },
+  );
+
+  let ok = false;
+  try {
+    ok = await (join
+      ? Native.addToGroup(deviceId)
+      : Native.removeFromGroup(deviceId));
+  } catch (error) {
+    reportError(error, {
+      area: "player",
+      endpoint: join ? "upnp.groupAdd" : "upnp.groupRemove",
+    });
+  }
+  if (!ok && isUpnpConnected()) useUpnpBase.getState().setGroup(before);
+  await upnpRefreshGroup();
+  return ok;
+}
+
+export const upnpAddToGroup = (deviceId: string) => changeGroup(deviceId, true);
+
+export const upnpRemoveFromGroup = (deviceId: string) =>
+  changeGroup(deviceId, false);
+
+async function pushDeviceVolume(deviceId: string, volume: number) {
+  const clamped = Math.max(0, Math.min(1, volume));
+  const { group, setGroup } = useUpnpBase.getState();
+  if (group) {
+    setGroup({
+      ...group,
+      members: group.members.map((member) =>
+        member.id === deviceId ? { ...member, volume: clamped } : member,
+      ),
+    });
+  }
+  try {
+    await Native?.setDeviceVolume(deviceId, Math.round(clamped * 100));
+  } catch (error) {
+    reportError(error, { area: "player", endpoint: "upnp.setDeviceVolume" });
+  }
+}
+
+/** One room's own volume, 0..1, while the rest of the group stays put. */
+export function upnpSetDeviceVolume(deviceId: string, volume: number) {
+  void pushDeviceVolume(deviceId, volume);
+}
+
+/** The end of a room's volume gesture: the group's own volume moved with it. */
+export async function upnpCommitDeviceVolume(
+  deviceId: string,
+  volume: number,
+): Promise<void> {
+  await pushDeviceVolume(deviceId, volume);
+  await adoptRendererVolume();
 }
 
 // ── Remote target ────────────────────────────────────────────────────────────

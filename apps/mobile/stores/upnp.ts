@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { createDynamicScopedStorage } from "@/config/storage";
-import type { UpnpDevice } from "@/modules/upnp-cast";
+import type { UpnpDevice, UpnpGroup } from "@/modules/upnp-cast";
 import { currentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
 
@@ -36,6 +36,12 @@ type State = {
   scanning: boolean;
   /** The renderer's own volume, 0..1. UPnP works in 0..100. */
   volume: number;
+  /**
+   * The Sonos group the connected speaker plays in, volumes in 0..1. Read when the
+   * output sheet opens and after each change made from it; null for anything that
+   * is not a Sonos. Never persisted — the household can change while we're away.
+   */
+  group: UpnpGroup | null;
   session: UpnpPersistedSession | null;
   /**
    * Renderers this app has played to before, most recent first. Asked directly
@@ -64,6 +70,7 @@ type Actions = {
   forgetDevice: (id: string) => void;
   setScanning: (scanning: boolean) => void;
   setVolume: (volume: number) => void;
+  setGroup: (group: UpnpGroup | null) => void;
   setSession: (session: UpnpPersistedSession | null) => void;
   rememberSeen: (device: UpnpDevice) => void;
   setPendingResume: (pendingResume: boolean) => void;
@@ -77,6 +84,7 @@ const initialState: State = {
   devices: [],
   scanning: false,
   volume: 0.3,
+  group: null,
   session: null,
   seen: [],
   pendingResume: false,
@@ -121,6 +129,7 @@ const useUpnpBase = create<State & Actions>()(
         })),
       setScanning: (scanning) => set({ scanning }),
       setVolume: (volume) => set({ volume: Math.max(0, Math.min(1, volume)) }),
+      setGroup: (group) => set({ group }),
       setSession: (session) => set({ session }),
       rememberSeen: (device) =>
         set((state) => ({

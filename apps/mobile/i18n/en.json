@@ -2061,7 +2061,10 @@
 				"outputChromecastUnavailable": "The Chromecast device picker is unavailable.",
 				"outputChromecastNoPlayServices": "Chromecast needs Google Play services, which this device does not have.",
 				"outputChromecastNoPlayServicesHint": "Needs Google Play services",
-				"outputConnectErrorMessage": "Could not play to {{name}}."
+				"outputConnectErrorMessage": "Could not play to {{name}}.",
+				"outputAddRooms": "Also play on",
+				"outputGroupVolume": "Group volume",
+				"outputGroupErrorMessage": "Could not change the group on {{name}}."
 			},
 			"shares": {
 				"title": "Shares",
