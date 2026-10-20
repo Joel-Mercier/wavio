@@ -3,8 +3,8 @@ import {
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import * as Clipboard from "expo-clipboard";
-import ClipboardIcon from "lucide-react-native/dist/esm/icons/clipboard.mjs";
-import ClipboardCheck from "lucide-react-native/dist/esm/icons/clipboard-check.mjs";
+import ClipboardIcon from "lucide-react-native/icons/clipboard";
+import ClipboardCheck from "lucide-react-native/icons/clipboard-check";
 import { type RefObject, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

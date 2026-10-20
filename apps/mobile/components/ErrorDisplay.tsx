@@ -1,8 +1,8 @@
 import { Link } from "expo-router";
 import { useRoute } from "expo-router/react-navigation";
-import CircleX from "lucide-react-native/dist/esm/icons/circle-x.mjs";
-import ServerOff from "lucide-react-native/dist/esm/icons/server-off.mjs";
-import WifiOff from "lucide-react-native/dist/esm/icons/wifi-off.mjs";
+import CircleX from "lucide-react-native/icons/circle-x";
+import ServerOff from "lucide-react-native/icons/server-off";
+import WifiOff from "lucide-react-native/icons/wifi-off";
 import { useTranslation } from "react-i18next";
 import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
 import { Box } from "@/components/ui/box";

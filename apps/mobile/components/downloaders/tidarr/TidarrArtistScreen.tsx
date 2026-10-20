@@ -1,5 +1,5 @@
 import { Redirect, useLocalSearchParams } from "expo-router";
-import Download from "lucide-react-native/dist/esm/icons/download.mjs";
+import Download from "lucide-react-native/icons/download";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
 import TidarrAlbumRow from "@/components/downloaders/tidarr/TidarrAlbumRow";

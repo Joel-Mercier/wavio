@@ -1,7 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import X from "lucide-react-native/dist/esm/icons/x.mjs";
+import X from "lucide-react-native/icons/x";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";

@@ -1,4 +1,4 @@
-import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
+import ListMusic from "lucide-react-native/icons/list-music";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

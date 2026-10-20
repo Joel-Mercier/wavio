@@ -1,10 +1,10 @@
-import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView } from "react-native";
+import { ScrollView, type ScrollViewInstance } from "react-native";
 import LyricsLine, { LYRICS_LINE_HEIGHT } from "@/components/player/LyricsLine";
 import { Box } from "@/components/ui/box";
+import { MaskedView } from "@/components/ui/masked-view";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import {
@@ -51,7 +51,7 @@ export default function LyricsBody({
   isLoading?: boolean;
 }) {
   const { t } = useTranslation();
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const [containerHeight, setContainerHeight] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const userScrollingUntilRef = useRef(0);

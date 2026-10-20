@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { createDynamicScopedStorage } from "@/config/storage";
+import type { Child } from "@/services/openSubsonic/types";
 import { currentAuthScope } from "@/stores/auth";
 import type { QueueSource, QueueTrack } from "@/stores/queue";
 import createSelectors from "@/utils/createSelectors";
@@ -26,6 +27,7 @@ export type ActivityEntry = {
   coverArt?: string;
   albumId?: string;
   artistId?: string;
+  replayGain?: Child["replayGain"];
   // null when the play has no clear album/artist/playlist source → generic group.
   source: ActivitySource;
   playedAt: number;
@@ -92,6 +94,7 @@ const useActivityBase = create<ActivityStore>()(
             coverArt: track.coverArt,
             albumId: track.albumId,
             artistId: track.artistId,
+            replayGain: track.replayGain,
             source: activitySource,
             playedAt: Date.now(),
           };

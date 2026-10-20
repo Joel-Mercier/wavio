@@ -1,4 +1,4 @@
-import GripVertical from "lucide-react-native/dist/esm/icons/grip-vertical.mjs";
+import GripVertical from "lucide-react-native/icons/grip-vertical";
 import { Uniwind } from "uniwind";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";

@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import Podcast from "lucide-react-native/dist/esm/icons/mic-signal.mjs";
+import Podcast from "lucide-react-native/icons/mic-signal";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";

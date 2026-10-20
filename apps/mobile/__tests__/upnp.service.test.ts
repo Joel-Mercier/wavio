@@ -58,6 +58,10 @@ const mockNative = {
   pollNow: jest.fn(async () => undefined),
   setVolume: jest.fn(async () => true),
   getVolume: jest.fn(async () => 30),
+  groupState: jest.fn(async (): Promise<unknown> => null),
+  addToGroup: jest.fn(async () => true),
+  removeFromGroup: jest.fn(async () => true),
+  setDeviceVolume: jest.fn(async () => true),
   disconnect: jest.fn(async () => true),
   startListening: jest.fn(async () => true),
   stopListening: jest.fn(async () => undefined),
@@ -202,9 +206,15 @@ import {
   initUpnpOnLaunch,
   reattach,
   takeOverLocally,
+  upnpAddToGroup,
+  upnpCommitDeviceVolume,
+  upnpCommitVolume,
   upnpConnect,
   upnpDisconnect,
+  upnpRefreshGroup,
   upnpRelease,
+  upnpRemoveFromGroup,
+  upnpSetDeviceVolume,
   upnpStartDiscovery,
   upnpStopDiscovery,
 } from "@/services/upnp";
@@ -260,6 +270,10 @@ beforeEach(async () => {
   mockNative.pollNow.mockResolvedValue(undefined);
   mockNative.setVolume.mockResolvedValue(true);
   mockNative.getVolume.mockResolvedValue(30);
+  mockNative.groupState.mockResolvedValue(null);
+  mockNative.addToGroup.mockResolvedValue(true);
+  mockNative.removeFromGroup.mockResolvedValue(true);
+  mockNative.setDeviceVolume.mockResolvedValue(true);
   mockNative.disconnect.mockResolvedValue(true);
   mockNative.describe.mockResolvedValue(null);
   mockNative.probe.mockResolvedValue(null);
@@ -348,6 +362,142 @@ describe("upnp session", () => {
     mockNative.getVolume.mockResolvedValueOnce(80);
     await connect();
     expect(useUpnpBase.getState().volume).toBeCloseTo(0.8);
+  });
+});
+
+describe("sonos groups", () => {
+  const kitchen = { id: "uuid-1", name: "Kitchen", volume: 30 };
+  const bedroom = { id: "uuid-2", name: "Bedroom", volume: 50 };
+  const office = { id: "uuid-3", name: "Office" };
+  const alone = {
+    coordinatorId: "uuid-1",
+    members: [kitchen],
+    candidates: [{ id: "uuid-2", name: "Bedroom" }, office],
+  };
+  const withBedroom = {
+    coordinatorId: "uuid-1",
+    members: [kitchen, bedroom],
+    candidates: [office],
+  };
+
+  it("reads the group with volumes in the store's 0..1", async () => {
+    await connect();
+    mockNative.groupState.mockResolvedValueOnce(withBedroom);
+    mockNative.getVolume.mockResolvedValueOnce(40);
+    await upnpRefreshGroup();
+    const group = useUpnpBase.getState().group;
+    expect(group?.members.map((m) => m.volume)).toEqual([0.3, 0.5]);
+    expect(group?.candidates).toEqual([office]);
+    expect(useUpnpBase.getState().volume).toBeCloseTo(0.4);
+  });
+
+  it("is empty for a renderer that is not a Sonos", async () => {
+    await connect();
+    await upnpRefreshGroup();
+    expect(useUpnpBase.getState().group).toBeNull();
+  });
+
+  it("shows a room joining at once, then what the household says", async () => {
+    await connect();
+    mockNative.groupState.mockResolvedValueOnce(alone);
+    await upnpRefreshGroup();
+
+    let release: (ok: boolean) => void = () => {};
+    mockNative.addToGroup.mockImplementationOnce(
+      () => new Promise<boolean>((resolve) => (release = resolve)),
+    );
+    mockNative.groupState.mockResolvedValueOnce(withBedroom);
+    const adding = upnpAddToGroup("uuid-2");
+    expect(useUpnpBase.getState().group?.members.map((m) => m.id)).toEqual([
+      "uuid-1",
+      "uuid-2",
+    ]);
+    expect(useUpnpBase.getState().group?.candidates.map((c) => c.id)).toEqual([
+      "uuid-3",
+    ]);
+
+    release(true);
+    expect(await adding).toBe(true);
+    expect(mockNative.addToGroup).toHaveBeenCalledWith("uuid-2");
+    expect(useUpnpBase.getState().group?.members[1].volume).toBe(0.5);
+  });
+
+  it("puts the group back when a room refuses to join", async () => {
+    await connect();
+    mockNative.groupState.mockResolvedValueOnce(alone);
+    await upnpRefreshGroup();
+    mockNative.addToGroup.mockResolvedValueOnce(false);
+    mockNative.groupState.mockRejectedValueOnce(new Error("unreachable"));
+    expect(await upnpAddToGroup("uuid-2")).toBe(false);
+    expect(useUpnpBase.getState().group?.members.map((m) => m.id)).toEqual([
+      "uuid-1",
+    ]);
+  });
+
+  it("takes a room out without touching the music", async () => {
+    await connect();
+    mockNative.groupState.mockResolvedValueOnce(withBedroom);
+    await upnpRefreshGroup();
+    mockNative.groupState.mockResolvedValueOnce(alone);
+    const loads = mockNative.load.mock.calls.length;
+    expect(await upnpRemoveFromGroup("uuid-2")).toBe(true);
+    expect(mockNative.removeFromGroup).toHaveBeenCalledWith("uuid-2");
+    expect(useUpnpBase.getState().group?.members).toHaveLength(1);
+    expect(mockNative.load.mock.calls.length).toBe(loads);
+    expect(mockNative.disconnect).not.toHaveBeenCalled();
+  });
+
+  it("refuses to change a room it does not know", async () => {
+    await connect();
+    mockNative.groupState.mockResolvedValueOnce(alone);
+    await upnpRefreshGroup();
+    expect(await upnpRemoveFromGroup("uuid-9")).toBe(false);
+    expect(mockNative.removeFromGroup).not.toHaveBeenCalled();
+  });
+
+  it("sets one room's volume and re-reads the group's once it lands", async () => {
+    await connect();
+    mockNative.groupState.mockResolvedValueOnce(withBedroom);
+    await upnpRefreshGroup();
+    upnpSetDeviceVolume("uuid-2", 0.8);
+    expect(mockNative.setDeviceVolume).toHaveBeenCalledWith("uuid-2", 80);
+    expect(useUpnpBase.getState().group?.members[1].volume).toBe(0.8);
+
+    mockNative.getVolume.mockResolvedValueOnce(55);
+    await upnpCommitDeviceVolume("uuid-2", 0.8);
+    expect(useUpnpBase.getState().volume).toBeCloseTo(0.55);
+  });
+
+  it("re-reads every room after the group's volume moved them", async () => {
+    await connect();
+    mockNative.groupState.mockResolvedValueOnce(withBedroom);
+    await upnpRefreshGroup();
+    mockNative.groupState.mockResolvedValueOnce({
+      ...withBedroom,
+      members: [
+        { ...kitchen, volume: 60 },
+        { ...bedroom, volume: 100 },
+      ],
+    });
+    await upnpCommitVolume(0.8);
+    expect(mockNative.setVolume).toHaveBeenLastCalledWith(80);
+    expect(useUpnpBase.getState().group?.members.map((m) => m.volume)).toEqual([
+      0.6, 1,
+    ]);
+  });
+
+  it("sends the volume keys to the group, through the renderer's volume", async () => {
+    await connect();
+    activeRemoteTarget()?.setVolume?.(0.5);
+    expect(mockNative.setVolume).toHaveBeenLastCalledWith(50);
+  });
+
+  it("forgets the group on disconnect", async () => {
+    await connect();
+    mockNative.groupState.mockResolvedValueOnce(withBedroom);
+    await upnpRefreshGroup();
+    await upnpDisconnect();
+    expect(useUpnpBase.getState().group).toBeNull();
   });
 });
 

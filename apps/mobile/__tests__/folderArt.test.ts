@@ -87,7 +87,7 @@ jest.mock("expo-file-system", () => {
     open() {
       // A JPEG's magic, so `looksLikeImage` is satisfied.
       return {
-        readBytes: () => new Uint8Array([0xff, 0xd8, 0xff, 0xe0]),
+        readBytesSync: () => new Uint8Array([0xff, 0xd8, 0xff, 0xe0]),
         close() {},
       };
     }

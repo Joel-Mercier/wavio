@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
-import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
-import Save from "lucide-react-native/dist/esm/icons/save.mjs";
+import ListPlus from "lucide-react-native/icons/list-plus";
+import Save from "lucide-react-native/icons/save";
 import { type ReactNode, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

@@ -70,6 +70,11 @@ export type OfflineCollection = {
   source?: OfflineSource;
 };
 
+// Why services/offline/collectionAdoption.ts left a collection unregistered:
+// one of its tracks wasn't downloaded. It is not fetched again until that track
+// lands or `version` changes.
+export type IncompleteCollection = { version: string; missingTrackId: string };
+
 // Queue entries carry the source through app restarts (the queue is persisted),
 // so a resumed auto download is still removable by disabling extended offline.
 export type QueuedTrack = Child & { offlineSource?: OfflineSource };
@@ -106,6 +111,12 @@ export interface OfflineStore {
   removeDownloadedCollection: (collectionId: string) => void;
   removeDownloadedCollections: (collectionIds: string[]) => void;
   getDownloadedCollections: () => OfflineCollection[];
+
+  // Keyed by `${kind}|${id}`; a null update drops the entry.
+  incompleteCollections: Record<string, IncompleteCollection>;
+  updateIncompleteCollections: (
+    updates: Record<string, IncompleteCollection | null>,
+  ) => void;
 
   downloadProgress: Record<string, DownloadProgress>;
   setDownloadProgress: (trackId: string, progress: DownloadProgress) => void;
@@ -160,6 +171,7 @@ const initialOfflineState = {
   offlineModeEnabled: false,
   downloadedTracks: {} as Record<string, OfflineTrack>,
   downloadedCollections: {} as Record<string, OfflineCollection>,
+  incompleteCollections: {} as Record<string, IncompleteCollection>,
   downloadProgress: {} as Record<string, DownloadProgress>,
   downloadQueue: [] as QueuedTrack[],
   artworkCache: {} as Record<string, string>,
@@ -386,6 +398,17 @@ const useOfflineBase = create<OfflineStore>()(
         return Object.values(downloadedCollections);
       },
 
+      updateIncompleteCollections: (updates) => {
+        set((state) => {
+          const incompleteCollections = { ...state.incompleteCollections };
+          for (const [key, entry] of Object.entries(updates)) {
+            if (entry) incompleteCollections[key] = entry;
+            else delete incompleteCollections[key];
+          }
+          return { incompleteCollections };
+        });
+      },
+
       setDownloadProgress: (trackId, progress) => {
         set((state) => ({
           downloadProgress: {
@@ -575,6 +598,7 @@ const useOfflineBase = create<OfflineStore>()(
         offlineModeEnabled: state.offlineModeEnabled,
         downloadedTracks: state.downloadedTracks,
         downloadedCollections: state.downloadedCollections,
+        incompleteCollections: state.incompleteCollections,
         downloadQueue: state.downloadQueue,
         downloadProgress: state.downloadProgress,
         artworkCache: state.artworkCache,

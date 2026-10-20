@@ -3,15 +3,15 @@ import {
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
-import CloudDownload from "lucide-react-native/dist/esm/icons/cloud-download.mjs";
-import Drama from "lucide-react-native/dist/esm/icons/drama.mjs";
-import Fingerprint from "lucide-react-native/dist/esm/icons/fingerprint-pattern.mjs";
-import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
-import Podcast from "lucide-react-native/dist/esm/icons/mic-signal.mjs";
-import Radio from "lucide-react-native/dist/esm/icons/radio.mjs";
-import Sparkles from "lucide-react-native/dist/esm/icons/sparkles.mjs";
-import Wand2 from "lucide-react-native/dist/esm/icons/wand-sparkles.mjs";
-import Waypoints from "lucide-react-native/dist/esm/icons/waypoints.mjs";
+import CloudDownload from "lucide-react-native/icons/cloud-download";
+import Drama from "lucide-react-native/icons/drama";
+import Fingerprint from "lucide-react-native/icons/fingerprint-pattern";
+import ListMusic from "lucide-react-native/icons/list-music";
+import Podcast from "lucide-react-native/icons/mic-signal";
+import Radio from "lucide-react-native/icons/radio";
+import Sparkles from "lucide-react-native/icons/sparkles";
+import Wand2 from "lucide-react-native/icons/wand-sparkles";
+import Waypoints from "lucide-react-native/icons/waypoints";
 import { forwardRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

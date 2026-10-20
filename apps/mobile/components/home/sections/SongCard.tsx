@@ -1,4 +1,4 @@
-import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
+import AudioLines from "lucide-react-native/icons/audio-lines";
 import { memo } from "react";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";

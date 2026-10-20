@@ -28,36 +28,18 @@ jest.mock("@/hooks/useCapabilities", () => ({
       .requireActual("@/services/backend/capabilities")
       .getCapabilities(mockAuth.serverType),
 }));
-jest.mock("lucide-react-native/dist/esm/icons/archive.mjs", () => () => null);
-jest.mock(
-  "lucide-react-native/dist/esm/icons/audio-lines.mjs",
-  () => () => null,
-);
-jest.mock(
-  "lucide-react-native/dist/esm/icons/cloud-download.mjs",
-  () => () => null,
-);
-jest.mock("lucide-react-native/dist/esm/icons/download.mjs", () => () => null);
-jest.mock(
-  "lucide-react-native/dist/esm/icons/hard-drive.mjs",
-  () => () => null,
-);
-jest.mock("lucide-react-native/dist/esm/icons/library.mjs", () => () => null);
-jest.mock(
-  "lucide-react-native/dist/esm/icons/mic-signal.mjs",
-  () => () => null,
-);
-jest.mock("lucide-react-native/dist/esm/icons/palette.mjs", () => () => null);
-jest.mock("lucide-react-native/dist/esm/icons/radio.mjs", () => () => null);
-jest.mock(
-  "lucide-react-native/dist/esm/icons/refresh-cw.mjs",
-  () => () => null,
-);
-jest.mock(
-  "lucide-react-native/dist/esm/icons/shield-check.mjs",
-  () => () => null,
-);
-jest.mock("lucide-react-native/dist/esm/icons/workflow.mjs", () => () => null);
+jest.mock("lucide-react-native/icons/archive", () => () => null);
+jest.mock("lucide-react-native/icons/audio-lines", () => () => null);
+jest.mock("lucide-react-native/icons/cloud-download", () => () => null);
+jest.mock("lucide-react-native/icons/download", () => () => null);
+jest.mock("lucide-react-native/icons/hard-drive", () => () => null);
+jest.mock("lucide-react-native/icons/library", () => () => null);
+jest.mock("lucide-react-native/icons/mic-signal", () => () => null);
+jest.mock("lucide-react-native/icons/palette", () => () => null);
+jest.mock("lucide-react-native/icons/radio", () => () => null);
+jest.mock("lucide-react-native/icons/refresh-cw", () => () => null);
+jest.mock("lucide-react-native/icons/shield-check", () => () => null);
+jest.mock("lucide-react-native/icons/workflow", () => () => null);
 jest.mock("@/components/settings/SettingsLinkRow", () => () => null);
 jest.mock(
   "@/components/settings/SettingsScreenScaffold",

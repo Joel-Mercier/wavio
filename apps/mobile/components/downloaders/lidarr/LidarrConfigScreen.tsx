@@ -1,9 +1,9 @@
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Href } from "expo-router";
-import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
-import Compass from "lucide-react-native/dist/esm/icons/compass.mjs";
-import ListChecks from "lucide-react-native/dist/esm/icons/list-checks.mjs";
+import ChevronRight from "lucide-react-native/icons/chevron-right";
+import Compass from "lucide-react-native/icons/compass";
+import ListChecks from "lucide-react-native/icons/list-checks";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

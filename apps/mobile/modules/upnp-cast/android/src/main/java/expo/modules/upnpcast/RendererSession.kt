@@ -24,7 +24,8 @@ class RendererSession(
   initialDescription: DeviceDescription
 ) {
   @Volatile
-  private var description: DeviceDescription = initialDescription
+  var description: DeviceDescription = initialDescription
+    private set
 
   /**
    * Resolved once and reused. On a Sonos group member this is quietly replaced by
@@ -36,6 +37,19 @@ class RendererSession(
 
   private val renderingControl: String? =
     initialDescription.controlUrl(Services.RENDERING_CONTROL)
+
+  /** Sonos: the coordinator's, alongside [avTransport]. Null on anything else. */
+  @Volatile
+  private var groupRenderingControl: String? =
+    initialDescription.controlUrl(Services.GROUP_RENDERING_CONTROL)
+
+  /**
+   * When the group's volume was last set. Sonos scales a group from the volumes
+   * it last snapshotted, so a fresh gesture snapshots first — or one that follows
+   * a room joining, leaving or having its own volume moved.
+   */
+  @Volatile
+  private var groupVolumeSetAt = 0L
 
   private val mutex = Mutex()
 
@@ -65,6 +79,10 @@ class RendererSession(
   @Volatile
   private var lastTransportState: String? = null
 
+  /** Kept once seen: later polls go straight to the new group and no longer show it. */
+  @Volatile
+  private var regrouped = false
+
   data class State(
     val playbackState: String,
     /** OK, or ERROR_OCCURRED when the renderer could not play what it was handed. */
@@ -73,7 +91,13 @@ class RendererSession(
     val durationMs: Long,
     /** What the renderer says it is holding — empty when it does not report one. */
     val trackUri: String,
-    val generation: Double
+    val generation: Double,
+    /**
+     * Sonos: the speaker was moved into another group from outside, and that group
+     * plays someone else's music. Ours stayed behind with the rooms it left, where
+     * this session cannot follow it.
+     */
+    val regrouped: Boolean = false
   )
 
   data class LoadResult(
@@ -90,6 +114,7 @@ class RendererSession(
     latestRequested = 0.0
     lastUri = null
     lastTransportState = null
+    regrouped = false
     return ++epoch
   }
 
@@ -115,13 +140,14 @@ class RendererSession(
       var attempt = handover(control, track)
 
       if (!attempt.ok) {
-        val coordinator = SonosTopology.coordinatorControlUrl(description)
-        if (coordinator != null && coordinator != control) {
+        val coordinator = SonosTopology.coordinatorOf(description, fresh = true)
+        val coordinatorControl = coordinator?.controlUrl(Services.AV_TRANSPORT)
+        if (coordinator != null && coordinatorControl != null && coordinatorControl != control) {
           // A different device: whatever the member said about itself says nothing
           // about what the coordinator is doing.
-          stopBeforeHandover(coordinator, force = true)
-          attempt = handover(coordinator, track)
-          if (attempt.ok) avTransport = coordinator
+          stopBeforeHandover(coordinatorControl, force = true)
+          attempt = handover(coordinatorControl, track)
+          if (attempt.ok) follow(coordinator)
         }
       }
 
@@ -310,7 +336,79 @@ class RendererSession(
     return Soap.call(control, Services.AV_TRANSPORT, action, arguments).ok
   }
 
-  /** 0..100, the range UPnP uses. */
+  /**
+   * Points every later command at whoever coordinates this speaker's group, which
+   * is the speaker itself unless it is a member. Returns whether anything moved.
+   */
+  suspend fun followCoordinator(): Boolean = mutex.withLock { followCoordinatorLocked() }
+
+  private suspend fun followCoordinatorLocked(): Boolean {
+    val coordinator = SonosTopology.coordinatorOf(description, fresh = true) ?: return false
+    if (coordinator.controlUrl(Services.AV_TRANSPORT) == avTransport) return false
+    follow(coordinator)
+    return true
+  }
+
+  private fun follow(coordinator: DeviceDescription) {
+    avTransport = coordinator.controlUrl(Services.AV_TRANSPORT)
+    groupRenderingControl = coordinator.controlUrl(Services.GROUP_RENDERING_CONTROL)
+    lastTransportState = null
+    groupVolumeSetAt = 0L
+  }
+
+  /**
+   * Sonos: makes this speaker play whatever [coordinatorUuid]'s group plays. Sent
+   * to the speaker joining, on its own AVTransport, never to the coordinator.
+   */
+  suspend fun joinGroup(coordinatorUuid: String): Boolean = mutex.withLock {
+    val control = description.controlUrl(Services.AV_TRANSPORT) ?: return false
+    Soap.call(
+      control,
+      Services.AV_TRANSPORT,
+      "SetAVTransportURI",
+      "<InstanceID>0</InstanceID>" +
+        "<CurrentURI>${Soap.escape("x-rincon:$coordinatorUuid")}</CurrentURI>" +
+        "<CurrentURIMetaData></CurrentURIMetaData>"
+    ).ok
+  }
+
+  /** Sonos: takes this speaker out of its group, leaving the rest playing. */
+  suspend fun leaveGroup(): Boolean = mutex.withLock {
+    val control = description.controlUrl(Services.AV_TRANSPORT) ?: return false
+    Soap.call(control, Services.AV_TRANSPORT, "BecomeCoordinatorOfStandaloneGroup", INSTANCE).ok
+  }
+
+  fun groupChanged() {
+    groupVolumeSetAt = 0L
+  }
+
+  /**
+   * The output's volume: the whole group's on a Sonos — the average its rooms
+   * report, scaled together — and the device's own anywhere else. A Sonos on its
+   * own is a group of one, so this needs no idea of whether anything is grouped.
+   */
+  suspend fun outputVolume(): Int? {
+    val group = groupRenderingControl ?: return volume()
+    val result = Soap.call(group, Services.GROUP_RENDERING_CONTROL, "GetGroupVolume", INSTANCE)
+    return Soap.argument(result.body, "CurrentVolume")?.toIntOrNull() ?: volume()
+  }
+
+  suspend fun setOutputVolume(volume: Int): Boolean {
+    val group = groupRenderingControl ?: return setVolume(volume)
+    val now = System.currentTimeMillis()
+    if (now - groupVolumeSetAt > GESTURE_GAP_MS) {
+      Soap.call(group, Services.GROUP_RENDERING_CONTROL, "SnapshotGroupVolume", INSTANCE)
+    }
+    groupVolumeSetAt = now
+    return Soap.call(
+      group,
+      Services.GROUP_RENDERING_CONTROL,
+      "SetGroupVolume",
+      "<InstanceID>0</InstanceID><DesiredVolume>${volume.coerceIn(0, 100)}</DesiredVolume>"
+    ).ok || setVolume(volume)
+  }
+
+  /** This device's own volume, 0..100, the range UPnP uses. */
   suspend fun setVolume(volume: Int): Boolean {
     val control = renderingControl ?: return false
     return Soap.call(
@@ -343,20 +441,33 @@ class RendererSession(
    */
   suspend fun state(): State? = mutex.withLock { stateLocked() }
 
-  private suspend fun stateLocked(): State? {
+  private suspend fun stateLocked(rerouted: Boolean = false): State? {
     val control = avTransport ?: refreshControlUrl() ?: return null
     val generation = activeGeneration
     val transport = Soap.call(control, Services.AV_TRANSPORT, "GetTransportInfo", INSTANCE, Soap.POLL_TIMEOUT_MS)
     val playbackState = Soap.argument(transport.body, "CurrentTransportState") ?: return null
     val position = Soap.call(control, Services.AV_TRANSPORT, "GetPositionInfo", INSTANCE, Soap.POLL_TIMEOUT_MS)
+    val trackUri = Soap.argument(position.body, "TrackURI") ?: ""
+    // A Sonos speaker pulled into another group from the Sonos app: it now answers
+    // PLAYING, always, about a group it does not run. The group's coordinator is
+    // the one to ask, and to send everything to from now on.
+    if (!rerouted && trackUri.startsWith(GROUP_MEMBER_URI) && description.isSonos) {
+      if (followCoordinatorLocked()) {
+        val joined = stateLocked(rerouted = true) ?: return null
+        val ours = lastUri ?: return joined
+        if (!StreamUri.same(joined.trackUri, ours)) regrouped = true
+        return joined.copy(regrouped = regrouped)
+      }
+    }
     lastTransportState = playbackState
     return State(
       playbackState = playbackState,
       transportStatus = Soap.argument(transport.body, "CurrentTransportStatus") ?: "OK",
       positionMs = Didl.parseDuration(Soap.argument(position.body, "RelTime")),
       durationMs = Didl.parseDuration(Soap.argument(position.body, "TrackDuration")),
-      trackUri = Soap.argument(position.body, "TrackURI") ?: "",
-      generation = generation
+      trackUri = trackUri,
+      generation = generation,
+      regrouped = regrouped
     )
   }
 
@@ -364,6 +475,7 @@ class RendererSession(
     val fresh = Soap.fetch(location)?.let { DeviceDescription.parse(it, location) } ?: return null
     description = fresh
     avTransport = fresh.controlUrl(Services.AV_TRANSPORT)
+    groupRenderingControl = fresh.controlUrl(Services.GROUP_RENDERING_CONTROL)
     return avTransport
   }
 
@@ -371,6 +483,10 @@ class RendererSession(
     const val INSTANCE = "<InstanceID>0</InstanceID>"
     const val VERIFY_WINDOW_MS = 2500L
     const val VERIFY_STEP_MS = 300L
+    /** Long enough apart that two volume changes are two gestures, not one drag. */
+    const val GESTURE_GAP_MS = 1500L
+    /** What a grouped Sonos reports holding: its coordinator's id, not a track. */
+    const val GROUP_MEMBER_URI = "x-rincon:"
     /** 714 Illegal MIME-Type, 716 Resource not found: the type was the objection. */
     val MIME_FAULTS = setOf(714, 716)
   }

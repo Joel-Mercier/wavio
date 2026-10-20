@@ -1,12 +1,12 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import Cast from "lucide-react-native/dist/esm/icons/cast.mjs";
+import Cast from "lucide-react-native/icons/cast";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type {
   NativeScrollEvent,
   NativeSyntheticEvent,
-  ScrollView as RNScrollView,
+  ScrollViewInstance,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
@@ -51,7 +51,7 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
   const isWideLayout = useApp((store) => store.isWideLayout);
   const setShowDrawer = useApp((store) => store.setShowDrawer);
   const username = useAuth((store) => store.username);
-  const scrollRef = useRef<RNScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const [white, emerald500] = Uniwind.getCSSVariable([
     "--color-white",
     "--color-emerald-500",

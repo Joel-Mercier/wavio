@@ -1,5 +1,5 @@
-import ServerOff from "lucide-react-native/dist/esm/icons/server-off.mjs";
-import WifiOff from "lucide-react-native/dist/esm/icons/wifi-off.mjs";
+import ServerOff from "lucide-react-native/icons/server-off";
+import WifiOff from "lucide-react-native/icons/wifi-off";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { StyleSheet } from "react-native";

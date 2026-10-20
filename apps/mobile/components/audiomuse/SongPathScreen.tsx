@@ -1,8 +1,8 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
-import Route from "lucide-react-native/dist/esm/icons/route.mjs";
+import ArrowLeft from "lucide-react-native/icons/arrow-left";
+import ChevronRight from "lucide-react-native/icons/chevron-right";
+import Route from "lucide-react-native/icons/route";
 import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";

@@ -4,6 +4,9 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Platform } from "react-native";
 import ConfirmActionDialog from "@/components/settings/ConfirmActionDialog";
+import MediaControlsSheet, {
+  mediaControlButtonLabelKey,
+} from "@/components/settings/MediaControlsSheet";
 import OptionsBottomSheetModal from "@/components/settings/OptionsBottomSheetModal";
 import {
   SettingsActionRow,
@@ -26,7 +29,6 @@ import { clearWaveformMemory } from "@/services/waveform";
 import { clearWaveforms } from "@/services/waveform/cache";
 import useApp, {
   type CellularStreamFormat,
-  MEDIA_CONTROLS_LAYOUTS,
   type StreamFormat,
 } from "@/stores/app";
 
@@ -115,10 +117,8 @@ export default function PlaybackAudioSection() {
   );
   const showPlayerRating = useApp((store) => store.showPlayerRating);
   const setShowPlayerRating = useApp((store) => store.setShowPlayerRating);
-  const mediaControlsLayout = useApp((store) => store.mediaControlsLayout);
-  const setMediaControlsLayout = useApp(
-    (store) => store.setMediaControlsLayout,
-  );
+  const mediaControlsLeft = useApp((store) => store.mediaControlsLeft);
+  const mediaControlsRight = useApp((store) => store.mediaControlsRight);
   const queueSyncPriority = useApp((store) => store.queueSyncPriority);
   const setQueueSyncPriority = useApp((store) => store.setQueueSyncPriority);
   const lyricsSource = useApp((store) => store.lyricsSource);
@@ -198,25 +198,7 @@ export default function PlaybackAudioSection() {
             onSelect={setQueueSyncPriority}
             dismissOnSelect
           />
-          <OptionsBottomSheetModal
-            modalRef={bottomSheetMediaControlsModalRef}
-            header={t("app.settings.playbackSettings.mediaControlsLabel")}
-            headerDescription={t(
-              "app.settings.playbackSettings.mediaControlsDescription",
-            )}
-            options={MEDIA_CONTROLS_LAYOUTS.map((option) => ({
-              value: option,
-              label: t(
-                `app.settings.playbackSettings.mediaControlsOptions.${option}.label`,
-              ),
-              description: t(
-                `app.settings.playbackSettings.mediaControlsOptions.${option}.description`,
-              ),
-            }))}
-            selectedValue={mediaControlsLayout}
-            onSelect={setMediaControlsLayout}
-            dismissOnSelect
-          />
+          <MediaControlsSheet modalRef={bottomSheetMediaControlsModalRef} />
           <OptionsBottomSheetModal
             modalRef={bottomSheetLyricsSourceModalRef}
             header={t("app.settings.displaySettings.lyricsSourceLabel")}
@@ -391,9 +373,13 @@ export default function PlaybackAudioSection() {
             description={t(
               "app.settings.playbackSettings.mediaControlsDescription",
             )}
-            badgeText={t(
-              `app.settings.playbackSettings.mediaControlsOptions.${mediaControlsLayout}.label`,
-            )}
+            badgeText={
+              mediaControlsLeft || mediaControlsRight
+                ? [mediaControlsLeft, mediaControlsRight]
+                    .map((button) => t(mediaControlButtonLabelKey(button)))
+                    .join(" · ")
+                : t(mediaControlButtonLabelKey(null))
+            }
             onPress={() => bottomSheetMediaControlsModalRef.current?.present()}
           />
         )}

@@ -1,5 +1,5 @@
-import FolderPlus from "lucide-react-native/dist/esm/icons/folder-plus.mjs";
-import Plus from "lucide-react-native/dist/esm/icons/plus.mjs";
+import FolderPlus from "lucide-react-native/icons/folder-plus";
+import Plus from "lucide-react-native/icons/plus";
 import { useTranslation } from "react-i18next";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import CombinatorToggle from "@/components/smartPlaylist/CombinatorToggle";

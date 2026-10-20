@@ -61,10 +61,10 @@ index 0222bdc1bf39968fc4ecc43fa81c8fd0bd1326c5..95a499ab5b26602c6d201b6e6029e011
  /**
   * Executes a file download with optional progress reporting.
 diff --git a/android/src/main/java/expo/modules/filesystem/FileSystemDownloadTask.kt b/android/src/main/java/expo/modules/filesystem/FileSystemDownloadTask.kt
-index 44dd86d624d0065081dbae4073d0f1a272f643a0..1d533d217c18843ed20dc2d095f5db2500532f53 100644
+index bbf971218a9624c4f0c8619f3f245b7caa347bd3..e39cc8ef7610d61414ee4c2d85374bdc56fc5ded 100644
 --- a/android/src/main/java/expo/modules/filesystem/FileSystemDownloadTask.kt
 +++ b/android/src/main/java/expo/modules/filesystem/FileSystemDownloadTask.kt
-@@ -42,7 +42,13 @@ class DownloadTaskOptions : Record {
+@@ -43,7 +43,13 @@ class DownloadTaskOptions : Record {
   */
  class FileSystemDownloadTask : SharedObject() {
    companion object {
@@ -80,10 +80,10 @@ index 44dd86d624d0065081dbae4073d0f1a272f643a0..1d533d217c18843ed20dc2d095f5db25
        .readTimeout(60, TimeUnit.SECONDS)
        .writeTimeout(60, TimeUnit.SECONDS)
 diff --git a/android/src/main/java/expo/modules/filesystem/FileSystemUploadTask.kt b/android/src/main/java/expo/modules/filesystem/FileSystemUploadTask.kt
-index 90e9a68228ad2fa4327134374b772055b05c9ffa..192e2bfc50f75ba1bb12ef5242c54171828e26df 100644
+index b02bcddd78fb0d868f36de45b7c3f60058d7a031..0fca01e0b7ee2da621118f2991c37f7b5b856b88 100644
 --- a/android/src/main/java/expo/modules/filesystem/FileSystemUploadTask.kt
 +++ b/android/src/main/java/expo/modules/filesystem/FileSystemUploadTask.kt
-@@ -69,7 +69,13 @@ class UploadTaskResult : Record {
+@@ -70,7 +70,13 @@ class UploadTaskResult : Record {
   */
  class FileSystemUploadTask : SharedObject() {
    companion object {
@@ -99,7 +99,7 @@ index 90e9a68228ad2fa4327134374b772055b05c9ffa..192e2bfc50f75ba1bb12ef5242c54171
        .readTimeout(60, TimeUnit.SECONDS)
        .writeTimeout(60, TimeUnit.SECONDS)
 diff --git a/android/src/main/java/expo/modules/filesystem/legacy/FileSystemLegacyModule.kt b/android/src/main/java/expo/modules/filesystem/legacy/FileSystemLegacyModule.kt
-index 4626dac32067ec203788ae69de4b0f1d5b03eec0..5b00b6c3037de5cd901a10b39424e2e6f624d93d 100644
+index f6b7d934ad02ae611616a0a95bc8eaa3212f6cf6..443740baaaaa9092ee9287e4d74c5e0d842d2eed 100644
 --- a/android/src/main/java/expo/modules/filesystem/legacy/FileSystemLegacyModule.kt
 +++ b/android/src/main/java/expo/modules/filesystem/legacy/FileSystemLegacyModule.kt
 @@ -14,6 +14,7 @@ import android.util.Base64
@@ -110,7 +110,7 @@ index 4626dac32067ec203788ae69de4b0f1d5b03eec0..5b00b6c3037de5cd901a10b39424e2e6
  import expo.modules.core.errors.ModuleDestroyedException
  import expo.modules.kotlin.Promise
  import expo.modules.kotlin.exception.Exceptions
-@@ -992,7 +993,15 @@ open class FileSystemLegacyModule : Module() {
+@@ -1000,7 +1001,15 @@ open class FileSystemLegacyModule : Module() {
    private val okHttpClient: OkHttpClient?
      get() {
        if (client == null) {

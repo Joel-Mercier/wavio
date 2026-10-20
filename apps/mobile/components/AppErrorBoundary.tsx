@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import TriangleAlert from "lucide-react-native/dist/esm/icons/triangle-alert.mjs";
+import TriangleAlert from "lucide-react-native/icons/triangle-alert";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";

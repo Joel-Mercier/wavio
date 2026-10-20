@@ -1,6 +1,5 @@
-import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
-import MoveRight from "lucide-react-native/dist/esm/icons/move-right.mjs";
+import MoveRight from "lucide-react-native/icons/move-right";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -23,6 +22,7 @@ import Animated, {
 import { Uniwind } from "uniwind";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
+import { MaskedView } from "@/components/ui/masked-view";
 import { Text } from "@/components/ui/text";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useConnectionType } from "@/hooks/useIsOnline";

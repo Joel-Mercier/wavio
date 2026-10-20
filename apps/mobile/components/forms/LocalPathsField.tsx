@@ -1,7 +1,7 @@
 import { StorageAccessFramework } from "expo-file-system/legacy";
-import FolderIcon from "lucide-react-native/dist/esm/icons/folder.mjs";
-import FolderPlusIcon from "lucide-react-native/dist/esm/icons/folder-plus.mjs";
-import XIcon from "lucide-react-native/dist/esm/icons/x.mjs";
+import FolderIcon from "lucide-react-native/icons/folder";
+import FolderPlusIcon from "lucide-react-native/icons/folder-plus";
+import XIcon from "lucide-react-native/icons/x";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";

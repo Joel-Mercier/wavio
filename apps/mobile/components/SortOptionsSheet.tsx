@@ -1,7 +1,7 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import ArrowDown from "lucide-react-native/dist/esm/icons/arrow-down.mjs";
-import ArrowUp from "lucide-react-native/dist/esm/icons/arrow-up.mjs";
+import ArrowDown from "lucide-react-native/icons/arrow-down";
+import ArrowUp from "lucide-react-native/icons/arrow-up";
 import type { Ref } from "react";
 import { useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";

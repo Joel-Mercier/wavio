@@ -5,12 +5,12 @@ import {
 import { LegendList } from "@legendapp/list/react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import Check from "lucide-react-native/dist/esm/icons/check.mjs";
-import ListOrdered from "lucide-react-native/dist/esm/icons/list-ordered.mjs";
-import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
-import Timer from "lucide-react-native/dist/esm/icons/timer.mjs";
-import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
+import ArrowLeft from "lucide-react-native/icons/arrow-left";
+import Check from "lucide-react-native/icons/check";
+import ListOrdered from "lucide-react-native/icons/list-ordered";
+import ListPlus from "lucide-react-native/icons/list-plus";
+import Timer from "lucide-react-native/icons/timer";
+import Trash from "lucide-react-native/icons/trash";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -51,7 +51,7 @@ import { useSleepTimer } from "@/services/sleepTimer";
 import useApp from "@/stores/app";
 import usePlayHistory, { type PlayHistoryEntry } from "@/stores/playHistory";
 import useQueue, { manualLaneEnd, type QueueTrack } from "@/stores/queue";
-import { childToTrack } from "@/utils/childToTrack";
+import { childToTrack, trackToChild } from "@/utils/childToTrack";
 import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
 import { TOAST_DURATION } from "@/utils/toastDuration";
@@ -88,22 +88,7 @@ const historyEntryToChild = (entry: PlayHistoryEntry): Child =>
     coverArt: entry.coverArt,
     duration: entry.duration,
     contentType: entry.contentType,
-  }) as Child;
-
-const queueTrackToChild = (track: QueueTrack): Child =>
-  ({
-    id: track.id,
-    title: track.title,
-    artist: track.artist,
-    album: track.album,
-    artistId: track.artistId,
-    albumId: track.albumId,
-    coverArt: track.coverArt,
-    duration: track.duration,
-    starred: track.starred,
-    musicBrainzId: track.musicBrainzId,
-    genre: track.genre,
-    contentType: track.contentType,
+    replayGain: entry.replayGain,
   }) as Child;
 
 export default function QueueDetail() {
@@ -142,7 +127,7 @@ export default function QueueDetail() {
   const cancelSleepTimer = useSleepTimer((s) => s.cancel);
   const sleepActive = sleepEndsAt != null || sleepEndOfTrack;
 
-  const tracks = useMemo(() => queue.map(queueTrackToChild), [queue]);
+  const tracks = useMemo(() => queue.map(trackToChild), [queue]);
   // The rows already *are* the queue: jump to the tapped index rather than
   // replaying the list, which would rebuild (and under shuffle re-randomise)
   // the very order the user is looking at, and drop the "Playing from" source.

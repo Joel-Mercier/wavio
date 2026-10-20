@@ -60,8 +60,11 @@
           "android": {
             "usesCleartextTraffic": true,
             "minSdkVersion": 26,
-            "compileSdkVersion": 36,
-            "targetSdkVersion": 36
+            "compileSdkVersion": 37,
+            "targetSdkVersion": 36,
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "-keep class com.facebook.react.modules.network.OkHttpClientProvider { *; }"
           }
         }
       ],
@@ -95,7 +98,12 @@
         }
       ],
       "./plugins/withCastOptions",
-      "react-native-google-cast",
+      [
+        "react-native-google-cast",
+        {
+          "androidPlayServicesCastFrameworkVersion": "22.3.1"
+        }
+      ],
       "./plugins/withAndroidAuto",
       "./plugins/withWidgets",
       "./plugins/withShortcuts",
@@ -104,6 +112,7 @@
       "./plugins/withSslTrust",
       "./plugins/withInstallApkPermission",
       "./plugins/withProfileable",
+      "./plugins/withGradleTuning",
       [
         "@sentry/react-native/expo",
         {

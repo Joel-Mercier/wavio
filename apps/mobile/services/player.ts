@@ -6,6 +6,7 @@ import {
   setAudioModeAsync,
 } from "expo-audio";
 import { File } from "expo-file-system";
+import { Platform } from "react-native";
 import { queryClient } from "@/config/queryClient";
 import { setStarred } from "@/hooks/backend/useMediaAnnotation";
 import { isIndexBacked } from "@/services/backend/dispatch";
@@ -105,14 +106,18 @@ import {
 import useActivity from "@/stores/activity";
 import {
   clampPodcastPlaybackRate,
-  type MediaControlsLayout,
+  type MediaControlButton,
   useAppBase,
 } from "@/stores/app";
 import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
 import useOffline from "@/stores/offline";
 import usePlaybackNotice from "@/stores/playbackNotice";
 import usePlayHistory from "@/stores/playHistory";
-import useQueue, { type QueueSource, type QueueTrack } from "@/stores/queue";
+import useQueue, {
+  nextRepeatMode,
+  type QueueSource,
+  type QueueTrack,
+} from "@/stores/queue";
 import { resolveOfflineTrackArtwork } from "@/utils/artwork";
 import { computeReplayGainFactor } from "@/utils/replayGain";
 
@@ -956,22 +961,22 @@ function clearLockScreen(p: AudioPlayer) {
   lockScreenTrackId = null;
 }
 
-type MediaButton = Parameters<AudioPlayer["setMediaButtons"]>[0][number];
+type MediaButton = NonNullable<Parameters<AudioPlayer["setMediaButtons"]>[0]>;
 
-const MEDIA_CONTROLS_BUTTONS: Record<MediaControlsLayout, MediaButton[]> = {
-  seek: ["seekBackward", "seekForward"],
-  favoriteAndSeekForward: ["favorite", "seekForward"],
-  seekBackwardAndFavorite: ["seekBackward", "favorite"],
-  favorite: ["favorite"],
-  none: [],
-};
+const REPEAT_MEDIA_BUTTONS = {
+  off: "repeatOff",
+  all: "repeatAll",
+  one: "repeatOne",
+} as const;
 
 // The favorite the notification button asked for, shown until the star lands
 // in the queue so the heart flips on tap rather than after the round trip.
 let pendingFavorite: { id: string; starred: boolean } | null = null;
 let pushedMediaButtons: string | null = null;
 
-function canFavorite(track: QueueTrack | null): track is QueueTrack {
+// Favorite, shuffle and repeat are about a music queue; the player screen
+// doesn't offer them for radio or podcasts either.
+function isMusicTrack(track: QueueTrack | null): track is QueueTrack {
   return !!track && !track.isRadio && !isPodcastTrack(track);
 }
 
@@ -981,18 +986,33 @@ function isTrackFavorite(track: QueueTrack): boolean {
     : !!track.starred;
 }
 
+function nativeMediaButton(
+  button: MediaControlButton | null,
+  track: QueueTrack | null,
+): MediaButton | null {
+  if (button === "seekBackward" || button === "seekForward") return button;
+  if (!button || !isMusicTrack(track)) return null;
+  const queue = useQueue.getState();
+  switch (button) {
+    case "favorite":
+      return isTrackFavorite(track) ? "favoriteOn" : "favoriteOff";
+    case "shuffle":
+      return queue.shuffle ? "shuffleOn" : "shuffleOff";
+    case "repeat":
+      return REPEAT_MEDIA_BUTTONS[queue.repeatMode];
+  }
+}
+
 function syncMediaButtons() {
   const track = useQueue.getState().getCurrent();
-  const favoritable = canFavorite(track);
-  const buttons = MEDIA_CONTROLS_BUTTONS[
-    useAppBase.getState().mediaControlsLayout
-  ].filter((button) => favoritable || button !== "favorite");
-  const favorite = favoritable && isTrackFavorite(track);
-  const key = `${buttons.join(",")}|${favorite}`;
+  const { mediaControlsLeft, mediaControlsRight } = useAppBase.getState();
+  const left = nativeMediaButton(mediaControlsLeft, track);
+  const right = nativeMediaButton(mediaControlsRight, track);
+  const key = `${left}|${right}`;
   if (key === pushedMediaButtons) return;
   pushedMediaButtons = key;
   try {
-    player.setMediaButtons(buttons, favorite);
+    player.setMediaButtons(left, right);
   } catch (error) {
     logSwallowed("setMediaButtons", error);
   }
@@ -1000,7 +1020,7 @@ function syncMediaButtons() {
 
 async function toggleCurrentTrackFavorite() {
   const track = useQueue.getState().getCurrent();
-  if (!canFavorite(track) || pendingFavorite?.id === track.id) return;
+  if (!isMusicTrack(track) || pendingFavorite?.id === track.id) return;
   const starred = !track.starred;
   pendingFavorite = { id: track.id, starred };
   syncMediaButtons();
@@ -1604,13 +1624,28 @@ remoteListeners.push(
     void toggleCurrentTrackFavorite();
   }),
 );
+remoteListeners.push(
+  player.addListener("remoteShuffle", () => {
+    const queue = useQueue.getState();
+    queue.setShuffle(!queue.shuffle);
+  }),
+);
+remoteListeners.push(
+  player.addListener("remoteRepeat", () => {
+    const queue = useQueue.getState();
+    queue.setRepeatMode(nextRepeatMode(queue.repeatMode));
+  }),
+);
 statusListeners.push(
   player.addListener("playbackStatusUpdate", handlePlaybackStatus),
 );
 
 const appUnsub = useAppBase.subscribe((state, prev) => {
   const cur = useQueue.getState().getCurrent();
-  if (state.mediaControlsLayout !== prev.mediaControlsLayout) {
+  if (
+    state.mediaControlsLeft !== prev.mediaControlsLeft ||
+    state.mediaControlsRight !== prev.mediaControlsRight
+  ) {
     syncMediaButtons();
   }
   if (
@@ -1869,7 +1904,10 @@ export async function configurePlayback() {
   playbackConfigured ??= setAudioModeAsync({
     playsInSilentMode: true,
     shouldPlayInBackground: true,
-    interruptionMode: "doNotMix",
+    // Persistent focus on Android: a music player takes the output until the
+    // user moves elsewhere, rather than lending it to whatever played before.
+    interruptionMode:
+      Platform.OS === "android" ? "doNotMixPersistent" : "doNotMix",
   }).catch((e) => {
     playbackConfigured = null;
     throw e;

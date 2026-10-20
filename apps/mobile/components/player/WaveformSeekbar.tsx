@@ -1,4 +1,3 @@
-import MaskedView from "@react-native-masked-view/masked-view";
 import { memo, useMemo } from "react";
 import { View } from "react-native";
 import { GestureDetector } from "react-native-gesture-handler";
@@ -9,6 +8,7 @@ import Animated, {
 import Svg, { Path } from "react-native-svg";
 import { Uniwind } from "uniwind";
 import BufferingSweep from "@/components/player/BufferingSweep";
+import { MaskedView } from "@/components/ui/masked-view";
 import { Text } from "@/components/ui/text";
 import { usePlaybackProgress } from "@/hooks/player";
 import useScrubGesture from "@/hooks/useScrubGesture";

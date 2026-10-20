@@ -1,8 +1,8 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
-import Check from "lucide-react-native/dist/esm/icons/check.mjs";
-import Download from "lucide-react-native/dist/esm/icons/download.mjs";
-import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
+import Check from "lucide-react-native/icons/check";
+import Download from "lucide-react-native/icons/download";
+import ListMusic from "lucide-react-native/icons/list-music";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";

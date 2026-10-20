@@ -1,4 +1,4 @@
-import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
+import Heart from "lucide-react-native/icons/heart";
 import { type ComponentProps, memo, useCallback, useEffect } from "react";
 import Animated, {
   useAnimatedStyle,

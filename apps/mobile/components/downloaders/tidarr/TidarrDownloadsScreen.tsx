@@ -1,6 +1,6 @@
 import { Redirect } from "expo-router";
-import RotateCcw from "lucide-react-native/dist/esm/icons/rotate-ccw.mjs";
-import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
+import RotateCcw from "lucide-react-native/icons/rotate-ccw";
+import Trash from "lucide-react-native/icons/trash";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
 import { Uniwind } from "uniwind";

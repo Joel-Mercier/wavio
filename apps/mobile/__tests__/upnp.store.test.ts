@@ -82,3 +82,16 @@ describe("renderers played to before", () => {
     expect(seen.filter((s) => s.id === "r3")).toHaveLength(1);
   });
 });
+
+describe("the sonos group", () => {
+  it("is never persisted: the household can change while the app is away", () => {
+    useUpnpBase.getState().setGroup({
+      coordinatorId: "a",
+      members: [{ id: "a", name: "Kitchen", volume: 0.3 }],
+      candidates: [{ id: "b", name: "Bedroom" }],
+    });
+    const state = useUpnpBase.getState();
+    const persisted = useUpnpBase.persist.getOptions().partialize?.(state);
+    expect(persisted).not.toHaveProperty("group");
+  });
+});

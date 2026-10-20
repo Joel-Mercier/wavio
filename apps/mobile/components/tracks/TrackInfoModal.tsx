@@ -1,5 +1,5 @@
-import Check from "lucide-react-native/dist/esm/icons/check.mjs";
-import X from "lucide-react-native/dist/esm/icons/x.mjs";
+import Check from "lucide-react-native/icons/check";
+import X from "lucide-react-native/icons/x";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";

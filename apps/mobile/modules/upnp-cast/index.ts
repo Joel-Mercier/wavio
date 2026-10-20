@@ -10,6 +10,20 @@ export type UpnpDevice = {
   location: string;
   /** A guess from the device's name, used only to pick an icon. */
   isTV: boolean;
+  /** A Sonos speaker, which can be grouped with the other rooms of its household. */
+  isSonos?: boolean;
+};
+
+/**
+ * The Sonos group the connected speaker plays in. Sonos keeps the rooms in step
+ * itself; the app only ever drives the coordinator.
+ */
+export type UpnpGroup = {
+  coordinatorId: string;
+  /** Every room in the group, the connected one included. */
+  members: { id: string; name: string; volume: number | null }[];
+  /** The household's other rooms, which could join. */
+  candidates: { id: string; name: string }[];
 };
 
 /** What the renderer is told about the track, so it doesn't have to guess. */
@@ -125,9 +139,20 @@ type UpnpCastNativeModule = {
   seek(positionMs: number): Promise<boolean>;
   /** One poll now, outside the schedule. */
   pollNow(): Promise<void>;
-  /** 0..100, the range UPnP uses. */
+  /** 0..100, the range UPnP uses. On a Sonos, the whole group's, keeping its balance. */
   setVolume(volume: number): Promise<boolean>;
   getVolume(): Promise<number | null>;
+  /**
+   * The connected Sonos speaker's group, read fresh with each room's volume. Null
+   * for anything that is not a Sonos.
+   */
+  groupState(): Promise<UpnpGroup | null>;
+  /** Brings another room into the group; it picks up the music where it is. */
+  addToGroup(deviceId: string): Promise<boolean>;
+  /** Takes a room out, leaving the rest playing. Never the connected speaker. */
+  removeFromGroup(deviceId: string): Promise<boolean>;
+  /** One room's own volume, 0..100. */
+  setDeviceVolume(deviceId: string, volume: number): Promise<boolean>;
   disconnect(): Promise<boolean>;
   addListener(
     event: "device",

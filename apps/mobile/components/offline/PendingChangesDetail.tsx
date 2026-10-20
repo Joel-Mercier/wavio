@@ -1,9 +1,9 @@
 import { LegendList } from "@legendapp/list/react-native";
 import { type QueryClient, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import RefreshCw from "lucide-react-native/dist/esm/icons/refresh-cw.mjs";
-import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
+import ArrowLeft from "lucide-react-native/icons/arrow-left";
+import RefreshCw from "lucide-react-native/icons/refresh-cw";
+import Trash from "lucide-react-native/icons/trash";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

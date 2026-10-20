@@ -1,5 +1,5 @@
-import PlusIcon from "lucide-react-native/dist/esm/icons/plus.mjs";
-import XIcon from "lucide-react-native/dist/esm/icons/x.mjs";
+import PlusIcon from "lucide-react-native/icons/plus";
+import XIcon from "lucide-react-native/icons/x";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";

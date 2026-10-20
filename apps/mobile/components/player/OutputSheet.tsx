@@ -2,13 +2,20 @@ import {
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import Cast from "lucide-react-native/dist/esm/icons/cast.mjs";
-import Check from "lucide-react-native/dist/esm/icons/check.mjs";
-import RefreshCw from "lucide-react-native/dist/esm/icons/refresh-cw.mjs";
-import Smartphone from "lucide-react-native/dist/esm/icons/smartphone.mjs";
-import Speaker from "lucide-react-native/dist/esm/icons/speaker.mjs";
-import Tv from "lucide-react-native/dist/esm/icons/tv.mjs";
-import { type RefObject, useCallback, useEffect, useRef } from "react";
+import Cast from "lucide-react-native/icons/cast";
+import Check from "lucide-react-native/icons/check";
+import RefreshCw from "lucide-react-native/icons/refresh-cw";
+import Smartphone from "lucide-react-native/icons/smartphone";
+import Speaker from "lucide-react-native/icons/speaker";
+import Tv from "lucide-react-native/icons/tv";
+import {
+  type ReactNode,
+  type RefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
 import CastContext from "react-native-google-cast";
@@ -17,6 +24,11 @@ import BottomSheetModalComponent from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import GestureSlider from "@/components/GestureSlider";
 import { Box } from "@/components/ui/box";
+import {
+  Checkbox,
+  CheckboxIcon,
+  CheckboxIndicator,
+} from "@/components/ui/checkbox";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
@@ -45,9 +57,15 @@ import {
   play as playLocal,
 } from "@/services/player";
 import {
+  upnpAddToGroup,
+  upnpCommitDeviceVolume,
+  upnpCommitVolume,
   upnpConnect,
   upnpDisconnect,
+  upnpRefreshGroup,
+  upnpRemoveFromGroup,
   upnpSearch,
+  upnpSetDeviceVolume,
   upnpSetVolume,
   upnpStartDiscovery,
   upnpStopDiscovery,
@@ -113,12 +131,37 @@ export default function OutputSheet() {
   const upnpDevices = useUpnp((s) => s.devices);
   const upnpScanning = useUpnp((s) => s.scanning);
   const upnpVolume = useUpnp((s) => s.volume);
+  const upnpGroup = useUpnp((s) => s.group);
+  const [pendingRooms, setPendingRooms] = useState<string[]>([]);
 
   // Casting of any kind needs a URL the receiver can fetch for itself, which the
   // on-device library has no way to produce.
   const canCast = capabilities.remoteStreamableUrl;
   const showUpnp = canCast && isUpnpAvailable();
   const playingLocally = !jukeboxActive && !upnpConnected && !casting;
+
+  // The connected Sonos speaker's household: the other rooms of its group, ticked,
+  // and the rest, which could join. Listed here rather than as outputs of their
+  // own, since tapping one there would move the music instead of adding a room.
+  const sonosRooms = upnpGroup
+    ? [
+        ...upnpGroup.members
+          .filter((member) => member.id !== upnpDeviceId)
+          .map((member) => ({
+            id: member.id,
+            name: member.name,
+            grouped: true,
+          })),
+        ...upnpGroup.candidates.map((candidate) => ({
+          ...candidate,
+          grouped: false,
+        })),
+      ].sort((a, b) => a.name.localeCompare(b.name))
+    : [];
+  const listedUpnpDevices = upnpDevices.filter(
+    (device) => !sonosRooms.some((room) => room.id === device.id),
+  );
+  const upnpGrouped = (upnpGroup?.members.length ?? 0) > 1;
 
   useEffect(() => {
     mountedSheetRef = sheetRef;
@@ -201,6 +244,22 @@ export default function OutputSheet() {
     sheetRef.current?.dismiss();
   };
 
+  const toggleSonosRoom = async (room: {
+    id: string;
+    name: string;
+    grouped: boolean;
+  }) => {
+    if (pendingRooms.includes(room.id)) return;
+    setPendingRooms((ids) => [...ids, room.id]);
+    const changed = room.grouped
+      ? await upnpRemoveFromGroup(room.id)
+      : await upnpAddToGroup(room.id);
+    setPendingRooms((ids) => ids.filter((id) => id !== room.id));
+    if (!changed) {
+      showError(t("app.player.outputGroupErrorMessage", { name: room.name }));
+    }
+  };
+
   const openChromecastPicker = async () => {
     // Without Google Play services (or on a TV) the Cast SDK never comes up,
     // and the picker would be a dead tap; say so instead.
@@ -228,6 +287,7 @@ export default function OutputSheet() {
         if (showUpnp) upnpStopDiscovery();
         return;
       }
+      if (useUpnp.getState().connected) void upnpRefreshGroup();
       // Ping the server for live jukebox state rather than relying on stale
       // cached status. When a session is active, also pull the playlist so
       // another device's changes are reflected.
@@ -248,6 +308,7 @@ export default function OutputSheet() {
     selected: boolean,
     onPress: () => void,
     subtitle?: string,
+    trailing?: ReactNode,
   ) => (
     <FadeOutScaleDown key={key} onPress={onPress}>
       <HStack className="items-center justify-between">
@@ -268,7 +329,7 @@ export default function OutputSheet() {
             )}
           </VStack>
         </HStack>
-        {selected && <Check size={20} color={emerald500} />}
+        {trailing ?? (selected && <Check size={20} color={emerald500} />)}
       </HStack>
     </FadeOutScaleDown>
   );
@@ -335,14 +396,14 @@ export default function OutputSheet() {
                     </FadeOutScaleDown>
                   )}
                 </HStack>
-                {upnpDevices.length === 0 ? (
+                {listedUpnpDevices.length === 0 ? (
                   <Text className="text-sm text-primary-100">
                     {upnpScanning
                       ? t("app.player.outputScanning")
                       : t("app.player.outputNoDevices")}
                   </Text>
                 ) : (
-                  upnpDevices.map((device) =>
+                  listedUpnpDevices.map((device) =>
                     outputRow(
                       device.id,
                       device.isTV ? (
@@ -365,6 +426,44 @@ export default function OutputSheet() {
                       () => selectUpnpDevice(device),
                     ),
                   )
+                )}
+                {sonosRooms.length > 0 && (
+                  <Text className="text-sm text-primary-100 mt-2">
+                    {t("app.player.outputAddRooms")}
+                  </Text>
+                )}
+                {sonosRooms.map((room) =>
+                  outputRow(
+                    room.id,
+                    <Speaker
+                      size={20}
+                      color={room.grouped ? emerald500 : gray200}
+                    />,
+                    room.name,
+                    room.grouped,
+                    () => toggleSonosRoom(room),
+                    undefined,
+                    pendingRooms.includes(room.id) ? (
+                      <ActivityIndicator size="small" color={gray200} />
+                    ) : (
+                      <Checkbox
+                        value={room.id}
+                        isChecked={room.grouped}
+                        onChange={() => toggleSonosRoom(room)}
+                        size="lg"
+                        isInvalid={false}
+                        isDisabled={false}
+                        defaultIsChecked={false}
+                      >
+                        <CheckboxIndicator className="rounded-full border-2 border-primary-100 data-[checked=true]:bg-emerald-500 data-[checked=true]:border-emerald-500">
+                          <CheckboxIcon
+                            as={Check}
+                            className="text-primary-800"
+                          />
+                        </CheckboxIndicator>
+                      </Checkbox>
+                    ),
+                  ),
                 )}
               </>
             )}
@@ -410,13 +509,38 @@ export default function OutputSheet() {
             {upnpConnected && (
               <VStack className="gap-y-2">
                 <Text className="text-sm text-primary-100">
-                  {t("app.player.jukeboxGain")}
+                  {upnpGrouped
+                    ? t("app.player.outputGroupVolume")
+                    : t("app.player.jukeboxGain")}
                 </Text>
                 <GestureSlider
                   value={upnpVolume}
                   onScrub={upnpSetVolume}
-                  onComplete={upnpSetVolume}
+                  onComplete={upnpCommitVolume}
                 />
+                {upnpGrouped &&
+                  upnpGroup?.members.map(
+                    (member) =>
+                      member.volume != null && (
+                        <VStack key={member.id} className="gap-y-2 mt-2">
+                          <Text
+                            className="text-sm text-primary-100"
+                            numberOfLines={1}
+                          >
+                            {member.name}
+                          </Text>
+                          <GestureSlider
+                            value={member.volume}
+                            onScrub={(volume) =>
+                              upnpSetDeviceVolume(member.id, volume)
+                            }
+                            onComplete={(volume) =>
+                              upnpCommitDeviceVolume(member.id, volume)
+                            }
+                          />
+                        </VStack>
+                      ),
+                  )}
               </VStack>
             )}
 

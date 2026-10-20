@@ -1,4 +1,4 @@
-import X from "lucide-react-native/dist/esm/icons/x.mjs";
+import X from "lucide-react-native/icons/x";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

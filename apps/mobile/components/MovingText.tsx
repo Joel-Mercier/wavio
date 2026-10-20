@@ -1,4 +1,3 @@
-import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   Children,
@@ -18,6 +17,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
+import { MaskedView } from "@/components/ui/masked-view";
 
 const FADE_DURATION = 220;
 

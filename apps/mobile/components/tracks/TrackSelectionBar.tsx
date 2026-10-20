@@ -1,10 +1,9 @@
-import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { usePathname, useRouter } from "expo-router";
-import PlusCircle from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
-import ListPlus from "lucide-react-native/dist/esm/icons/list-plus.mjs";
-import ListStart from "lucide-react-native/dist/esm/icons/list-start.mjs";
-import X from "lucide-react-native/dist/esm/icons/x.mjs";
+import PlusCircle from "lucide-react-native/icons/circle-plus";
+import ListPlus from "lucide-react-native/icons/list-plus";
+import ListStart from "lucide-react-native/icons/list-start";
+import X from "lucide-react-native/icons/x";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -18,6 +17,7 @@ import {
 import { OFFLINE_BANNER_HEIGHT } from "@/components/OfflineBanner";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
+import { MaskedView } from "@/components/ui/masked-view";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { Text } from "@/components/ui/text";
 import {

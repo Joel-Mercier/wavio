@@ -1,5 +1,5 @@
-import Info from "lucide-react-native/dist/esm/icons/info.mjs";
-import TriangleAlert from "lucide-react-native/dist/esm/icons/triangle-alert.mjs";
+import Info from "lucide-react-native/icons/info";
+import TriangleAlert from "lucide-react-native/icons/triangle-alert";
 import { Uniwind } from "uniwind";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";

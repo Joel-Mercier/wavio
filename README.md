@@ -139,9 +139,9 @@ A single `bun install` at the repo root installs both. Most scripts are exposed 
 
 ### Prerequisites
 
-- **Node v22+** and **[bun](https://bun.sh/)** (the repo pins a version in `.bun-version`)
-- **JDK 17** (17 is what React Native 0.86 pins source/target compatibility to; a newer JDK generally works too, JDK 11 or older does not)
-- **Android SDK** with platform 36 and the build tools, usually via Android Studio, with `ANDROID_HOME` (or `ANDROID_SDK_ROOT`) exported and `platform-tools` on your `PATH`
+- **Node v26.12.0** (pinned in `.nvmrc`; with [nvm](https://github.com/nvm-sh/nvm), run `nvm install` then `nvm use` at the repo root) and **[bun](https://bun.sh/)** (the repo pins a version in `.bun-version`)
+- **JDK 17** (17 is what React Native 0.88 pins source/target compatibility to; a newer JDK generally works too, JDK 11 or older does not)
+- **Android SDK** with platform 37 and the build tools, usually via Android Studio, with `ANDROID_HOME` (or `ANDROID_SDK_ROOT`) exported and `platform-tools` on your `PATH`
 - An Android device with USB debugging on, or an emulator
 
 You do **not** need an NDK or CMake: the only C++ in the repo (TagLib, in `apps/mobile/modules/audio-tagger`) ships as prebuilt `.so` files committed under `jniLibs/`, and Gradle only packages them.
@@ -248,6 +248,8 @@ The landing page is a static [Astro](https://astro.build/) site (Tailwind v4, `e
 4. Preview the built site with `bun run landing:preview`
 
 For Astro CLI commands, run them inside the workspace: `cd apps/landing && bun run astro ...`.
+
+The site is deployed on Vercel, which doesn't offer Node 26 yet, so `apps/landing/package.json` declares `engines.node: "24.x"` instead of the repo-wide 26.12.0 pin. It builds fine on either version locally.
 
 ### E2E tests
 

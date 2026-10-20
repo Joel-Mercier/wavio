@@ -65,6 +65,12 @@ describe("activity store — recordPlay", () => {
     expect(e.playedAt).toBeGreaterThan(0);
   });
 
+  it("keeps the replay gain so replaying from Activity stays normalized", () => {
+    const replayGain = { trackGain: -10.38, trackPeak: 0.98 };
+    get().recordPlay(track("t1", { replayGain }), albumSource);
+    expect(get().activity[0].replayGain).toEqual(replayGain);
+  });
+
   it("treats non-groupable sources as generic (source = null)", () => {
     get().recordPlay(track("t1"), { type: "likedSongs", name: "Liked" });
     get().recordPlay(track("t2"), { type: "folder", name: "F", id: "f1" });

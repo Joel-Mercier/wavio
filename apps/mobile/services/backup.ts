@@ -168,7 +168,7 @@ export async function exportBackup(): Promise<void> {
   const file = new File(Paths.cache, fileName);
   if (file.exists) file.delete();
   file.create();
-  file.write(JSON.stringify(backup, null, 2));
+  file.writeSync(JSON.stringify(backup, null, 2));
 
   await Share.open({
     title: fileName,

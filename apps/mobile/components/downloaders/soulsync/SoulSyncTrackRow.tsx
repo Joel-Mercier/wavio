@@ -1,6 +1,6 @@
-import CircleCheck from "lucide-react-native/dist/esm/icons/circle-check.mjs";
-import CircleX from "lucide-react-native/dist/esm/icons/circle-x.mjs";
-import Download from "lucide-react-native/dist/esm/icons/download.mjs";
+import CircleCheck from "lucide-react-native/icons/circle-check";
+import CircleX from "lucide-react-native/icons/circle-x";
+import Download from "lucide-react-native/icons/download";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

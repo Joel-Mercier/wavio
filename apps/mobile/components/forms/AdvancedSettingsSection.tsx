@@ -1,5 +1,5 @@
-import ChevronDown from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
-import ChevronUp from "lucide-react-native/dist/esm/icons/chevron-up.mjs";
+import ChevronDown from "lucide-react-native/icons/chevron-down";
+import ChevronUp from "lucide-react-native/icons/chevron-up";
 import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

@@ -9,6 +9,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -193,6 +195,9 @@ class UpnpCastModule : Module() {
           return@launch
         }
         sessionEpoch = target.connect()
+        // A grouped Sonos speaker plays whatever its group plays, so playing to it
+        // means playing to the group — through its coordinator, from the start.
+        if (target.description.isSonos) target.followCoordinator()
         session = target
         startPolling()
         promise.resolve(true)
@@ -257,13 +262,102 @@ class UpnpCastModule : Module() {
       }
     }
 
-    /** 0..100. */
+    /** 0..100. A Sonos group's as a whole, keeping its rooms' balance. */
     AsyncFunction("setVolume") { volume: Int, promise: Promise ->
-      scope.launch { promise.resolve(session?.setVolume(volume) ?: false) }
+      scope.launch { promise.resolve(session?.setOutputVolume(volume) ?: false) }
     }
 
     AsyncFunction("getVolume") { promise: Promise ->
-      scope.launch { promise.resolve(session?.volume()) }
+      scope.launch { promise.resolve(session?.outputVolume()) }
+    }
+
+    /**
+     * The Sonos group the connected speaker plays in, and the other rooms of its
+     * household that could join it. Null for anything that is not a Sonos.
+     *
+     * Asked fresh, and each member's volume with it: this is read when someone is
+     * about to change the group, never on a schedule.
+     */
+    AsyncFunction("groupState") { promise: Promise ->
+      val current = session
+      if (current == null || !current.description.isSonos) {
+        promise.resolve(null)
+        return@AsyncFunction
+      }
+      scope.launch {
+        val topology = SonosTopology.read(current.description, fresh = true)
+        val group = topology?.groupOf(current.deviceId)
+        if (topology == null || group == null) {
+          promise.resolve(null)
+          return@launch
+        }
+        val members = group.visibleMembers.map { member ->
+          async {
+            mapOf(
+              "id" to member.uuid,
+              "name" to (member.zoneName ?: member.uuid),
+              "volume" to sonosRoom(member.uuid)?.volume()
+            )
+          }
+        }.awaitAll()
+        val candidates = topology.groups.filter { it !== group }.flatMap { it.visibleMembers }.map {
+          mapOf("id" to it.uuid, "name" to (it.zoneName ?: it.uuid))
+        }
+        promise.resolve(
+          mapOf("coordinatorId" to group.coordinator, "members" to members, "candidates" to candidates)
+        )
+      }
+    }
+
+    /**
+     * Brings another room of the household into the connected speaker's group. Sonos
+     * keeps it in step from there; nothing is reloaded and the music does not stop.
+     */
+    AsyncFunction("addToGroup") { deviceId: String, promise: Promise ->
+      val current = session
+      if (current == null || deviceId == current.deviceId) {
+        promise.resolve(false)
+        return@AsyncFunction
+      }
+      scope.launch {
+        val coordinator = SonosTopology.read(current.description, fresh = true)
+          ?.groupOf(current.deviceId)?.coordinator
+        val room = sonosRoom(deviceId)
+        val ok = coordinator != null && room != null && room.joinGroup(coordinator)
+        afterGroupChange(current)
+        promise.resolve(ok)
+      }
+    }
+
+    /**
+     * Takes a room out of the group, leaving the rest playing. Never the connected
+     * speaker itself: that is the output, and leaving it is a disconnect.
+     */
+    AsyncFunction("removeFromGroup") { deviceId: String, promise: Promise ->
+      val current = session
+      if (current == null || deviceId == current.deviceId) {
+        promise.resolve(false)
+        return@AsyncFunction
+      }
+      scope.launch {
+        val ok = sonosRoom(deviceId)?.leaveGroup() ?: false
+        afterGroupChange(current)
+        promise.resolve(ok)
+      }
+    }
+
+    /** One room's own volume, 0..100, leaving the rest of its group where they are. */
+    AsyncFunction("setDeviceVolume") { deviceId: String, volume: Int, promise: Promise ->
+      val current = session
+      if (current == null) {
+        promise.resolve(false)
+        return@AsyncFunction
+      }
+      scope.launch {
+        val ok = sonosRoom(deviceId)?.setVolume(volume) ?: false
+        current.groupChanged()
+        promise.resolve(ok)
+      }
     }
 
     AsyncFunction("disconnect") { promise: Promise ->
@@ -291,11 +385,40 @@ class UpnpCastModule : Module() {
       val description = DeviceDescription.parse(xml, location) ?: return null
       if (!description.isRenderer) return null
       val id = description.udn ?: address
+      // The hidden half of a stereo pair answers a search like any speaker, under
+      // the same room name; offered, it is a duplicate row that plays half the music.
+      if (SonosTopology.read(description)?.member(id)?.invisible == true) return null
       known[id] = RendererSession(id, address, location, description)
       return deviceMap(id, address, location, description)
     } finally {
       describing.remove(location)
     }
+  }
+
+  /**
+   * A room of the connected speaker's household, as a session to send it commands
+   * through. Found by search like any device, or learnt from where the household
+   * says it is: a room can be in a group without ever having answered this phone.
+   */
+  private suspend fun sonosRoom(deviceId: String): RendererSession? {
+    known[deviceId]?.let { return it }
+    val anchor = session ?: return null
+    val member = SonosTopology.read(anchor.description)?.member(deviceId) ?: return null
+    val description = Soap.fetch(member.location)?.let { DeviceDescription.parse(it, member.location) }
+    if (description == null || description.udn != deviceId || !description.isRenderer) return null
+    return RendererSession(deviceId, URL(member.location).host, member.location, description)
+      .also { known[deviceId] = it }
+  }
+
+  /**
+   * After a room joins or leaves, the household has changed under every cached
+   * answer — and when the room that left was the coordinator, the music went with
+   * whoever took over, so the session goes there too.
+   */
+  private suspend fun afterGroupChange(current: RendererSession) {
+    SonosTopology.invalidate()
+    current.groupChanged()
+    current.followCoordinator()
   }
 
   private fun startPolling() {
@@ -307,6 +430,13 @@ class UpnpCastModule : Module() {
         val current = session ?: break
         val state = current.state()
         val now = System.currentTimeMillis()
+        if (state?.regrouped == true) {
+          // Taken over from the Sonos app. Dropped before the app hears of it, so
+          // the disconnect that follows does not stop another group's music.
+          session = null
+          sendEvent("lost", mapOf("deviceId" to current.deviceId))
+          break
+        }
         if (state != null) {
           silentSince = 0L
           sendEvent("state", stateMap(state))
@@ -341,10 +471,11 @@ class UpnpCastModule : Module() {
     description: DeviceDescription
   ): Map<String, Any> = mapOf(
     "id" to id,
-    "name" to (description.friendlyName?.takeIf { it.isNotEmpty() } ?: address),
+    "name" to (description.displayName ?: address),
     "address" to address,
     "location" to location,
-    "isTV" to description.isTv
+    "isTV" to description.isTv,
+    "isSonos" to description.isSonos
   )
 
   private fun stateMap(state: RendererSession.State): Map<String, Any> = mapOf(

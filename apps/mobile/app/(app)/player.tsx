@@ -1,16 +1,16 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { LinearGradient } from "expo-linear-gradient";
 import { type Href, useIsFocused, useRouter } from "expo-router";
-import AudioLines from "lucide-react-native/dist/esm/icons/audio-lines.mjs";
-import Captions from "lucide-react-native/dist/esm/icons/captions.mjs";
-import Cast from "lucide-react-native/dist/esm/icons/cast.mjs";
-import ChevronDown from "lucide-react-native/dist/esm/icons/chevron-down.mjs";
-import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
-import ListMusic from "lucide-react-native/dist/esm/icons/list-music.mjs";
-import Mic2 from "lucide-react-native/dist/esm/icons/mic-vocal.mjs";
-import RadioIcon from "lucide-react-native/dist/esm/icons/radio.mjs";
-import SkipBack from "lucide-react-native/dist/esm/icons/skip-back.mjs";
-import SkipForward from "lucide-react-native/dist/esm/icons/skip-forward.mjs";
+import AudioLines from "lucide-react-native/icons/audio-lines";
+import Captions from "lucide-react-native/icons/captions";
+import Cast from "lucide-react-native/icons/cast";
+import ChevronDown from "lucide-react-native/icons/chevron-down";
+import EllipsisVertical from "lucide-react-native/icons/ellipsis-vertical";
+import ListMusic from "lucide-react-native/icons/list-music";
+import Mic2 from "lucide-react-native/icons/mic-vocal";
+import RadioIcon from "lucide-react-native/icons/radio";
+import SkipBack from "lucide-react-native/icons/skip-back";
+import SkipForward from "lucide-react-native/icons/skip-forward";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { StyleSheet } from "react-native";
@@ -78,7 +78,7 @@ import useApp from "@/stores/app";
 import useCast from "@/stores/cast";
 import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
-import useQueue, { type QueueTrack } from "@/stores/queue";
+import useQueue, { nextRepeatMode, type QueueTrack } from "@/stores/queue";
 import useUpnp from "@/stores/upnp";
 import { formatAudioQuality } from "@/utils/audioQuality";
 import { HEADER_TINT_COLOR } from "@/utils/headerGradient";
@@ -881,13 +881,7 @@ export default function PlayerScreen() {
                     mode={repeatMode}
                     hitSlop={ICON_HIT_SLOP}
                     onPress={() =>
-                      handleRepeatModePress(
-                        repeatMode === "off"
-                          ? "all"
-                          : repeatMode === "all"
-                            ? "one"
-                            : "off",
-                      )
+                      handleRepeatModePress(nextRepeatMode(repeatMode))
                     }
                   />
                 )}

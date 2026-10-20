@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { createDynamicScopedStorage } from "@/config/storage";
+import type { Child } from "@/services/openSubsonic/types";
 import { currentAuthScope } from "@/stores/auth";
 import type { QueueTrack } from "@/stores/queue";
 import createSelectors from "@/utils/createSelectors";
@@ -17,6 +18,7 @@ export type PlayHistoryEntry = {
   coverArt?: string;
   duration?: number;
   contentType?: string;
+  replayGain?: Child["replayGain"];
   playedAt: number;
   // Last time the server confirmed this id still exists. Absent until the first
   // reconcile pass reaches it. See services/playHistory/reconcile.ts.
@@ -55,6 +57,7 @@ const usePlayHistoryBase = create<PlayHistoryStore>()(
               coverArt: track.coverArt,
               duration: track.duration,
               contentType: track.contentType,
+              replayGain: track.replayGain,
               playedAt: Date.now(),
               // A replay is proof the id still resolves, but the stream may have
               // come from disk while offline — so carry the old value rather

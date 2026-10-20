@@ -1,5 +1,5 @@
-import LayoutGrid from "lucide-react-native/dist/esm/icons/layout-grid.mjs";
-import List from "lucide-react-native/dist/esm/icons/list.mjs";
+import LayoutGrid from "lucide-react-native/icons/layout-grid";
+import List from "lucide-react-native/icons/list";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import type { AlbumScreenLayout } from "@/stores/app";

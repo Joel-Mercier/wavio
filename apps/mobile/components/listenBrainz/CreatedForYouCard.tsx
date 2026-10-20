@@ -1,6 +1,6 @@
-import CalendarDays from "lucide-react-native/dist/esm/icons/calendar-days.mjs";
-import Compass from "lucide-react-native/dist/esm/icons/compass.mjs";
-import Sun from "lucide-react-native/dist/esm/icons/sun.mjs";
+import CalendarDays from "lucide-react-native/icons/calendar-days";
+import Compass from "lucide-react-native/icons/compass";
+import Sun from "lucide-react-native/icons/sun";
 import type { ComponentType } from "react";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";

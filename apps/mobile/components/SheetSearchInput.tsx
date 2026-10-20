@@ -1,6 +1,6 @@
 import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
 import { useForm, useSelector } from "@tanstack/react-form";
-import X from "lucide-react-native/dist/esm/icons/x.mjs";
+import X from "lucide-react-native/icons/x";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

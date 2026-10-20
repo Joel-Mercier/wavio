@@ -30,7 +30,7 @@ const deviceReader = (path: string): ByteReader => {
   return {
     read(offset: number, length: number): Promise<Uint8Array> {
       handle.offset = offset;
-      return Promise.resolve(handle.readBytes(length));
+      return Promise.resolve(handle.readBytesSync(length));
     },
     close() {
       handle.close();

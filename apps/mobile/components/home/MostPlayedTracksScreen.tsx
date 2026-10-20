@@ -1,7 +1,7 @@
 import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
+import ArrowLeft from "lucide-react-native/icons/arrow-left";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import Animated, {

@@ -181,7 +181,7 @@ export async function mirrorFolderImage(
     const handle = temp.open(FileMode.ReadOnly);
     let head: Uint8Array;
     try {
-      head = handle.readBytes(4);
+      head = handle.readBytesSync(4);
     } finally {
       handle.close();
     }

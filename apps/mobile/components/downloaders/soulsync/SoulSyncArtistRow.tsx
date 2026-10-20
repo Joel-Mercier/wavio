@@ -1,5 +1,5 @@
-import Eye from "lucide-react-native/dist/esm/icons/eye.mjs";
-import EyeOff from "lucide-react-native/dist/esm/icons/eye-off.mjs";
+import Eye from "lucide-react-native/icons/eye";
+import EyeOff from "lucide-react-native/icons/eye-off";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

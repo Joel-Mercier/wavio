@@ -3,9 +3,9 @@ import {
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
-import CircleMinus from "lucide-react-native/dist/esm/icons/circle-minus.mjs";
-import CirclePlus from "lucide-react-native/dist/esm/icons/circle-plus.mjs";
-import Podcast from "lucide-react-native/dist/esm/icons/mic-signal.mjs";
+import CircleMinus from "lucide-react-native/icons/circle-minus";
+import CirclePlus from "lucide-react-native/icons/circle-plus";
+import Podcast from "lucide-react-native/icons/mic-signal";
 import {
   createContext,
   type ReactNode,

@@ -1,9 +1,9 @@
 import { LegendList } from "@legendapp/list/react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import ArrowLeft from "lucide-react-native/dist/esm/icons/arrow-left.mjs";
-import ChevronRight from "lucide-react-native/dist/esm/icons/chevron-right.mjs";
-import Folder from "lucide-react-native/dist/esm/icons/folder.mjs";
-import Play from "lucide-react-native/dist/esm/icons/play.mjs";
+import ArrowLeft from "lucide-react-native/icons/arrow-left";
+import ChevronRight from "lucide-react-native/icons/chevron-right";
+import Folder from "lucide-react-native/icons/folder";
+import Play from "lucide-react-native/icons/play";
 import { useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";

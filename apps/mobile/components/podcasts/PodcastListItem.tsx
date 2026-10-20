@@ -1,9 +1,9 @@
 import { fromUnixTime } from "date-fns/fromUnixTime";
 import { secondsToMinutes } from "date-fns/secondsToMinutes";
 import { File, Paths } from "expo-file-system";
-import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
-import Podcast from "lucide-react-native/dist/esm/icons/mic-signal.mjs";
-import Share2 from "lucide-react-native/dist/esm/icons/share-2.mjs";
+import EllipsisVertical from "lucide-react-native/icons/ellipsis-vertical";
+import Podcast from "lucide-react-native/icons/mic-signal";
+import Share2 from "lucide-react-native/icons/share-2";
 import { useTranslation } from "react-i18next";
 import Share from "react-native-share";
 import { Uniwind } from "uniwind";

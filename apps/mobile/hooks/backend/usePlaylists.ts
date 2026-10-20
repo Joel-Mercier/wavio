@@ -10,6 +10,7 @@ import { forgetDeletedPlaylist } from "@/services/forgetPlaylist";
 import { getIsEffectivelyOnline } from "@/services/network";
 import { isNotFoundError } from "@/services/notFound";
 import { librarySyncService } from "@/services/offline";
+import { adoptDownloadedPlaylists } from "@/services/offline/collectionAdoption";
 import { enqueueOfflineMutation } from "@/services/offlineMutations/enqueue";
 import type { PlaylistWithSongs } from "@/services/openSubsonic/types";
 import type { OfflineAction } from "@/stores/offlineMutations";
@@ -23,11 +24,11 @@ export const usePlaylists = (
     queryKey: ["playlists", params],
     queryFn: async () => {
       const response = await getPlaylists(params);
+      const playlists = response?.playlists?.playlist ?? [];
       usePlaylistsStore
         .getState()
-        .reconcileDeletedPlaylists(
-          (response?.playlists?.playlist ?? []).map((playlist) => playlist.id),
-        );
+        .reconcileDeletedPlaylists(playlists.map((playlist) => playlist.id));
+      void adoptDownloadedPlaylists(playlists);
       return response;
     },
     enabled: options?.enabled,

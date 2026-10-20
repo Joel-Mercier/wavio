@@ -38,17 +38,29 @@ export type TrackCacheCount = (typeof TRACK_CACHE_COUNTS)[number];
 export const TRACK_CACHE_BUDGETS_MB = [250, 500, 1000, 2000] as const;
 export type TrackCacheBudgetMb = (typeof TRACK_CACHE_BUDGETS_MB)[number];
 
-// The optional buttons of the Android media notification, beside previous /
-// play / next. The system only has room for two, so a favorite button always
-// costs one of the 10-second skips.
-export const MEDIA_CONTROLS_LAYOUTS = [
-  "seek",
-  "favoriteAndSeekForward",
-  "seekBackwardAndFavorite",
+// The optional buttons of the Android media notification. The system has room
+// for one on each side of previous / play / next.
+export const MEDIA_CONTROL_BUTTONS = [
+  "seekBackward",
+  "seekForward",
   "favorite",
-  "none",
+  "shuffle",
+  "repeat",
 ] as const;
-export type MediaControlsLayout = (typeof MEDIA_CONTROLS_LAYOUTS)[number];
+export type MediaControlButton = (typeof MEDIA_CONTROL_BUTTONS)[number];
+export type MediaControlSide = "left" | "right";
+
+// The single-setting layouts persisted before v3.
+const LEGACY_MEDIA_CONTROLS_LAYOUTS: Record<
+  string,
+  [MediaControlButton | null, MediaControlButton | null]
+> = {
+  seek: ["seekBackward", "seekForward"],
+  favoriteAndSeekForward: ["favorite", "seekForward"],
+  seekBackwardAndFavorite: ["seekBackward", "favorite"],
+  favorite: ["favorite", null],
+  none: [null, null],
+};
 
 // Genre tag rows shown on the internet radio stations home screen, used when
 // the user hasn't customized them.
@@ -260,8 +272,12 @@ interface AppStore {
   setShowPlayerAudioQuality: (enabled: boolean) => void;
   showPlayerRating: boolean;
   setShowPlayerRating: (enabled: boolean) => void;
-  mediaControlsLayout: MediaControlsLayout;
-  setMediaControlsLayout: (mediaControlsLayout: MediaControlsLayout) => void;
+  mediaControlsLeft: MediaControlButton | null;
+  mediaControlsRight: MediaControlButton | null;
+  setMediaControlButton: (
+    side: MediaControlSide,
+    button: MediaControlButton | null,
+  ) => void;
   // See services/playQueueSync.ts.
   queueSyncPriority: "server" | "local" | "off";
   setQueueSyncPriority: (priority: "server" | "local" | "off") => void;
@@ -504,9 +520,21 @@ export const useAppBase = create<AppStore>()(
       setShowPlayerRating: (showPlayerRating: boolean) => {
         set({ showPlayerRating });
       },
-      mediaControlsLayout: "seek",
-      setMediaControlsLayout: (mediaControlsLayout: MediaControlsLayout) => {
-        set({ mediaControlsLayout });
+      mediaControlsLeft: "seekBackward",
+      mediaControlsRight: "seekForward",
+      // A button can't sit on both sides: picking the other side's swaps them.
+      setMediaControlButton: (side, button) => {
+        set((state) => {
+          const left = side === "left" ? button : state.mediaControlsLeft;
+          const right = side === "right" ? button : state.mediaControlsRight;
+          if (button === null || left !== right) {
+            return { mediaControlsLeft: left, mediaControlsRight: right };
+          }
+          return {
+            mediaControlsLeft: state.mediaControlsRight,
+            mediaControlsRight: state.mediaControlsLeft,
+          };
+        });
       },
       queueSyncPriority: "off",
       setQueueSyncPriority: (queueSyncPriority: "server" | "local" | "off") => {
@@ -563,13 +591,14 @@ export const useAppBase = create<AppStore>()(
     }),
     {
       name: "app",
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => zustandStorage),
       // v0 persisted libraryFilter as a single string (or null); it is now a
       // multi-select array. Wrap an existing selection into a one-element array.
       migrate: (persisted, version) => {
         const state = persisted as Partial<AppStore> & {
           libraryFilter?: LibraryFilter | LibraryFilter[] | null;
+          mediaControlsLayout?: string;
         };
         if (version < 1) {
           state.libraryFilter =
@@ -583,6 +612,16 @@ export const useAppBase = create<AppStore>()(
         // offline unless the user re-enables auto sign-out.
         if (version < 2) {
           state.autoSignOutOnServerUnreachable = false;
+        }
+        // v2 stored one of five fixed media notification layouts; each side is
+        // now picked on its own.
+        if (version < 3) {
+          const layout =
+            LEGACY_MEDIA_CONTROLS_LAYOUTS[
+              state.mediaControlsLayout ?? "seek"
+            ] ?? LEGACY_MEDIA_CONTROLS_LAYOUTS.seek;
+          [state.mediaControlsLeft, state.mediaControlsRight] = layout;
+          delete state.mediaControlsLayout;
         }
         return state as AppStore;
       },

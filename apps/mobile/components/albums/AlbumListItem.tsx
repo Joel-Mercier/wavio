@@ -1,4 +1,4 @@
-import Disc3 from "lucide-react-native/dist/esm/icons/disc-3.mjs";
+import Disc3 from "lucide-react-native/icons/disc-3";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";

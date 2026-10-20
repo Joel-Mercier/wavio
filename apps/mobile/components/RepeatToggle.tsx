@@ -1,5 +1,5 @@
-import Repeat from "lucide-react-native/dist/esm/icons/repeat.mjs";
-import Repeat1 from "lucide-react-native/dist/esm/icons/repeat-1.mjs";
+import Repeat from "lucide-react-native/icons/repeat";
+import Repeat1 from "lucide-react-native/icons/repeat-1";
 import { type ComponentProps, useEffect } from "react";
 import { StyleSheet } from "react-native";
 import Animated, {

@@ -4,10 +4,10 @@ import {
 } from "@gorhom/bottom-sheet";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
-import EllipsisVertical from "lucide-react-native/dist/esm/icons/ellipsis-vertical.mjs";
-import Pencil from "lucide-react-native/dist/esm/icons/pencil.mjs";
-import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
-import UsersIcon from "lucide-react-native/dist/esm/icons/users.mjs";
+import EllipsisVertical from "lucide-react-native/icons/ellipsis-vertical";
+import Pencil from "lucide-react-native/icons/pencil";
+import Trash from "lucide-react-native/icons/trash";
+import UsersIcon from "lucide-react-native/icons/users";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Platform } from "react-native";

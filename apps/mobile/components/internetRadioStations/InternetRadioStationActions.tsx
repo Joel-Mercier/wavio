@@ -1,9 +1,9 @@
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
-import Heart from "lucide-react-native/dist/esm/icons/heart.mjs";
-import Info from "lucide-react-native/dist/esm/icons/info.mjs";
-import Pencil from "lucide-react-native/dist/esm/icons/pencil.mjs";
-import Trash from "lucide-react-native/dist/esm/icons/trash.mjs";
+import Heart from "lucide-react-native/icons/heart";
+import Info from "lucide-react-native/icons/info";
+import Pencil from "lucide-react-native/icons/pencil";
+import Trash from "lucide-react-native/icons/trash";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
