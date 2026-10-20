@@ -2059,6 +2059,9 @@
 				"outputChromecastNoPlayServices": "Chromecast benötigt Google Play-Dienste, über die dieses Gerät nicht verfügt.",
 				"outputChromecastNoPlayServicesHint": "Erfordert Google Play-Dienste",
 				"outputConnectErrorMessage": "Die Wiedergabe unter {{name}} war nicht möglich.",
+				"outputAddRooms": "Also play on",
+				"outputGroupVolume": "Group volume",
+				"outputGroupErrorMessage": "Could not change the group on {{name}}.",
 				"sleepTimerMinutes_one": "{{count}} Minute",
 				"sleepTimerMinutes_other": "{{count}} Minuten"
 			},
