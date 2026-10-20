@@ -1163,7 +1163,7 @@
 							"unreachable": "Impossibile connettersi a Last.fm.",
 							"noData": "In questo periodo non è stato ancora registrato nulla.",
 							"scrobbles_one": "{{formattedCount}} scrobble",
-							"scrobbles_other": "{{formattedCount}} scrobble"
+							"scrobbles_other": "{{formattedCount}} scrobbles"
 						},
 						"queue": {
 							"pendingLabel": "In attesa di essere inviato",
@@ -1466,6 +1466,9 @@
 					"checking": "Controllo di…",
 					"upToDate": "Stai utilizzando l'ultima versione",
 					"checkFailed": "Impossibile verificare la disponibilità di aggiornamenti. Controlla la connessione e riprova.",
+					"rateLabel": "Rate Wavio",
+					"rateDescription": "Enjoying Wavio? A rating on Google Play helps other people find it",
+					"rateAction": "Tasso",
 					"currentVersionLabel": "Versione attuale"
 				},
 				"storageSettings": {
@@ -1623,28 +1626,16 @@
 						}
 					},
 					"mediaControlsLabel": "Pulsanti di notifica multimediali",
-					"mediaControlsDescription": "Nella notifica multimediale e nella schermata di blocco vengono visualizzati pulsanti aggiuntivi accanto a “Precedente”, “Riproduci/Pausa” e “Successivo”. Android ha spazio solo per due pulsanti, quindi il pulsante “Preferiti” sostituisce quello per saltare 10 secondi. Nelle stazioni radio e negli episodi dei podcast non viene mai visualizzato.",
-					"mediaControlsOptions": {
-						"seek": {
-							"label": "Vai indietro e avanti",
-							"description": "Riavvolgi e vai avanti di 10 secondi."
-						},
-						"favoriteAndSeekForward": {
-							"label": "Aggiungi ai preferiti e vai avanti",
-							"description": "Aggiungi il brano in riproduzione ai tuoi preferiti (o rimuovilo) e vai avanti di 10 secondi."
-						},
-						"seekBackwardAndFavorite": {
-							"label": "Torna indietro e aggiungi ai preferiti",
-							"description": "Torna indietro di 10 secondi e aggiungi il brano corrente ai preferiti (o rimuovilo)."
-						},
-						"favorite": {
-							"label": "Solo preferiti",
-							"description": "Solo il pulsante dei preferiti: così ci sono meno pulsanti che si possono premere per sbaglio."
-						},
-						"none": {
-							"label": "Nessuno",
-							"description": "Solo il brano precedente, riproduzione/pausa e il brano successivo."
-						}
+					"mediaControlsDescription": "Pick the buttons shown on each side of previous, play/pause and next in the media notification and on the lock screen. If you pick only one button, Android shows it on the left. Favorite, shuffle and repeat are hidden for radio stations and podcast episodes.",
+					"mediaControlsLeftLabel": "Left button",
+					"mediaControlsRightLabel": "Right button",
+					"mediaControlsButtons": {
+						"none": "None",
+						"seekBackward": "Back 10 s",
+						"seekForward": "Forward 10 s",
+						"favorite": "Preferiti",
+						"shuffle": "Shuffle",
+						"repeat": "Repeat"
 					},
 					"waveformSeekbarLabel": "Barra di ricerca della forma d'onda",
 					"waveformSeekbarDescription": "Mostra la forma d'onda del brano invece di una semplice barra di avanzamento. Ogni forma d'onda viene analizzata una sola volta, pochi secondi dopo l'inizio del brano, e poi riutilizzata. Per farlo, i brani in streaming scaricano una copia aggiuntiva a bassa qualità, quindi questa funzione consuma più dati — ma mai tramite rete mobile. Questa funzione viene disattivata per i podcast, la radio e i brani di durata superiore a 15 minuti.",

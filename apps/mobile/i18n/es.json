@@ -1466,6 +1466,9 @@
 					"checking": "Comprobando…",
 					"upToDate": "Ya tienes la última versión",
 					"checkFailed": "No se han podido buscar actualizaciones. Comprueba tu conexión e inténtalo de nuevo.",
+					"rateLabel": "Rate Wavio",
+					"rateDescription": "Enjoying Wavio? A rating on Google Play helps other people find it",
+					"rateAction": "Valoración",
 					"currentVersionLabel": "Versión actual"
 				},
 				"storageSettings": {
@@ -1623,28 +1626,16 @@
 						}
 					},
 					"mediaControlsLabel": "Botones de notificación multimedia",
-					"mediaControlsDescription": "Aparecen botones adicionales junto a «Anterior», «Reproducir/Pausa» y «Siguiente» en la notificación multimedia y en la pantalla de bloqueo. Android solo tiene espacio para dos, por lo que el botón de «Favoritos» ocupa el lugar del botón para saltar 10 segundos. Las emisoras de radio y los episodios de podcasts nunca lo muestran.",
-					"mediaControlsOptions": {
-						"seek": {
-							"label": "Ir atrás y adelante",
-							"description": "Rebobina y avanza 10 segundos."
-						},
-						"favoriteAndSeekForward": {
-							"label": "Añadir a favoritos y avanzar",
-							"description": "Añade la canción actual a tus favoritos (o elimínala) y avanza 10 segundos."
-						},
-						"seekBackwardAndFavorite": {
-							"label": "Volver atrás y añadir a favoritos",
-							"description": "Retrocede 10 segundos y añade la canción actual a tus favoritos (o elimínala)."
-						},
-						"favorite": {
-							"label": "Solo favoritos",
-							"description": "Solo el botón de «Favoritos», lo que hace que haya menos botones con los que pulsar sin querer."
-						},
-						"none": {
-							"label": "Ninguno",
-							"description": "Solo «Anterior», «Reproducir/Pausa» y «Siguiente»."
-						}
+					"mediaControlsDescription": "Pick the buttons shown on each side of previous, play/pause and next in the media notification and on the lock screen. If you pick only one button, Android shows it on the left. Favorite, shuffle and repeat are hidden for radio stations and podcast episodes.",
+					"mediaControlsLeftLabel": "Left button",
+					"mediaControlsRightLabel": "Right button",
+					"mediaControlsButtons": {
+						"none": "None",
+						"seekBackward": "Back 10 s",
+						"seekForward": "Forward 10 s",
+						"favorite": "Favoritos",
+						"shuffle": "Shuffle",
+						"repeat": "Repeat"
 					},
 					"waveformSeekbarLabel": "Barra de búsqueda de la forma de onda",
 					"waveformSeekbarDescription": "Muestra la forma de onda de la pista en lugar de una simple barra de progreso. Cada forma de onda se analiza una vez, unos segundos después de que comience la pista, y luego se reutiliza. Para ello, las pistas reproducidas en streaming descargan una copia adicional de baja calidad, por lo que esto consume más datos —nunca a través de la red móvil—. No se aplica a los podcasts, la radio ni a las pistas de más de 15 minutos de duración.",

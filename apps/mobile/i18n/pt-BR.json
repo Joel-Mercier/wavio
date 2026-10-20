@@ -622,7 +622,7 @@
 				"successMessage": "Perfil atualizado",
 				"errorMessage": "Ocorreu um erro ao atualizar o perfil",
 				"roleLabels": {
-					"admin": "Admin",
+					"admin": "Administrador",
 					"settings": "Configurações",
 					"stream": "Transmissão",
 					"jukebox": "Jukebox",
@@ -1466,6 +1466,9 @@
 					"checking": "Verificando…",
 					"upToDate": "Você está na versão mais recente",
 					"checkFailed": "Não foi possível verificar se há atualizações. Verifique sua conexão e tente novamente.",
+					"rateLabel": "Rate Wavio",
+					"rateDescription": "Enjoying Wavio? A rating on Google Play helps other people find it",
+					"rateAction": "Taxa",
 					"currentVersionLabel": "Versão atual"
 				},
 				"storageSettings": {
@@ -1577,7 +1580,7 @@
 					"homeSectionsCount_other": "{{count}} mostrado"
 				},
 				"hapticsSettings": {
-					"title": "Haptics",
+					"title": "Feedback tátil",
 					"enabledLabel": "Retroalimentação tátil",
 					"enabledDescription": "Vibrar em interações como rolar o índice alfabético"
 				},
@@ -1623,28 +1626,16 @@
 						}
 					},
 					"mediaControlsLabel": "Botões de notificação de mídia",
-					"mediaControlsDescription": "Botões adicionais exibidos ao lado dos botões “Anterior”, “Reproduzir/Pausar” e “Próximo” na notificação de mídia e na tela de bloqueio. O Android só tem espaço para dois, então o botão “Favoritos” ocupa o lugar do botão de pular 10 segundos. As estações de rádio e os episódios de podcast nunca exibem esse botão.",
-					"mediaControlsOptions": {
-						"seek": {
-							"label": "Avançar e retroceder",
-							"description": "Retroceda e avance 10 segundos."
-						},
-						"favoriteAndSeekForward": {
-							"label": "Marcar como favorito e avançar",
-							"description": "Adicione a faixa atual aos seus favoritos (ou remova-a) e avance 10 segundos."
-						},
-						"seekBackwardAndFavorite": {
-							"label": "Voltar e adicionar aos favoritos",
-							"description": "Volte 10 segundos e adicione a faixa atual aos seus favoritos (ou remova-a)."
-						},
-						"favorite": {
-							"label": "Somente favoritos",
-							"description": "Apenas o botão de favoritos, o que reduz o risco de apertar outros botões por engano."
-						},
-						"none": {
-							"label": "Nenhum",
-							"description": "Apenas a faixa anterior, reproduzir/pausar e a próxima."
-						}
+					"mediaControlsDescription": "Pick the buttons shown on each side of previous, play/pause and next in the media notification and on the lock screen. If you pick only one button, Android shows it on the left. Favorite, shuffle and repeat are hidden for radio stations and podcast episodes.",
+					"mediaControlsLeftLabel": "Left button",
+					"mediaControlsRightLabel": "Right button",
+					"mediaControlsButtons": {
+						"none": "None",
+						"seekBackward": "Back 10 s",
+						"seekForward": "Forward 10 s",
+						"favorite": "Favorito",
+						"shuffle": "Shuffle",
+						"repeat": "Repeat"
 					},
 					"waveformSeekbarLabel": "Barra de navegação pela forma de onda",
 					"waveformSeekbarDescription": "Exiba a forma de onda da faixa em vez de uma simples barra de progresso. Cada forma de onda é analisada uma vez, alguns segundos após o início da faixa, e depois reutilizada. Para isso, as faixas transmitidas baixam uma cópia adicional de baixa qualidade, o que consome mais dados — mas nunca pela rede móvel. Esse recurso é ignorado para podcasts, rádio e faixas com duração superior a 15 minutos.",

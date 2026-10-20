@@ -1552,6 +1552,9 @@
 					"checking": "Проверяем...",
 					"upToDate": "Установлена последняя версия",
 					"checkFailed": "Не удалось проверить наличие обновлений. Проверь интернет соединение и попробуй снова.",
+					"rateLabel": "Rate Wavio",
+					"rateDescription": "Enjoying Wavio? A rating on Google Play helps other people find it",
+					"rateAction": "Оценить",
 					"currentVersionLabel": "Текущая версия"
 				},
 				"storageSettings": {
@@ -1713,28 +1716,16 @@
 						}
 					},
 					"mediaControlsLabel": "Кнопки уведомлений в приложениях",
-					"mediaControlsDescription": "Дополнительные кнопки отображаются рядом с кнопками «Назад», «Воспроизведение/Пауза» и «Вперед» в уведомлении о мультимедиа и на экране блокировки. В Android хватает места только для двух кнопок, поэтому кнопка «Избранное» занимает место кнопки «Перейти на 10 секунд вперед». На радиостанциях и в эпизодах подкастов она никогда не отображается.",
-					"mediaControlsOptions": {
-						"seek": {
-							"label": "Перейти назад и вперёд",
-							"description": "Перемотайте назад и вперёд на 10 секунд."
-						},
-						"favoriteAndSeekForward": {
-							"label": "Добавить в избранное и перейти дальше",
-							"description": "Добавьте текущий трек в избранное (или удалите его) и перемотайте вперед на 10 секунд."
-						},
-						"seekBackwardAndFavorite": {
-							"label": "Вернуться назад и добавить в избранное",
-							"description": "Перемотайте назад на 10 секунд и добавьте текущий трек в избранное (или удалите его)."
-						},
-						"favorite": {
-							"label": "Только избранное",
-							"description": "Только кнопка «Избранное» — так меньше шансов нажать что-то случайно."
-						},
-						"none": {
-							"label": "Нет",
-							"description": "Только предыдущий, воспроизведение/пауза и следующий."
-						}
+					"mediaControlsDescription": "Pick the buttons shown on each side of previous, play/pause and next in the media notification and on the lock screen. If you pick only one button, Android shows it on the left. Favorite, shuffle and repeat are hidden for radio stations and podcast episodes.",
+					"mediaControlsLeftLabel": "Left button",
+					"mediaControlsRightLabel": "Right button",
+					"mediaControlsButtons": {
+						"none": "None",
+						"seekBackward": "Back 10 s",
+						"seekForward": "Forward 10 s",
+						"favorite": "Избранное",
+						"shuffle": "Shuffle",
+						"repeat": "Repeat"
 					},
 					"waveformSeekbarLabel": "Полоса прокрутки формы сигнала",
 					"waveformSeekbarDescription": "Отображать график сигнала трека вместо обычной полосы прогресса. Каждый график сигнала анализируется один раз — через несколько секунд после начала воспроизведения трека — и затем используется повторно. Для потоковых треков в целях реализации этой функции загружается дополнительная копия низкого качества, поэтому при этом расходуется больше данных — но никогда через сотовую сеть. Эта функция не применяется к подкастам, радиопередачам и трекам продолжительностью более 15 минут.",
