@@ -13,6 +13,7 @@ import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import { useSleepTimerBadgeSpace } from "@/components/player/SleepTimerBadge";
 import AddToPlaylistListItem from "@/components/playlists/AddToPlaylistListItem";
 import AddToPlaylistListItemSkeleton from "@/components/playlists/AddToPlaylistListItemSkeleton";
 import {
@@ -79,6 +80,7 @@ export default function AddToPlaylistDetail() {
   const toast = useToast();
   const insets = useSafeAreaInsets();
   const isWideLayout = useApp((s) => s.isWideLayout);
+  const sleepTimerBadgeSpace = useSleepTimerBadgeSpace();
   const recentTargets = usePlaylistTargets((state) => state.recentTargets);
   const { data, isLoading, error } = usePlaylists({});
   const doUpdatePlaylist = useUpdatePlaylist();
@@ -282,7 +284,9 @@ export default function AddToPlaylistDetail() {
   // needs no bottom clearance. Portrait: FloatingPlayer sits at bottom: 96 and is
   // FLOATING_PLAYER_HEIGHT tall,
   // so its top edge is this far from the bottom of the screen.
-  const floatingPlayerTop = isWideLayout ? 0 : 96 + FLOATING_PLAYER_HEIGHT;
+  const floatingPlayerTop = isWideLayout
+    ? 0
+    : 96 + FLOATING_PLAYER_HEIGHT + sleepTimerBadgeSpace;
 
   const playlists = data?.playlists.playlist;
   const playlistById = useMemo(

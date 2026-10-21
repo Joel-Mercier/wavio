@@ -61,3 +61,13 @@ export const formatSeconds = (seconds: number) => {
   const remaining = total % 60;
   return `${minutes}:${remaining.toString().padStart(2, "0")}`;
 };
+
+// Follows the device's 12/24-hour setting, which the app language doesn't carry.
+export const formatClockTime = (
+  ms: number,
+  uses24hourClock: boolean | null | undefined,
+) => {
+  const pattern =
+    uses24hourClock == null ? "p" : uses24hourClock ? "HH:mm" : "h:mm a";
+  return format(new Date(ms), pattern);
+};

@@ -22,6 +22,7 @@ import type {
 } from "@/services/openSubsonic/types";
 import { registerRemoteTarget } from "@/services/playback/remoteTarget";
 import { restoreServerQueue, takeOverFromRemote } from "@/services/player";
+import { useSleepTimer } from "@/services/sleepTimer";
 import useJukebox from "@/stores/jukebox";
 import useQueue from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
@@ -369,6 +370,8 @@ export async function activate(opts: ActivateOptions): Promise<void> {
     await selectTrack(idx, offset, opts.autoplay);
   }
   useJukebox.getState().setActive(true);
+  // Track ends happen on the server and never reach the end-of-track hook.
+  if (useSleepTimer.getState().endOfTrack) useSleepTimer.getState().cancel();
   await refreshStatus();
   subscribeQueue();
   startPolling(3000);

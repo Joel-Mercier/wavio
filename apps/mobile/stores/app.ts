@@ -268,6 +268,10 @@ interface AppStore {
   setPodcastPlaybackRate: (podcastPlaybackRate: number) => void;
   endlessPlaybackEnabled: boolean;
   setEndlessPlaybackEnabled: (enabled: boolean) => void;
+  sleepTimerFinishTrack: boolean;
+  setSleepTimerFinishTrack: (enabled: boolean) => void;
+  sleepTimerLastCustomMinutes: number;
+  setSleepTimerLastCustomMinutes: (minutes: number) => void;
   showPlayerAudioQuality: boolean;
   setShowPlayerAudioQuality: (enabled: boolean) => void;
   showPlayerRating: boolean;
@@ -511,6 +515,14 @@ export const useAppBase = create<AppStore>()(
       endlessPlaybackEnabled: false,
       setEndlessPlaybackEnabled: (endlessPlaybackEnabled: boolean) => {
         set({ endlessPlaybackEnabled });
+      },
+      sleepTimerFinishTrack: false,
+      setSleepTimerFinishTrack: (sleepTimerFinishTrack: boolean) => {
+        set({ sleepTimerFinishTrack });
+      },
+      sleepTimerLastCustomMinutes: 90,
+      setSleepTimerLastCustomMinutes: (sleepTimerLastCustomMinutes: number) => {
+        set({ sleepTimerLastCustomMinutes });
       },
       showPlayerAudioQuality: true,
       setShowPlayerAudioQuality: (showPlayerAudioQuality: boolean) => {

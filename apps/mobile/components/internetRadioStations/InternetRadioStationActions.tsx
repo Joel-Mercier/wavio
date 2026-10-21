@@ -4,7 +4,7 @@ import Heart from "lucide-react-native/icons/heart";
 import Info from "lucide-react-native/icons/info";
 import Pencil from "lucide-react-native/icons/pencil";
 import Trash from "lucide-react-native/icons/trash";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
 import { Uniwind } from "uniwind";
@@ -59,6 +59,7 @@ interface Props {
   onToggleFavorite?: () => void;
   onActionStart?: () => void;
   onDeleted?: () => void;
+  children?: ReactNode;
 }
 
 export default function InternetRadioStationActions({
@@ -71,6 +72,7 @@ export default function InternetRadioStationActions({
   onToggleFavorite,
   onActionStart,
   onDeleted,
+  children,
 }: Props) {
   const [gray200, emerald500, primary800] = Uniwind.getCSSVariable([
     "--color-gray-200",
@@ -251,6 +253,7 @@ export default function InternetRadioStationActions({
             </FadeOutScaleDown>
           </>
         )}
+        {children}
       </VStack>
       <AlertDialog
         isOpen={showDeleteDialog}

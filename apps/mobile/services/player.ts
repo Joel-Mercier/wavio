@@ -96,7 +96,8 @@ import {
 import {
   checkSleepTimerExpiry,
   consumeSleepEndOfTrack,
-  registerSleepTimerPauseHandler,
+  registerSleepTimerExpiryHandler,
+  useSleepTimer,
 } from "@/services/sleepTimer";
 import {
   cachedTrackUri,
@@ -119,6 +120,7 @@ import useQueue, {
   type QueueTrack,
 } from "@/stores/queue";
 import { resolveOfflineTrackArtwork } from "@/utils/artwork";
+import { canFinishTrack } from "@/utils/playbackEnd";
 import { computeReplayGainFactor } from "@/utils/replayGain";
 
 // Native engine calls (pause/seek/lock-screen/…) can throw while the
@@ -588,7 +590,7 @@ export const PODCAST_SEEK_FORWARD_SECONDS = 30;
 
 // Speed only applies to spoken word — a music track always plays at 1×, so a
 // rate left over from a podcast never bleeds into the next album.
-function getPlaybackRateFor(track: QueueTrack | null): number {
+export function getPlaybackRateFor(track: QueueTrack | null): number {
   if (track?.source !== "podcast") return 1;
   return clampPodcastPlaybackRate(useAppBase.getState().podcastPlaybackRate);
 }
@@ -1454,9 +1456,9 @@ function handlePlaybackStatus(status: AudioStatus) {
       player.volume = sleepFadeFromVolume * (remaining / SLEEP_FADE_MS);
       return;
     }
-    // Native-driven so the minutes sleep timer fires on time even backgrounded,
-    // when the JS setTimeout is throttled. The registered handler starts the
-    // fade-out; skip the rest of this tick.
+    // Backstop for the sleep timer's own background timer, which falls back to
+    // a throttled JS timer on iOS. The registered handler starts the fade-out
+    // (or arms end-of-track); skip the rest of this tick.
     if (checkSleepTimerExpiry()) return;
     const cur = useQueue.getState().getCurrent();
     if (cur) {
@@ -1529,7 +1531,7 @@ function handlePlaybackStatus(status: AudioStatus) {
       effectivePosition(status.currentTime ?? 0) || previous?.duration || 0;
     if (previous) countFinishedPlay(previous, played);
     if (consumeSleepEndOfTrack()) {
-      player.pause();
+      parkAfterSleepTrackEnd(previousId);
       return;
     }
     // End of queue with no repeat: keep the current track loaded so the
@@ -1577,6 +1579,25 @@ function handlePlaybackStatus(status: AudioStatus) {
     if (c.id === previousId) {
       loadAndPlay(c);
     }
+  }
+}
+
+// The sleep timer stopped playback at a track end. Load whatever would have
+// played next without starting it, so the next play picks up from there instead
+// of replaying (and re-scrobbling) the finished track parked at its end.
+function parkAfterSleepTrackEnd(finishedId: string | null) {
+  try {
+    player.pause();
+    if (!atEndlessQueueTail() && useQueue.getState().repeatMode !== "one") {
+      suppressAutoplayOnce = true;
+      playbackInitialized = false;
+      useQueue.getState().next();
+      if (useQueue.getState().getCurrent()?.id !== finishedId) return;
+      suppressAutoplayOnce = false;
+    }
+    seekTo(0);
+  } catch (error) {
+    logSwallowed("park after sleep track end", error);
   }
 }
 
@@ -2118,11 +2139,24 @@ export function pause() {
   player.pause();
 }
 
+function canFinishCurrentTrack(): boolean {
+  const remote = activeRemoteTarget();
+  return canFinishTrack(
+    useQueue.getState().getCurrent(),
+    remote ? remote.isPlaying() : player.playing,
+    !!remote?.playsOnServer,
+  );
+}
+
 // Sleep-timer expiry handler: start a volume ramp when playing locally, letting
 // the status tick carry it to zero and then pause. If nothing is actively
 // playing locally (a remote target owns playback, or we're already paused)
 // there's no tick to drive the ramp, so just pause outright.
-function beginSleepFade() {
+function handleSleepTimerExpiry() {
+  if (useAppBase.getState().sleepTimerFinishTrack && canFinishCurrentTrack()) {
+    useSleepTimer.getState().finishCurrentTrack();
+    return;
+  }
   if (activeRemoteTarget() || !player.playing) {
     pause();
     return;
@@ -2131,7 +2165,7 @@ function beginSleepFade() {
   sleepFadeUntil = Date.now() + SLEEP_FADE_MS;
 }
 
-registerSleepTimerPauseHandler(beginSleepFade);
+registerSleepTimerExpiryHandler(handleSleepTimerExpiry);
 
 export function play() {
   // Resuming during a sleep fade means "keep listening" — abort the ramp and

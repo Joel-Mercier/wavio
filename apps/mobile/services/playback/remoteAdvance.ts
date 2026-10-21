@@ -1,3 +1,4 @@
+import { consumeSleepEndOfTrack } from "@/services/sleepTimer";
 import usePlaybackNotice from "@/stores/playbackNotice";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 
@@ -42,6 +43,10 @@ export function advanceAfterTrackEnd(handlers: Handlers) {
   const current = state.getCurrent();
   if (current) {
     for (const listener of trackEndListeners) listener(current);
+  }
+  if (consumeSleepEndOfTrack()) {
+    handlers.stop();
+    return;
   }
   if (state.repeatMode === "one") {
     if (current) handlers.reload(current);

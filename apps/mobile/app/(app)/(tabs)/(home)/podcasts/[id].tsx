@@ -31,6 +31,7 @@ import { Uniwind } from "uniwind";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import PlayPauseButton from "@/components/PlayPauseButton";
+import SleepTimerActionRow from "@/components/player/SleepTimerActionRow";
 import RichText from "@/components/RichText";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -488,6 +489,9 @@ export default function PodcastScreen() {
                   </HStack>
                 </FadeOutScaleDown>
               )}
+              <SleepTimerActionRow
+                onPress={() => bottomSheetModalRef.current?.dismiss()}
+              />
             </VStack>
           </Box>
         </BottomSheetScrollView>

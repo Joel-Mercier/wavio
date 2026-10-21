@@ -1,58 +1,80 @@
 import { create } from "zustand";
+import {
+  type BackgroundTimer,
+  clearBackgroundTimer,
+  setBackgroundTimeout,
+} from "@/services/backgroundTimer";
 
-let pauseHandler: (() => void) | null = null;
+let expiryHandler: (() => void) | null = null;
 
-export function registerSleepTimerPauseHandler(handler: () => void) {
-  pauseHandler = handler;
+export function registerSleepTimerExpiryHandler(handler: () => void) {
+  expiryHandler = handler;
 }
 
 type State = {
   endsAt: number | null;
+  durationMs: number | null;
   endOfTrack: boolean;
+  // endOfTrack was armed by an expired timer with "finish current song" on,
+  // rather than picked by the user.
+  finishing: boolean;
 };
 
 type Actions = {
   setMinutes: (minutes: number) => void;
   setEndOfTrack: () => void;
+  finishCurrentTrack: () => void;
   cancel: () => void;
 };
 
-let timeoutId: ReturnType<typeof setTimeout> | null = null;
+const IDLE: State = {
+  endsAt: null,
+  durationMs: null,
+  endOfTrack: false,
+  finishing: false,
+};
 
-// Guarded, idempotent: nulls state before pausing so whichever path fires first
-// (the setTimeout below or checkSleepTimerExpiry from the player status tick)
-// wins and the other no-ops.
+let timer: BackgroundTimer | null = null;
+
+function clearTimer() {
+  clearBackgroundTimer(timer);
+  timer = null;
+}
+
+// Guarded, idempotent: resets state before handing over so whichever path fires
+// first (the background timer below or checkSleepTimerExpiry from the player
+// status tick) wins and the other no-ops.
 function fireSleepTimer() {
-  if (timeoutId) clearTimeout(timeoutId);
-  timeoutId = null;
-  useSleepTimer.setState({ endsAt: null, endOfTrack: false });
-  pauseHandler?.();
+  clearTimer();
+  useSleepTimer.setState(IDLE);
+  expiryHandler?.();
 }
 
 export const useSleepTimer = create<State & Actions>((set) => ({
-  endsAt: null,
-  endOfTrack: false,
+  ...IDLE,
   setMinutes: (minutes) => {
-    if (timeoutId) clearTimeout(timeoutId);
+    clearTimer();
     const ms = minutes * 60 * 1000;
-    timeoutId = setTimeout(fireSleepTimer, ms);
-    set({ endsAt: Date.now() + ms, endOfTrack: false });
+    timer = setBackgroundTimeout(fireSleepTimer, ms);
+    set({ ...IDLE, endsAt: Date.now() + ms, durationMs: ms });
   },
   setEndOfTrack: () => {
-    if (timeoutId) clearTimeout(timeoutId);
-    timeoutId = null;
-    set({ endsAt: null, endOfTrack: true });
+    clearTimer();
+    set({ ...IDLE, endOfTrack: true });
+  },
+  finishCurrentTrack: () => {
+    clearTimer();
+    set({ ...IDLE, endOfTrack: true, finishing: true });
   },
   cancel: () => {
-    if (timeoutId) clearTimeout(timeoutId);
-    timeoutId = null;
-    set({ endsAt: null, endOfTrack: false });
+    clearTimer();
+    set(IDLE);
   },
 }));
 
-// Background-safe entry point: the JS setTimeout is throttled/suspended while the
-// app is backgrounded, so the player calls this from its native-driven playback
-// status tick to fire the minutes timer on time regardless of app state.
+export const isSleepTimerActive = (state: State) =>
+  state.endsAt != null || state.endOfTrack;
+
 export function checkSleepTimerExpiry(): boolean {
   const { endsAt } = useSleepTimer.getState();
   if (endsAt != null && Date.now() >= endsAt) {
@@ -64,7 +86,7 @@ export function checkSleepTimerExpiry(): boolean {
 
 export function consumeSleepEndOfTrack(): boolean {
   if (useSleepTimer.getState().endOfTrack) {
-    useSleepTimer.setState({ endOfTrack: false });
+    useSleepTimer.setState(IDLE);
     return true;
   }
   return false;

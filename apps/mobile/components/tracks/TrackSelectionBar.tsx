@@ -15,6 +15,7 @@ import {
   TAB_BAR_CONTENT_HEIGHT,
 } from "@/components/FloatingPlayer";
 import { OFFLINE_BANNER_HEIGHT } from "@/components/OfflineBanner";
+import { useSleepTimerBadgeSpace } from "@/components/player/SleepTimerBadge";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { MaskedView } from "@/components/ui/masked-view";
@@ -87,6 +88,7 @@ export default function TrackSelectionBar() {
   const isOnline = useIsOnline();
   const isWideLayout = useApp((state) => state.isWideLayout);
   const playingTrack = usePlayingTrack();
+  const sleepTimerBadgeSpace = useSleepTimerBadgeSpace();
 
   // The bar is mounted at the (app) layout, alongside the floating player and
   // outside the tab navigator — so, like the player, it can't measure the tab
@@ -99,7 +101,9 @@ export default function TrackSelectionBar() {
     : insets.bottom +
       TAB_BAR_CONTENT_HEIGHT +
       (isOnline ? 0 : OFFLINE_BANNER_HEIGHT) +
-      (playerVisible ? FLOATING_PLAYER_HEIGHT + CHROME_GAP : CHROME_GAP);
+      (playerVisible
+        ? FLOATING_PLAYER_HEIGHT + sleepTimerBadgeSpace + CHROME_GAP
+        : CHROME_GAP);
 
   // The action labels are translated, and some locales need far more room than
   // the panel has (German's "Als Nächstes abspielen" alone is wider than a

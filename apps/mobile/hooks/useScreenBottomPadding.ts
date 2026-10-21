@@ -3,6 +3,7 @@ import { BottomTabBarHeightContext } from "expo-router/js-tabs";
 import { useContext } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import { useSleepTimerBadgeSpace } from "@/components/player/SleepTimerBadge";
 import {
   TRACK_SELECTION_BAR_GAP,
   TRACK_SELECTION_BAR_HEIGHT,
@@ -39,6 +40,7 @@ export function useScreenBottomPadding() {
   // from are the ones it covers.
   const selectionActive = useTrackSelection((state) => state.active);
   const measuredBarHeight = useTrackSelection((state) => state.barHeight);
+  const sleepTimerBadgeSpace = useSleepTimerBadgeSpace();
   const selectionSpace = selectionActive
     ? TRACK_SELECTION_BAR_GAP +
       (measuredBarHeight || TRACK_SELECTION_BAR_HEIGHT)
@@ -53,7 +55,7 @@ export function useScreenBottomPadding() {
   const chromeBase = bottomTabBarHeight ?? insets.bottom;
   const playerSpace = hidesFloatingPlayer(pathname)
     ? 0
-    : FLOATING_PLAYER_HEIGHT;
+    : FLOATING_PLAYER_HEIGHT + sleepTimerBadgeSpace;
   if (playerSpace === 0 && !selectionActive) return chromeBase;
   // The gap is counted once, above whichever pieces of chrome are stacked.
   return (
