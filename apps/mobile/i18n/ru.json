@@ -347,6 +347,19 @@
 				"albumCount_many": "{{count}} релизов",
 				"albumCount_other": "{{count}} релизов"
 			},
+			"mixes": {
+				"createArtistMix": "Create artist mix",
+				"createGenreMix": "Create genre mix",
+				"title": "{{name}} Mix",
+				"featuring": "With {{names}} and more",
+				"empty": "Not enough songs in your library to build this mix",
+				"offline": "Mixes are built from your music server, which can't be reached right now",
+				"error": "The mix couldn't be generated",
+				"queued_one": "{{count}} песня добавлена в очередь",
+				"queued_few": "{{count}} песни, добавленные в очередь",
+				"queued_many": "{{count}} песни, добавленные в очередь",
+				"queued_other": "{{count}} песни, добавленные в очередь"
+			},
 			"favorites": {
 				"title": "Любимые треки",
 				"favorite_tracks": "Любимые треки",
@@ -2101,6 +2114,7 @@
 					"similar": "Похожие треки",
 					"audiomuse": "Воспроизведение из AudioMuse-AI",
 					"listenbrainz": "Воспроизведение с ListenBrainz",
+					"mix": "Playing from mix",
 					"albumList": "Из альбомов",
 					"playlistList": "Из плейлистов"
 				},
