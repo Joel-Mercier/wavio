@@ -335,6 +335,17 @@
 				"albumCount_one": "{{count}} Album",
 				"albumCount_other": "{{count}} Alben"
 			},
+			"mixes": {
+				"createArtistMix": "Create artist mix",
+				"createGenreMix": "Create genre mix",
+				"title": "{{name}} Mix",
+				"featuring": "With {{names}} and more",
+				"empty": "Not enough songs in your library to build this mix",
+				"offline": "Mixes are built from your music server, which can't be reached right now",
+				"error": "The mix couldn't be generated",
+				"queued_one": "{{count}} Titel zur Warteschlange hinzugefügt",
+				"queued_other": "{{count}} Zur Warteschlange hinzugefügte Titel"
+			},
 			"favorites": {
 				"title": "Favoriten",
 				"favorite_tracks": "Lieblingstitel",
@@ -1993,6 +2004,7 @@
 					"similar": "Ähnliche Songs abspielen",
 					"audiomuse": "Wiedergabe über AudioMuse-AI",
 					"listenbrainz": "Wird über ListenBrainz abgespielt",
+					"mix": "Playing from mix",
 					"albumList": "Wiedergabe von Alben",
 					"playlistList": "Wiedergabe aus Wiedergabelisten"
 				},
