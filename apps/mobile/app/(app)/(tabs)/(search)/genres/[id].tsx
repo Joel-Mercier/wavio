@@ -1,9 +1,17 @@
+import {
+  type BottomSheetModal,
+  BottomSheetScrollView,
+} from "@gorhom/bottom-sheet";
 import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/icons/arrow-left";
+import Disc3 from "lucide-react-native/icons/disc-3";
+import EllipsisVertical from "lucide-react-native/icons/ellipsis-vertical";
 import LayoutGrid from "lucide-react-native/icons/layout-grid";
 import List from "lucide-react-native/icons/list";
-import { useMemo } from "react";
+import Tag from "lucide-react-native/icons/tag";
+import { useCallback, useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useWindowDimensions } from "react-native";
 import Animated, {
   Extrapolation,
@@ -16,6 +24,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import AlbumListItem from "@/components/albums/AlbumListItem";
 import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
+import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -24,9 +33,12 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Pressable } from "@/components/ui/pressable";
+import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useInfiniteAlbumList2 } from "@/hooks/backend/useLists";
 import { useAlbumScreenLayout } from "@/hooks/useAlbumScreenLayout";
+import { useCapabilities } from "@/hooks/useCapabilities";
+import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
@@ -37,8 +49,15 @@ import { goBackOrHome } from "@/utils/navigation";
 const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 export default function GenreScreen() {
-  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
+  const { t } = useTranslation();
+  const [white, gray200] = Uniwind.getCSSVariable([
+    "--color-white",
+    "--color-gray-200",
+  ]) as string[];
   const router = useRouter();
+  const capabilities = useCapabilities();
+  const isOnline = useIsOnline();
+  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const offsetY = useSharedValue(0);
@@ -79,6 +98,23 @@ export default function GenreScreen() {
     () => data?.pages.flatMap((page) => page.albumList2?.album ?? []) ?? [],
     [data],
   );
+  const handlePresentModalPress = useCallback(() => {
+    bottomSheetModalRef.current?.present();
+  }, []);
+  const handleCreateMixPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    router.push({
+      pathname: "/mix",
+      params: { kind: "genre", id },
+    });
+  };
+  const optionsButton = capabilities.songLists ? (
+    <FadeOutScaleDown onPress={handlePresentModalPress}>
+      <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
+        <EllipsisVertical size={20} color={white} />
+      </Box>
+    </FadeOutScaleDown>
+  ) : null;
   return (
     <Box className="h-full">
       <AnimatedBox
@@ -102,15 +138,18 @@ export default function GenreScreen() {
             >
               {id}
             </Heading>
-            <FadeOutScaleDown testID="album-layout-toggle" onPress={toggle}>
-              <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                {layout === "list" ? (
-                  <LayoutGrid size={20} color={white} />
-                ) : (
-                  <List size={20} color={white} />
-                )}
-              </Box>
-            </FadeOutScaleDown>
+            <HStack className="items-center gap-x-3">
+              <FadeOutScaleDown testID="album-layout-toggle" onPress={toggle}>
+                <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
+                  {layout === "list" ? (
+                    <LayoutGrid size={20} color={white} />
+                  ) : (
+                    <List size={20} color={white} />
+                  )}
+                </Box>
+              </FadeOutScaleDown>
+              {optionsButton}
+            </HStack>
           </HStack>
         </ScreenHeaderGradient>
       </AnimatedBox>
@@ -153,18 +192,21 @@ export default function GenreScreen() {
                       </Animated.View>
                     )}
                   </Pressable>
-                  <FadeOutScaleDown
-                    testID="album-layout-toggle"
-                    onPress={toggle}
-                  >
-                    <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                      {layout === "list" ? (
-                        <LayoutGrid size={20} color={white} />
-                      ) : (
-                        <List size={20} color={white} />
-                      )}
-                    </Box>
-                  </FadeOutScaleDown>
+                  <HStack className="items-center gap-x-3">
+                    <FadeOutScaleDown
+                      testID="album-layout-toggle"
+                      onPress={toggle}
+                    >
+                      <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
+                        {layout === "list" ? (
+                          <LayoutGrid size={20} color={white} />
+                        ) : (
+                          <List size={20} color={white} />
+                        )}
+                      </Box>
+                    </FadeOutScaleDown>
+                    {optionsButton}
+                  </HStack>
                 </HStack>
                 <Heading
                   numberOfLines={2}
@@ -196,6 +238,50 @@ export default function GenreScreen() {
         }}
         onEndReachedThreshold={0.5}
       />
+      <CenteredBottomSheetModal
+        ref={bottomSheetModalRef}
+        backgroundStyle={{
+          backgroundColor: "rgb(41, 41, 41)",
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: "#b3b3b3",
+        }}
+      >
+        <BottomSheetScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ alignItems: "center" }}
+        >
+          <Box className="p-6 w-full mb-12">
+            <HStack className="items-center">
+              <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
+                <Tag size={24} color={white} />
+              </Box>
+              <VStack className="ml-4 flex-1">
+                <Heading
+                  className="text-white font-normal"
+                  size="lg"
+                  numberOfLines={1}
+                >
+                  {id}
+                </Heading>
+              </VStack>
+            </HStack>
+            <VStack className="mt-6 gap-y-8">
+              <FadeOutScaleDown
+                onPress={handleCreateMixPress}
+                disabled={!isOnline}
+              >
+                <HStack className="items-center">
+                  <Disc3 size={24} color={gray200} />
+                  <Text className="ml-4 text-lg text-gray-200">
+                    {t("app.mixes.createGenreMix")}
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
+            </VStack>
+          </Box>
+        </BottomSheetScrollView>
+      </CenteredBottomSheetModal>
     </Box>
   );
 }

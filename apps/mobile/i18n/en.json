@@ -335,6 +335,17 @@
 				"unfavoriteSuccessMessage": "Artist successfully removed from favorites",
 				"unfavoriteErrorMessage": "An error occurred while removing the artist from favorites"
 			},
+			"mixes": {
+				"createArtistMix": "Create artist mix",
+				"createGenreMix": "Create genre mix",
+				"title": "{{name}} Mix",
+				"featuring": "With {{names}} and more",
+				"empty": "Not enough songs in your library to build this mix",
+				"offline": "Mixes are built from your music server, which can't be reached right now",
+				"error": "The mix couldn't be generated",
+				"queued_one": "{{count}} song added to the queue",
+				"queued_other": "{{count}} songs added to the queue"
+			},
 			"favorites": {
 				"title": "Favorites",
 				"favorite_tracks": "Favorite tracks",
@@ -1994,6 +2005,7 @@
 					"similar": "Playing from similar songs",
 					"audiomuse": "Playing from AudioMuse-AI",
 					"listenbrainz": "Playing from ListenBrainz",
+					"mix": "Playing from mix",
 					"albumList": "Playing from albums",
 					"playlistList": "Playing from playlists"
 				},

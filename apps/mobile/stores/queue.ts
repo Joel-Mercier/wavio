@@ -23,7 +23,9 @@ export type QueueSource = {
     | "audiomuse"
     // A ListenBrainz "created for you" playlist, resolved against the library.
     // Not navigable either: the playlist exists on ListenBrainz, not the server.
-    | "listenbrainz";
+    | "listenbrainz"
+    // An artist or genre mix the app generated. Not navigable either.
+    | "mix";
   name: string;
   // Present for navigable sources (album/playlist/artist/folder)
   id?: string;

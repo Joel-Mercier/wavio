@@ -23,6 +23,7 @@ export default function SearchLayout() {
       <Stack.Screen name="playlists/add-to-playlist" />
       <Stack.Screen name="genres/[id]" />
       <Stack.Screen name="tracks/[id]/similar" />
+      <Stack.Screen name="mix" />
       <Stack.Screen name="settings/index" />
       <Stack.Screen name="settings/[section]" />
       <Stack.Screen name="downloaders/lidarr" />

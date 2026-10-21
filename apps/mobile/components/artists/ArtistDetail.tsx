@@ -8,6 +8,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/icons/arrow-left";
 import ChevronRight from "lucide-react-native/icons/chevron-right";
+import Disc3 from "lucide-react-native/icons/disc-3";
 import EllipsisVertical from "lucide-react-native/icons/ellipsis-vertical";
 import Heart from "lucide-react-native/icons/heart";
 import ListMusic from "lucide-react-native/icons/list-music";
@@ -81,6 +82,7 @@ import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { SIMILAR_ARTISTS_DEFAULT_RESULTS } from "@/services/audioMuse/artists";
 import { getAlbum } from "@/services/backend/browsing";
+import { ARTIST_SCREEN_SIMILAR_PARAMS } from "@/services/mixes/artistMix";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
@@ -141,14 +143,8 @@ export default function ArtistDetail() {
         }
       : undefined,
   );
-  // `includeNotPresent` keeps the recommendations the library doesn't hold:
-  // they're the discovery half of the row, and ArtistCarouselRow renders them
-  // as their own kind of tile rather than a link to a detail screen.
   const { data: artistInfoData, isLoading: isLoadingArtistInfo } =
-    useArtistInfo2(id, {
-      count: SIMILAR_ARTISTS_LIMIT,
-      includeNotPresent: true,
-    });
+    useArtistInfo2(id, ARTIST_SCREEN_SIMILAR_PARAMS);
   // Passing the route id lets servers with the `topSongsByArtistId` extension
   // (and Jellyfin / the local library) fetch this in parallel with useArtist
   // instead of waiting on it for a name.
@@ -464,6 +460,20 @@ export default function ArtistDetail() {
         `https://www.last.fm/music/${encodeURIComponent(data?.artist?.name)}`,
       );
     }
+  };
+
+  const handleCreateMixPress = () => {
+    if (!data?.artist?.id) return;
+    bottomSheetModalRef.current?.dismiss();
+    router.push({
+      pathname: "/mix",
+      params: {
+        kind: "artist",
+        id: data.artist.id,
+        name: data.artist.name,
+        mbid: data.artist.musicBrainzId,
+      },
+    });
   };
 
   const handleRatingPress = () => {
@@ -987,6 +997,19 @@ export default function ArtistDetail() {
               </VStack>
             </HStack>
             <VStack className="mt-6 gap-y-8">
+              {data?.artist?.id && (
+                <FadeOutScaleDown
+                  onPress={handleCreateMixPress}
+                  disabled={!isOnline}
+                >
+                  <HStack className="items-center">
+                    <Disc3 size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.mixes.createArtistMix")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
               {capabilities.setRating && (
                 <FadeOutScaleDown onPress={handleRatingPress}>
                   <HStack className="items-center justify-between">
