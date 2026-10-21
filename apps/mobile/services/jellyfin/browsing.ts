@@ -1,5 +1,7 @@
 import axios, { type AxiosRequestConfig } from "axios";
-import jellyfinApiInstance from "@/services/jellyfin/index";
+import jellyfinApiInstance, {
+  MUSIC_ARTIST_ITEM_TYPES,
+} from "@/services/jellyfin/index";
 import {
   mapBaseItemToAlbum,
   mapBaseItemToAlbumWithSongs,
@@ -236,7 +238,7 @@ export const getArtistInfo2 = async (
 };
 
 export const getArtists = async ({
-  musicFolderId: _musicFolderId,
+  musicFolderId,
 }: {
   musicFolderId?: string;
 }) => {
@@ -246,6 +248,8 @@ export const getArtists = async ({
       params: {
         UserId: userId(),
         Recursive: true,
+        IncludeItemTypes: MUSIC_ARTIST_ITEM_TYPES,
+        ParentId: musicFolderId,
         Fields: COMMON_FIELDS,
         SortBy: "SortName",
       },

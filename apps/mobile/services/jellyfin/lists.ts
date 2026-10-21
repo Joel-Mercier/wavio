@@ -1,5 +1,7 @@
 import axios from "axios";
-import jellyfinApiInstance from "@/services/jellyfin/index";
+import jellyfinApiInstance, {
+  MUSIC_ARTIST_ITEM_TYPES,
+} from "@/services/jellyfin/index";
 import {
   mapBaseItemToAlbum,
   mapBaseItemToArtist,
@@ -355,6 +357,7 @@ const searchArtistIds = async (query: string, musicFolderId?: string) => {
       SearchTerm: query,
       Limit: SEARCH_HINTS,
       ParentId: musicFolderId,
+      IncludeItemTypes: MUSIC_ARTIST_ITEM_TYPES,
     },
   });
   return (rsp.data?.Items ?? []).map((item) => item.Id).filter(Boolean);
@@ -497,6 +500,7 @@ async function getFavoriteArtists() {
     params: {
       UserId: userId(),
       Recursive: true,
+      IncludeItemTypes: MUSIC_ARTIST_ITEM_TYPES,
       Fields: FIELDS,
       SortBy: "SortName",
     },
