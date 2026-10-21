@@ -329,6 +329,16 @@
 				"unfavoriteErrorMessage": "取消收藏艺人时发生错误",
 				"albumCount_other": "{{count}} 张专辑"
 			},
+			"mixes": {
+				"createArtistMix": "Create artist mix",
+				"createGenreMix": "Create genre mix",
+				"title": "{{name}} Mix",
+				"featuring": "With {{names}} and more",
+				"empty": "Not enough songs in your library to build this mix",
+				"offline": "Mixes are built from your music server, which can't be reached right now",
+				"error": "The mix couldn't be generated",
+				"queued_other": "{{count}} 已添加到播放列表中的歌曲"
+			},
 			"favorites": {
 				"title": "收藏",
 				"favorite_tracks": "收藏的曲目",
@@ -1939,6 +1949,7 @@
 					"similar": "播放自相似歌曲",
 					"audiomuse": "正在播放来自 AudioMuse-AI 的内容",
 					"listenbrainz": "正在播放来自 ListenBrainz 的音乐",
+					"mix": "Playing from mix",
 					"albumList": "从专辑中播放",
 					"playlistList": "从播放列表中播放"
 				},
