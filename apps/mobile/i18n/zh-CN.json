@@ -1801,6 +1801,21 @@
 			"activity": {
 				"title": "播放记录",
 				"empty": "暂无记录。你播放过的专辑、艺人和歌单将显示在这里。",
+				"tabs": {
+					"history": "历史"
+				},
+				"listenbrainz": {
+					"notConnected": "Connect your ListenBrainz account to see your listening stats here.",
+					"noData": "No listens on ListenBrainz yet. Your stats will show up here once your plays start reaching it.",
+					"connectAction": "Connect ListenBrainz",
+					"settingsAction": "ListenBrainz settings"
+				},
+				"lastfm": {
+					"notConnected": "Connect your Last.fm account to see your listening stats here.",
+					"noData": "Nothing scrobbled to Last.fm yet. Your stats will show up here once your plays start reaching it.",
+					"connectAction": "Connect Last.fm",
+					"settingsAction": "Last.fm settings"
+				},
 				"sections": {
 					"today": "今天",
 					"yesterday": "昨天",
