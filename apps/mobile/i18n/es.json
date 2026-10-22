@@ -1559,6 +1559,10 @@
 					"homeSectionsSheetDescription": "Desactiva las secciones para ocultarlas de la pantalla de inicio",
 					"homeSectionsReorderHint": "Mantén pulsada una sección y, a continuación, arrástrala para cambiar su posición en el feed.",
 					"homeSectionsResetOrder": "Restablecer el pedido",
+					"pinFavoritesShortcutLabel": "Pin Favorites shortcut",
+					"pinFavoritesShortcutDescription": "Keep Favorites first in the home shortcuts. When off, it moves like any other shortcut",
+					"homeShortcutsCountLabel": "Number of shortcuts",
+					"homeShortcutsCountDescription": "How many recent plays to show as shortcuts on the home screen",
 					"homeSections": {
 						"recentPlays": "Atajos",
 						"moreFromArtist": "Más obras de un artista",
