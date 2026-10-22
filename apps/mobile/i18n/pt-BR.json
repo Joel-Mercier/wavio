@@ -1559,6 +1559,10 @@
 					"homeSectionsSheetDescription": "Desative as seções para ocultá-las da tela inicial",
 					"homeSectionsReorderHint": "Mantenha pressionada uma seção e, em seguida, arraste-a para alterar sua posição no feed",
 					"homeSectionsResetOrder": "Redefinir pedido",
+					"pinFavoritesShortcutLabel": "Pin Favorites shortcut",
+					"pinFavoritesShortcutDescription": "Keep Favorites first in the home shortcuts. When off, it moves like any other shortcut",
+					"homeShortcutsCountLabel": "Number of shortcuts",
+					"homeShortcutsCountDescription": "How many recent plays to show as shortcuts on the home screen",
 					"homeSections": {
 						"recentPlays": "Atalhos",
 						"moreFromArtist": "Mais obras de um artista",
