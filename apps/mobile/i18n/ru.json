@@ -91,6 +91,8 @@
 				"title": "Создать",
 				"playlistTitle": "Плейлист",
 				"playlistDescription": "Создай плейлист с треками",
+				"playlistFolderTitle": "Folder",
+				"playlistFolderDescription": "Group your playlists in a folder",
 				"aiPlaylistTitle": "Плейлист по запросу",
 				"aiPlaylistDescription": "Опишите, что вы хотите услышать, и позвольте AudioMuse-AI создать это",
 				"fingerprintTitle": "Звуковой отпечаток",
@@ -627,6 +629,24 @@
 			"favoritePodcasts": {
 				"title": "Недавние эпизоды",
 				"noServerFavorites": "У тебя пока нет избранных подкастов. Открой любой подкаст и нажми на сердечко, чтобы добавить его сюда."
+			},
+			"playlistFolders": {
+				"newTitle": "New folder",
+				"editTitle": "Edit folder",
+				"namePlaceholder": "Folder name",
+				"nameTaken": "A folder with this name already exists",
+				"colorLabel": "Color",
+				"playlistsLabel": "Плейлисты",
+				"empty": "This folder is empty",
+				"emptyHint": "Edit the folder to add playlists, or use Move to folder on a playlist.",
+				"notFound": "This folder no longer exists",
+				"edit": "Edit this folder",
+				"delete": "Delete this folder",
+				"deleteConfirmTitle": "Delete this folder?",
+				"deleteConfirmDescription": "Its playlists go back to your library. They are not deleted.",
+				"moveToFolder": "Move to folder",
+				"removeFromFolder": "Remove from folder",
+				"newFolder": "New folder"
 			},
 			"newPlaylist": {
 				"title": "Придумай название плейлиста",
@@ -1684,6 +1704,18 @@
 					"homeSectionsCount_many": "{{count}} показано",
 					"homeSectionsCount_other": "{{count}} показано"
 				},
+				"libraryDisplaySettings": {
+					"title": "Моя медиатека",
+					"playlistFoldersLabel": "Group playlists by name",
+					"playlistFoldersDescription": "Put playlists named like “{{example}}” in a “Rock” folder. Folders you create yourself always show.",
+					"separatorLabel": "Folder separator",
+					"separatorDescription": "Text between the folder name and the playlist name. Spaces count.",
+					"separatorCustom": "Custom",
+					"separatorCustomLabel": "Custom separator",
+					"separatorCustomPlaceholder": "e.g. \" of \"",
+					"separatorSaveAction": "Сохранить",
+					"separatorPreview": "“{{example}}” → “Rock” › “80s”"
+				},
 				"hapticsSettings": {
 					"title": "Тактильная отдача",
 					"enabledLabel": "Тактильная отдача",
@@ -2362,6 +2394,7 @@
 					"removeConfirmDescription_other": "{{count}} Загруженные песни будут удалены с этого устройства. Песни, сохраненные также в другом альбоме или плейлисте, останутся."
 				},
 				"favorites": "Любимые треки",
+				"playlistFolder": "Playlist folder",
 				"filters": {
 					"albums": "Альбомы",
 					"artists": "Исполнители",
@@ -2443,6 +2476,10 @@
 				"folder_few": "Папки",
 				"folder_many": "Папок",
 				"folder_other": "Папок",
+				"playlistCount_one": "{{count}} playlist",
+				"playlistCount_few": "{{count}} playlists",
+				"playlistCount_many": "{{count}} playlists",
+				"playlistCount_other": "{{count}} playlists",
 				"song_one": "Песня",
 				"song_few": "Песни",
 				"song_many": "Песен",
