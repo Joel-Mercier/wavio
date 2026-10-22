@@ -1847,6 +1847,21 @@
 			"activity": {
 				"title": "Attività",
 				"empty": "Qui non c'è ancora nulla. Gli album, gli artisti e le playlist che ascolti appariranno qui.",
+				"tabs": {
+					"history": "Storia"
+				},
+				"listenbrainz": {
+					"notConnected": "Connect your ListenBrainz account to see your listening stats here.",
+					"noData": "No listens on ListenBrainz yet. Your stats will show up here once your plays start reaching it.",
+					"connectAction": "Connect ListenBrainz",
+					"settingsAction": "ListenBrainz settings"
+				},
+				"lastfm": {
+					"notConnected": "Connect your Last.fm account to see your listening stats here.",
+					"noData": "Nothing scrobbled to Last.fm yet. Your stats will show up here once your plays start reaching it.",
+					"connectAction": "Connect Last.fm",
+					"settingsAction": "Last.fm settings"
+				},
 				"sections": {
 					"today": "Oggi",
 					"yesterday": "Ieri",
