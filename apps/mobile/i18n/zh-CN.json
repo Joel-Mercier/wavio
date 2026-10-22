@@ -91,6 +91,8 @@
 				"title": "创建",
 				"playlistTitle": "歌单",
 				"playlistDescription": "创建歌单",
+				"playlistFolderTitle": "Folder",
+				"playlistFolderDescription": "Group your playlists in a folder",
 				"aiPlaylistTitle": "根据提示生成的播放列表",
 				"aiPlaylistDescription": "描述你想听的内容，让AudioMuse-AI为你生成",
 				"fingerprintTitle": "声波指纹",
@@ -591,6 +593,24 @@
 			"favoritePodcasts": {
 				"title": "最近单集",
 				"noServerFavorites": "你还没有订阅任何播客。打开一个播客，点击心形图标即可订阅。"
+			},
+			"playlistFolders": {
+				"newTitle": "New folder",
+				"editTitle": "Edit folder",
+				"namePlaceholder": "Folder name",
+				"nameTaken": "A folder with this name already exists",
+				"colorLabel": "Color",
+				"playlistsLabel": "歌单",
+				"empty": "This folder is empty",
+				"emptyHint": "Edit the folder to add playlists, or use Move to folder on a playlist.",
+				"notFound": "This folder no longer exists",
+				"edit": "Edit this folder",
+				"delete": "Delete this folder",
+				"deleteConfirmTitle": "Delete this folder?",
+				"deleteConfirmDescription": "Its playlists go back to your library. They are not deleted.",
+				"moveToFolder": "Move to folder",
+				"removeFromFolder": "Remove from folder",
+				"newFolder": "New folder"
 			},
 			"newPlaylist": {
 				"title": "给歌单取个名字",
@@ -1549,6 +1569,18 @@
 					},
 					"homeSectionsCount_other": "{{count}} 显示"
 				},
+				"libraryDisplaySettings": {
+					"title": "音乐库",
+					"playlistFoldersLabel": "Group playlists by name",
+					"playlistFoldersDescription": "Put playlists named like “{{example}}” in a “Rock” folder. Folders you create yourself always show.",
+					"separatorLabel": "Folder separator",
+					"separatorDescription": "Text between the folder name and the playlist name. Spaces count.",
+					"separatorCustom": "Custom",
+					"separatorCustomLabel": "Custom separator",
+					"separatorCustomPlaceholder": "e.g. \" of \"",
+					"separatorSaveAction": "保存",
+					"separatorPreview": "“{{example}}” → “Rock” › “80s”"
+				},
 				"hapticsSettings": {
 					"title": "触感反馈",
 					"enabledLabel": "触感反馈",
@@ -2179,6 +2211,7 @@
 					"removeConfirmDescription_other": "{{count}} 已下载的歌曲将从本设备中删除。同时保存在其他专辑或播放列表中的歌曲将保留。"
 				},
 				"favorites": "收藏",
+				"playlistFolder": "Playlist folder",
 				"filters": {
 					"albums": "专辑",
 					"artists": "艺人",
@@ -2242,6 +2275,7 @@
 				"podcast_other": "播客",
 				"radioStation_other": "电台",
 				"folder_other": "文件夹",
+				"playlistCount_other": "{{count}} playlists",
 				"song_other": "歌曲",
 				"albumCount_other": "{{count}} 张专辑",
 				"songCount_other": "{{count}} 首歌",
