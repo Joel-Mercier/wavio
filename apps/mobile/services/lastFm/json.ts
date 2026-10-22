@@ -15,3 +15,13 @@ export const toCount = (
   value: string | number | undefined,
   fallback: number,
 ): number => (value === undefined ? fallback : Number(value) || 0);
+
+export const toOptionalCount = (
+  value: string | number | undefined,
+): number | null => {
+  const count =
+    value === undefined || String(value).trim() === ""
+      ? Number.NaN
+      : Number(value);
+  return Number.isFinite(count) ? count : null;
+};

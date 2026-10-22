@@ -215,9 +215,9 @@ export const fetchArtistEvolution = async ({
  */
 export const fetchListenCount = async (options?: {
   signal?: AbortSignal;
-}): Promise<number> => {
+}): Promise<number | null> => {
   const rsp = await listenBrainzApiInstance.get<
     StatsResponse<ListenCountPayload>
   >(`/1/user/${requireUserName()}/listen-count`, { signal: options?.signal });
-  return rsp.data?.payload?.count ?? 0;
+  return rsp.data?.payload?.count ?? null;
 };

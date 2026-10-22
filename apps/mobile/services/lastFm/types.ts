@@ -29,7 +29,7 @@ export type LastFmPeriod = "7day" | "1month" | "12month" | "overall";
 
 export type LastFmUserInfo = {
   name: string;
-  playCount: number;
+  playCount: number | null;
   artistCount: number;
   albumCount: number;
   trackCount: number;

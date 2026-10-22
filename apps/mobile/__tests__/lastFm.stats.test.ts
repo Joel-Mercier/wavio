@@ -213,7 +213,18 @@ describe("fetchUserInfo", () => {
     const info = await fetchUserInfo({ userName: "someone" });
 
     expect(info.registeredAt).toBe(1157128225);
-    expect(info.playCount).toBe(0);
+    expect(info.playCount).toBeNull();
+  });
+
+  it("keeps a real zero play count but drops an unreadable one", async () => {
+    mockCallRead.mockResolvedValue({ user: { playcount: "0" } });
+    expect((await fetchUserInfo({ userName: "someone" })).playCount).toBe(0);
+
+    mockCallRead.mockResolvedValue({ user: { playcount: "n/a" } });
+    expect((await fetchUserInfo({ userName: "someone" })).playCount).toBeNull();
+
+    mockCallRead.mockResolvedValue({ user: { playcount: " " } });
+    expect((await fetchUserInfo({ userName: "someone" })).playCount).toBeNull();
   });
 
   it("reports no registration date rather than the epoch", async () => {

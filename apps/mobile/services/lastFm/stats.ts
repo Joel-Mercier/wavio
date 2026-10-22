@@ -1,6 +1,6 @@
 import { callRead } from "@/services/lastFm/client";
 import { type LastFmImage, pickImageUrl } from "@/services/lastFm/images";
-import { toCount, toEntries } from "@/services/lastFm/json";
+import { toCount, toEntries, toOptionalCount } from "@/services/lastFm/json";
 import type {
   LastFmPeriod,
   LastFmRecentTrack,
@@ -168,7 +168,7 @@ export const fetchUserInfo = async ({
   );
   return {
     name: user.name?.trim() || userName,
-    playCount: toCount(user.playcount, 0),
+    playCount: toOptionalCount(user.playcount),
     artistCount: toCount(user.artist_count, 0),
     albumCount: toCount(user.album_count, 0),
     trackCount: toCount(user.track_count, 0),
