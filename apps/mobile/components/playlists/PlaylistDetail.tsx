@@ -16,6 +16,7 @@ import ClipboardCheck from "lucide-react-native/icons/clipboard-check";
 import Clock from "lucide-react-native/icons/clock";
 import Download from "lucide-react-native/icons/download";
 import EllipsisVertical from "lucide-react-native/icons/ellipsis-vertical";
+import FolderInput from "lucide-react-native/icons/folder-input";
 import ListChecks from "lucide-react-native/icons/list-checks";
 import ListMusic from "lucide-react-native/icons/list-music";
 import ListOrdered from "lucide-react-native/icons/list-ordered";
@@ -48,6 +49,7 @@ import ImageWithFallback from "@/components/ImageWithFallback";
 import CollectionDownloadedCount from "@/components/offline/CollectionDownloadedCount";
 import RemoveDownloadsDialog from "@/components/offline/RemoveDownloadsDialog";
 import PlayPauseButton from "@/components/PlayPauseButton";
+import MoveToFolderSheet from "@/components/playlistFolders/MoveToFolderSheet";
 import SaveGeneratedPlaylistDialog from "@/components/playlists/SaveGeneratedPlaylistDialog";
 import ShuffleToggle from "@/components/ShuffleToggle";
 import SortOptionsSheet, {
@@ -163,6 +165,7 @@ export default function PlaylistDetail() {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetMoveToFolderModalRef = useRef<BottomSheetModal>(null);
   // Set once this playlist is known not to exist any more, by either path.
   const playlistGoneRef = useRef(false);
   const { data: serverPlaylistData, error, fetchStatus } = usePlaylist(id);
@@ -269,6 +272,11 @@ export default function PlaylistDetail() {
   const handlePlaylistUpdatePress = () => {
     bottomSheetModalRef.current?.dismiss();
     router.navigate(`/playlists/${id}/edit`);
+  };
+
+  const handleMoveToFolderPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    bottomSheetMoveToFolderModalRef.current?.present();
   };
 
   const handlePlaylistReorderPress = () => {
@@ -1299,6 +1307,14 @@ export default function PlaylistDetail() {
                   </Text>
                 </HStack>
               </FadeOutScaleDown>
+              <FadeOutScaleDown onPress={handleMoveToFolderPress}>
+                <HStack className="items-center">
+                  <FolderInput size={24} color={gray200} />
+                  <Text className="ml-4 text-lg text-gray-200">
+                    {t("app.playlistFolders.moveToFolder")}
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
               {capabilities.sharing && (
                 <FadeOutScaleDown
                   onPress={handleSharePress}
@@ -1329,6 +1345,10 @@ export default function PlaylistDetail() {
           </Box>
         </BottomSheetScrollView>
       </CenteredBottomSheetModal>
+      <MoveToFolderSheet
+        modalRef={bottomSheetMoveToFolderModalRef}
+        playlist={playlistData?.playlist}
+      />
       <SortOptionsSheet
         ref={bottomSheetSortModalRef}
         fields={sortFields}

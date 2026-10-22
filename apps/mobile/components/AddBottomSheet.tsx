@@ -6,6 +6,7 @@ import { useRouter } from "expo-router";
 import CloudDownload from "lucide-react-native/icons/cloud-download";
 import Drama from "lucide-react-native/icons/drama";
 import Fingerprint from "lucide-react-native/icons/fingerprint-pattern";
+import FolderPlus from "lucide-react-native/icons/folder-plus";
 import ListMusic from "lucide-react-native/icons/list-music";
 import Podcast from "lucide-react-native/icons/mic-signal";
 import Radio from "lucide-react-native/icons/radio";
@@ -82,6 +83,11 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
     router.navigate("/playlists/new");
   };
 
+  const handleCreatePlaylistFolderPress = () => {
+    dismiss();
+    router.navigate("/playlists/new-folder");
+  };
+
   const handleCreateSmartPlaylistPress = () => {
     dismiss();
     router.navigate("/playlists/new-smart");
@@ -152,6 +158,19 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
                   </Heading>
                   <Text className="text-md text-gray-200 flex-1">
                     {t("app.create.playlistDescription")}
+                  </Text>
+                </VStack>
+              </HStack>
+            </FadeOutScaleDown>
+            <FadeOutScaleDown onPress={handleCreatePlaylistFolderPress}>
+              <HStack className="items-center">
+                <FolderPlus size={32} color={gray200} />
+                <VStack className="ml-4 flex-1">
+                  <Heading numberOfLines={1} className="text-white">
+                    {t("app.create.playlistFolderTitle")}
+                  </Heading>
+                  <Text className="text-md text-gray-200 flex-1">
+                    {t("app.create.playlistFolderDescription")}
                   </Text>
                 </VStack>
               </HStack>

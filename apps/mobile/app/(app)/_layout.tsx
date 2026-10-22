@@ -186,6 +186,7 @@ export default function AppLayout() {
         useUpnp.getState().__reset();
         useRecentPlays.getState().__reset();
         useRecentSearches.getState().__reset();
+        usePlaylists.getState().__reset();
         useActivity.getState().__reset();
         usePlayHistory.getState().__reset();
         useQueue.getState().__reset();

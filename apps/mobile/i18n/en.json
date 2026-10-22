@@ -91,6 +91,8 @@
 				"title": "Create",
 				"playlistTitle": "Playlist",
 				"playlistDescription": "Create a playlist with songs",
+				"playlistFolderTitle": "Folder",
+				"playlistFolderDescription": "Group your playlists in a folder",
 				"aiPlaylistTitle": "Playlist from a prompt",
 				"aiPlaylistDescription": "Describe what you want to hear and let AudioMuse-AI build it",
 				"fingerprintTitle": "Sonic fingerprint",
@@ -603,6 +605,24 @@
 			"favoritePodcasts": {
 				"title": "Recent episodes",
 				"noServerFavorites": "You haven't favorited any podcasts yet. Open a podcast and tap the heart to add it here."
+			},
+			"playlistFolders": {
+				"newTitle": "New folder",
+				"editTitle": "Edit folder",
+				"namePlaceholder": "Folder name",
+				"nameTaken": "A folder with this name already exists",
+				"colorLabel": "Color",
+				"playlistsLabel": "Playlists",
+				"empty": "This folder is empty",
+				"emptyHint": "Edit the folder to add playlists, or use Move to folder on a playlist.",
+				"notFound": "This folder no longer exists",
+				"edit": "Edit this folder",
+				"delete": "Delete this folder",
+				"deleteConfirmTitle": "Delete this folder?",
+				"deleteConfirmDescription": "Its playlists go back to your library. They are not deleted.",
+				"moveToFolder": "Move to folder",
+				"removeFromFolder": "Remove from folder",
+				"newFolder": "New folder"
 			},
 			"newPlaylist": {
 				"title": "Give a name to your playlist",
@@ -1594,6 +1614,18 @@
 						"addToPlaylist": "Add to playlist"
 					}
 				},
+				"libraryDisplaySettings": {
+					"title": "Library",
+					"playlistFoldersLabel": "Group playlists by name",
+					"playlistFoldersDescription": "Put playlists named like “{{example}}” in a “Rock” folder. Folders you create yourself always show.",
+					"separatorLabel": "Folder separator",
+					"separatorDescription": "Text between the folder name and the playlist name. Spaces count.",
+					"separatorCustom": "Custom",
+					"separatorCustomLabel": "Custom separator",
+					"separatorCustomPlaceholder": "e.g. \" of \"",
+					"separatorSaveAction": "Save",
+					"separatorPreview": "“{{example}}” → “Rock” › “80s”"
+				},
 				"hapticsSettings": {
 					"title": "Haptics",
 					"enabledLabel": "Haptic feedback",
@@ -2253,6 +2285,9 @@
 				"radioStation_other": "Radio stations",
 				"folder_one": "Folder",
 				"folder_other": "Folders",
+				"playlistFolder": "Playlist folder",
+				"playlistCount_one": "{{count}} playlist",
+				"playlistCount_other": "{{count}} playlists",
 				"song_one": "Song",
 				"song_other": "Songs",
 				"filters": {

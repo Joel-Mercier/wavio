@@ -11,6 +11,7 @@ import { zustandStorage } from "@/config/storage";
 import { type AlbumSortType, DEFAULT_ALBUM_SORT } from "@/utils/albumSort";
 import { type ArtistSortType, DEFAULT_ARTIST_SORT } from "@/utils/artistSort";
 import createSelectors from "@/utils/createSelectors";
+import { DEFAULT_PLAYLIST_FOLDER_SEPARATOR } from "@/utils/playlistFolders";
 import { DEFAULT_SONG_SORT, type SongSortType } from "@/utils/songSort";
 import type { SortType } from "@/utils/sort";
 import type { OfflineTrackSortType, TrackSortType } from "@/utils/trackSort";
@@ -174,6 +175,13 @@ interface AppStore {
   setLibrarySort: (librarySort: LibrarySort) => void;
   libraryFilter: LibraryFilter[];
   setLibraryFilter: (libraryFilter: LibraryFilter[]) => void;
+  // Group playlists named "<folder><separator><title>" into folders (issue
+  // #224). Off by default so existing libraries don't suddenly regroup.
+  playlistFolderDetection: boolean;
+  setPlaylistFolderDetection: (enabled: boolean) => void;
+  // Matched literally, spaces included: " - " keeps "lo-fi beats" whole.
+  playlistFolderSeparator: string;
+  setPlaylistFolderSeparator: (separator: string) => void;
   genresSort: GenresSort;
   setGenresSort: (genresSort: GenresSort) => void;
   // Layout (list/grid) chosen on each album-list screen, keyed by a stable
@@ -402,6 +410,15 @@ export const useAppBase = create<AppStore>()(
       libraryFilter: [],
       setLibraryFilter: (libraryFilter: LibraryFilter[]) => {
         set({ libraryFilter });
+      },
+      playlistFolderDetection: false,
+      setPlaylistFolderDetection: (playlistFolderDetection: boolean) => {
+        set({ playlistFolderDetection });
+      },
+      playlistFolderSeparator: DEFAULT_PLAYLIST_FOLDER_SEPARATOR,
+      setPlaylistFolderSeparator: (playlistFolderSeparator: string) => {
+        if (!playlistFolderSeparator.trim()) return;
+        set({ playlistFolderSeparator });
       },
       genresSort: "alphabeticalAsc",
       setGenresSort: (genresSort: GenresSort) => {

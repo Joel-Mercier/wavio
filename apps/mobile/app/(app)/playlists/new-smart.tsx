@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import X from "lucide-react-native/icons/x";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { StyleSheet } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
@@ -258,8 +259,7 @@ export default function NewSmartPlaylistScreen() {
           />
         </VStack>
       </KeyboardAwareScrollView>
-      <LinearGradient
-        colors={["transparent", "#000000"]}
+      <Box
         pointerEvents="box-none"
         style={{
           position: "absolute",
@@ -271,6 +271,11 @@ export default function NewSmartPlaylistScreen() {
           alignItems: "center",
         }}
       >
+        <LinearGradient
+          pointerEvents="none"
+          colors={["transparent", "#000000"]}
+          style={StyleSheet.absoluteFill}
+        />
         <FadeOutScaleDown
           onPress={form.handleSubmit}
           disabled={doCreate.isPending}
@@ -284,7 +289,7 @@ export default function NewSmartPlaylistScreen() {
             </Text>
           )}
         </FadeOutScaleDown>
-      </LinearGradient>
+      </Box>
     </Box>
   );
 }

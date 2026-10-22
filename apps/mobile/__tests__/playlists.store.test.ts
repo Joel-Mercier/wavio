@@ -127,3 +127,37 @@ describe("playlists store - smart playlist snapshots", () => {
     expect(get().smartPlaylistSnapshots).toBe(before);
   });
 });
+
+describe("playlists store - folders", () => {
+  beforeEach(() => {
+    get().__reset();
+  });
+
+  it("remembers the detected names a folder was renamed from", () => {
+    get().savePlaylistFolder(
+      "rock",
+      { name: "Rock music", color: null },
+      { a: "rock music" },
+    );
+    get().savePlaylistFolder(
+      "rock music",
+      { name: "Guitars", color: "red" },
+      {},
+    );
+    expect(get().playlistFolders).toEqual({
+      guitars: {
+        name: "Guitars",
+        color: "red",
+        createdAt: expect.any(Number),
+        renamedFrom: ["rock", "rock music"],
+      },
+    });
+    expect(get().playlistFolderAssignments).toEqual({ a: "guitars" });
+  });
+
+  it("drops a name the folder is renamed back to", () => {
+    get().savePlaylistFolder("rock", { name: "Rock music", color: null }, {});
+    get().savePlaylistFolder("rock music", { name: "Rock", color: null }, {});
+    expect(get().playlistFolders.rock.renamedFrom).toEqual(["rock music"]);
+  });
+});

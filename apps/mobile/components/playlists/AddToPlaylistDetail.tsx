@@ -7,6 +7,7 @@ import Search from "lucide-react-native/icons/search";
 import X from "lucide-react-native/icons/x";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
@@ -458,10 +459,8 @@ export default function AddToPlaylistDetail() {
           ) : null
         }
       />
-      <LinearGradient
+      <Box
         pointerEvents="box-none"
-        colors={["transparent", "#000000"]}
-        locations={[0, 0.6]}
         style={{
           position: "absolute",
           left: 0,
@@ -471,6 +470,12 @@ export default function AddToPlaylistDetail() {
           justifyContent: "flex-end",
         }}
       >
+        <LinearGradient
+          pointerEvents="none"
+          colors={["transparent", "#000000"]}
+          locations={[0, 0.6]}
+          style={StyleSheet.absoluteFill}
+        />
         <Center style={{ marginBottom: floatingPlayerTop + 16 }}>
           <FadeOutScaleDown
             className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full"
@@ -482,7 +487,7 @@ export default function AddToPlaylistDetail() {
             </Text>
           </FadeOutScaleDown>
         </Center>
-      </LinearGradient>
+      </Box>
       <AlertDialog
         isOpen={showDuplicateDialog}
         onClose={handleCloseDuplicateDialog}

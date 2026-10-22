@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import X from "lucide-react-native/icons/x";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { StyleSheet } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
@@ -301,8 +302,7 @@ export default function EditSmartPlaylistScreen() {
           </VStack>
         </KeyboardAwareScrollView>
       )}
-      <LinearGradient
-        colors={["transparent", "#000000"]}
+      <Box
         pointerEvents="box-none"
         style={{
           position: "absolute",
@@ -314,6 +314,11 @@ export default function EditSmartPlaylistScreen() {
           alignItems: "center",
         }}
       >
+        <LinearGradient
+          pointerEvents="none"
+          colors={["transparent", "#000000"]}
+          style={StyleSheet.absoluteFill}
+        />
         <FadeOutScaleDown
           onPress={form.handleSubmit}
           disabled={doUpdate.isPending}
@@ -327,7 +332,7 @@ export default function EditSmartPlaylistScreen() {
             </Text>
           )}
         </FadeOutScaleDown>
-      </LinearGradient>
+      </Box>
     </Box>
   );
 }

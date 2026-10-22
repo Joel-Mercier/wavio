@@ -36,6 +36,7 @@ import LibraryListItem, {
   type LibraryAllArtists,
   type LibraryAllTracks,
   type LibraryFolder,
+  type LibraryPlaylistFolder,
   type LibraryPodcast,
   type LibraryRadioStation,
 } from "@/components/library/LibraryListItem";
@@ -65,6 +66,7 @@ import {
 import { useAlbumScreenLayout } from "@/hooks/useAlbumScreenLayout";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import { usePlaylistFolderOptions } from "@/hooks/usePlaylistFolderOptions";
 import {
   useScopedPodcastFavorites,
   useSyncServerPodcastFavorites,
@@ -90,6 +92,10 @@ import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import usePodcasts from "@/stores/podcasts";
 import { gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
+import {
+  groupPlaylistsIntoFolders,
+  playlistFolderRow,
+} from "@/utils/playlistFolders";
 import { parseSortType, sortItems } from "@/utils/sort";
 import { cn } from "@/utils/tailwind";
 
@@ -174,6 +180,7 @@ export default function LibraryScreen() {
   const queryClient = useQueryClient();
   const downloadedCollections = useDownloadedCollections();
   const hasDownloadedTracks = useHasDownloadedTracks();
+  const playlistFolderOptions = usePlaylistFolderOptions();
   const {
     data: starredData,
     isLoading: isLoadingStarred,
@@ -336,8 +343,15 @@ export default function LibraryScreen() {
       ) {
         data.push(favoritesItem);
       }
-      data.push(
+      const { rootPlaylists, folders } = groupPlaylistsIntoFolders(
         mergeOffline(playlistsData?.playlists?.playlist ?? [], "playlist"),
+        playlistFolderOptions,
+      );
+      data.push(rootPlaylists);
+      data.push(
+        folders
+          .filter((folder) => !downloadedFilter || folder.members.length > 0)
+          .map(playlistFolderRow),
       );
     }
     if (showPodcasts && showBucket("podcasts")) {
@@ -431,6 +445,7 @@ export default function LibraryScreen() {
     downloadedCollections,
     hasDownloadedTracks,
     queryClient,
+    playlistFolderOptions,
   ]);
 
   const isLoading = isLoadingPlaylists || isLoadingStarred;
@@ -651,6 +666,7 @@ export default function LibraryScreen() {
                 Favorites &
                 LibraryPodcast &
                 LibraryFolder &
+                LibraryPlaylistFolder &
                 LibraryRadioStation &
                 LibraryAllAlbums &
                 LibraryAllArtists &
