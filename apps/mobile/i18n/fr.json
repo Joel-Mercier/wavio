@@ -1559,6 +1559,10 @@
 					"homeSectionsSheetDescription": "Désactivez des sections pour les masquer de l'écran d'accueil",
 					"homeSectionsReorderHint": "Appuyez longuement sur une section, puis faites-la glisser pour modifier sa position dans le fil",
 					"homeSectionsResetOrder": "Réinitialiser l'ordre",
+					"pinFavoritesShortcutLabel": "Pin Favorites shortcut",
+					"pinFavoritesShortcutDescription": "Keep Favorites first in the home shortcuts. When off, it moves like any other shortcut",
+					"homeShortcutsCountLabel": "Number of shortcuts",
+					"homeShortcutsCountDescription": "How many recent plays to show as shortcuts on the home screen",
 					"homeSections": {
 						"recentPlays": "Raccourcis",
 						"moreFromArtist": "Plus d'un artiste",
