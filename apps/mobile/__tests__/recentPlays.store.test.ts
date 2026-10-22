@@ -29,7 +29,7 @@ jest.mock("@/stores/auth", () => ({
 
 import useRecentPlays, {
   type RecentPlay,
-  setEnsuredRecentPlayOnHydration,
+  setFavoritesPinned,
 } from "@/stores/recentPlays";
 
 const get = () => useRecentPlays.getState();
@@ -47,6 +47,7 @@ const favorites: RecentPlay = {
 };
 
 beforeEach(() => {
+  setFavoritesPinned(true);
   useRecentPlays.setState({ recentPlays: [] }, false);
 });
 
@@ -63,12 +64,12 @@ describe("recentPlays store - addRecentPlay", () => {
     expect(get().recentPlays).toHaveLength(1);
   });
 
-  it("caps the list at 8 items", () => {
-    for (let i = 0; i < 12; i++) {
+  it("caps the list at 20 items", () => {
+    for (let i = 0; i < 24; i++) {
       get().addRecentPlay(make(`p${i}`));
     }
-    expect(get().recentPlays).toHaveLength(8);
-    expect(get().recentPlays[0].id).toBe("p11");
+    expect(get().recentPlays).toHaveLength(20);
+    expect(get().recentPlays[0].id).toBe("p23");
   });
 
   // persist wraps set() so that it writes the whole list back to storage on
@@ -127,6 +128,61 @@ describe("recentPlays store - addRecentPlay", () => {
     get().addRecentPlay(make("b"));
     get().addRecentPlay(favorites);
     expect(get().recentPlays[0].id).toBe("favorites");
+  });
+
+  it("orders favorites like any other entry when unpinned", () => {
+    setFavoritesPinned(false);
+    get().addRecentPlay(favorites);
+    get().addRecentPlay(make("a"));
+    get().addRecentPlay(make("b"));
+    expect(get().recentPlays.map((p) => p.id)).toEqual(["b", "a", "favorites"]);
+  });
+
+  it("lets an unpinned favorites entry fall past the cap", () => {
+    setFavoritesPinned(false);
+    get().addRecentPlay(favorites);
+    for (let i = 0; i < 20; i++) {
+      get().addRecentPlay(make(`p${i}`));
+    }
+    expect(get().recentPlays.find((p) => p.id === "favorites")).toBeUndefined();
+  });
+});
+
+describe("recentPlays store - pinFavorites", () => {
+  it("is a no-op before hydration", () => {
+    get().addRecentPlay(make("a"));
+    get().pinFavorites();
+    expect(get().recentPlays.map((p) => p.id)).toEqual(["a"]);
+  });
+
+  describe("once hydrated", () => {
+    beforeEach(async () => {
+      await useRecentPlays.persist.rehydrate();
+      useRecentPlays.setState({ recentPlays: [] }, false);
+    });
+
+    it("moves an existing favorites entry to the top", () => {
+      setFavoritesPinned(false);
+      get().addRecentPlay(favorites);
+      get().addRecentPlay(make("a"));
+      setFavoritesPinned(true);
+      get().pinFavorites();
+      expect(get().recentPlays.map((p) => p.id)).toEqual(["favorites", "a"]);
+    });
+
+    it("inserts favorites at the top when missing", () => {
+      get().addRecentPlay(make("a"));
+      get().pinFavorites();
+      expect(get().recentPlays.map((p) => p.id)).toEqual(["favorites", "a"]);
+    });
+
+    it("does not write when favorites already leads", () => {
+      get().addRecentPlay(make("a"));
+      get().addRecentPlay(favorites);
+      const writes = mockWrites.length;
+      get().pinFavorites();
+      expect(mockWrites).toHaveLength(writes);
+    });
   });
 });
 
@@ -221,28 +277,31 @@ describe("recentPlays store - clearRecentPlays", () => {
     get().clearRecentPlays();
     expect(get().recentPlays).toEqual([]);
   });
+
+  it("clears favorites too when unpinned", () => {
+    get().addRecentPlay(make("a"));
+    get().addRecentPlay(favorites);
+    setFavoritesPinned(false);
+    get().clearRecentPlays();
+    expect(get().recentPlays).toEqual([]);
+  });
 });
 
-describe("recentPlays store - cap then pin ordering", () => {
-  it("re-pins favorites even when buried past the cap", () => {
-    // Pre-seed state with favorites at index 9 (beyond the 8-item cap).
+describe("recentPlays store - pin then cap ordering", () => {
+  it("keeps a pinned favorites entry that sits past the cap", () => {
     const seeded: RecentPlay[] = [
-      ...Array.from({ length: 9 }, (_, i) => make(`p${i}`)),
+      ...Array.from({ length: 21 }, (_, i) => make(`p${i}`)),
       favorites,
     ];
     useRecentPlays.setState({ recentPlays: seeded }, false);
-    // Trigger pinFavoritesAndCap by adding a duplicate; favorites is at index 9
-    // which is dropped by .slice(0, 8), so without pre-pinning it would be lost.
-    get().addRecentPlay(make("p0"));
-    // Current implementation caps before pinning, so favorites is dropped here.
-    // Document the actual behavior: favorites does NOT survive when buried past 8.
-    expect(get().recentPlays.find((p) => p.id === "favorites")).toBeUndefined();
+    get().addRecentPlay(make("new"));
+    expect(get().recentPlays).toHaveLength(20);
+    expect(get().recentPlays[0].id).toBe("favorites");
   });
 });
 
 describe("recentPlays store - hydration", () => {
-  it("setEnsuredRecentPlayOnHydration + rehydrate inserts favorites if missing", async () => {
-    setEnsuredRecentPlayOnHydration(favorites);
+  it("rehydrate inserts favorites if missing while pinned", async () => {
     useRecentPlays.setState({ recentPlays: [make("a"), make("b")] }, false);
     await useRecentPlays.persist.rehydrate();
     // After rehydration the persisted state (just our seeded values) is loaded
@@ -250,17 +309,23 @@ describe("recentPlays store - hydration", () => {
     expect(get().recentPlays[0].id).toBe("favorites");
   });
 
-  it("setEnsuredRecentPlayOnHydration(null) skips the auto-insert", async () => {
-    setEnsuredRecentPlayOnHydration(null);
+  it("skips the auto-insert when unpinned", async () => {
+    setFavoritesPinned(false);
     useRecentPlays.setState({ recentPlays: [make("a")] }, false);
     await useRecentPlays.persist.rehydrate();
     expect(get().recentPlays.find((p) => p.id === "favorites")).toBeUndefined();
-    // restore default for other tests
-    setEnsuredRecentPlayOnHydration(favorites);
   });
 
-  it("does not duplicate when ensured entry already present", async () => {
-    setEnsuredRecentPlayOnHydration(favorites);
+  it("moves favorites to the top when the scope left it lower", async () => {
+    useRecentPlays.setState(
+      { recentPlays: [make("a"), favorites, make("b")] },
+      false,
+    );
+    await useRecentPlays.persist.rehydrate();
+    expect(get().recentPlays.map((p) => p.id)).toEqual(["favorites", "a", "b"]);
+  });
+
+  it("does not duplicate when favorites is already present", async () => {
     useRecentPlays.setState({ recentPlays: [favorites, make("a")] }, false);
     await useRecentPlays.persist.rehydrate();
     const ids = get().recentPlays.map((p) => p.id);

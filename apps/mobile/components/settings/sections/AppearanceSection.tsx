@@ -7,6 +7,7 @@ import OptionsBottomSheetModal from "@/components/settings/OptionsBottomSheetMod
 import {
   SettingsSectionTitle,
   SettingsSelectRow,
+  SettingsStepperRow,
   SettingsToggleRow,
 } from "@/components/settings/SettingsRows";
 import SettingsScreenScaffold from "@/components/settings/SettingsScreenScaffold";
@@ -16,6 +17,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { MAX_HOME_SHORTCUTS, MIN_HOME_SHORTCUTS } from "@/config/homeShortcuts";
 import { LanguageNames, SupportedLanguages } from "@/config/i18n";
 import { useHighlightedSetting } from "@/hooks/useHighlightedSetting";
 import { useHomeSectionAvailability } from "@/hooks/useHomeSectionAvailability";
@@ -54,6 +56,12 @@ export default function AppearanceSection() {
   const setShowEmptyHomeSections = useApp(
     (store) => store.setShowEmptyHomeSections,
   );
+  const pinFavoritesShortcut = useApp((store) => store.pinFavoritesShortcut);
+  const setPinFavoritesShortcut = useApp(
+    (store) => store.setPinFavoritesShortcut,
+  );
+  const homeShortcutsCount = useApp((store) => store.homeShortcutsCount);
+  const setHomeShortcutsCount = useApp((store) => store.setHomeShortcutsCount);
   const hiddenHomeSections = useApp((store) => store.hiddenHomeSections);
   const visibleHomeSectionCount = useMemo(
     () =>
@@ -151,6 +159,26 @@ export default function AppearanceSection() {
             onPress={() => bottomSheetHomeSectionsModalRef.current?.present()}
           />
         </Box>
+        <SettingsToggleRow
+          label={t("app.settings.displaySettings.pinFavoritesShortcutLabel")}
+          description={t(
+            "app.settings.displaySettings.pinFavoritesShortcutDescription",
+          )}
+          value={pinFavoritesShortcut}
+          onToggle={(value) => setPinFavoritesShortcut(value)}
+        />
+        <SettingsStepperRow
+          label={t("app.settings.displaySettings.homeShortcutsCountLabel")}
+          description={t(
+            "app.settings.displaySettings.homeShortcutsCountDescription",
+          )}
+          valueText={String(homeShortcutsCount)}
+          valueClassName="w-6"
+          onDecrement={() => setHomeShortcutsCount(homeShortcutsCount - 2)}
+          onIncrement={() => setHomeShortcutsCount(homeShortcutsCount + 2)}
+          decrementDisabled={homeShortcutsCount <= MIN_HOME_SHORTCUTS}
+          incrementDisabled={homeShortcutsCount >= MAX_HOME_SHORTCUTS}
+        />
         <SettingsSelectRow
           label={t("app.settings.displaySettings.swipeActionLabel")}
           description={t("app.settings.displaySettings.swipeActionDescription")}

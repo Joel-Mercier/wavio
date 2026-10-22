@@ -142,8 +142,8 @@ export default function AllSongs() {
   }, [addRecentPlay, data?.artist, id]);
 
   const songsSource = useMemo<QueueSource>(
-    () => ({ type: "allSongs", name: data?.artist?.name ?? "" }),
-    [data?.artist],
+    () => ({ type: "allSongs", id, name: data?.artist?.name ?? "" }),
+    [data?.artist, id],
   );
   const [preparing, setPreparing] = useState(false);
 

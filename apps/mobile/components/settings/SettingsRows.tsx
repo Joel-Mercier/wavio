@@ -259,6 +259,8 @@ export function SettingsStepperRow({
   onIncrement,
   valueClassName,
   disabled = false,
+  decrementDisabled = false,
+  incrementDisabled = false,
 }: {
   label: string;
   description: string;
@@ -267,7 +269,12 @@ export function SettingsStepperRow({
   onIncrement: () => void;
   valueClassName?: string;
   disabled?: boolean;
+  decrementDisabled?: boolean;
+  incrementDisabled?: boolean;
 }) {
+  // The row already dims as a whole when disabled; a button at its bound dims
+  // on its own.
+  const boundOpacity = disabled ? 1 : undefined;
   return (
     <HStack
       className={cn(
@@ -284,8 +291,8 @@ export function SettingsStepperRow({
       <HStack className="items-center gap-x-3">
         <FadeOutScaleDown
           onPress={onDecrement}
-          disabled={disabled}
-          disabledOpacity={1}
+          disabled={disabled || decrementDisabled}
+          disabledOpacity={boundOpacity}
           className="items-center justify-center w-10 h-10 border border-emerald-500 bg-emerald-500 rounded-full"
         >
           <Text className="text-primary-800 font-bold text-lg">-</Text>
@@ -297,8 +304,8 @@ export function SettingsStepperRow({
         </Text>
         <FadeOutScaleDown
           onPress={onIncrement}
-          disabled={disabled}
-          disabledOpacity={1}
+          disabled={disabled || incrementDisabled}
+          disabledOpacity={boundOpacity}
           className="items-center justify-center w-10 h-10 border border-emerald-500 bg-emerald-500 rounded-full"
         >
           <Text className="text-primary-800 font-bold text-lg">+</Text>

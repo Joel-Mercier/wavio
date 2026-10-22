@@ -4,6 +4,9 @@ import "expo-router/entry";
 // Guarded: this runs during entry-module evaluation, where an uncaught throw
 // takes the whole app down — including for users who never open the car.
 import { startCarAutoSession } from "./services/carAuto/session";
+// Keeps the shortcuts store's Favorites pin in step with the setting before any
+// rehydrate, headless car boot included.
+import { startHomeShortcutsSync } from "./services/homeShortcuts";
 // Keeps the OS media controls pointed at whatever owns playback. Wired here
 // rather than from a screen for the same reason: a headless boot has no React
 // tree, and a remote session restored at launch still has to claim the controls.
@@ -11,6 +14,12 @@ import { startLockScreenMirror } from "./services/playback/lockScreenMirror";
 // Decides when the unreachable-server recovery poll may run (foreground,
 // playing, or a car connected) — including on a headless car boot.
 import { startRecoveryPollGate } from "./services/recoveryPollGate";
+
+try {
+  startHomeShortcutsSync();
+} catch (e) {
+  console.warn("[shortcuts] failed to start favorites pin sync", e);
+}
 
 try {
   startCarAutoSession();

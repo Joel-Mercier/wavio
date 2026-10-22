@@ -45,6 +45,7 @@ import useApp from "@/stores/app";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
+import { FAVORITES_QUEUE_SOURCE_ID } from "@/utils/activeRecentPlay";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
@@ -115,7 +116,11 @@ export default function FavoritesScreen() {
   const trackIdSet = useMemo(() => new Set(data?.map((t) => t.id)), [data]);
   const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
   const favoritesSource = useMemo<QueueSource>(
-    () => ({ type: "likedSongs", name: t("app.favorites.title") }),
+    () => ({
+      type: "likedSongs",
+      id: FAVORITES_QUEUE_SOURCE_ID,
+      name: t("app.favorites.title"),
+    }),
     [t],
   );
   const hasPlayableTracks = useHasPlayableTracks(data);

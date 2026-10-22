@@ -296,4 +296,16 @@ describe("app store", () => {
     expect(persisted.state).not.toHaveProperty("showDrawer");
     expect(persisted.state.showAddTab).toBe(true);
   });
+
+  it("clamps homeShortcutsCount to an even number between 2 and 20", () => {
+    const { setHomeShortcutsCount } = useAppBase.getState();
+    setHomeShortcutsCount(12);
+    expect(useAppBase.getState().homeShortcutsCount).toBe(12);
+    setHomeShortcutsCount(0);
+    expect(useAppBase.getState().homeShortcutsCount).toBe(2);
+    setHomeShortcutsCount(22);
+    expect(useAppBase.getState().homeShortcutsCount).toBe(20);
+    setHomeShortcutsCount(7);
+    expect(useAppBase.getState().homeShortcutsCount).toBe(8);
+  });
 });

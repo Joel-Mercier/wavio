@@ -1561,6 +1561,10 @@
 					"homeSectionsSheetDescription": "Turn sections off to hide them from the home screen",
 					"homeSectionsReorderHint": "Press and hold a section, then drag it to change its position in the feed",
 					"homeSectionsResetOrder": "Reset order",
+					"pinFavoritesShortcutLabel": "Pin Favorites shortcut",
+					"pinFavoritesShortcutDescription": "Keep Favorites first in the home shortcuts. When off, it moves like any other shortcut",
+					"homeShortcutsCountLabel": "Number of shortcuts",
+					"homeShortcutsCountDescription": "How many recent plays to show as shortcuts on the home screen",
 					"homeSections": {
 						"recentPlays": "Shortcuts",
 						"moreFromArtist": "More from an artist",

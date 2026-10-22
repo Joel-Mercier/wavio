@@ -2,6 +2,10 @@ import { Orientation } from "expo-screen-orientation";
 import { Dimensions } from "react-native";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import {
+  clampHomeShortcutsCount,
+  DEFAULT_HOME_SHORTCUTS,
+} from "@/config/homeShortcuts";
 import i18n, { applyZodLocale, type TSupportedLanguages } from "@/config/i18n";
 import { zustandStorage } from "@/config/storage";
 import { type AlbumSortType, DEFAULT_ALBUM_SORT } from "@/utils/albumSort";
@@ -145,6 +149,10 @@ interface AppStore {
   // order (sections shipped after it was saved) keep their built position.
   homeSectionOrder: string[];
   setHomeSectionOrder: (homeSectionOrder: string[]) => void;
+  pinFavoritesShortcut: boolean;
+  setPinFavoritesShortcut: (pinFavoritesShortcut: boolean) => void;
+  homeShortcutsCount: number;
+  setHomeShortcutsCount: (homeShortcutsCount: number) => void;
   // "off" hides lyrics entirely; "server" uses only server-embedded lyrics;
   // "all" also falls back to lrclib.net when the server has none.
   lyricsSource: "off" | "server" | "all";
@@ -346,6 +354,16 @@ export const useAppBase = create<AppStore>()(
       homeSectionOrder: [],
       setHomeSectionOrder: (homeSectionOrder: string[]) => {
         set({ homeSectionOrder });
+      },
+      pinFavoritesShortcut: true,
+      setPinFavoritesShortcut: (pinFavoritesShortcut: boolean) => {
+        set({ pinFavoritesShortcut });
+      },
+      homeShortcutsCount: DEFAULT_HOME_SHORTCUTS,
+      setHomeShortcutsCount: (homeShortcutsCount: number) => {
+        set({
+          homeShortcutsCount: clampHomeShortcutsCount(homeShortcutsCount),
+        });
       },
       lyricsSource: "all",
       setLyricsSource: (lyricsSource: "off" | "server" | "all") => {

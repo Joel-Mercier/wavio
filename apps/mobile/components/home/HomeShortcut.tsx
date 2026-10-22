@@ -10,14 +10,18 @@ import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
+import PlayingBars from "@/components/PlayingBars";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import type { RecentPlay } from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
+import { cn } from "@/utils/tailwind";
 
 interface HomeShortcutProps {
   recentPlay: RecentPlay;
+  isActive: boolean;
+  playing: boolean;
 }
 
 function HomeShortcutIcon({ type }: { type: RecentPlay["type"] }) {
@@ -35,7 +39,7 @@ function HomeShortcutIcon({ type }: { type: RecentPlay["type"] }) {
   }
 }
 
-function HomeShortcut({ recentPlay }: HomeShortcutProps) {
+function HomeShortcut({ recentPlay, isActive, playing }: HomeShortcutProps) {
   const { t } = useTranslation();
   const [blue500, emerald500] = Uniwind.getCSSVariable([
     "--color-blue-500",
@@ -117,13 +121,20 @@ function HomeShortcut({ recentPlay }: HomeShortcutProps) {
             numberOfLines={2}
             ellipsizeMode="tail"
             size="sm"
-            className="text-white font-bold mx-2"
+            className={cn("text-white font-bold mx-2", {
+              "text-emerald-500": isActive,
+            })}
           >
             {recentPlay.type === "favorites"
               ? t("app.favorites.title")
               : recentPlay.title}
           </Heading>
         </Box>
+        {isActive && (
+          <Box className="mr-3">
+            <PlayingBars playing={playing} />
+          </Box>
+        )}
       </HStack>
     </FadeOutScaleDown>
   );
