@@ -91,6 +91,8 @@
 				"title": "Criar",
 				"playlistTitle": "Lista de reprodução",
 				"playlistDescription": "Crie uma lista de reprodução com músicas",
+				"playlistFolderTitle": "Folder",
+				"playlistFolderDescription": "Group your playlists in a folder",
 				"aiPlaylistTitle": "Lista de reprodução a partir de uma sugestão",
 				"aiPlaylistDescription": "Descreva o que você quer ouvir e deixe que o AudioMuse-AI crie isso para você",
 				"fingerprintTitle": "Impressão digital sonora",
@@ -603,6 +605,24 @@
 			"favoritePodcasts": {
 				"title": "Episódios recentes",
 				"noServerFavorites": "Você ainda não adicionou nenhum podcast aos favoritos. Abra um podcast e toque no coração para adicioná-lo aqui."
+			},
+			"playlistFolders": {
+				"newTitle": "New folder",
+				"editTitle": "Edit folder",
+				"namePlaceholder": "Folder name",
+				"nameTaken": "A folder with this name already exists",
+				"colorLabel": "Color",
+				"playlistsLabel": "Listas de reprodução",
+				"empty": "This folder is empty",
+				"emptyHint": "Edit the folder to add playlists, or use Move to folder on a playlist.",
+				"notFound": "This folder no longer exists",
+				"edit": "Edit this folder",
+				"delete": "Delete this folder",
+				"deleteConfirmTitle": "Delete this folder?",
+				"deleteConfirmDescription": "Its playlists go back to your library. They are not deleted.",
+				"moveToFolder": "Move to folder",
+				"removeFromFolder": "Remove from folder",
+				"newFolder": "New folder"
 			},
 			"newPlaylist": {
 				"title": "Dê um nome à sua lista de reprodução",
@@ -1594,6 +1614,18 @@
 					"homeSectionsCount_one": "{{count}} mostrado",
 					"homeSectionsCount_other": "{{count}} mostrado"
 				},
+				"libraryDisplaySettings": {
+					"title": "Biblioteca",
+					"playlistFoldersLabel": "Group playlists by name",
+					"playlistFoldersDescription": "Put playlists named like “{{example}}” in a “Rock” folder. Folders you create yourself always show.",
+					"separatorLabel": "Folder separator",
+					"separatorDescription": "Text between the folder name and the playlist name. Spaces count.",
+					"separatorCustom": "Custom",
+					"separatorCustomLabel": "Custom separator",
+					"separatorCustomPlaceholder": "e.g. \" of \"",
+					"separatorSaveAction": "Salvar",
+					"separatorPreview": "“{{example}}” → “Rock” › “80s”"
+				},
 				"hapticsSettings": {
 					"title": "Feedback tátil",
 					"enabledLabel": "Retroalimentação tátil",
@@ -2240,6 +2272,7 @@
 					"removeConfirmDescription_other": "{{count}} As músicas baixadas serão excluídas deste aparelho. As músicas que também estiverem salvas em outro álbum ou lista de reprodução serão mantidas."
 				},
 				"favorites": "Favoritos",
+				"playlistFolder": "Playlist folder",
 				"filters": {
 					"albums": "Álbuns",
 					"artists": "Artistas",
@@ -2309,6 +2342,8 @@
 				"radioStation_other": "Estações de rádio",
 				"folder_one": "Pasta",
 				"folder_other": "Pastas",
+				"playlistCount_one": "{{count}} playlist",
+				"playlistCount_other": "{{count}} playlists",
 				"song_one": "Música",
 				"song_other": "Músicas",
 				"albumCount_one": "{{count}} álbum",
