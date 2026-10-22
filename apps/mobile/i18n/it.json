@@ -91,6 +91,8 @@
 				"title": "Crea",
 				"playlistTitle": "Playlist",
 				"playlistDescription": "Crea una playlist con delle canzoni",
+				"playlistFolderTitle": "Folder",
+				"playlistFolderDescription": "Group your playlists in a folder",
 				"aiPlaylistTitle": "Playlist creata a partire da un suggerimento",
 				"aiPlaylistDescription": "Descrivi ciò che desideri ascoltare e lascia che AudioMuse-AI lo realizzi",
 				"fingerprintTitle": "Impronta sonora",
@@ -603,6 +605,24 @@
 			"favoritePodcasts": {
 				"title": "Episodi recenti",
 				"noServerFavorites": "Non hai ancora aggiunto nessun podcast ai preferiti. Apri un podcast e tocca il cuore per aggiungerlo qui."
+			},
+			"playlistFolders": {
+				"newTitle": "New folder",
+				"editTitle": "Edit folder",
+				"namePlaceholder": "Folder name",
+				"nameTaken": "A folder with this name already exists",
+				"colorLabel": "Color",
+				"playlistsLabel": "Playlist",
+				"empty": "This folder is empty",
+				"emptyHint": "Edit the folder to add playlists, or use Move to folder on a playlist.",
+				"notFound": "This folder no longer exists",
+				"edit": "Edit this folder",
+				"delete": "Delete this folder",
+				"deleteConfirmTitle": "Delete this folder?",
+				"deleteConfirmDescription": "Its playlists go back to your library. They are not deleted.",
+				"moveToFolder": "Move to folder",
+				"removeFromFolder": "Remove from folder",
+				"newFolder": "New folder"
 			},
 			"newPlaylist": {
 				"title": "Assegna un nome alla tua playlist",
@@ -1594,6 +1614,18 @@
 					"homeSectionsCount_one": "{{count}} mostrato",
 					"homeSectionsCount_other": "{{count}} mostrato"
 				},
+				"libraryDisplaySettings": {
+					"title": "Libreria",
+					"playlistFoldersLabel": "Group playlists by name",
+					"playlistFoldersDescription": "Put playlists named like “{{example}}” in a “Rock” folder. Folders you create yourself always show.",
+					"separatorLabel": "Folder separator",
+					"separatorDescription": "Text between the folder name and the playlist name. Spaces count.",
+					"separatorCustom": "Custom",
+					"separatorCustomLabel": "Custom separator",
+					"separatorCustomPlaceholder": "e.g. \" of \"",
+					"separatorSaveAction": "Salva",
+					"separatorPreview": "“{{example}}” → “Rock” › “80s”"
+				},
 				"hapticsSettings": {
 					"title": "Feedback tattile",
 					"enabledLabel": "Feedback tattile",
@@ -2240,6 +2272,7 @@
 					"removeConfirmDescription_other": "{{count}} I brani scaricati verranno eliminati da questo dispositivo. I brani salvati anche in un altro album o in un'altra playlist verranno mantenuti."
 				},
 				"favorites": "Preferiti",
+				"playlistFolder": "Playlist folder",
 				"filters": {
 					"albums": "Album",
 					"artists": "Artisti",
@@ -2309,6 +2342,8 @@
 				"radioStation_other": "Stazioni radio",
 				"folder_one": "Cartella",
 				"folder_other": "Cartelle",
+				"playlistCount_one": "{{count}} playlist",
+				"playlistCount_other": "{{count}} playlists",
 				"song_one": "Canzone",
 				"song_other": "Canzoni",
 				"albumCount_one": "{{count}} album",
