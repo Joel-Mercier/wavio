@@ -1515,6 +1515,10 @@
 					"homeSectionsSheetDescription": "关闭板块以将其从主页上隐藏",
 					"homeSectionsReorderHint": "长按一个板块，然后将其拖动以更改其在信息流中的位置",
 					"homeSectionsResetOrder": "重置订单",
+					"pinFavoritesShortcutLabel": "Pin Favorites shortcut",
+					"pinFavoritesShortcutDescription": "Keep Favorites first in the home shortcuts. When off, it moves like any other shortcut",
+					"homeShortcutsCountLabel": "Number of shortcuts",
+					"homeShortcutsCountDescription": "How many recent plays to show as shortcuts on the home screen",
 					"homeSections": {
 						"recentPlays": "快捷方式",
 						"moreFromArtist": "来自某位艺术家的更多内容",
