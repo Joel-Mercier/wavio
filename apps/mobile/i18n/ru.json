@@ -1647,6 +1647,10 @@
 					"homeSectionsSheetDescription": "Отключите разделы, чтобы скрыть их с главного экрана",
 					"homeSectionsReorderHint": "Нажмите и удерживайте элемент, а затем перетащите его, чтобы изменить его положение в ленте",
 					"homeSectionsResetOrder": "Сбросить заказ",
+					"pinFavoritesShortcutLabel": "Pin Favorites shortcut",
+					"pinFavoritesShortcutDescription": "Keep Favorites first in the home shortcuts. When off, it moves like any other shortcut",
+					"homeShortcutsCountLabel": "Number of shortcuts",
+					"homeShortcutsCountDescription": "How many recent plays to show as shortcuts on the home screen",
 					"homeSections": {
 						"recentPlays": "Ярлыки",
 						"moreFromArtist": "Больше от исполнителя",
