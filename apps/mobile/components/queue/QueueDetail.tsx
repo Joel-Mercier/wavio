@@ -1,7 +1,3 @@
-import {
-  type BottomSheetModal,
-  BottomSheetScrollView,
-} from "@gorhom/bottom-sheet";
 import { LegendList } from "@legendapp/list/react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -11,16 +7,17 @@ import ListOrdered from "lucide-react-native/icons/list-ordered";
 import ListPlus from "lucide-react-native/icons/list-plus";
 import Timer from "lucide-react-native/icons/timer";
 import Trash from "lucide-react-native/icons/trash";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
-import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import DraggableList from "@/components/DraggableList";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import { openSleepTimerSheet } from "@/components/player/SleepTimerSheet";
 import CreatePlaylistFromQueueDialog from "@/components/queue/CreatePlaylistFromQueueDialog";
 import QueueEditLaneDivider from "@/components/queue/QueueEditLaneDivider";
 import QueueEditTrackItem from "@/components/queue/QueueEditTrackItem";
+import QueueEndFooter from "@/components/queue/QueueEndFooter";
 import QueuePodcastListItem from "@/components/queue/QueuePodcastListItem";
 import TabBar from "@/components/TabBar";
 import TrackListItem from "@/components/tracks/TrackListItem";
@@ -47,7 +44,7 @@ import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { Child } from "@/services/openSubsonic/types";
 import { play as playLocal, startTrackRadio } from "@/services/player";
 import { reconcilePlayHistory } from "@/services/playHistory/reconcile";
-import { useSleepTimer } from "@/services/sleepTimer";
+import { isSleepTimerActive, useSleepTimer } from "@/services/sleepTimer";
 import useApp from "@/stores/app";
 import usePlayHistory, { type PlayHistoryEntry } from "@/stores/playHistory";
 import useQueue, { manualLaneEnd, type QueueTrack } from "@/stores/queue";
@@ -92,11 +89,10 @@ const historyEntryToChild = (entry: PlayHistoryEntry): Child =>
   }) as Child;
 
 export default function QueueDetail() {
-  const [white, gray500, emerald500, gray200] = Uniwind.getCSSVariable([
+  const [white, gray500, emerald500] = Uniwind.getCSSVariable([
     "--color-white",
     "--color-gray-500",
     "--color-emerald-500",
-    "--color-gray-200",
   ]) as string[];
   const { t } = useTranslation();
   const router = useRouter();
@@ -119,13 +115,7 @@ export default function QueueDetail() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
 
-  const sleepTimerSheetRef = useRef<BottomSheetModal>(null);
-  const sleepEndsAt = useSleepTimer((s) => s.endsAt);
-  const sleepEndOfTrack = useSleepTimer((s) => s.endOfTrack);
-  const setSleepMinutes = useSleepTimer((s) => s.setMinutes);
-  const setSleepEndOfTrack = useSleepTimer((s) => s.setEndOfTrack);
-  const cancelSleepTimer = useSleepTimer((s) => s.cancel);
-  const sleepActive = sleepEndsAt != null || sleepEndOfTrack;
+  const sleepActive = useSleepTimer(isSleepTimerActive);
 
   const tracks = useMemo(() => queue.map(trackToChild), [queue]);
   // The rows already *are* the queue: jump to the tapped index rather than
@@ -352,19 +342,7 @@ export default function QueueDetail() {
     });
   };
 
-  const handleSleepTimerPress = () => sleepTimerSheetRef.current?.present();
-  const handleSleepPresetPress = (minutes: number) => {
-    setSleepMinutes(minutes);
-    sleepTimerSheetRef.current?.dismiss();
-  };
-  const handleSleepEndOfTrackPress = () => {
-    setSleepEndOfTrack();
-    sleepTimerSheetRef.current?.dismiss();
-  };
-  const handleSleepCancelPress = () => {
-    cancelSleepTimer();
-    sleepTimerSheetRef.current?.dismiss();
-  };
+  const handleSleepTimerPress = () => openSleepTimerSheet();
 
   const handleCreatePlaylistPress = () => setShowCreatePlaylist(true);
 
@@ -572,6 +550,7 @@ export default function QueueDetail() {
               keyExtractor={(item) => item.key}
               getItemType={(item) => item.kind}
               showsVerticalScrollIndicator={false}
+              ListFooterComponent={QueueEndFooter}
               contentContainerStyle={{
                 paddingBottom: screenBottomPadding,
               }}
@@ -656,72 +635,6 @@ export default function QueueDetail() {
         onClose={() => setShowCreatePlaylist(false)}
         trackIds={queue.map((q) => q.id)}
       />
-      <CenteredBottomSheetModal
-        ref={sleepTimerSheetRef}
-        backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
-        handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
-      >
-        <BottomSheetScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ alignItems: "center" }}
-        >
-          <Box className="p-6 w-full mb-12">
-            <HStack className="items-center mb-6">
-              <Timer size={24} color={gray200} />
-              <Heading
-                className="ml-4 text-white font-normal"
-                size="lg"
-                numberOfLines={1}
-              >
-                {t("app.player.sleepTimer")}
-              </Heading>
-            </HStack>
-            <VStack className="gap-y-6">
-              <FadeOutScaleDown onPress={handleSleepCancelPress}>
-                <Text
-                  className="text-lg"
-                  style={{
-                    color: !sleepActive ? emerald500 : gray200,
-                  }}
-                >
-                  {t("app.player.sleepTimerOff")}
-                </Text>
-              </FadeOutScaleDown>
-              {[5, 10, 15, 30, 45, 60].map((minutes) => {
-                const active =
-                  !sleepEndOfTrack &&
-                  sleepEndsAt != null &&
-                  Math.round((sleepEndsAt - Date.now()) / 60000) === minutes;
-                return (
-                  <FadeOutScaleDown
-                    key={minutes}
-                    onPress={() => handleSleepPresetPress(minutes)}
-                  >
-                    <Text
-                      className="text-lg"
-                      style={{
-                        color: active ? emerald500 : gray200,
-                      }}
-                    >
-                      {t("app.player.sleepTimerMinutes", { count: minutes })}
-                    </Text>
-                  </FadeOutScaleDown>
-                );
-              })}
-              <FadeOutScaleDown onPress={handleSleepEndOfTrackPress}>
-                <Text
-                  className="text-lg"
-                  style={{
-                    color: sleepEndOfTrack ? emerald500 : gray200,
-                  }}
-                >
-                  {t("app.player.sleepTimerEndOfTrack")}
-                </Text>
-              </FadeOutScaleDown>
-            </VStack>
-          </Box>
-        </BottomSheetScrollView>
-      </CenteredBottomSheetModal>
     </Box>
   );
 }

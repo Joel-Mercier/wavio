@@ -2,11 +2,16 @@ import { Orientation } from "expo-screen-orientation";
 import { Dimensions } from "react-native";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import {
+  clampHomeShortcutsCount,
+  DEFAULT_HOME_SHORTCUTS,
+} from "@/config/homeShortcuts";
 import i18n, { applyZodLocale, type TSupportedLanguages } from "@/config/i18n";
 import { zustandStorage } from "@/config/storage";
 import { type AlbumSortType, DEFAULT_ALBUM_SORT } from "@/utils/albumSort";
 import { type ArtistSortType, DEFAULT_ARTIST_SORT } from "@/utils/artistSort";
 import createSelectors from "@/utils/createSelectors";
+import { DEFAULT_PLAYLIST_FOLDER_SEPARATOR } from "@/utils/playlistFolders";
 import { DEFAULT_SONG_SORT, type SongSortType } from "@/utils/songSort";
 import type { SortType } from "@/utils/sort";
 import type { OfflineTrackSortType, TrackSortType } from "@/utils/trackSort";
@@ -145,6 +150,10 @@ interface AppStore {
   // order (sections shipped after it was saved) keep their built position.
   homeSectionOrder: string[];
   setHomeSectionOrder: (homeSectionOrder: string[]) => void;
+  pinFavoritesShortcut: boolean;
+  setPinFavoritesShortcut: (pinFavoritesShortcut: boolean) => void;
+  homeShortcutsCount: number;
+  setHomeShortcutsCount: (homeShortcutsCount: number) => void;
   // "off" hides lyrics entirely; "server" uses only server-embedded lyrics;
   // "all" also falls back to lrclib.net when the server has none.
   lyricsSource: "off" | "server" | "all";
@@ -166,6 +175,13 @@ interface AppStore {
   setLibrarySort: (librarySort: LibrarySort) => void;
   libraryFilter: LibraryFilter[];
   setLibraryFilter: (libraryFilter: LibraryFilter[]) => void;
+  // Group playlists named "<folder><separator><title>" into folders (issue
+  // #224). Off by default so existing libraries don't suddenly regroup.
+  playlistFolderDetection: boolean;
+  setPlaylistFolderDetection: (enabled: boolean) => void;
+  // Matched literally, spaces included: " - " keeps "lo-fi beats" whole.
+  playlistFolderSeparator: string;
+  setPlaylistFolderSeparator: (separator: string) => void;
   genresSort: GenresSort;
   setGenresSort: (genresSort: GenresSort) => void;
   // Layout (list/grid) chosen on each album-list screen, keyed by a stable
@@ -268,6 +284,10 @@ interface AppStore {
   setPodcastPlaybackRate: (podcastPlaybackRate: number) => void;
   endlessPlaybackEnabled: boolean;
   setEndlessPlaybackEnabled: (enabled: boolean) => void;
+  sleepTimerFinishTrack: boolean;
+  setSleepTimerFinishTrack: (enabled: boolean) => void;
+  sleepTimerLastCustomMinutes: number;
+  setSleepTimerLastCustomMinutes: (minutes: number) => void;
   showPlayerAudioQuality: boolean;
   setShowPlayerAudioQuality: (enabled: boolean) => void;
   showPlayerRating: boolean;
@@ -343,6 +363,16 @@ export const useAppBase = create<AppStore>()(
       setHomeSectionOrder: (homeSectionOrder: string[]) => {
         set({ homeSectionOrder });
       },
+      pinFavoritesShortcut: true,
+      setPinFavoritesShortcut: (pinFavoritesShortcut: boolean) => {
+        set({ pinFavoritesShortcut });
+      },
+      homeShortcutsCount: DEFAULT_HOME_SHORTCUTS,
+      setHomeShortcutsCount: (homeShortcutsCount: number) => {
+        set({
+          homeShortcutsCount: clampHomeShortcutsCount(homeShortcutsCount),
+        });
+      },
       lyricsSource: "all",
       setLyricsSource: (lyricsSource: "off" | "server" | "all") => {
         set({ lyricsSource });
@@ -380,6 +410,15 @@ export const useAppBase = create<AppStore>()(
       libraryFilter: [],
       setLibraryFilter: (libraryFilter: LibraryFilter[]) => {
         set({ libraryFilter });
+      },
+      playlistFolderDetection: false,
+      setPlaylistFolderDetection: (playlistFolderDetection: boolean) => {
+        set({ playlistFolderDetection });
+      },
+      playlistFolderSeparator: DEFAULT_PLAYLIST_FOLDER_SEPARATOR,
+      setPlaylistFolderSeparator: (playlistFolderSeparator: string) => {
+        if (!playlistFolderSeparator.trim()) return;
+        set({ playlistFolderSeparator });
       },
       genresSort: "alphabeticalAsc",
       setGenresSort: (genresSort: GenresSort) => {
@@ -511,6 +550,14 @@ export const useAppBase = create<AppStore>()(
       endlessPlaybackEnabled: false,
       setEndlessPlaybackEnabled: (endlessPlaybackEnabled: boolean) => {
         set({ endlessPlaybackEnabled });
+      },
+      sleepTimerFinishTrack: false,
+      setSleepTimerFinishTrack: (sleepTimerFinishTrack: boolean) => {
+        set({ sleepTimerFinishTrack });
+      },
+      sleepTimerLastCustomMinutes: 90,
+      setSleepTimerLastCustomMinutes: (sleepTimerLastCustomMinutes: number) => {
+        set({ sleepTimerLastCustomMinutes });
       },
       showPlayerAudioQuality: true,
       setShowPlayerAudioQuality: (showPlayerAudioQuality: boolean) => {

@@ -119,6 +119,9 @@ export function shouldPersistQuery(query: Query): boolean {
     // sheet is open — persisting a result set per track browsed would grow the
     // cache for nothing.
     query.queryKey[0] !== "lrclib:search" &&
+    // A generated mix is rerolled per visit; persisting each one would grow the
+    // cache by a 50-track list per regenerate.
+    query.queryKey[0] !== "mix" &&
     !isEmptyLyricsLookup(query)
   );
 }

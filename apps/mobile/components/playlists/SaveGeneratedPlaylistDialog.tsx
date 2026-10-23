@@ -18,8 +18,10 @@ import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
-import { createAudioMusePlaylist } from "@/services/audioMuse/playlists";
-import { createSnapshot } from "@/services/playlistSnapshot";
+import {
+  type SavePlaylistTarget,
+  saveGeneratedPlaylist,
+} from "@/services/saveGeneratedPlaylist";
 import useAudioMuse from "@/stores/audioMuse";
 
 // Two writers produce the same playlist by different routes: the app creates it
@@ -36,7 +38,7 @@ import useAudioMuse from "@/stores/audioMuse";
 // lands on the server. Saying so up front beats discovering it afterwards.
 const AUDIOMUSE_NAME_SUFFIX = "_instant";
 
-export type SavePlaylistTarget = "backend" | "audiomuse";
+export type { SavePlaylistTarget };
 
 // The i18n keys stay under app.audiomuse.save.* even though this component now
 // serves other callers: the strings are generic ("Save as playlist", "Playlist
@@ -84,13 +86,14 @@ export default function SaveGeneratedPlaylistDialog({
     if (!trimmed || trackIds.length === 0) return;
     setIsSaving(true);
     try {
-      if (target === "audiomuse") {
-        await createAudioMusePlaylist(trimmed, trackIds);
-      } else {
-        // Chunked: a generated playlist can hold more track ids than a single
-        // Subsonic GET can carry on its query string.
-        onSaved?.(await createSnapshot(trimmed, trackIds));
-      }
+      // Awaited on its own line: inside `onSaved?.(…)` the write would be
+      // skipped whenever no callback is set.
+      const playlistId = await saveGeneratedPlaylist(
+        target === "audiomuse" ? "audiomuse" : "backend",
+        trimmed,
+        trackIds,
+      );
+      if (playlistId) onSaved?.(playlistId);
       // Either writer lands the playlist on the server, so the app's list is
       // stale whichever one ran.
       queryClient.invalidateQueries({ queryKey: ["playlists"] });

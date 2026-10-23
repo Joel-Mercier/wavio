@@ -35,8 +35,9 @@ import {
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { revokeOidcSession } from "@/services/oidc/session";
 import useApp from "@/stores/app";
-import useAuth from "@/stores/auth";
+import useAuth, { useAuthBase } from "@/stores/auth";
 import useServers, { type ServerUser } from "@/stores/servers";
 import { cn } from "@/utils/tailwind";
 
@@ -125,6 +126,10 @@ export default function DrawerMenu({ onClose }: DrawerMenuProps) {
   };
 
   const handleLogoutPress = () => {
+    // Signing out of an SSO session forgets its refresh token too — unlike a
+    // server switch, which keeps it so switching back stays silent.
+    const { authMethod, serverId, username } = useAuthBase.getState();
+    if (authMethod === "oidc") void revokeOidcSession(serverId, username);
     logout();
     onClose();
   };

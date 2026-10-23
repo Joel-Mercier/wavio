@@ -134,7 +134,7 @@ jest.mock("@/stores/jukebox", () => ({
 
 const mockCapabilities = { remoteStreamableUrl: true };
 jest.mock("@/services/backend/capabilities", () => ({
-  getCapabilities: () => mockCapabilities,
+  sessionCapabilities: () => mockCapabilities,
 }));
 
 const mockStreamingFormat = { value: "raw" as string };

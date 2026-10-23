@@ -5,9 +5,16 @@ import { DYNAMIC_CAPABILITY_ENDPOINTS } from "@/services/backend/capabilities";
 import { reportError, UNSUPPORTED_METHOD_RE } from "@/services/errorReporting";
 import { noteServerVersion } from "@/services/navidromeIdMigration/detect";
 import { USER_AGENT } from "@/services/network";
+import {
+  ensureFreshAccessToken,
+  recoverFromUnauthorized,
+} from "@/services/oidc/session";
 import { subsonicAuthParams } from "@/services/openSubsonic/auth";
 import type { ResponseStatus } from "@/services/openSubsonic/types";
-import { customHeadersForUrl } from "@/services/serverHeaders";
+import {
+  authHeadersForUrl,
+  customHeadersForUrl,
+} from "@/services/serverHeaders";
 import { useAuthBase } from "@/stores/auth";
 import { useCapabilityOverridesBase } from "@/stores/capabilityOverrides";
 
@@ -47,7 +54,11 @@ const openSubsonicApiInstance = axios.create({
 });
 
 openSubsonicApiInstance.interceptors.request.use(
-  (request) => {
+  async (request) => {
+    // Resolves at once unless this is a single-sign-on session whose token is
+    // about to expire — then the request waits for the refresh instead of
+    // going out with a token the proxy is about to reject.
+    await ensureFreshAccessToken();
     const { url } = useAuthBase.getState();
     request.params = {
       ...(request.params ?? {}),
@@ -58,6 +69,12 @@ openSubsonicApiInstance.interceptors.request.use(
     };
     request.baseURL = url || request.baseURL || "";
     request.headers.set("User-Agent", USER_AGENT);
+    const credentials = authHeadersForUrl(request.baseURL);
+    if (credentials) {
+      for (const [name, value] of Object.entries(credentials)) {
+        request.headers.set(name, value);
+      }
+    }
     // Applied last: a server behind an authenticating proxy needs these on
     // every request, and the user's value wins on the (rare) name collision —
     // overriding the User-Agent a WAF rejects is a legitimate use.
@@ -125,7 +142,22 @@ openSubsonicApiInstance.interceptors.response.use(
     }
     return response;
   },
-  (error) => {
+  async (error) => {
+    // An SSO proxy rejecting the access token — revoked early, or the clock
+    // was off. One forced refresh and one replay; a second 401 is reported
+    // like any other failure.
+    const config = error?.config as
+      | (AxiosRequestConfig & { _oidcRetry?: boolean })
+      | undefined;
+    if (
+      error?.response?.status === 401 &&
+      config &&
+      !config._oidcRetry &&
+      (await recoverFromUnauthorized())
+    ) {
+      config._oidcRetry = true;
+      return openSubsonicApiInstance(config);
+    }
     if (error?.response?.status === 501) {
       noteUnsupportedEndpoint(error?.config?.url);
     }

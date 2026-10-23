@@ -1,6 +1,7 @@
 import type { useRouter } from "expo-router";
 import { hasNetworkServerType } from "@/services/backend/serverTraits";
 import { useAuthBase } from "@/stores/auth";
+import { getOidcSession } from "@/stores/oidc";
 import { useServersBase } from "@/stores/servers";
 
 type Router = ReturnType<typeof useRouter>;
@@ -12,9 +13,15 @@ type Router = ReturnType<typeof useRouter>;
 function resolveSavedCredential(serverId: string, username?: string) {
   const server = useServersBase.getState().getServerById(serverId);
   if (!server || !hasNetworkServerType(server.type)) return null;
+  // A single-sign-on user's saved refresh token replays like a password.
   const users = useServersBase
     .getState()
-    .users.filter((u) => u.serverId === serverId && !!u.password);
+    .users.filter(
+      (u) =>
+        u.serverId === serverId &&
+        (!!u.password ||
+          (!!server.oidc && !!getOidcSession(serverId, u.username))),
+    );
   if (username) {
     return users.find((u) => u.username === username) ?? null;
   }

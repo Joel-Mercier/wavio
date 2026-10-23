@@ -3,7 +3,7 @@ import { usePathname, useRouter } from "expo-router";
 import AudioLines from "lucide-react-native/icons/audio-lines";
 import Cast from "lucide-react-native/icons/cast";
 import SkipForward from "lucide-react-native/icons/skip-forward";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   GestureDetector,
@@ -27,6 +27,7 @@ import { OFFLINE_BANNER_HEIGHT } from "@/components/OfflineBanner";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import { openOutputSheet } from "@/components/player/OutputSheet";
 import PlaybackProgressBar from "@/components/player/PlaybackProgressBar";
+import SleepTimerBadge from "@/components/player/SleepTimerBadge";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Pressable } from "@/components/ui/pressable";
@@ -48,6 +49,7 @@ import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
 import type { PodcastSeries } from "@/services/taddyPodcasts/types";
 import useApp from "@/stores/app";
 import useCast from "@/stores/cast";
+import useFloatingPlayer from "@/stores/floatingPlayer";
 import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
 import useQueue from "@/stores/queue";
@@ -127,7 +129,8 @@ export default function FloatingPlayer() {
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
-  const [hidden, setHidden] = useState(false);
+  const hidden = useFloatingPlayer((s) => s.hidden);
+  const setHidden = useFloatingPlayer((s) => s.setHidden);
   const prevIdRef = useRef(playingTrack?.id);
 
   useEffect(() => {
@@ -138,6 +141,8 @@ export default function FloatingPlayer() {
       translateY.value = withTiming(0, { duration: 220 });
     }
   }, [playingTrack?.id, translateY]);
+
+  useEffect(() => () => setHidden(false), [setHidden]);
 
   const handlePress = () => {
     router.navigate("/player");
@@ -388,8 +393,8 @@ export default function FloatingPlayer() {
 
   if (isWideLayout) {
     return (
-      <Pressable
-        testID="floating-player"
+      <Box
+        pointerEvents="box-none"
         className="absolute left-0 bottom-0"
         style={{
           width: SIDEBAR_WIDTH,
@@ -398,185 +403,41 @@ export default function FloatingPlayer() {
           paddingLeft: insets.left,
           bottom: insets.bottom + 12 + (isOnline ? 0 : OFFLINE_BANNER_HEIGHT),
         }}
-        onPress={handlePress}
       >
-        <VStack className="relative mx-2 px-2 pt-3 pb-2 gap-y-3">
-          <PlaybackProgressBar position="top" />
-          <HStack className="items-center gap-x-2">
-            <ImageWithFallback
-              source={artwork ? { uri: artwork } : undefined}
-              className="w-10 h-10 rounded aspect-square"
-              alt="Track cover"
-              contentFit={playingTrack.isRadio ? "contain" : "cover"}
-              fallback={
-                <Box className="w-10 h-10 rounded bg-primary-600 items-center justify-center">
-                  <AudioLines size={20} color={white} />
-                </Box>
-              }
-            />
-            <VStack className="flex-1">
-              <MovingText animate={isPlaying}>
-                <Text className="text-white font-bold text-sm">
-                  {playingTrack.title || ""}
-                </Text>
-              </MovingText>
-              <MovingText animate={isPlaying}>
-                <Text className="text-gray-300 text-xs">
-                  {playingTrack.artist ||
-                    (!isRadio && !isPodcast
-                      ? t("app.shared.unknownArtist")
-                      : "")}
-                </Text>
-              </MovingText>
-            </VStack>
-            {!isRadio && isPodcast && podcastSeries && (
-              <AnimatedHeart
-                hitSlop={8}
-                filled={isPodcastSeriesFavorite}
-                onPress={
-                  isPodcastSeriesFavorite
-                    ? handleRemovePodcastFavoritePress
-                    : handleAddPodcastFavoritePress
-                }
-              />
-            )}
-            {!isRadio && !isPodcast && (
-              <AnimatedHeart
-                hitSlop={8}
-                filled={!!playingTrack.starred}
-                onPress={
-                  playingTrack.starred
-                    ? handleUnfavoritePress
-                    : handleFavoritePress
-                }
-              />
-            )}
-          </HStack>
-          <HStack className="items-center justify-between">
-            {hasOutputs ? (
-              <Pressable
-                hitSlop={8}
-                disabled={!isOnline}
-                style={{ opacity: isOnline ? 1 : 0.6 }}
-                onPress={(e) => {
-                  e.stopPropagation?.();
-                  openOutputSheet();
-                }}
-              >
-                <Cast size={20} color={playingRemotely ? emerald500 : white} />
-              </Pressable>
-            ) : (
-              <Box className="w-5" />
-            )}
-            <PlayPauseButton
-              testID="floating-player-play-pause"
-              isPlaying={isPlaying}
-              onPress={handlePlayPausePress}
-              size={40}
-              iconSize={20}
-              className="bg-white"
-              hitSlop={8}
-            />
-            {!isRadio ? (
-              <Pressable
-                hitSlop={8}
-                disabled={!canSkipNext}
-                style={{ opacity: canSkipNext ? 1 : 0.4 }}
-                onPress={(e) => {
-                  e.stopPropagation?.();
-                  skipNext();
-                }}
-              >
-                <SkipForward size={20} color={white} fill={white} />
-              </Pressable>
-            ) : (
-              <Box className="w-5" />
-            )}
-          </HStack>
-        </VStack>
-      </Pressable>
-    );
-  }
-
-  if (hidden) {
-    return null;
-  }
-
-  return (
-    <GestureDetector gesture={composedGesture}>
-      <Animated.View
-        className="absolute right-0 left-0"
-        style={[
-          dismissStyle,
-          {
-            bottom:
-              insets.bottom +
-              TAB_BAR_CONTENT_HEIGHT +
-              (isOnline ? 0 : OFFLINE_BANNER_HEIGHT),
-          },
-        ]}
-      >
+        <SleepTimerBadge />
         <Pressable testID="floating-player" onPress={handlePress}>
-          <HStack
-            className="h-16 mx-2 px-4 py-2 rounded-md items-center justify-between overflow-hidden"
-            style={{
-              backgroundColor: backgroundColor,
-            }}
-          >
-            <HStack className="items-center flex-1">
-              <Box style={{ zIndex: 2 }} className="rounded-md">
-                <ImageWithFallback
-                  source={artwork ? { uri: artwork } : undefined}
-                  className="w-12 h-12 rounded-md aspect-square"
-                  alt="Track cover"
-                  contentFit={playingTrack.isRadio ? "contain" : "cover"}
-                  fallback={
-                    <Box className="w-12 h-12 rounded-md bg-primary-600 items-center justify-center">
-                      <AudioLines size={24} color={white} />
-                    </Box>
-                  }
-                />
-              </Box>
-
-              <Animated.View
-                style={[textStyle, { zIndex: 1 }]}
-                className="ml-4 flex-1"
-              >
+          <VStack className="relative mx-2 px-2 pt-3 pb-2 gap-y-3">
+            <PlaybackProgressBar position="top" />
+            <HStack className="items-center gap-x-2">
+              <ImageWithFallback
+                source={artwork ? { uri: artwork } : undefined}
+                className="w-10 h-10 rounded aspect-square"
+                alt="Track cover"
+                contentFit={playingTrack.isRadio ? "contain" : "cover"}
+                fallback={
+                  <Box className="w-10 h-10 rounded bg-primary-600 items-center justify-center">
+                    <AudioLines size={20} color={white} />
+                  </Box>
+                }
+              />
+              <VStack className="flex-1">
                 <MovingText animate={isPlaying}>
-                  <Text className="text-white font-bold text-md">
+                  <Text className="text-white font-bold text-sm">
                     {playingTrack.title || ""}
                   </Text>
                 </MovingText>
                 <MovingText animate={isPlaying}>
-                  <Text className="text-gray-300">
+                  <Text className="text-gray-300 text-xs">
                     {playingTrack.artist ||
                       (!isRadio && !isPodcast
                         ? t("app.shared.unknownArtist")
                         : "")}
                   </Text>
                 </MovingText>
-              </Animated.View>
-            </HStack>
-            <HStack className="items-center pl-4 gap-4" style={{ zIndex: 2 }}>
-              {hasOutputs && (
-                <Pressable
-                  hitSlop={12}
-                  disabled={!isOnline}
-                  style={{ opacity: isOnline ? 1 : 0.6 }}
-                  onPress={(e) => {
-                    e.stopPropagation?.();
-                    openOutputSheet();
-                  }}
-                >
-                  <Cast
-                    size={24}
-                    color={playingRemotely ? emerald500 : white}
-                  />
-                </Pressable>
-              )}
-              {!playingTrack.isRadio && isPodcast && podcastSeries && (
+              </VStack>
+              {!isRadio && isPodcast && podcastSeries && (
                 <AnimatedHeart
-                  hitSlop={12}
+                  hitSlop={8}
                   filled={isPodcastSeriesFavorite}
                   onPress={
                     isPodcastSeriesFavorite
@@ -585,9 +446,9 @@ export default function FloatingPlayer() {
                   }
                 />
               )}
-              {!playingTrack.isRadio && !isPodcast && (
+              {!isRadio && !isPodcast && (
                 <AnimatedHeart
-                  hitSlop={12}
+                  hitSlop={8}
                   filled={!!playingTrack.starred}
                   onPress={
                     playingTrack.starred
@@ -596,21 +457,174 @@ export default function FloatingPlayer() {
                   }
                 />
               )}
+            </HStack>
+            <HStack className="items-center justify-between">
+              {hasOutputs ? (
+                <Pressable
+                  hitSlop={8}
+                  disabled={!isOnline}
+                  style={{ opacity: isOnline ? 1 : 0.6 }}
+                  onPress={(e) => {
+                    e.stopPropagation?.();
+                    openOutputSheet();
+                  }}
+                >
+                  <Cast
+                    size={20}
+                    color={playingRemotely ? emerald500 : white}
+                  />
+                </Pressable>
+              ) : (
+                <Box className="w-5" />
+              )}
               <PlayPauseButton
                 testID="floating-player-play-pause"
                 isPlaying={isPlaying}
                 onPress={handlePlayPausePress}
-                size={24}
-                iconSize={24}
-                color={white}
-                hitSlop={12}
+                size={40}
+                iconSize={20}
+                className="bg-white"
+                hitSlop={8}
               />
+              {!isRadio ? (
+                <Pressable
+                  hitSlop={8}
+                  disabled={!canSkipNext}
+                  style={{ opacity: canSkipNext ? 1 : 0.4 }}
+                  onPress={(e) => {
+                    e.stopPropagation?.();
+                    skipNext();
+                  }}
+                >
+                  <SkipForward size={20} color={white} fill={white} />
+                </Pressable>
+              ) : (
+                <Box className="w-5" />
+              )}
             </HStack>
-            <Box className="absolute inset-0 bg-black/30 -z-10" />
-            <PlaybackProgressBar />
-          </HStack>
+          </VStack>
         </Pressable>
-      </Animated.View>
-    </GestureDetector>
+      </Box>
+    );
+  }
+
+  if (hidden) {
+    return null;
+  }
+
+  return (
+    <Animated.View
+      pointerEvents="box-none"
+      className="absolute right-0 left-0"
+      style={[
+        dismissStyle,
+        {
+          bottom:
+            insets.bottom +
+            TAB_BAR_CONTENT_HEIGHT +
+            (isOnline ? 0 : OFFLINE_BANNER_HEIGHT),
+        },
+      ]}
+    >
+      <SleepTimerBadge />
+      <GestureDetector gesture={composedGesture}>
+        <Animated.View>
+          <Pressable testID="floating-player" onPress={handlePress}>
+            <HStack
+              className="h-16 mx-2 px-4 py-2 rounded-md items-center justify-between overflow-hidden"
+              style={{
+                backgroundColor: backgroundColor,
+              }}
+            >
+              <HStack className="items-center flex-1">
+                <Box style={{ zIndex: 2 }} className="rounded-md">
+                  <ImageWithFallback
+                    source={artwork ? { uri: artwork } : undefined}
+                    className="w-12 h-12 rounded-md aspect-square"
+                    alt="Track cover"
+                    contentFit={playingTrack.isRadio ? "contain" : "cover"}
+                    fallback={
+                      <Box className="w-12 h-12 rounded-md bg-primary-600 items-center justify-center">
+                        <AudioLines size={24} color={white} />
+                      </Box>
+                    }
+                  />
+                </Box>
+
+                <Animated.View
+                  style={[textStyle, { zIndex: 1 }]}
+                  className="ml-4 flex-1"
+                >
+                  <MovingText animate={isPlaying}>
+                    <Text className="text-white font-bold text-md">
+                      {playingTrack.title || ""}
+                    </Text>
+                  </MovingText>
+                  <MovingText animate={isPlaying}>
+                    <Text className="text-gray-300">
+                      {playingTrack.artist ||
+                        (!isRadio && !isPodcast
+                          ? t("app.shared.unknownArtist")
+                          : "")}
+                    </Text>
+                  </MovingText>
+                </Animated.View>
+              </HStack>
+              <HStack className="items-center pl-4 gap-4" style={{ zIndex: 2 }}>
+                {hasOutputs && (
+                  <Pressable
+                    hitSlop={12}
+                    disabled={!isOnline}
+                    style={{ opacity: isOnline ? 1 : 0.6 }}
+                    onPress={(e) => {
+                      e.stopPropagation?.();
+                      openOutputSheet();
+                    }}
+                  >
+                    <Cast
+                      size={24}
+                      color={playingRemotely ? emerald500 : white}
+                    />
+                  </Pressable>
+                )}
+                {!playingTrack.isRadio && isPodcast && podcastSeries && (
+                  <AnimatedHeart
+                    hitSlop={12}
+                    filled={isPodcastSeriesFavorite}
+                    onPress={
+                      isPodcastSeriesFavorite
+                        ? handleRemovePodcastFavoritePress
+                        : handleAddPodcastFavoritePress
+                    }
+                  />
+                )}
+                {!playingTrack.isRadio && !isPodcast && (
+                  <AnimatedHeart
+                    hitSlop={12}
+                    filled={!!playingTrack.starred}
+                    onPress={
+                      playingTrack.starred
+                        ? handleUnfavoritePress
+                        : handleFavoritePress
+                    }
+                  />
+                )}
+                <PlayPauseButton
+                  testID="floating-player-play-pause"
+                  isPlaying={isPlaying}
+                  onPress={handlePlayPausePress}
+                  size={24}
+                  iconSize={24}
+                  color={white}
+                  hitSlop={12}
+                />
+              </HStack>
+              <Box className="absolute inset-0 bg-black/30 -z-10" />
+              <PlaybackProgressBar />
+            </HStack>
+          </Pressable>
+        </Animated.View>
+      </GestureDetector>
+    </Animated.View>
   );
 }

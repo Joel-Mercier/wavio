@@ -1,6 +1,7 @@
 import axios from "axios";
 import { audioMuseRequest } from "@/services/audioMuse";
 import type { AudioMuseSimilarArtist } from "@/services/audioMuse/types";
+import type { ArtistID3 } from "@/services/openSubsonic/types";
 
 // AudioMuse fits a Gaussian Mixture Model per artist over its audio analysis and
 // compares those models, so this answers "sounds like" where the backend's own
@@ -60,4 +61,35 @@ export async function findSimilarArtists({
     }
     throw error;
   }
+}
+
+function normalizeName(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+/**
+ * Resolve AudioMuse rows against artists the active backend knows, nearest
+ * first. AudioMuse's `artist_id` comes from its own media-server registry, so it
+ * is only trusted when the backend has it; a row whose id is missing or unknown
+ * is recovered by name, and one that matches neither is dropped.
+ */
+export function matchSimilarArtists(
+  rows: readonly AudioMuseSimilarArtist[],
+  pool: readonly ArtistID3[],
+): ArtistID3[] {
+  const byId = new Map(pool.map((artist) => [artist.id, artist]));
+  const byName = new Map(
+    pool.map((artist) => [normalizeName(artist.name), artist]),
+  );
+  const seen = new Set<string>();
+  return rows.reduce<ArtistID3[]>((artists, row) => {
+    const match =
+      (row.artist_id ? byId.get(row.artist_id) : undefined) ??
+      byName.get(normalizeName(row.artist));
+    if (match && !seen.has(match.id)) {
+      seen.add(match.id);
+      artists.push(match);
+    }
+    return artists;
+  }, []);
 }

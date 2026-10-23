@@ -21,6 +21,7 @@ import LibraryPathField from "@/components/forms/LibraryPathField";
 import LocalPathsField from "@/components/forms/LocalPathsField";
 import PlainPasswordAuthField from "@/components/forms/PlainPasswordAuthField";
 import ServerTypeSelector from "@/components/forms/ServerTypeSelector";
+import SingleSignOnField from "@/components/forms/SingleSignOnField";
 import UrlInputField, {
   protocolsForServerType,
   realignUrlProtocol,
@@ -132,6 +133,9 @@ export default function ServersDetail() {
       fallbackUrl: "",
       headers: [] as HeaderRow[],
       plainPasswordAuth: false,
+      sso: false,
+      oidcIssuer: "",
+      oidcClientId: "",
     },
     validators: {
       onChange: addServerFormSchema,
@@ -205,6 +209,10 @@ export default function ServersDetail() {
             : undefined,
           plainPasswordAuth:
             usesSubsonicAuthType(value.type) && value.plainPasswordAuth,
+          oidc:
+            usesSubsonicAuthType(value.type) && value.sso
+              ? { issuer: value.oidcIssuer, clientId: value.oidcClientId }
+              : undefined,
         });
         // Refresh the native KeyManager so this server's client cert is
         // presented on future connections, and register the (possibly new)
@@ -387,6 +395,31 @@ export default function ServersDetail() {
                       {/* Cross-platform section; only the client certificate
                             is gated on Android + the native trust module. */}
                       <AdvancedSettingsSection>
+                        {usesSubsonicAuthType(type) && (
+                          <form.Subscribe
+                            selector={(state) => state.values.sso}
+                          >
+                            {(sso) => (
+                              <form.Field name="oidcIssuer">
+                                {(issuerField) => (
+                                  <form.Field name="oidcClientId">
+                                    {(clientIdField) => (
+                                      <SingleSignOnField
+                                        enabled={sso}
+                                        onToggle={(on) =>
+                                          form.setFieldValue("sso", on)
+                                        }
+                                        issuerField={issuerField}
+                                        clientIdField={clientIdField}
+                                        help={t("app.servers.oidcToggleHelp")}
+                                      />
+                                    )}
+                                  </form.Field>
+                                )}
+                              </form.Field>
+                            )}
+                          </form.Subscribe>
+                        )}
                         <form.Field name="fallbackUrl">
                           {(field) => (
                             <FallbackUrlField
@@ -432,14 +465,22 @@ export default function ServersDetail() {
                             </form.Field>
                           )}
                         {usesSubsonicAuthType(type) && (
-                          <form.Field name="plainPasswordAuth">
-                            {(field) => (
-                              <PlainPasswordAuthField
-                                value={field.state.value}
-                                onChange={field.handleChange}
-                              />
-                            )}
-                          </form.Field>
+                          <form.Subscribe
+                            selector={(state) => state.values.sso}
+                          >
+                            {(sso) =>
+                              sso ? null : (
+                                <form.Field name="plainPasswordAuth">
+                                  {(field) => (
+                                    <PlainPasswordAuthField
+                                      value={field.state.value}
+                                      onChange={field.handleChange}
+                                    />
+                                  )}
+                                </form.Field>
+                              )
+                            }
+                          </form.Subscribe>
                         )}
                       </AdvancedSettingsSection>
                     </>

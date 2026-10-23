@@ -23,10 +23,9 @@ import RadioIcon from "lucide-react-native/icons/radio";
 import Share2 from "lucide-react-native/icons/share-2";
 import Sparkles from "lucide-react-native/icons/sparkles";
 import TextSearch from "lucide-react-native/icons/text-search";
-import Timer from "lucide-react-native/icons/timer";
 import User from "lucide-react-native/icons/user";
 import Waypoints from "lucide-react-native/icons/waypoints";
-import { type RefObject, useEffect, useRef, useState } from "react";
+import { type RefObject, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking } from "react-native";
 import Share from "react-native-share";
@@ -38,6 +37,7 @@ import ImageWithFallback from "@/components/ImageWithFallback";
 import InternetRadioStationActions from "@/components/internetRadioStations/InternetRadioStationActions";
 import LrclibPickerSheet from "@/components/player/LrclibPickerSheet";
 import ShareLinkSheet from "@/components/player/ShareLinkSheet";
+import SleepTimerActionRow from "@/components/player/SleepTimerActionRow";
 import TrackInfoModal from "@/components/tracks/TrackInfoModal";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -62,7 +62,6 @@ import { useIsOnline } from "@/hooks/useIsOnline";
 import { isTlsTrustFailure } from "@/services/errorReporting";
 import { getCurrentTime } from "@/services/player";
 import { saveTrackToDevice } from "@/services/saveTrackToDevice";
-import { useSleepTimer } from "@/services/sleepTimer";
 import useApp, { PODCAST_PLAYBACK_RATES } from "@/stores/app";
 import useAudioMuse, {
   selectSimilarTracksAvailable,
@@ -135,32 +134,10 @@ export default function PlayerSheets({
   const toast = useToast();
   const [shareUrl, setShareUrl] = useState("");
   const [showInfoModal, setShowInfoModal] = useState(false);
-  const sleepTimerSheetRef = useRef<BottomSheetModal>(null);
   const ownLyricsPickerSheetRef = useRef<BottomSheetModal>(null);
   const lyricsPickerRef = lyricsPickerSheetRef ?? ownLyricsPickerSheetRef;
   const bottomSheetArtistsModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
-  const sleepEndsAt = useSleepTimer((s) => s.endsAt);
-  const sleepEndOfTrack = useSleepTimer((s) => s.endOfTrack);
-  const setSleepMinutes = useSleepTimer((s) => s.setMinutes);
-  const setSleepEndOfTrack = useSleepTimer((s) => s.setEndOfTrack);
-  const cancelSleepTimer = useSleepTimer((s) => s.cancel);
-  const sleepActive = sleepEndsAt != null || sleepEndOfTrack;
-  const [sleepNow, setSleepNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (sleepEndsAt == null) return;
-    const id = setInterval(() => setSleepNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, [sleepEndsAt]);
-  const sleepRemainingLabel = (() => {
-    if (sleepEndOfTrack) return t("app.player.sleepTimerEndOfTrack");
-    if (sleepEndsAt == null) return null;
-    const remaining = Math.max(0, sleepEndsAt - sleepNow);
-    const totalSec = Math.ceil(remaining / 1000);
-    const m = Math.floor(totalSec / 60);
-    const s = totalSec % 60;
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  })();
   const doShare = useCreateShare();
   const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
 
@@ -345,25 +322,9 @@ export default function PlayerSheets({
     });
   };
 
-  const handleSleepTimerPress = () => {
-    actionsSheetRef.current?.dismiss();
-    sleepTimerSheetRef.current?.present();
-  };
-
-  const handleSleepPresetPress = (minutes: number) => {
-    setSleepMinutes(minutes);
-    sleepTimerSheetRef.current?.dismiss();
-  };
-
-  const handleSleepEndOfTrackPress = () => {
-    setSleepEndOfTrack();
-    sleepTimerSheetRef.current?.dismiss();
-  };
-
-  const handleSleepCancelPress = () => {
-    cancelSleepTimer();
-    sleepTimerSheetRef.current?.dismiss();
-  };
+  const sleepTimerRow = (
+    <SleepTimerActionRow onPress={() => actionsSheetRef.current?.dismiss()} />
+  );
 
   const handlePlaybackRatePress = (rate: number) => {
     setPodcastPlaybackRate(rate);
@@ -623,7 +584,9 @@ export default function PlayerSheets({
                   if (router.canGoBack()) router.back();
                   else router.replace("/");
                 }}
-              />
+              >
+                {sleepTimerRow}
+              </InternetRadioStationActions>
             ) : isPodcast ? (
               <VStack className="mt-6 gap-y-8">
                 {podcastSeries && (
@@ -664,26 +627,7 @@ export default function PlayerSheets({
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={handleSleepTimerPress}>
-                  <HStack className="items-center">
-                    <Timer
-                      size={24}
-                      color={sleepActive ? emerald500 : gray200}
-                    />
-                    <Text
-                      className="ml-4 text-lg"
-                      style={{
-                        color: sleepActive ? emerald500 : gray200,
-                      }}
-                    >
-                      {sleepActive && sleepRemainingLabel
-                        ? t("app.player.sleepTimerActive", {
-                            label: sleepRemainingLabel,
-                          })
-                        : t("app.player.sleepTimer")}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
+                {sleepTimerRow}
               </VStack>
             ) : (
               <VStack className="mt-6 gap-y-8">
@@ -853,26 +797,7 @@ export default function PlayerSheets({
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={handleSleepTimerPress}>
-                  <HStack className="items-center">
-                    <Timer
-                      size={24}
-                      color={sleepActive ? emerald500 : gray200}
-                    />
-                    <Text
-                      className="ml-4 text-lg"
-                      style={{
-                        color: sleepActive ? emerald500 : gray200,
-                      }}
-                    >
-                      {sleepActive && sleepRemainingLabel
-                        ? t("app.player.sleepTimerActive", {
-                            label: sleepRemainingLabel,
-                          })
-                        : t("app.player.sleepTimer")}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
+                {sleepTimerRow}
                 {playingTrack?.musicBrainzId && (
                   <FadeOutScaleDown
                     onPress={handleMusicBrainzPress}
@@ -888,77 +813,6 @@ export default function PlayerSheets({
                 )}
               </VStack>
             )}
-          </Box>
-        </BottomSheetScrollView>
-      </BottomSheetModalComponent>
-      <BottomSheetModalComponent
-        ref={sleepTimerSheetRef}
-        enableHalfExpand={false}
-        backgroundStyle={{
-          backgroundColor: "rgb(41, 41, 41)",
-        }}
-        handleIndicatorStyle={{
-          backgroundColor: "#b3b3b3",
-        }}
-      >
-        <BottomSheetScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ alignItems: "center" }}
-        >
-          <Box className="p-6 w-full mb-12">
-            <HStack className="items-center mb-6">
-              <Timer size={24} color={gray200} />
-              <Heading
-                className="ml-4 text-white font-normal"
-                size="lg"
-                numberOfLines={1}
-              >
-                {t("app.player.sleepTimer")}
-              </Heading>
-            </HStack>
-            <VStack className="gap-y-6">
-              <FadeOutScaleDown onPress={handleSleepCancelPress}>
-                <Text
-                  className="text-lg"
-                  style={{
-                    color: !sleepActive ? emerald500 : gray200,
-                  }}
-                >
-                  {t("app.player.sleepTimerOff")}
-                </Text>
-              </FadeOutScaleDown>
-              {[5, 10, 15, 30, 45, 60].map((minutes) => {
-                const active =
-                  !sleepEndOfTrack &&
-                  sleepEndsAt != null &&
-                  Math.round((sleepEndsAt - Date.now()) / 60000) === minutes;
-                return (
-                  <FadeOutScaleDown
-                    key={minutes}
-                    onPress={() => handleSleepPresetPress(minutes)}
-                  >
-                    <Text
-                      className="text-lg"
-                      style={{
-                        color: active ? emerald500 : gray200,
-                      }}
-                    >
-                      {t("app.player.sleepTimerMinutes", { count: minutes })}
-                    </Text>
-                  </FadeOutScaleDown>
-                );
-              })}
-              <FadeOutScaleDown onPress={handleSleepEndOfTrackPress}>
-                <Text
-                  className="text-lg"
-                  style={{
-                    color: sleepEndOfTrack ? emerald500 : gray200,
-                  }}
-                >
-                  {t("app.player.sleepTimerEndOfTrack")}
-                </Text>
-              </FadeOutScaleDown>
-            </VStack>
           </Box>
         </BottomSheetScrollView>
       </BottomSheetModalComponent>

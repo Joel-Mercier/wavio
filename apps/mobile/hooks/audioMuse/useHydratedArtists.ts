@@ -1,14 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useArtists } from "@/hooks/backend/useBrowsing";
+import { matchSimilarArtists } from "@/services/audioMuse/artists";
 import type { AudioMuseSimilarArtist } from "@/services/audioMuse/types";
 import { getArtistsByIds } from "@/services/backend/browsing";
 import type { ArtistID3 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderId } from "@/stores/musicFolders";
-
-function normalizeName(name: string): string {
-  return name.trim().toLowerCase();
-}
 
 // Stable identity for the not-yet-loaded case, so callers can hand the query's
 // `data` straight in without a fresh [] re-running every memo each render.
@@ -64,23 +61,6 @@ export function useHydratedArtists(
   return useMemo<ArtistID3[]>(() => {
     const pool = cachedArtists ?? fetched;
     if (!pool?.length) return [];
-
-    const byId = new Map(pool.map((artist) => [artist.id, artist]));
-    const byName = new Map(
-      pool.map((artist) => [normalizeName(artist.name), artist]),
-    );
-
-    // AudioMuse ranks nearest-first; keep that order and drop what we can't resolve.
-    const seen = new Set<string>();
-    return rows.reduce<ArtistID3[]>((artists, result) => {
-      const match =
-        (result.artist_id ? byId.get(result.artist_id) : undefined) ??
-        byName.get(normalizeName(result.artist));
-      if (match && !seen.has(match.id)) {
-        seen.add(match.id);
-        artists.push(match);
-      }
-      return artists;
-    }, []);
+    return matchSimilarArtists(rows, pool);
   }, [rows, cachedArtists, fetched]);
 }

@@ -146,11 +146,8 @@ export default function LikedSongs() {
   };
 
   const likedSongsSource = useMemo<QueueSource>(
-    () =>
-      data?.artist
-        ? { type: "likedSongs", name: data.artist.name }
-        : { type: "likedSongs", name: "" },
-    [data?.artist],
+    () => ({ type: "likedSongs", id, name: data?.artist?.name ?? "" }),
+    [data?.artist, id],
   );
   const handlePlayPress = () => {
     if (isPlayingFromList) {

@@ -5,7 +5,9 @@ import { zustandStorage } from "@/config/storage";
 import {
   hasCaseInsensitiveUsernamesType,
   hasNetworkServerType,
+  usesSubsonicAuthType,
 } from "@/services/backend/serverTraits";
+import { oidcSessionKey, useOidcBase } from "@/stores/oidc";
 import createSelectors from "@/utils/createSelectors";
 
 export const serverTypeSchema = z.enum([
@@ -83,6 +85,25 @@ export function refineFallbackUrl(
     ctx.addIssue({
       code: "custom",
       path: ["fallbackUrl"],
+      message: parsed.error.issues[0]?.message,
+    });
+  }
+}
+
+// Shared by every form with the single-sign-on switch: the issuer is optional
+// (discovered when blank) but a typed one has to be a URL. Ignored while the
+// switch is off, where the field is hidden.
+export function refineOidcIssuer(
+  enabled: boolean,
+  issuer: string,
+  ctx: z.RefinementCtx,
+): void {
+  if (!enabled || !issuer.trim()) return;
+  const parsed = z.url().safeParse(issuer.trim());
+  if (!parsed.success) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["oidcIssuer"],
       message: parsed.error.issues[0]?.message,
     });
   }
@@ -242,9 +263,18 @@ export const addServerFormSchema = z
     // refine so a half-typed row doesn't block an unrelated field.
     headers: z.array(headerRowSchema),
     plainPasswordAuth: z.boolean(),
+    // Single sign-on and its manual overrides — see `Server.oidc`.
+    sso: z.boolean(),
+    oidcIssuer: z.string().trim(),
+    oidcClientId: z.string().trim(),
   })
   .superRefine((data, ctx) => {
     if (!hasNetworkServerType(data.type)) return;
+    refineOidcIssuer(
+      data.sso && usesSubsonicAuthType(data.type),
+      data.oidcIssuer,
+      ctx,
+    );
     const name = z.string().min(1).trim().safeParse(data.name);
     if (!name.success) {
       ctx.addIssue({
@@ -279,9 +309,17 @@ export const editServerFormSchema = z
     fallbackUrl: z.string().trim(),
     headers: z.array(headerRowSchema),
     plainPasswordAuth: z.boolean(),
+    sso: z.boolean(),
+    oidcIssuer: z.string().trim(),
+    oidcClientId: z.string().trim(),
   })
   .superRefine((data, ctx) => {
     if (!hasNetworkServerType(data.type)) return;
+    refineOidcIssuer(
+      data.sso && usesSubsonicAuthType(data.type),
+      data.oidcIssuer,
+      ctx,
+    );
     const url = z.url().min(1).trim().safeParse(data.url);
     if (!url.success) {
       ctx.addIssue({
@@ -345,7 +383,13 @@ export type Server = {
   // servers that fail some other way, and it costs something: the password
   // travels in every query string, hex-encoded but not encrypted.
   plainPasswordAuth?: boolean;
+  // Set when this server is signed into through single sign-on: an OpenID
+  // Connect proxy in front of it (services/oidc/). The fields are only the
+  // user's manual overrides — both absent means "discover from the server".
+  oidc?: OidcServerConfig;
 };
+
+export type OidcServerConfig = { issuer?: string; clientId?: string };
 
 export type ServerUser = {
   serverId: string;
@@ -368,6 +412,8 @@ interface ServersStore {
     fallbackUrl?: string;
     headers?: Record<string, string>;
     plainPasswordAuth?: boolean;
+    // null clears it (the server went back to password sign-in).
+    oidc?: OidcServerConfig | null;
   }) => Server;
   editServer: (
     id: string,
@@ -381,6 +427,7 @@ interface ServersStore {
       fallbackUrl?: string;
       headers?: Record<string, string>;
       plainPasswordAuth?: boolean;
+      oidc?: OidcServerConfig | null;
     },
   ) => void;
   removeServer: (id: string) => void;
@@ -412,6 +459,21 @@ const sameHeaders = (
   return aKeys.every((key) => a?.[key] === b?.[key]);
 };
 
+const normalizeOidc = (
+  oidc: OidcServerConfig | null | undefined,
+): OidcServerConfig | undefined => {
+  if (!oidc) return undefined;
+  const issuer = oidc.issuer?.trim() || undefined;
+  const clientId = oidc.clientId?.trim() || undefined;
+  return { ...(issuer ? { issuer } : {}), ...(clientId ? { clientId } : {}) };
+};
+
+const sameOidc = (
+  a: OidcServerConfig | undefined,
+  b: OidcServerConfig | undefined,
+): boolean =>
+  !!a === !!b && a?.issuer === b?.issuer && a?.clientId === b?.clientId;
+
 const generateId = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 
@@ -442,8 +504,10 @@ const useServersBase = create<ServersStore>()(
         fallbackUrl,
         headers,
         plainPasswordAuth,
+        oidc,
       }) => {
         const trimmedUrl = url.trim();
+        const cleanOidc = normalizeOidc(oidc);
         const trimmedName = name.trim();
         const cleanAlias = mtlsAlias?.trim() || undefined;
         const cleanLibraryPath = libraryPath?.trim() || undefined;
@@ -481,6 +545,9 @@ const useServersBase = create<ServersStore>()(
           ) {
             patch.plainPasswordAuth = plainPasswordAuth;
           }
+          if (oidc !== undefined && !sameOidc(existing.oidc, cleanOidc)) {
+            patch.oidc = cleanOidc;
+          }
           if (Object.keys(patch).length > 0) {
             set((state) => ({
               servers: state.servers.map((s) =>
@@ -504,6 +571,7 @@ const useServersBase = create<ServersStore>()(
           ...(cleanFallback ? { fallbackUrl: cleanFallback } : {}),
           ...(cleanHeaders ? { headers: cleanHeaders } : {}),
           ...(plainPasswordAuth ? { plainPasswordAuth } : {}),
+          ...(cleanOidc ? { oidc: cleanOidc } : {}),
         };
         set((state) => {
           const next = [created, ...state.servers];
@@ -541,12 +609,18 @@ const useServersBase = create<ServersStore>()(
                   ...(patch.plainPasswordAuth !== undefined
                     ? { plainPasswordAuth: patch.plainPasswordAuth }
                     : {}),
+                  ...(patch.oidc !== undefined
+                    ? { oidc: normalizeOidc(patch.oidc) }
+                    : {}),
                 }
               : s,
           ),
         }));
       },
       removeServer: (id) => {
+        // A forgotten server's refresh tokens would otherwise sit on the
+        // device indefinitely, still valid at the IdP.
+        useOidcBase.getState().removeServerSessions(id);
         set((state) => ({
           servers: state.servers.filter((s) => s.id !== id),
           users: state.users.filter((u) => u.serverId !== id),
@@ -599,6 +673,9 @@ const useServersBase = create<ServersStore>()(
         });
       },
       removeUser: (serverId, username) => {
+        useOidcBase
+          .getState()
+          .removeSession(oidcSessionKey(serverId, username));
         set((state) => ({
           users: state.users.filter(
             (u) => !(u.serverId === serverId && u.username === username),

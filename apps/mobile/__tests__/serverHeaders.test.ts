@@ -36,6 +36,7 @@ import {
   customHeadersForUrl,
   mergeCustomHeaders,
   requestHeadersForUrl,
+  setSessionBearer,
   withServerHeaders,
 } from "@/services/serverHeaders";
 import { type Server, type ServerUser, useServersBase } from "@/stores/servers";
@@ -348,5 +349,61 @@ describe("network-share credentials", () => {
     expect(mergeCustomHeaders("http://nas.local:4533/rest/ping", {})).toEqual(
       HEADERS,
     );
+  });
+});
+
+// The SSO access token reaches every transport the same way a share's Basic
+// header does — origin-keyed, both routes — and the same way never reaches the
+// "what did the user configure" accessors.
+describe("single-sign-on bearer", () => {
+  const sso = server({
+    id: "sso",
+    url: "https://music.example.com",
+    fallbackUrl: "http://192.168.1.10:4533",
+    headers: undefined,
+  });
+
+  afterEach(() => setSessionBearer(null));
+
+  it("sends the access token on both routes", () => {
+    setServers([sso]);
+    setSessionBearer({ serverId: "sso", accessToken: "at-1" });
+    expect(
+      requestHeadersForUrl("https://music.example.com/rest/stream?id=1"),
+    ).toEqual({ "User-Agent": USER_AGENT, Authorization: "Bearer at-1" });
+    expect(
+      requestHeadersForUrl("http://192.168.1.10:4533/rest/getCoverArt")
+        .Authorization,
+    ).toBe("Bearer at-1");
+    expect(
+      mergeCustomHeaders("https://music.example.com/rest/stream", {}),
+    ).toEqual({ Authorization: "Bearer at-1" });
+  });
+
+  it("picks up a refreshed token", () => {
+    setServers([sso]);
+    setSessionBearer({ serverId: "sso", accessToken: "at-1" });
+    const url = "https://music.example.com/rest/ping";
+    expect(requestHeadersForUrl(url).Authorization).toBe("Bearer at-1");
+    setSessionBearer({ serverId: "sso", accessToken: "at-2" });
+    expect(requestHeadersForUrl(url).Authorization).toBe("Bearer at-2");
+  });
+
+  it("stays out of the user-configured header map and the widget mirror", () => {
+    setServers([sso]);
+    setSessionBearer({ serverId: "sso", accessToken: "at-1" });
+    expect(customHeadersForUrl("https://music.example.com/x")).toBeUndefined();
+    expect(customHeaderHostMap()).toEqual({});
+    expect(configuredHeaderNames().has("authorization")).toBe(true);
+  });
+
+  it("lets a header the user configured win", () => {
+    setServers([
+      server({ id: "sso", headers: { Authorization: "Bearer static" } }),
+    ]);
+    setSessionBearer({ serverId: "sso", accessToken: "at-1" });
+    expect(
+      requestHeadersForUrl("https://music.example.com/x").Authorization,
+    ).toBe("Bearer static");
   });
 });

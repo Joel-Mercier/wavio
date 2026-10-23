@@ -61,9 +61,21 @@ export function isCredentialErrorCode(code: unknown): boolean {
 // no way out. Falling back to the password we still hold keeps such a session
 // usable; if there's no password either, the server rejects it once and the
 // corroborated sign-out (services/auth/credentialFailure.ts) ends it cleanly.
+//
+// A single-sign-on session with no password sends `u` alone: the proxy in
+// front of the server authenticates the request from its bearer header, and
+// Navidrome's external auth then ignores `p`/`t`/`s` entirely. Stream and cover
+// URLs built from this therefore carry no secret at all.
 export function subsonicAuthParams(): Record<string, string> {
-  const { username, password, subsonicSalt, subsonicToken, useTokenAuth } =
-    useAuthBase.getState();
+  const {
+    username,
+    password,
+    subsonicSalt,
+    subsonicToken,
+    useTokenAuth,
+    authMethod,
+  } = useAuthBase.getState();
+  if (authMethod === "oidc" && !password) return { u: username };
   if (useTokenAuth !== false && subsonicToken && subsonicSalt) {
     return { u: username, t: subsonicToken, s: subsonicSalt };
   }

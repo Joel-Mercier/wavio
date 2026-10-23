@@ -246,7 +246,65 @@ describe("currentAuthScope", () => {
   });
 });
 
+const SSO_DEFAULTS = {
+  authMethod: "password" as const,
+  oidcIssuer: "",
+  oidcClientId: "",
+};
+
 describe("auth login schema", () => {
+  const base = {
+    url: "https://music.example.com",
+    username: "",
+    password: "",
+    type: "navidrome" as const,
+    paths: [],
+    libraryPath: "",
+    mtlsAlias: "",
+    fallbackUrl: "",
+    headers: [],
+    plainPasswordAuth: false,
+    ...SSO_DEFAULTS,
+  };
+
+  it("lets a single-sign-on login leave username and password empty", () => {
+    expect(loginSchema.safeParse({ ...base, authMethod: "oidc" }).success).toBe(
+      true,
+    );
+    expect(loginSchema.safeParse(base).success).toBe(false);
+  });
+
+  it("ignores leftover credentials under SSO, which hides those fields", () => {
+    expect(
+      loginSchema.safeParse({ ...base, authMethod: "oidc", password: "pw" })
+        .success,
+    ).toBe(true);
+  });
+
+  it("still needs credentials for a backend without SSO", () => {
+    expect(
+      loginSchema.safeParse({ ...base, type: "jellyfin", authMethod: "oidc" })
+        .success,
+    ).toBe(false);
+  });
+
+  it("rejects a malformed manual issuer", () => {
+    expect(
+      loginSchema.safeParse({
+        ...base,
+        authMethod: "oidc",
+        oidcIssuer: "auth.example.com",
+      }).success,
+    ).toBe(false);
+    expect(
+      loginSchema.safeParse({
+        ...base,
+        authMethod: "oidc",
+        oidcIssuer: "https://auth.example.com/realms/home",
+      }).success,
+    ).toBe(true);
+  });
+
   it("accepts a valid login payload", () => {
     const result = loginSchema.safeParse({
       url: "https://music.example.com",
@@ -259,6 +317,7 @@ describe("auth login schema", () => {
       fallbackUrl: "",
       headers: [],
       plainPasswordAuth: false,
+      ...SSO_DEFAULTS,
     });
     expect(result.success).toBe(true);
   });
@@ -275,6 +334,7 @@ describe("auth login schema", () => {
       fallbackUrl: "",
       headers: [],
       plainPasswordAuth: false,
+      ...SSO_DEFAULTS,
     });
     expect(result.success).toBe(true);
   });
@@ -290,6 +350,7 @@ describe("auth login schema", () => {
       mtlsAlias: "",
       headers: [],
       plainPasswordAuth: false,
+      ...SSO_DEFAULTS,
     };
     expect(
       loginSchema.safeParse({

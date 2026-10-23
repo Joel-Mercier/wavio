@@ -17,6 +17,7 @@ import {
 import { isMultistatus } from "@/services/fileSource/webdavMultistatus";
 import { authenticateByName as jellyfinAuthenticate } from "@/services/jellyfin/auth";
 import { nativeLogin } from "@/services/navidrome/auth";
+import { idTokenClaims } from "@/services/oidc/idToken";
 import { openSubsonicErrorCodes } from "@/services/openSubsonic";
 import {
   computeSubsonicToken,
@@ -24,6 +25,7 @@ import {
   generateSalt,
   isCredentialErrorCode,
 } from "@/services/openSubsonic/auth";
+import type { AuthMethod } from "@/stores/auth";
 import type { ServerType } from "@/stores/servers";
 import { basicAuthHeader } from "@/utils/basicAuth";
 
@@ -46,7 +48,17 @@ export type RemoteLoginOptions = {
   subsonicSalt?: string | null;
   subsonicToken?: string | null;
   useTokenAuth?: boolean;
+  authMethod?: AuthMethod;
+  // The server's own spelling of the signed-in user, when it told us rather
+  // than the user typing it: a single-sign-on session learns who it is from
+  // the proxy. Overrides the typed username when present.
+  username?: string;
 };
+
+// Tokens from a single-sign-on sign-in (services/oidc/signIn.ts). The proxy in
+// front of the server checks the access token; the ID token only offers a
+// username hint the server then has to confirm.
+export type OidcCredentials = { accessToken: string; idToken?: string };
 
 // Thrown when the server's TLS certificate isn't trusted (self-signed / unknown
 // CA). Carries the URL so the login UI can offer to inspect and trust the cert
@@ -252,6 +264,7 @@ export async function authenticateRemote(
   password: string,
   headers?: Record<string, string>,
   forcePasswordAuth?: boolean,
+  oidc?: OidcCredentials,
 ): Promise<RemoteLoginOptions> {
   const trimmedUrl = url.trim();
   const trimmedUsername = username.trim();
@@ -358,13 +371,29 @@ export async function authenticateRemote(
     throw new Error("authenticateRemote does not support on-device libraries");
   }
 
+  if (oidc && !trimmedPassword) {
+    return authenticateSsoOnly(
+      type,
+      trimmedUrl,
+      trimmedUsername,
+      oidc,
+      headers,
+    );
+  }
+  // SSO in front of a server that still checks its own password: the usual
+  // Subsonic sign-in, with the proxy's token on every request. The user's own
+  // headers still win, as everywhere else (services/serverHeaders.ts).
+  const requestHeaders = oidc
+    ? { Authorization: `Bearer ${oidc.accessToken}`, ...headers }
+    : headers;
+
   const subsonicSalt = generateSalt();
   const subsonicToken = await computeSubsonicToken(
     trimmedPassword,
     subsonicSalt,
   );
 
-  const pingClient = createBareClient(trimmedUrl, undefined, headers);
+  const pingClient = createBareClient(trimmedUrl, undefined, requestHeaders);
   const ping = (authParams: Record<string, string>) =>
     pingClient.get("/rest/ping", {
       params: {
@@ -388,7 +417,9 @@ export async function authenticateRemote(
         ? { t: subsonicToken, s: subsonicSalt }
         : { p: encodePasswordParam(trimmedPassword) },
     ),
-  );
+  ).catch((error) => {
+    throw oidc ? translateSsoHttpFailure(error) : error;
+  });
   let subsonicResponse = rsp.data?.["subsonic-response"];
   if (
     useTokenAuth &&
@@ -434,7 +465,7 @@ export async function authenticateRemote(
         trimmedUrl,
         trimmedUsername,
         trimmedPassword,
-        headers,
+        requestHeaders,
       );
       if (payload?.token && payload?.id) {
         navidrome = {
@@ -457,6 +488,192 @@ export async function authenticateRemote(
     subsonicSalt: useTokenAuth ? subsonicSalt : null,
     subsonicToken: useTokenAuth ? subsonicToken : null,
     useTokenAuth,
+    authMethod: oidc ? "oidc" : "password",
+  };
+}
+
+// An SSO proxy answering for the server: say what's wrong with the proxy
+// rather than "check your password", which the user doesn't have.
+function translateSsoHttpFailure(error: unknown): unknown {
+  if (!axios.isAxiosError(error)) return error;
+  const status = error.response?.status;
+  if (status === 401 || status === 403) {
+    return new LoginFailedError(
+      `SSO: proxy refused the access token (HTTP ${status})`,
+      i18n.t("auth.login.oidcTokenRejected"),
+      status,
+    );
+  }
+  return error;
+}
+
+type NavidromeHeaderLogin = { id: string; username: string; isAdmin: boolean };
+
+/**
+ * Who Navidrome thinks the proxy said we are, read from the web UI's bootstrap
+ * config (`window.__APP_CONFIG__.auth`, filled in by its external-auth
+ * handler).
+ *
+ * Fetched for more than the username. Navidrome only creates accounts for
+ * proxy-authenticated users when the web UI's page is served — the Subsonic
+ * API answers an unknown user with error 40 — so this request is also what lets
+ * someone whose first ever visit is from Wavio in at all. The native API's user
+ * id and admin flag come with it.
+ */
+async function navidromeHeaderLogin(
+  client: ReturnType<typeof createBareClient>,
+): Promise<NavidromeHeaderLogin | null> {
+  const response = await client.get("/app/", {
+    responseType: "text",
+    transformResponse: [(body: string) => body],
+    validateStatus: () => true,
+  });
+  if (response.status !== 200 || typeof response.data !== "string") return null;
+  return parseNavidromeHeaderLogin(response.data);
+}
+
+export function parseNavidromeHeaderLogin(
+  html: string,
+): NavidromeHeaderLogin | null {
+  // The config is a JSON document serialized *into* a JS string literal.
+  const literal = /__APP_CONFIG__\s*=\s*("(?:[^"\\]|\\.)*")/.exec(html)?.[1];
+  if (!literal) return null;
+  try {
+    const config = JSON.parse(JSON.parse(literal));
+    const auth = config?.auth;
+    if (typeof auth?.username !== "string" || typeof auth?.id !== "string")
+      return null;
+    return { id: auth.id, username: auth.username, isAdmin: !!auth.isAdmin };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Sign in on the proxy's word alone: no password, the bearer token on every
+ * request, and Navidrome's external auth mapping the proxy's user header to an
+ * account. The username isn't something the user types — it's whoever the
+ * IdP says they are — so it's discovered, in decreasing order of authority.
+ */
+async function authenticateSsoOnly(
+  type: ServerType,
+  url: string,
+  typedUsername: string,
+  oidc: OidcCredentials,
+  headers?: Record<string, string>,
+): Promise<RemoteLoginOptions> {
+  const client = createBareClient(url, undefined, {
+    Authorization: `Bearer ${oidc.accessToken}`,
+    ...headers,
+  });
+  const params = {
+    v: process.env.EXPO_PUBLIC_OPENSUBSONIC_API_VERSION,
+    c: process.env.EXPO_PUBLIC_CLIENT_NAME,
+    f: "json",
+  };
+  const get = (path: string, extra: Record<string, string> = {}) =>
+    withSslDetection(url, () =>
+      client.get(path, { params: { ...params, ...extra } }),
+    ).catch((error) => {
+      throw translateSsoHttpFailure(error);
+    });
+
+  let navidrome: RemoteLoginOptions["navidrome"] = null;
+  let username: string | undefined;
+  if (type === "navidrome") {
+    const headerLogin = await navidromeHeaderLogin(client).catch(() => null);
+    if (headerLogin) {
+      username = headerLogin.username;
+      // No JWT: the native API accepts the proxy's user header the same way.
+      navidrome = {
+        token: "",
+        userId: headerLogin.id,
+        isAdmin: headerLogin.isAdmin,
+      };
+    }
+  }
+
+  const ping = (await get("/rest/ping")).data?.["subsonic-response"];
+  if (ping?.status !== "ok") {
+    const code = ping?.error?.code;
+    // Code 10 (a required parameter is missing): the server never saw the
+    // proxy's user header, so it fell back to wanting Subsonic credentials.
+    // Navidrome's ExtAuth.TrustedSources doesn't include the proxy.
+    if (code === 10) {
+      throw new LoginFailedError(
+        "SSO: server ignored the proxy's user header (error 10)",
+        i18n.t("auth.login.oidcExtAuthMissing"),
+        code,
+      );
+    }
+    // Code 40 with a token the proxy accepted: the account doesn't exist.
+    if (code === 40) {
+      throw new LoginFailedError(
+        "SSO: server has no account for the proxy's user (error 40)",
+        i18n.t("auth.login.oidcNoServerAccount"),
+        code,
+      );
+    }
+    // No envelope: the proxy answered with its sign-in page instead of a 401,
+    // and the client followed the redirect into it.
+    throw new LoginFailedError(
+      typeof code === "number"
+        ? `SSO login rejected: error code ${code}`
+        : "SSO: response carries no subsonic-response envelope",
+      typeof code === "number"
+        ? (openSubsonicErrorCodes[code] ??
+            i18n.t("auth.login.loginErrorMessage"))
+        : i18n.t("auth.login.oidcProxyRedirected"),
+      typeof code === "number" ? code : undefined,
+    );
+  }
+
+  // OpenSubsonic `tokenInfo` names the user whatever authenticated the request.
+  if (!username) {
+    const info = (await get("/rest/tokenInfo").catch(() => null))?.data?.[
+      "subsonic-response"
+    ];
+    if (info?.status === "ok" && typeof info.tokenInfo?.username === "string")
+      username = info.tokenInfo.username;
+  }
+
+  // Last, a hint — what the user typed, or what the IdP calls them — that the
+  // server must confirm: `getUser` only answers for the requesting user, and
+  // returns the account's own spelling.
+  if (!username) {
+    const claims = idTokenClaims(oidc.idToken);
+    const hints = [
+      typedUsername,
+      claims?.preferred_username,
+      claims?.nickname,
+      claims?.email,
+    ].filter((h): h is string => typeof h === "string" && h.length > 0);
+    for (const hint of new Set(hints)) {
+      const user = (
+        await get("/rest/getUser", { username: hint }).catch(() => null)
+      )?.data?.["subsonic-response"];
+      if (user?.status === "ok" && typeof user.user?.username === "string") {
+        username = user.user.username;
+        break;
+      }
+    }
+  }
+
+  if (!username) {
+    throw new LoginFailedError(
+      "SSO: could not determine the signed-in username",
+      i18n.t("auth.login.oidcUsernameUnknown"),
+    );
+  }
+
+  return {
+    serverType: type,
+    navidrome,
+    subsonicSalt: null,
+    subsonicToken: null,
+    useTokenAuth: false,
+    authMethod: "oidc",
+    username,
   };
 }
 
@@ -500,6 +717,7 @@ export async function authenticateWithFallback(
   password: string,
   headers?: Record<string, string>,
   forcePasswordAuth?: boolean,
+  oidc?: OidcCredentials,
 ): Promise<{ options: RemoteLoginOptions; activeUrl: string }> {
   const trimmedUrl = url.trim();
   const trimmedFallback = fallbackUrl?.trim();
@@ -511,6 +729,7 @@ export async function authenticateWithFallback(
       password,
       headers,
       forcePasswordAuth,
+      oidc,
     );
     return { options, activeUrl: trimmedUrl };
   } catch (primaryError) {
@@ -526,6 +745,7 @@ export async function authenticateWithFallback(
         password,
         headers,
         forcePasswordAuth,
+        oidc,
       );
       return { options, activeUrl: trimmedFallback };
     } catch (fallbackError) {

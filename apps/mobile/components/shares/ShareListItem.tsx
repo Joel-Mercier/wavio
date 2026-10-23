@@ -240,7 +240,7 @@ export default function ShareListItem({ share }: { share: Share }) {
     <FadeOutScaleDown onPress={handleSharePress} className="mb-4">
       <Card className="w-full p-4 rounded-md bg-primary-600">
         <HStack className="items-center justify-between">
-          <HStack className="items-center">
+          <HStack className="flex-1 items-center">
             {share?.entry && hasEntries && share?.entry[0]?.coverArt ? (
               <Image
                 source={{ uri: artworkUrl(share.entry[0].coverArt) }}
@@ -258,7 +258,7 @@ export default function ShareListItem({ share }: { share: Share }) {
                 )}
               </Box>
             )}
-            <VStack className="ml-4">
+            <VStack className="flex-1 ml-4">
               <Heading size="lg" className="text-white" numberOfLines={1}>
                 {isPlaylist
                   ? share.description
@@ -282,7 +282,7 @@ export default function ShareListItem({ share }: { share: Share }) {
               </HStack>
             </VStack>
           </HStack>
-          <FadeOutScaleDown onPress={handlePresentModalPress}>
+          <FadeOutScaleDown onPress={handlePresentModalPress} className="ml-2">
             <EllipsisVertical color={gray300} />
           </FadeOutScaleDown>
         </HStack>

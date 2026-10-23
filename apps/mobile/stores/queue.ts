@@ -23,9 +23,13 @@ export type QueueSource = {
     | "audiomuse"
     // A ListenBrainz "created for you" playlist, resolved against the library.
     // Not navigable either: the playlist exists on ListenBrainz, not the server.
-    | "listenbrainz";
+    | "listenbrainz"
+    // An artist or genre mix the app generated. Not navigable either.
+    | "mix";
   name: string;
-  // Present for navigable sources (album/playlist/artist/folder)
+  // Present for navigable sources (album/playlist/artist/folder), and on
+  // artist-scoped lists (allSongs/likedSongs: the artist's id) so the artist's
+  // home shortcut can tell it is playing.
   id?: string;
   // The source's own cover art id (artist image / album / playlist cover), used
   // by the Activity screen's group headers.

@@ -14,6 +14,8 @@ import { Uniwind } from "uniwind";
 import Logo from "@/assets/images/logo.svg";
 import CertificateTrustDialog from "@/components/auth/CertificateTrustDialog";
 import LocalLibraryInfoDialog from "@/components/auth/LocalLibraryInfoDialog";
+import SsoAutoDetect from "@/components/auth/SsoAutoDetect";
+import SsoNotice from "@/components/auth/SsoNotice";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import AdvancedSettingsSection from "@/components/forms/AdvancedSettingsSection";
 import ClientCertificateField from "@/components/forms/ClientCertificateField";
@@ -27,6 +29,7 @@ import LibraryPathField from "@/components/forms/LibraryPathField";
 import LocalPathsField from "@/components/forms/LocalPathsField";
 import PlainPasswordAuthField from "@/components/forms/PlainPasswordAuthField";
 import ServerTypeSelector from "@/components/forms/ServerTypeSelector";
+import SingleSignOnField from "@/components/forms/SingleSignOnField";
 import UrlInputField, {
   protocolsForServerType,
   realignUrlProtocol,
@@ -80,8 +83,10 @@ import {
 } from "@/modules/ssl-trust";
 import {
   authenticateWithFallback,
+  LoginFailedError,
   loginFailureMessage,
   loginFailureStatus,
+  type OidcCredentials,
   SslUntrustedError,
 } from "@/services/auth/authenticate";
 import { sessionUsernameFor } from "@/services/auth/sessionUsername";
@@ -93,9 +98,18 @@ import {
 import { reportError, scrubUrl } from "@/services/errorReporting";
 import { parseSmbUrl } from "@/services/fileSource/smbAddress";
 import { foldersRemoved, samePaths } from "@/services/local/paths";
+import { OidcDiscoveryError } from "@/services/oidc/discovery";
+import {
+  resolveSsoTarget,
+  type SsoTarget,
+  saveOidcSession,
+  signInToTarget,
+} from "@/services/oidc/flow";
+import { OidcSignInError, type OidcTokens } from "@/services/oidc/signIn";
 import { syncSslClientCertificates, syncSslProxy } from "@/services/sslTrust";
 import useAuth, { loginSchema } from "@/stores/auth";
 import { flagLocalRescanOnEntry } from "@/stores/localLibrary";
+import { useOidcBase } from "@/stores/oidc";
 import useRecentPlays from "@/stores/recentPlays";
 import useServers, {
   cleanOptionalUrl,
@@ -192,6 +206,10 @@ export default function LoginScreen() {
   // login attempt fails with an untrusted TLS certificate; cleared on
   // cancel/trust.
   const [sslPromptUrl, setSslPromptUrl] = useState<string | null>(null);
+  // Single sign-on is switched on automatically when the server turns out to
+  // publish it — until the user flips the switch themselves, which then wins.
+  const [ssoTouched, setSsoTouched] = useState(false);
+  const [ssoIssuerHost, setSsoIssuerHost] = useState<string | null>(null);
   // Pre-check when this server+user already has a saved password (e.g. an avatar
   // re-login). Initial value only; the user can toggle it freely afterwards.
   const [saveCredentials, setSaveCredentials] = useState(() =>
@@ -217,6 +235,11 @@ export default function LoginScreen() {
       fallbackUrl: preselectedServer?.fallbackUrl ?? "",
       headers: headerRecordToRows(preselectedServer?.headers),
       plainPasswordAuth: !!preselectedServer?.plainPasswordAuth,
+      authMethod: (preselectedServer?.oidc ? "oidc" : "password") as
+        | "password"
+        | "oidc",
+      oidcIssuer: preselectedServer?.oidc?.issuer ?? "",
+      oidcClientId: preselectedServer?.oidc?.clientId ?? "",
     },
     validators: {
       onChange: loginSchema,
@@ -320,6 +343,32 @@ export default function LoginScreen() {
           // endpoint at all, so neither ever sees these params.
           const plainPasswordAuth =
             usesSubsonicAuthType(serverType) && !!value.plainPasswordAuth;
+          // Single sign-on: find the server's IdP and sign in there first. The
+          // tokens then authenticate everything that follows, starting with
+          // the sign-in requests below.
+          const useSso =
+            value.authMethod === "oidc" && usesSubsonicAuthType(serverType);
+          let ssoTarget: SsoTarget | null = null;
+          let ssoTokens: OidcTokens | null = null;
+          if (useSso) {
+            ssoTarget = await resolveSsoTarget({
+              urls: [trimmedUrl, fallbackUrl].filter((u): u is string => !!u),
+              headers,
+              issuer: value.oidcIssuer,
+              clientId: value.oidcClientId,
+            });
+            if (!ssoTarget) {
+              throw new LoginFailedError(
+                "SSO: server publishes no protected resource metadata",
+                t("auth.login.oidcNotFound"),
+              );
+            }
+            ssoTokens = await signInToTarget(ssoTarget);
+            if (!ssoTokens) return;
+          }
+          const oidc: OidcCredentials | undefined = ssoTokens
+            ? { accessToken: ssoTokens.accessToken, idToken: ssoTokens.idToken }
+            : undefined;
           // Register the client cert with the native KeyManager before the
           // handshake so mTLS servers get it presented on this first request —
           // for both routes, since either may be the one we end up talking to.
@@ -331,24 +380,35 @@ export default function LoginScreen() {
           const existing = servers.find((s) => s.url === trimmedUrl);
           // `joel` on a server that already holds `Joel`'s data signs in as
           // `Joel`, or the session would open an empty storage scope.
-          const username = existing
-            ? sessionUsernameFor(
-                { id: existing.id, type: serverType },
-                trimmedUsername,
-                allUsers
-                  .filter((u) => u.serverId === existing.id)
-                  .map((u) => u.username),
-              )
-            : trimmedUsername;
+          const adoptSpelling = (name: string) =>
+            existing
+              ? sessionUsernameFor(
+                  { id: existing.id, type: serverType },
+                  name,
+                  allUsers
+                    .filter((u) => u.serverId === existing.id)
+                    .map((u) => u.username),
+                )
+              : name;
+          // Under SSO the credential fields are hidden, so anything left in
+          // them (a demo fill, an earlier attempt) must not tag along.
+          const typedUsername =
+            !useSso && trimmedUsername ? adoptSpelling(trimmedUsername) : "";
+          const password = useSso ? "" : trimmedPassword;
           const { options, activeUrl } = await authenticateWithFallback(
             serverType,
             trimmedUrl,
             fallbackUrl,
-            username,
-            trimmedPassword,
+            typedUsername,
+            password,
             headers,
             plainPasswordAuth,
+            oidc,
           );
+          // Under SSO the server names the user; that wins over anything typed.
+          const username = options.username
+            ? adoptSpelling(options.username)
+            : typedUsername;
           // Narrowing or widening a share's scanned sub-path changes which files
           // belong to the library, so the index has to be reconciled. Flagged
           // here (pre-hydration) for the same reason the local branch does it:
@@ -374,14 +434,26 @@ export default function LoginScreen() {
             // re-logging into a saved server drops its old headers.
             headers: headers ?? {},
             plainPasswordAuth,
+            // A password sign-in on a server that used SSO turns it back into a
+            // password server; the overrides only exist under SSO.
+            oidc: usesSubsonicAuthType(serverType)
+              ? useSso
+                ? { issuer: value.oidcIssuer, clientId: value.oidcClientId }
+                : null
+              : undefined,
           });
           // Persist the password only when the user opted in; passing undefined
           // clears any previously saved password for this server+user.
           addOrUpdateUser({
             serverId: server.id,
             username,
-            password: saveCredentials ? trimmedPassword : undefined,
+            password: saveCredentials && password ? password : undefined,
           });
+          // Before login(): the session's bearer header is published from the
+          // token store the moment the auth store flips.
+          if (ssoTarget && ssoTokens) {
+            saveOidcSession(server.id, username, ssoTarget, ssoTokens);
+          }
           setCurrentServer(server.id);
           // `activeUrl` may be the fallback: the scope is keyed on serverId, so
           // which route we signed in through doesn't affect where state lives.
@@ -389,7 +461,7 @@ export default function LoginScreen() {
             serverId: server.id,
             url: activeUrl,
             username,
-            password: trimmedPassword,
+            password,
             ...options,
           });
           // Register the fallback origin as an iOS proxy upstream now that the
@@ -418,6 +490,14 @@ export default function LoginScreen() {
           setSslPromptUrl(error.url);
           return;
         }
+        // A sign-in the IdP refused or that never found an IdP: say so in
+        // terms of SSO rather than "check your password".
+        const ssoMessage =
+          error instanceof OidcSignInError
+            ? t("auth.login.oidcSignInFailed", { reason: error.message })
+            : error instanceof OidcDiscoveryError
+              ? t("auth.login.oidcDiscoveryFailed")
+              : null;
         // Login failures never reach the axios interceptors (auth uses its own
         // bare client), so report them here — otherwise this whole class of bug
         // is invisible in Sentry. Tagged `auth` (not `api`) and without a
@@ -445,9 +525,10 @@ export default function LoginScreen() {
             <Toast action="error">
               <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
               <ToastDescription>
-                {axios.isAxiosError(error)
-                  ? t("auth.login.loginErrorMessage")
-                  : loginFailureMessage(error)}
+                {ssoMessage ??
+                  (axios.isAxiosError(error)
+                    ? t("auth.login.loginErrorMessage")
+                    : loginFailureMessage(error))}
               </ToastDescription>
             </Toast>
           ),
@@ -464,6 +545,26 @@ export default function LoginScreen() {
     }
   }, [params.serverId, params.username]);
 
+  // Landed here because the IdP refused to refresh an SSO session: explain,
+  // once, rather than leave it looking like a crash back to the sign-in page.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once on mount
+  useEffect(() => {
+    if (!useOidcBase.getState().expiredNotice) return;
+    useOidcBase.getState().setExpiredNotice(null);
+    toast.show({
+      placement: "top",
+      duration: TOAST_DURATION.longer,
+      render: () => (
+        <Toast action="error">
+          <ToastTitle>{t("auth.login.oidcSessionExpiredTitle")}</ToastTitle>
+          <ToastDescription>
+            {t("auth.login.oidcSessionExpired")}
+          </ToastDescription>
+        </Toast>
+      ),
+    });
+  }, []);
+
   const handleServerChange = (serverId: string) => {
     const server = servers.find((s) => s.id === serverId);
     if (!server) return;
@@ -478,7 +579,12 @@ export default function LoginScreen() {
     // the newly selected one.
     form.setFieldValue("fallbackUrl", server.fallbackUrl ?? "");
     form.setFieldValue("plainPasswordAuth", !!server.plainPasswordAuth);
-    if (server.type !== "local") {
+    form.setFieldValue("oidcIssuer", server.oidc?.issuer ?? "");
+    form.setFieldValue("oidcClientId", server.oidc?.clientId ?? "");
+    form.setFieldValue("authMethod", server.oidc ? "oidc" : "password");
+    setSsoTouched(false);
+    setSsoIssuerHost(null);
+    if (server.type !== "local" && !server.oidc) {
       setTimeout(() => usernameRef.current?.focus(), 250);
     }
   };
@@ -629,100 +735,188 @@ export default function LoginScreen() {
                       {(field) => <LibraryPathField field={field} />}
                     </form.Field>
                   )}
-                  <form.Field name="username">
-                    {(field) => (
-                      <FormControl
-                        isInvalid={showFieldError(field)}
-                        size="md"
-                        isDisabled={false}
-                        isReadOnly={false}
-                        isRequired={false}
-                        className="my-2"
-                      >
-                        <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                          <InputField
-                            disableFullscreenUI
-                            ref={usernameRef}
-                            value={field.state.value}
-                            onChangeText={field.handleChange}
-                            onBlur={() => handleFieldBlur(field)}
-                            className="text-md text-white"
-                            placeholder={t("auth.login.usernamePlaceholder")}
-                            autoCapitalize="none"
-                            textContentType="username"
-                            returnKeyType="next"
-                            onSubmitEditing={() => passwordRef.current?.focus()}
-                          />
-                        </Input>
-                        <FieldError field={field} />
-                      </FormControl>
-                    )}
-                  </form.Field>
-                  <form.Field name="password">
-                    {(field) => (
-                      <FormControl
-                        isInvalid={showFieldError(field)}
-                        size="md"
-                        isDisabled={false}
-                        isReadOnly={false}
-                        isRequired={false}
-                        className="my-2"
-                      >
-                        <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
-                          <InputField
-                            disableFullscreenUI
-                            ref={passwordRef}
-                            value={field.state.value}
-                            onChangeText={field.handleChange}
-                            onBlur={() => handleFieldBlur(field)}
-                            className="text-md text-white"
-                            placeholder={t("auth.login.passwordPlaceholder")}
-                            secureTextEntry={!showPassword}
-                            autoCapitalize="none"
-                            textContentType="password"
-                            returnKeyType="go"
-                            onSubmitEditing={() => form.handleSubmit()}
-                          />
-                          <InputSlot>
-                            <Pressable
-                              onPress={() => setShowPassword((v) => !v)}
-                              accessibilityRole="button"
-                              accessibilityLabel={
-                                showPassword
-                                  ? t("auth.login.hidePassword")
-                                  : t("auth.login.showPassword")
+                  {usesSubsonicAuthType(type) && (
+                    <form.Subscribe
+                      selector={(state) =>
+                        [
+                          state.values.url,
+                          state.values.headers,
+                          state.values.oidcIssuer,
+                          state.values.authMethod,
+                        ] as const
+                      }
+                    >
+                      {([url, headerRows, oidcIssuer, method]) => (
+                        <>
+                          <SsoAutoDetect
+                            url={url ?? ""}
+                            headers={headerRowsToRecord(headerRows)}
+                            onResult={(host) => {
+                              setSsoIssuerHost(host);
+                              if (ssoTouched) return;
+                              const saved = servers.find(
+                                (s) => s.url === url?.trim(),
+                              )?.oidc;
+                              if (host) {
+                                form.setFieldValue("authMethod", "oidc");
+                              } else if (!saved && !oidcIssuer?.trim()) {
+                                form.setFieldValue("authMethod", "password");
                               }
-                            >
-                              {showPassword ? (
-                                <EyeOffIcon size={20} color={white} />
-                              ) : (
-                                <EyeIcon size={20} color={white} />
-                              )}
-                            </Pressable>
-                          </InputSlot>
-                        </Input>
-                        <FieldError field={field} />
-                      </FormControl>
-                    )}
-                  </form.Field>
-                  <Checkbox
-                    value="save-credentials"
-                    isChecked={saveCredentials}
-                    onChange={setSaveCredentials}
-                    className="my-2"
-                  >
-                    <CheckboxIndicator className="border-primary-100 data-[checked=true]:bg-emerald-500 data-[checked=true]:border-emerald-500">
-                      <CheckboxIcon as={CheckIcon} />
-                    </CheckboxIndicator>
-                    <CheckboxLabel className="text-primary-100">
-                      {t("auth.login.saveCredentials")}
-                    </CheckboxLabel>
-                  </Checkbox>
+                            }}
+                          />
+                          {method === "oidc" && (
+                            <SsoNotice
+                              issuerHost={
+                                oidcIssuer?.trim()
+                                  ? hostnameFromUrl(oidcIssuer.trim()) || null
+                                  : ssoIssuerHost
+                              }
+                              onUsePassword={() => {
+                                setSsoTouched(true);
+                                form.setFieldValue("authMethod", "password");
+                              }}
+                            />
+                          )}
+                        </>
+                      )}
+                    </form.Subscribe>
+                  )}
+                  <form.Subscribe selector={(state) => state.values.authMethod}>
+                    {(method) =>
+                      method === "oidc" && usesSubsonicAuthType(type) ? null : (
+                        <>
+                          <form.Field name="username">
+                            {(field) => (
+                              <FormControl
+                                isInvalid={showFieldError(field)}
+                                size="md"
+                                isDisabled={false}
+                                isReadOnly={false}
+                                isRequired={false}
+                                className="my-2"
+                              >
+                                <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                                  <InputField
+                                    disableFullscreenUI
+                                    ref={usernameRef}
+                                    value={field.state.value}
+                                    onChangeText={field.handleChange}
+                                    onBlur={() => handleFieldBlur(field)}
+                                    className="text-md text-white"
+                                    placeholder={t(
+                                      "auth.login.usernamePlaceholder",
+                                    )}
+                                    autoCapitalize="none"
+                                    textContentType="username"
+                                    returnKeyType="next"
+                                    onSubmitEditing={() =>
+                                      passwordRef.current?.focus()
+                                    }
+                                  />
+                                </Input>
+                                <FieldError field={field} />
+                              </FormControl>
+                            )}
+                          </form.Field>
+                          <form.Field name="password">
+                            {(field) => (
+                              <FormControl
+                                isInvalid={showFieldError(field)}
+                                size="md"
+                                isDisabled={false}
+                                isReadOnly={false}
+                                isRequired={false}
+                                className="my-2"
+                              >
+                                <Input className="border border-primary-600 bg-primary-600 data-[focus=true]:border-emerald-500 data-[invalid=true]:border-red-500 rounded-md px-6 py-2">
+                                  <InputField
+                                    disableFullscreenUI
+                                    ref={passwordRef}
+                                    value={field.state.value}
+                                    onChangeText={field.handleChange}
+                                    onBlur={() => handleFieldBlur(field)}
+                                    className="text-md text-white"
+                                    placeholder={t(
+                                      "auth.login.passwordPlaceholder",
+                                    )}
+                                    secureTextEntry={!showPassword}
+                                    autoCapitalize="none"
+                                    textContentType="password"
+                                    returnKeyType="go"
+                                    onSubmitEditing={() => form.handleSubmit()}
+                                  />
+                                  <InputSlot>
+                                    <Pressable
+                                      onPress={() => setShowPassword((v) => !v)}
+                                      accessibilityRole="button"
+                                      accessibilityLabel={
+                                        showPassword
+                                          ? t("auth.login.hidePassword")
+                                          : t("auth.login.showPassword")
+                                      }
+                                    >
+                                      {showPassword ? (
+                                        <EyeOffIcon size={20} color={white} />
+                                      ) : (
+                                        <EyeIcon size={20} color={white} />
+                                      )}
+                                    </Pressable>
+                                  </InputSlot>
+                                </Input>
+                                <FieldError field={field} />
+                              </FormControl>
+                            )}
+                          </form.Field>
+                          <Checkbox
+                            value="save-credentials"
+                            isChecked={saveCredentials}
+                            onChange={setSaveCredentials}
+                            className="my-2"
+                          >
+                            <CheckboxIndicator className="border-primary-100 data-[checked=true]:bg-emerald-500 data-[checked=true]:border-emerald-500">
+                              <CheckboxIcon as={CheckIcon} />
+                            </CheckboxIndicator>
+                            <CheckboxLabel className="text-primary-100">
+                              {t("auth.login.saveCredentials")}
+                            </CheckboxLabel>
+                          </Checkbox>
+                        </>
+                      )
+                    }
+                  </form.Subscribe>
                   {/* The section itself is cross-platform now that it holds the
                       fallback URL; the client certificate stays gated on
                       Android + the native trust module, and on speaking HTTP at
                       all — SMB's handshake has no TLS layer to present one to. */}
                   <AdvancedSettingsSection>
+                    {usesSubsonicAuthType(type) && (
+                      <form.Subscribe
+                        selector={(state) => state.values.authMethod}
+                      >
+                        {(method) => (
+                          <form.Field name="oidcIssuer">
+                            {(issuerField) => (
+                              <form.Field name="oidcClientId">
+                                {(clientIdField) => (
+                                  <SingleSignOnField
+                                    enabled={method === "oidc"}
+                                    onToggle={(on) => {
+                                      setSsoTouched(true);
+                                      form.setFieldValue(
+                                        "authMethod",
+                                        on ? "oidc" : "password",
+                                      );
+                                    }}
+                                    issuerField={issuerField}
+                                    clientIdField={clientIdField}
+                                  />
+                                )}
+                              </form.Field>
+                            )}
+                          </form.Field>
+                        )}
+                      </form.Subscribe>
+                    )}
                     <form.Field name="fallbackUrl">
                       {(field) => (
                         <FallbackUrlField
@@ -771,30 +965,49 @@ export default function LoginScreen() {
                         (access token) and for WebDAV/SMB shares, which
                         authenticate against the share itself. */}
                     {usesSubsonicAuthType(type) && (
-                      <form.Field name="plainPasswordAuth">
-                        {(field) => (
-                          <PlainPasswordAuthField
-                            value={field.state.value}
-                            onChange={field.handleChange}
-                          />
-                        )}
-                      </form.Field>
+                      <form.Subscribe
+                        selector={(state) => state.values.authMethod}
+                      >
+                        {(method) =>
+                          method === "oidc" ? null : (
+                            <form.Field name="plainPasswordAuth">
+                              {(field) => (
+                                <PlainPasswordAuthField
+                                  value={field.state.value}
+                                  onChange={field.handleChange}
+                                />
+                              )}
+                            </form.Field>
+                          )
+                        }
+                      </form.Subscribe>
                     )}
                   </AdvancedSettingsSection>
                 </>
               )
             }
           </form.Subscribe>
-          <form.Subscribe selector={(state) => state.isSubmitting}>
-            {(isSubmitting) => (
+          <form.Subscribe
+            selector={(state) =>
+              [
+                state.isSubmitting,
+                state.values.authMethod === "oidc" &&
+                  usesSubsonicAuthType(state.values.type),
+              ] as const
+            }
+          >
+            {([isSubmitting, sso]) => (
               <FadeOutScaleDown
                 onPress={() => {
                   // Local logins have no credentials to edit and the saved
                   // folders pre-fill `paths`, so the form is never dirty on
                   // re-login; gate them on type instead. Remote servers keep
                   // the dirty guard.
+                  // An SSO sign-in has nothing to type, so it's never dirty
+                  // either.
                   const { isDirty, values } = form.state;
-                  if (isDirty || values.type === "local") form.handleSubmit();
+                  if (isDirty || values.type === "local" || sso)
+                    form.handleSubmit();
                 }}
                 disabled={isSubmitting}
                 className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full ml-4 mt-4"
@@ -803,7 +1016,7 @@ export default function LoginScreen() {
                   <Spinner color={primary800} />
                 ) : (
                   <Text className="text-primary-800 font-bold text-lg">
-                    {t("auth.login.login")}
+                    {sso ? t("auth.login.ssoSignIn") : t("auth.login.login")}
                   </Text>
                 )}
               </FadeOutScaleDown>

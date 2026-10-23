@@ -3,11 +3,34 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { createDynamicScopedStorage } from "@/config/storage";
 import { currentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
+import {
+  folderKey,
+  type PlaylistFolderAssignments,
+  type PlaylistFolderColor,
+  type PlaylistFolderRecord,
+} from "@/utils/playlistFolders";
 import type { TrackSortType } from "@/utils/trackSort";
 
 // Every field in utils/trackSort, per playlist. `addedAt` is the playlist's own
 // order (server order with the manual reorder overlay applied).
 export type PlaylistSortType = TrackSortType;
+
+// undefined drops the playlist's assignment, so detection decides again.
+export type PlaylistFolderAssignmentUpdates = Record<
+  string,
+  string | null | undefined
+>;
+
+const applyAssignmentUpdates = (
+  assignments: PlaylistFolderAssignments,
+  updates: PlaylistFolderAssignmentUpdates,
+) => {
+  for (const [playlistId, value] of Object.entries(updates)) {
+    if (value === undefined) delete assignments[playlistId];
+    else assignments[playlistId] = value;
+  }
+  return assignments;
+};
 
 interface PlaylistsStore {
   playlistSorts: Record<string, PlaylistSortType>;
@@ -27,6 +50,30 @@ interface PlaylistsStore {
   setSmartPlaylistSnapshot: (smartId: string, snapshotId: string) => void;
   clearSmartPlaylistSnapshot: (smartId: string) => void;
   clearSnapshotLinksTo: (snapshotId: string) => void;
+  playlistFolders: Record<string, PlaylistFolderRecord>;
+  playlistFolderAssignments: PlaylistFolderAssignments;
+  // Old key → new key for folders renamed this session, so a folder screen
+  // opened under the old key can follow the rename. Not persisted.
+  playlistFolderRenames: Record<string, string>;
+  // Creates, edits or renames (previousKey) a folder, carrying every
+  // assignment to the old key over to the new one.
+  savePlaylistFolder: (
+    previousKey: string | null,
+    folder: {
+      name: string;
+      color: PlaylistFolderColor | null;
+      createdAt?: number;
+    },
+    updates: PlaylistFolderAssignmentUpdates,
+  ) => void;
+  deletePlaylistFolder: (
+    key: string,
+    updates: PlaylistFolderAssignmentUpdates,
+  ) => void;
+  setPlaylistFolderAssignments: (
+    updates: PlaylistFolderAssignmentUpdates,
+  ) => void;
+  __reset: () => void;
 }
 
 const usePlaylistsBase = create<PlaylistsStore>()(
@@ -81,6 +128,7 @@ const usePlaylistsBase = create<PlaylistsStore>()(
         if (
           !(playlistId in state.playlistSorts) &&
           !(playlistId in state.playlistTrackOrders) &&
+          !(playlistId in state.playlistFolderAssignments) &&
           staleLinks.length === 0
         ) {
           return;
@@ -88,10 +136,17 @@ const usePlaylistsBase = create<PlaylistsStore>()(
         const { [playlistId]: _sort, ...playlistSorts } = state.playlistSorts;
         const { [playlistId]: _order, ...playlistTrackOrders } =
           state.playlistTrackOrders;
+        const { [playlistId]: _folder, ...playlistFolderAssignments } =
+          state.playlistFolderAssignments;
         const smartPlaylistSnapshots = { ...state.smartPlaylistSnapshots };
         for (const [smartId] of staleLinks)
           delete smartPlaylistSnapshots[smartId];
-        set({ playlistSorts, playlistTrackOrders, smartPlaylistSnapshots });
+        set({
+          playlistSorts,
+          playlistTrackOrders,
+          playlistFolderAssignments,
+          smartPlaylistSnapshots,
+        });
       },
       // Ids the server no longer has. Persisted because a shortcut kept for its
       // downloads outlives the session that discovered the deletion, and every
@@ -150,6 +205,92 @@ const usePlaylistsBase = create<PlaylistsStore>()(
         for (const smartId of owners) delete smartPlaylistSnapshots[smartId];
         set({ smartPlaylistSnapshots });
       },
+      playlistFolders: {},
+      playlistFolderAssignments: {},
+      playlistFolderRenames: {},
+      savePlaylistFolder: (previousKey, folder, updates) => {
+        const state = get();
+        const key = folderKey(folder.name);
+        const playlistFolders = { ...state.playlistFolders };
+        const previous =
+          (previousKey ? playlistFolders[previousKey] : undefined) ??
+          playlistFolders[key];
+        if (previousKey) delete playlistFolders[previousKey];
+        const renamedFrom = [
+          ...new Set([
+            ...(previous?.renamedFrom ?? []),
+            ...(previousKey ? [previousKey] : []),
+          ]),
+        ].filter((from) => from !== key);
+        playlistFolders[key] = {
+          name: folder.name.trim(),
+          color: folder.color,
+          createdAt: previous?.createdAt ?? folder.createdAt ?? Date.now(),
+          ...(renamedFrom.length > 0 && { renamedFrom }),
+        };
+        const playlistFolderAssignments = Object.fromEntries(
+          Object.entries(state.playlistFolderAssignments).map(
+            ([playlistId, assigned]) => [
+              playlistId,
+              previousKey && assigned === previousKey ? key : assigned,
+            ],
+          ),
+        );
+        const playlistFolderRenames =
+          previousKey && previousKey !== key
+            ? {
+                ...Object.fromEntries(
+                  Object.entries(state.playlistFolderRenames).map(
+                    ([from, to]) => [from, to === previousKey ? key : to],
+                  ),
+                ),
+                [previousKey]: key,
+              }
+            : state.playlistFolderRenames;
+        set({
+          playlistFolders,
+          playlistFolderAssignments: applyAssignmentUpdates(
+            playlistFolderAssignments,
+            updates,
+          ),
+          playlistFolderRenames,
+        });
+      },
+      deletePlaylistFolder: (key, updates) => {
+        const state = get();
+        const { [key]: _folder, ...playlistFolders } = state.playlistFolders;
+        const playlistFolderAssignments = Object.fromEntries(
+          Object.entries(state.playlistFolderAssignments).filter(
+            ([, assigned]) => assigned !== key,
+          ),
+        );
+        set({
+          playlistFolders,
+          playlistFolderAssignments: applyAssignmentUpdates(
+            playlistFolderAssignments,
+            updates,
+          ),
+        });
+      },
+      setPlaylistFolderAssignments: (updates) => {
+        set((state) => ({
+          playlistFolderAssignments: applyAssignmentUpdates(
+            { ...state.playlistFolderAssignments },
+            updates,
+          ),
+        }));
+      },
+      __reset: () => {
+        set({
+          playlistSorts: {},
+          playlistTrackOrders: {},
+          deletedPlaylists: {},
+          smartPlaylistSnapshots: {},
+          playlistFolders: {},
+          playlistFolderAssignments: {},
+          playlistFolderRenames: {},
+        });
+      },
     }),
     {
       name: "playlists",
@@ -158,6 +299,7 @@ const usePlaylistsBase = create<PlaylistsStore>()(
         createDynamicScopedStorage(currentAuthScope),
       ),
       skipHydration: true,
+      partialize: ({ playlistFolderRenames: _renames, ...state }) => state,
       // v0 persisted custom order as a per-track position map
       // (`playlistTrackPositions: Record<trackId, number>`). Rebuild the ordered
       // id list by sorting each playlist's tracks by their saved position.

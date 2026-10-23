@@ -1,3 +1,4 @@
+import type { AuthMethod } from "@/stores/auth";
 import type { ServerType } from "@/stores/servers";
 
 export type BackendCapabilities = {
@@ -313,4 +314,29 @@ export function getCapabilities(serverType: ServerType): BackendCapabilities {
     default:
       return SUBSONIC;
   }
+}
+
+/**
+ * What the *session*, rather than the server type, rules out.
+ *
+ * A single-sign-on session reaches its server only with the proxy's bearer
+ * token in a header, and a Chromecast or UPnP renderer fetches the bare stream
+ * URL itself — it would be turned away at the proxy, so casting isn't offered.
+ * The jukebox is unaffected: the server plays the audio itself.
+ */
+export function sessionCapabilityOverrides(
+  authMethod: AuthMethod,
+): Partial<BackendCapabilities> {
+  return authMethod === "oidc" ? { remoteStreamableUrl: false } : {};
+}
+
+/** The active session's capabilities, outside React. */
+export function sessionCapabilities(
+  serverType: ServerType,
+  authMethod: AuthMethod,
+): BackendCapabilities {
+  return {
+    ...getCapabilities(serverType),
+    ...sessionCapabilityOverrides(authMethod),
+  };
 }

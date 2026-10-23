@@ -46,6 +46,10 @@ import useRadioStations, {
   type RadioStationSource,
 } from "@/stores/radioStations";
 import { artworkUrl } from "@/utils/artwork";
+import {
+  PLAYLIST_FOLDER_COLOR_CLASSES,
+  type PlaylistFolderColor,
+} from "@/utils/playlistFolders";
 import { cn } from "@/utils/tailwind";
 
 export type Favorites = {
@@ -66,6 +70,12 @@ export type LibraryPodcast = {
 };
 export type LibraryFolder = {
   isFolder?: boolean;
+};
+export type LibraryPlaylistFolder = {
+  isPlaylistFolder?: boolean;
+  folderKey?: string;
+  folderColor?: PlaylistFolderColor | null;
+  playlistCount?: number;
 };
 export type LibraryAllAlbums = {
   isAllAlbums?: boolean;
@@ -91,11 +101,15 @@ interface LibraryListItemProps {
     Favorites &
     LibraryPodcast &
     LibraryFolder &
+    LibraryPlaylistFolder &
     LibraryRadioStation &
     LibraryAllAlbums &
     LibraryAllArtists &
     LibraryAllTracks;
   layout: LibraryLayout;
+  // Shown instead of the item's name, for playlists listed inside a folder
+  // under their name minus its folder prefix.
+  title?: string;
 }
 
 function LibraryListItemIcon({ type }: { type: string }) {
@@ -124,7 +138,7 @@ function LibraryListItemIcon({ type }: { type: string }) {
   if (type === "radioStation") {
     return <Radio size={32} color={white} />;
   }
-  if (type === "folder") {
+  if (type === "folder" || type === "playlistFolder") {
     return <Folder size={32} color={white} />;
   }
   return <ListMusic size={32} color={white} />;
@@ -164,6 +178,8 @@ function LibraryListItemSubtitle({
           : type.label;
       case "folder":
         return type.label;
+      case "playlistFolder":
+        return `${type.label} ⦁ ${t("app.shared.playlistCount", { count: item.playlistCount ?? 0 })}`;
       case "playlist":
         return `${type.label} ⦁ ${songCount}${item.owner ? ` ⦁ ${item.owner}` : ""}`;
       default:
@@ -180,6 +196,7 @@ function LibraryListItemSubtitle({
 export default function LibraryListItem({
   item,
   layout,
+  title,
 }: LibraryListItemProps) {
   const [blue500, emerald500] = Uniwind.getCSSVariable([
     "--color-blue-500",
@@ -228,6 +245,16 @@ export default function LibraryListItem({
         url: {
           pathname: "/folders/[id]",
           params: { id: item.id, name: item.name, root: "1" },
+        } as Href,
+      };
+    }
+    if (item.isPlaylistFolder && item.folderKey) {
+      return {
+        id: "playlistFolder",
+        label: t("app.shared.playlistFolder"),
+        url: {
+          pathname: "/playlist-folders/[key]",
+          params: { key: item.folderKey },
         } as Href,
       };
     }
@@ -488,6 +515,9 @@ export default function LibraryListItem({
                   "w-20 h-20": layout === "list",
                   "rounded-full": type.id === "artist",
                 },
+                type.id === "playlistFolder" &&
+                  item.folderColor &&
+                  PLAYLIST_FOLDER_COLOR_CLASSES[item.folderColor],
               )}
             >
               {type.id === "favorites" ? (
@@ -521,7 +551,7 @@ export default function LibraryListItem({
             item.isAllArtists ||
             item.isAllTracks
               ? type.label
-              : item.name}
+              : (title ?? item.name)}
           </Heading>
           <HStack className="items-center w-full">
             {showDownloadedBadge && <DownloadedBadge className="mr-2" />}

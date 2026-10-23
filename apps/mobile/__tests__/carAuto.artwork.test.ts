@@ -42,6 +42,10 @@ jest.mock("@/stores/podcasts", () => ({
   default: { getState: () => ({}) },
   podcastFavoritesForScope: () => [],
 }));
+jest.mock("@/stores/app", () => ({
+  __esModule: true,
+  default: { getState: () => ({ homeShortcutsCount: 8 }) },
+}));
 jest.mock("@/stores/recentPlays", () => ({
   __esModule: true,
   default: { getState: () => ({ recentPlays: [] }) },

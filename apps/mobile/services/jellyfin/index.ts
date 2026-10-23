@@ -7,6 +7,10 @@ import { useAuthBase } from "@/stores/auth";
 
 const client = process.env.EXPO_PUBLIC_CLIENT_NAME || "Wavio";
 
+// /Artists and /Artists/AlbumArtists span every library, so without this the
+// authors of a Books library's audiobooks come back as empty artists (#245).
+export const MUSIC_ARTIST_ITEM_TYPES = "Audio,MusicAlbum";
+
 export function buildAuthorizationHeader(token?: string | null): string {
   const deviceId = getDeviceId();
   const parts = [

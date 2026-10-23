@@ -4,10 +4,15 @@ import {
   getPlaybackSnapshot,
   subscribePlaybackState,
 } from "@/hooks/player/playbackSnapshot";
+import {
+  cachedArtworkUri,
+  ensureArtworkCached,
+} from "@/services/lockScreenArtwork";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
 import {
+  authHeadersForUrl,
   customHeaderHostMap,
-  customHeadersForUrl,
+  requestHeadersForUrl,
   subscribeCustomHeaders,
 } from "@/services/serverHeaders";
 import { currentAuthScope, useAuthBase } from "@/stores/auth";
@@ -69,7 +74,7 @@ async function resolveBgColor(coverUrl: string | null): Promise<number> {
       fallback: "#000000",
       cache: true,
       key: coverUrl,
-      headers: customHeadersForUrl(coverUrl),
+      headers: requestHeadersForUrl(coverUrl),
     });
     let hex: string | undefined;
     if (result.platform === "android") {
@@ -83,6 +88,20 @@ async function resolveBgColor(coverUrl: string | null): Promise<number> {
   } catch {
     return DEFAULT_BG;
   }
+}
+
+// Glide in the widget carries the user's configured headers (mirrored natively by
+// pushImageHeaders) but not credentials the app holds itself — a single-sign-on
+// session's access token expires within minutes, and a share's password has no
+// business in the widget's preferences. For those servers the widget gets the
+// cover mirrored to a local file instead, like the media notification does.
+function needsMirroredCover(url: string | null): url is string {
+  return !!url && /^https?:/i.test(url) && !!authHeadersForUrl(url);
+}
+
+function widgetCover(url: string | null): string | null {
+  if (!needsMirroredCover(url)) return url;
+  return cachedArtworkUri(url) ?? null;
 }
 
 let lastTrackId: string | null = null;
@@ -114,13 +133,25 @@ async function pushNowPlaying() {
   // downloads and decodes the cover, which can take seconds on a cache miss —
   // never make the title/artist wait on it.
   const cachedBg = coverUrl ? bgColorCache.get(coverUrl) : undefined;
+  let shownCover = widgetCover(coverUrl);
   Native.updateNowPlaying({
     title: current.title ?? null,
     artist: current.artist ?? null,
-    coverUrl,
+    coverUrl: shownCover,
     isPlaying,
     bgColor: cachedBg ?? DEFAULT_BG,
   });
+  if (needsMirroredCover(coverUrl) && !shownCover) {
+    shownCover = (await ensureArtworkCached(coverUrl)) ?? null;
+    if (token !== lastNowPlayingToken || !shownCover) return;
+    Native.updateNowPlaying({
+      title: current.title ?? null,
+      artist: current.artist ?? null,
+      coverUrl: shownCover,
+      isPlaying: getPlaybackSnapshot().playing,
+      bgColor: cachedBg ?? DEFAULT_BG,
+    });
+  }
   if (cachedBg != null) return;
   // Resolve the palette in the background and push once more when it lands, as
   // long as this is still the current track and the colour beats the default.
@@ -129,7 +160,7 @@ async function pushNowPlaying() {
   Native.updateNowPlaying({
     title: current.title ?? null,
     artist: current.artist ?? null,
-    coverUrl,
+    coverUrl: shownCover,
     isPlaying: getPlaybackSnapshot().playing,
     bgColor,
   });
@@ -170,24 +201,43 @@ function deepLinkFor(play: RecentPlay): string {
   }
 }
 
-function pushRecent() {
+let lastRecentToken = 0;
+
+async function pushRecent() {
   if (!Native) return;
-  const items = useRecentPlays
-    .getState()
-    .recentPlays.slice(0, 5)
-    .map((play) => ({
-      id: play.id,
-      title: play.title,
-      coverUrl:
-        play.type === "internetRadioStation"
-          ? (play.coverArt ?? null)
-          : play.coverArt
-            ? artworkUrl(play.coverArt)
-            : null,
-      type: play.type,
-      uri: deepLinkFor(play),
-    }));
-  Native.updateRecent(items);
+  const token = ++lastRecentToken;
+  const plays = useRecentPlays.getState().recentPlays.slice(0, 5);
+  const remoteCovers = plays.map((play) =>
+    play.type === "internetRadioStation"
+      ? (play.coverArt ?? null)
+      : play.coverArt
+        ? artworkUrl(play.coverArt)
+        : null,
+  );
+  const send = (covers: (string | null)[]) =>
+    Native.updateRecent(
+      plays.map((play, index) => ({
+        id: play.id,
+        title: play.title,
+        coverUrl: covers[index],
+        type: play.type,
+        uri: deepLinkFor(play),
+      })),
+    );
+  const covers = remoteCovers.map(widgetCover);
+  send(covers);
+  const missing = remoteCovers.some(
+    (url, index) => needsMirroredCover(url) && !covers[index],
+  );
+  if (!missing) return;
+  const mirrored = await Promise.all(
+    remoteCovers.map(async (url, index) =>
+      needsMirroredCover(url) && !covers[index]
+        ? ((await ensureArtworkCached(url)) ?? null)
+        : covers[index],
+    ),
+  );
+  if (token === lastRecentToken) send(mirrored);
 }
 
 let initialized = false;
@@ -238,11 +288,11 @@ export function initWidget() {
     lastTrackId = null;
     void pushNowPlaying();
     Native.updateRecent([]);
-    pushRecent();
+    void pushRecent();
   });
 
   useRecentPlays.subscribe(() => {
-    pushRecent();
+    void pushRecent();
   });
 
   DeviceEventEmitter.addListener("WavioWidgetControl", (action: string) => {
@@ -260,5 +310,5 @@ export function initWidget() {
   });
 
   void pushNowPlaying();
-  pushRecent();
+  void pushRecent();
 }

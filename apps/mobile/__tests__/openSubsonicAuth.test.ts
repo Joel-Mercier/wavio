@@ -13,6 +13,7 @@ const authState = {
   subsonicSalt: "salt" as string | null,
   subsonicToken: "tok" as string | null,
   useTokenAuth: true,
+  authMethod: "password" as "password" | "oidc",
 };
 jest.mock("@/stores/auth", () => ({
   useAuthBase: { getState: () => authState },
@@ -108,6 +109,7 @@ describe("subsonicAuthQuery", () => {
     authState.subsonicSalt = "salt";
     authState.subsonicToken = "tok";
     authState.useTokenAuth = true;
+    authState.authMethod = "password";
   });
 
   it("uses token+salt for token-auth sessions", () => {
@@ -126,5 +128,21 @@ describe("subsonicAuthQuery", () => {
   it("URL-encodes reserved characters in the username", () => {
     authState.username = "a b&c";
     expect(subsonicAuthQuery()).toBe("u=a%20b%26c&t=tok&s=salt");
+  });
+
+  // Behind an SSO proxy the bearer header authenticates the request and
+  // Navidrome's external auth ignores p/t/s, so stream and cover URLs built
+  // from this must not carry a stale or empty credential.
+  it("sends only the username for a password-less single-sign-on session", () => {
+    authState.authMethod = "oidc";
+    authState.password = "";
+    authState.subsonicSalt = null;
+    authState.subsonicToken = null;
+    expect(subsonicAuthQuery()).toBe("u=joel");
+  });
+
+  it("keeps Subsonic credentials when SSO fronts a password-checking server", () => {
+    authState.authMethod = "oidc";
+    expect(subsonicAuthQuery()).toBe("u=joel&t=tok&s=salt");
   });
 });

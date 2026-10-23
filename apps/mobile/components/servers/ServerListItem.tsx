@@ -25,6 +25,7 @@ import FieldError, {
 import LibraryPathField from "@/components/forms/LibraryPathField";
 import LocalPathsField from "@/components/forms/LocalPathsField";
 import PlainPasswordAuthField from "@/components/forms/PlainPasswordAuthField";
+import SingleSignOnField from "@/components/forms/SingleSignOnField";
 import UrlInputField, {
   protocolsForServerType,
 } from "@/components/forms/UrlInputField";
@@ -68,6 +69,7 @@ import {
 } from "@/services/backend/serverTraits";
 import { parseSmbUrl } from "@/services/fileSource/smbAddress";
 import { foldersRemoved } from "@/services/local/paths";
+import { revokeServerOidcSessions } from "@/services/oidc/session";
 import { syncSslClientCertificates, syncSslProxy } from "@/services/sslTrust";
 import { useAuthBase } from "@/stores/auth";
 import useLocalLibrary, { requestRescanForServer } from "@/stores/localLibrary";
@@ -125,6 +127,9 @@ export default function ServerListItem({ server }: ServerListItemProps) {
       fallbackUrl: server.fallbackUrl ?? "",
       headers: headerRecordToRows(server.headers),
       plainPasswordAuth: !!server.plainPasswordAuth,
+      sso: !!server.oidc,
+      oidcIssuer: server.oidc?.issuer ?? "",
+      oidcClientId: server.oidc?.clientId ?? "",
     },
     validators: {
       onChange: editServerFormSchema,
@@ -193,6 +198,13 @@ export default function ServerListItem({ server }: ServerListItemProps) {
             : {},
           plainPasswordAuth:
             usesSubsonicAuthType(value.type) && value.plainPasswordAuth,
+          // Applies from the next sign-in; a session already signed in keeps
+          // the method it was opened with.
+          oidc: usesSubsonicAuthType(value.type)
+            ? value.sso
+              ? { issuer: value.oidcIssuer, clientId: value.oidcClientId }
+              : null
+            : undefined,
         });
         // Refresh the native KeyManager so the updated client cert applies, and
         // register the (possibly new) fallback origin with the iOS proxy —
@@ -245,6 +257,7 @@ export default function ServerListItem({ server }: ServerListItemProps) {
         scoped.removeItem("recentPlays");
       }
     }
+    void revokeServerOidcSessions(server.id);
     removeServer(server.id);
     if (wasCurrent && useAuthBase.getState().isAuthenticated) {
       useAuthBase.getState().logout();
@@ -623,6 +636,29 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                       behind a disclosure, client certificate gated on Android +
                       the native trust module (it does nothing elsewhere). */}
                 <AdvancedSettingsSection>
+                  {usesSubsonicAuthType(server.type) && (
+                    <form.Subscribe selector={(state) => state.values.sso}>
+                      {(sso) => (
+                        <form.Field name="oidcIssuer">
+                          {(issuerField) => (
+                            <form.Field name="oidcClientId">
+                              {(clientIdField) => (
+                                <SingleSignOnField
+                                  enabled={sso}
+                                  onToggle={(on) =>
+                                    form.setFieldValue("sso", on)
+                                  }
+                                  issuerField={issuerField}
+                                  clientIdField={clientIdField}
+                                  help={t("app.servers.oidcToggleHelp")}
+                                />
+                              )}
+                            </form.Field>
+                          )}
+                        </form.Field>
+                      )}
+                    </form.Subscribe>
+                  )}
                   <form.Field name="fallbackUrl">
                     {(field) => (
                       <FallbackUrlField
@@ -668,14 +704,20 @@ export default function ServerListItem({ server }: ServerListItemProps) {
                       </form.Field>
                     )}
                   {usesSubsonicAuthType(server.type) && (
-                    <form.Field name="plainPasswordAuth">
-                      {(field) => (
-                        <PlainPasswordAuthField
-                          value={field.state.value}
-                          onChange={field.handleChange}
-                        />
-                      )}
-                    </form.Field>
+                    <form.Subscribe selector={(state) => state.values.sso}>
+                      {(sso) =>
+                        sso ? null : (
+                          <form.Field name="plainPasswordAuth">
+                            {(field) => (
+                              <PlainPasswordAuthField
+                                value={field.state.value}
+                                onChange={field.handleChange}
+                              />
+                            )}
+                          </form.Field>
+                        )
+                      }
+                    </form.Subscribe>
                   )}
                 </AdvancedSettingsSection>
               </>

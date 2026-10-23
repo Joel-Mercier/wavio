@@ -1,6 +1,14 @@
 import axios from "axios";
 import { reauthenticateNavidrome } from "@/services/navidrome/auth";
-import { customHeadersForUrl } from "@/services/serverHeaders";
+import {
+  activeOidcKey,
+  ensureFreshAccessToken,
+  recoverFromUnauthorized,
+} from "@/services/oidc/session";
+import {
+  authHeadersForUrl,
+  customHeadersForUrl,
+} from "@/services/serverHeaders";
 import { useAuthBase } from "@/stores/auth";
 import { logError } from "@/utils/log";
 import { USER_AGENT } from "@/utils/userAgent";
@@ -13,17 +21,25 @@ const navidromeApiInstance = axios.create({
 });
 
 navidromeApiInstance.interceptors.request.use(
-  (request) => {
+  async (request) => {
+    await ensureFreshAccessToken();
     const { url, token } = useAuthBase.getState();
     request.baseURL = url ? `${url.replace(/\/+$/, "")}/api` : "";
     // Set before the custom headers so a user-configured User-Agent still wins,
     // matching the other instances. Without it this instance keeps RN's default
     // `okhttp/*`, which Cloudflare-fronted servers reject.
     request.headers.set("User-Agent", USER_AGENT);
-    // Applied *first* here, unlike the other instances: this endpoint
-    // authenticates with the Navidrome JWT in `Authorization`, so a
-    // user-configured header of that name has to lose or every native-API call
-    // 401s. Any other custom header still goes through untouched.
+    // Navidrome reads its own JWT from `X-ND-Authorization` only, which leaves
+    // `Authorization` free for whatever guards the server: a single-sign-on
+    // session's bearer token, or a header the user configured for their proxy.
+    // Under SSO there may be no JWT at all — Navidrome's external auth accepts
+    // the proxy's user header on the native API too.
+    const credentials = authHeadersForUrl(url);
+    if (credentials) {
+      for (const [name, value] of Object.entries(credentials)) {
+        request.headers.set(name, value);
+      }
+    }
     const custom = customHeadersForUrl(url);
     if (custom) {
       for (const [name, value] of Object.entries(custom)) {
@@ -31,7 +47,6 @@ navidromeApiInstance.interceptors.request.use(
       }
     }
     if (token) {
-      request.headers.set("Authorization", `Bearer ${token}`);
       request.headers.set(NAVIDROME_AUTH_HEADER, `Bearer ${token}`);
     }
     return request;
@@ -65,6 +80,18 @@ navidromeApiInstance.interceptors.response.use(
       const config = error.config as
         | (typeof error.config & { _retry?: boolean })
         | undefined;
+      // Under SSO a 401 is the proxy refusing the access token, not Navidrome
+      // refusing a JWT, and there's no password to log in with again. Refresh
+      // the token and replay; the native session itself stays.
+      if (activeOidcKey()) {
+        if (config && !config._retry) {
+          config._retry = true;
+          if (await recoverFromUnauthorized()) {
+            return navidromeApiInstance(config);
+          }
+        }
+        return Promise.reject(error);
+      }
       // A 401 means the native JWT is missing or expired. Re-acquire it once
       // from the stored credentials and replay the request; the request
       // interceptor picks up the refreshed token from the store. `_retry` guards

@@ -1,12 +1,16 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import HomeSectionsSheet from "@/components/settings/HomeSectionsSheet";
 import OptionsBottomSheetModal from "@/components/settings/OptionsBottomSheetModal";
+import PlaylistFolderSeparatorField, {
+  separatorExample,
+} from "@/components/settings/PlaylistFolderSeparatorField";
 import {
   SettingsSectionTitle,
   SettingsSelectRow,
+  SettingsStepperRow,
   SettingsToggleRow,
 } from "@/components/settings/SettingsRows";
 import SettingsScreenScaffold from "@/components/settings/SettingsScreenScaffold";
@@ -16,11 +20,15 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { MAX_HOME_SHORTCUTS, MIN_HOME_SHORTCUTS } from "@/config/homeShortcuts";
 import { LanguageNames, SupportedLanguages } from "@/config/i18n";
 import { useHighlightedSetting } from "@/hooks/useHighlightedSetting";
 import { useHomeSectionAvailability } from "@/hooks/useHomeSectionAvailability";
 import useApp, { type SwipeAction } from "@/stores/app";
 import { availableHomeSections } from "@/utils/homeFeed";
+import { PLAYLIST_FOLDER_SEPARATOR_PRESETS } from "@/utils/playlistFolders";
+
+const CUSTOM_SEPARATOR = "custom";
 
 const swipeActionOptions: SwipeAction[] = [
   "off",
@@ -45,6 +53,7 @@ export default function AppearanceSection() {
   const bottomSheetLanguageModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetSwipeActionModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetHomeSectionsModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetSeparatorModalRef = useRef<BottomSheetModal>(null);
 
   const locale = useApp((store) => store.locale);
   const setLocale = useApp((store) => store.setLocale);
@@ -54,6 +63,12 @@ export default function AppearanceSection() {
   const setShowEmptyHomeSections = useApp(
     (store) => store.setShowEmptyHomeSections,
   );
+  const pinFavoritesShortcut = useApp((store) => store.pinFavoritesShortcut);
+  const setPinFavoritesShortcut = useApp(
+    (store) => store.setPinFavoritesShortcut,
+  );
+  const homeShortcutsCount = useApp((store) => store.homeShortcutsCount);
+  const setHomeShortcutsCount = useApp((store) => store.setHomeShortcutsCount);
   const hiddenHomeSections = useApp((store) => store.hiddenHomeSections);
   const visibleHomeSectionCount = useMemo(
     () =>
@@ -64,6 +79,32 @@ export default function AppearanceSection() {
   );
   const swipeLeftAction = useApp((store) => store.swipeLeftAction);
   const setSwipeLeftAction = useApp((store) => store.setSwipeLeftAction);
+  const playlistFolderDetection = useApp(
+    (store) => store.playlistFolderDetection,
+  );
+  const setPlaylistFolderDetection = useApp(
+    (store) => store.setPlaylistFolderDetection,
+  );
+  const playlistFolderSeparator = useApp(
+    (store) => store.playlistFolderSeparator,
+  );
+  const setPlaylistFolderSeparator = useApp(
+    (store) => store.setPlaylistFolderSeparator,
+  );
+  const isPresetSeparator = (
+    PLAYLIST_FOLDER_SEPARATOR_PRESETS as readonly string[]
+  ).includes(playlistFolderSeparator);
+  const [customSeparatorOpen, setCustomSeparatorOpen] = useState(
+    !isPresetSeparator,
+  );
+  const handleSeparatorSelect = (value: string) => {
+    if (value === CUSTOM_SEPARATOR) {
+      setCustomSeparatorOpen(true);
+      return;
+    }
+    setCustomSeparatorOpen(false);
+    setPlaylistFolderSeparator(value);
+  };
   const hapticFeedbackEnabled = useApp((store) => store.hapticFeedbackEnabled);
   const setHapticFeedbackEnabled = useApp(
     (store) => store.setHapticFeedbackEnabled,
@@ -105,6 +146,28 @@ export default function AppearanceSection() {
             dismissOnSelect
           />
           <HomeSectionsSheet modalRef={bottomSheetHomeSectionsModalRef} />
+          <OptionsBottomSheetModal
+            modalRef={bottomSheetSeparatorModalRef}
+            header={t("app.settings.libraryDisplaySettings.separatorLabel")}
+            headerDescription={t(
+              "app.settings.libraryDisplaySettings.separatorDescription",
+            )}
+            options={[
+              ...PLAYLIST_FOLDER_SEPARATOR_PRESETS.map((separator) => ({
+                value: separator as string,
+                label: separatorExample(separator),
+              })),
+              {
+                value: CUSTOM_SEPARATOR,
+                label: t("app.settings.libraryDisplaySettings.separatorCustom"),
+              },
+            ]}
+            selectedValue={
+              customSeparatorOpen ? CUSTOM_SEPARATOR : playlistFolderSeparator
+            }
+            onSelect={handleSeparatorSelect}
+            dismissOnSelect
+          />
         </>
       }
     >
@@ -151,6 +214,26 @@ export default function AppearanceSection() {
             onPress={() => bottomSheetHomeSectionsModalRef.current?.present()}
           />
         </Box>
+        <SettingsToggleRow
+          label={t("app.settings.displaySettings.pinFavoritesShortcutLabel")}
+          description={t(
+            "app.settings.displaySettings.pinFavoritesShortcutDescription",
+          )}
+          value={pinFavoritesShortcut}
+          onToggle={(value) => setPinFavoritesShortcut(value)}
+        />
+        <SettingsStepperRow
+          label={t("app.settings.displaySettings.homeShortcutsCountLabel")}
+          description={t(
+            "app.settings.displaySettings.homeShortcutsCountDescription",
+          )}
+          valueText={String(homeShortcutsCount)}
+          valueClassName="w-6"
+          onDecrement={() => setHomeShortcutsCount(homeShortcutsCount - 2)}
+          onIncrement={() => setHomeShortcutsCount(homeShortcutsCount + 2)}
+          decrementDisabled={homeShortcutsCount <= MIN_HOME_SHORTCUTS}
+          incrementDisabled={homeShortcutsCount >= MAX_HOME_SHORTCUTS}
+        />
         <SettingsSelectRow
           label={t("app.settings.displaySettings.swipeActionLabel")}
           description={t("app.settings.displaySettings.swipeActionDescription")}
@@ -159,6 +242,37 @@ export default function AppearanceSection() {
           )}
           onPress={() => bottomSheetSwipeActionModalRef.current?.present()}
         />
+        <Divider className="bg-primary-400" />
+        <SettingsSectionTitle
+          title={t("app.settings.libraryDisplaySettings.title")}
+        />
+        <SettingsToggleRow
+          label={t("app.settings.libraryDisplaySettings.playlistFoldersLabel")}
+          description={t(
+            "app.settings.libraryDisplaySettings.playlistFoldersDescription",
+            { example: separatorExample(playlistFolderSeparator) },
+          )}
+          value={playlistFolderDetection}
+          onToggle={(value) => setPlaylistFolderDetection(value)}
+        />
+        {playlistFolderDetection && (
+          <>
+            <SettingsSelectRow
+              label={t("app.settings.libraryDisplaySettings.separatorLabel")}
+              description={t(
+                "app.settings.libraryDisplaySettings.separatorDescription",
+              )}
+              badgeText={separatorExample(playlistFolderSeparator)}
+              onPress={() => bottomSheetSeparatorModalRef.current?.present()}
+            />
+            {customSeparatorOpen && (
+              <PlaylistFolderSeparatorField
+                value={playlistFolderSeparator}
+                onSave={setPlaylistFolderSeparator}
+              />
+            )}
+          </>
+        )}
         <Divider className="bg-primary-400" />
         <SettingsSectionTitle title={t("app.settings.hapticsSettings.title")} />
         <SettingsToggleRow

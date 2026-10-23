@@ -30,6 +30,7 @@ import {
   resolveTargetDirectory,
 } from "@/services/offline/downloadDestination";
 import { albumSegments, exportFileName } from "@/services/offline/fileNaming";
+import { ensureFreshAccessToken } from "@/services/oidc/session";
 import { requestHeadersForUrl } from "@/services/serverHeaders";
 import { useAppBase } from "@/stores/app";
 import { currentAuthScope, useAuthBase } from "@/stores/auth";
@@ -766,6 +767,9 @@ export class OfflineDownloadService {
       } catch {}
     };
 
+    // A queue of downloads outlives a short-lived SSO token; the header below
+    // is read synchronously, so make it current first.
+    await ensureFreshAccessToken();
     let downloadResult = await File.downloadFileAsync(
       url,
       new File(stagingDir, stagedName),

@@ -23,6 +23,7 @@ import CastController from "@/components/player/CastController";
 import OutputSheet from "@/components/player/OutputSheet";
 import PlaybackNoticeToast from "@/components/player/PlaybackNoticeToast";
 import ResumeDialogs from "@/components/player/ResumeDialogs";
+import SleepTimerSheet from "@/components/player/SleepTimerSheet";
 import ServerExtensionsSync from "@/components/ServerExtensionsSync";
 import TrackSelectionBar from "@/components/tracks/TrackSelectionBar";
 import UpdateGate from "@/components/update/UpdateGate";
@@ -185,6 +186,7 @@ export default function AppLayout() {
         useUpnp.getState().__reset();
         useRecentPlays.getState().__reset();
         useRecentSearches.getState().__reset();
+        usePlaylists.getState().__reset();
         useActivity.getState().__reset();
         usePlayHistory.getState().__reset();
         useQueue.getState().__reset();
@@ -439,6 +441,7 @@ export default function AppLayout() {
       <ServerExtensionsSync />
       <ResumeDialogs />
       <OutputSheet />
+      <SleepTimerSheet />
       <CastController />
       <UpdateGate />
     </>

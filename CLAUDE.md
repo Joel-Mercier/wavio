@@ -111,6 +111,15 @@ When adding an endpoint:
 
 Subsonic error codes are translated via `openSubsonicErrorCodes` using `config/i18n`. Navidrome-specific (non-Subsonic) endpoints live under `hooks/navidrome/` and bypass the dispatch layer.
 
+**Single sign-on (OpenID Connect, issue #252)** is for Navidrome / OpenSubsonic behind an OIDC-aware reverse proxy. The admin guide is `docs/single-sign-on.md`.
+- **Session type:** `useAuthBase().authMethod === "oidc"`.
+- **Flow:** `services/oidc/` holds discovery (RFC 9728, then OIDC/RFC 8414), the PKCE sign-in (`expo-auth-session`, lazy-required) and the token lifecycle (`session.ts`, plus `refreshScheduler.ts` on a background timer). Tokens live in the global `stores/oidc.ts`, which is excluded from backups.
+- **Token delivery:** the access token reaches every transport as an origin-keyed `Authorization: Bearer` via `setSessionBearer` in `services/serverHeaders.ts`. Subsonic URLs then carry only `u`.
+- **Navidrome's own JWT** goes only in `X-ND-Authorization`, never in `Authorization`.
+- **Failure handling:** a 401 refreshes and replays once. Only `invalid_grant` / `invalid_client` / `unauthorized_client` sign the user out.
+- **Casting:** Cast and UPnP are switched off through `sessionCapabilityOverrides`, because receivers can't send the token.
+- **Test rig:** Keycloak + oauth2-proxy + Caddy in `tmp/oidc-rig` (gitignored).
+
 Podcast services (`services/taddyPodcasts`, `hooks/taddyPodcasts`) follow the same split for the Taddy GraphQL API.
 Radio stations services use the Radio Browser API.
 
@@ -132,6 +141,14 @@ All persisted state is zustand with `react-native-mmkv` as the backing store (`c
 `expo-audio` is the audio engine. `services/player.ts` is the registered background service; the queue store drives it. Offline downloads go through `services/offlineDownloadService.ts` + `hooks/useOfflineDownloads.ts` using `expo-file-system`.
 
 **Background timers.** JS `setTimeout` / `setInterval` stop within seconds of the app leaving the foreground and never fire again until the UI reopens — with audio playing, with or without a car (measured on MIUI; RN pauses timers when the Activity pauses). Anything that must keep running during background playback (network probes and recovery polls, prefetch / download / scrobble / replay backoffs, the play-queue sync debounce, the throttled MMKV and React Query persistence flushes, the jukebox status poll and the remote-output lock-screen pulse) uses `services/backgroundTimer.ts` (`setBackgroundTimeout` / `setBackgroundInterval` / `clearBackgroundTimer` / `backgroundSleep`), driven by a main-thread `Handler` message in `modules/car-auto` and falling back to JS timers on iOS and in tests. Keep plain JS timers for UI-only work (debounced inputs, animations, progress tickers) and for polls that should stop in the background — the reachable-state heartbeat in `services/network.ts` is one on purpose, so an idle backgrounded app never pings the server every 30 s. The unreachable-server recovery poll is on a background timer but gated by `services/recoveryPollGate.ts` (wired from `index.js`): it only runs while the app isn't backgrounded, audio is playing, or a car is connected.
+
+**Transcoded streams can't seek.** A server transcode is served without a seekable length, so `seekTo` re-requests it from an offset (`reloadAtOffset`: Subsonic `timeOffset` / Jellyfin `StartTimeTicks`). JS adds `streamStartOffset` back to every position it reads.
+
+The OS media controls read the engine's own clock, which restarts near 0. With an unknown length, media3 also treats the stream as live and publishes position -1. So `syncSessionStreamOffset` tells the native side where the stream starts, **right before every `player.replace`**:
+- **Android:** the expo-audio patch's `OffsetStreamPlayer` shows track time and hands session seeks and ±10 s back to JS as `remoteSeek`.
+- **iOS:** `MediaController` does the same.
+
+A new `replace` call site that skips the sync leaves the notification on a stale offset.
 
 Realtime playback state for non-React consumers (widget, Android Auto) goes through `hooks/player/playbackSnapshot.ts`: call `getPlaybackSnapshot()` for the current state and `subscribePlaybackStatus(cb)` to observe changes.
 

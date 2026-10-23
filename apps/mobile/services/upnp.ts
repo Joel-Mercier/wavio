@@ -5,7 +5,7 @@ import Native, {
   type UpnpGroup,
   type UpnpState,
 } from "@/modules/upnp-cast";
-import { getCapabilities } from "@/services/backend/capabilities";
+import { sessionCapabilities } from "@/services/backend/capabilities";
 import { reportError } from "@/services/errorReporting";
 import { getConnectionType, subscribeConnectionType } from "@/services/network";
 import { castContentUrl } from "@/services/playback/castContentUrl";
@@ -726,7 +726,10 @@ export async function initUpnpOnLaunch(): Promise<void> {
     !Native ||
     store.connected ||
     useJukebox.getState().active ||
-    !getCapabilities(useAuthBase.getState().serverType).remoteStreamableUrl
+    !sessionCapabilities(
+      useAuthBase.getState().serverType,
+      useAuthBase.getState().authMethod,
+    ).remoteStreamableUrl
   ) {
     forgetSession(session);
     return;

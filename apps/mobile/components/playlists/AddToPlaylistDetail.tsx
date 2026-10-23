@@ -7,12 +7,14 @@ import Search from "lucide-react-native/icons/search";
 import X from "lucide-react-native/icons/x";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import { useSleepTimerBadgeSpace } from "@/components/player/SleepTimerBadge";
 import AddToPlaylistListItem from "@/components/playlists/AddToPlaylistListItem";
 import AddToPlaylistListItemSkeleton from "@/components/playlists/AddToPlaylistListItemSkeleton";
 import {
@@ -79,6 +81,7 @@ export default function AddToPlaylistDetail() {
   const toast = useToast();
   const insets = useSafeAreaInsets();
   const isWideLayout = useApp((s) => s.isWideLayout);
+  const sleepTimerBadgeSpace = useSleepTimerBadgeSpace();
   const recentTargets = usePlaylistTargets((state) => state.recentTargets);
   const { data, isLoading, error } = usePlaylists({});
   const doUpdatePlaylist = useUpdatePlaylist();
@@ -282,7 +285,9 @@ export default function AddToPlaylistDetail() {
   // needs no bottom clearance. Portrait: FloatingPlayer sits at bottom: 96 and is
   // FLOATING_PLAYER_HEIGHT tall,
   // so its top edge is this far from the bottom of the screen.
-  const floatingPlayerTop = isWideLayout ? 0 : 96 + FLOATING_PLAYER_HEIGHT;
+  const floatingPlayerTop = isWideLayout
+    ? 0
+    : 96 + FLOATING_PLAYER_HEIGHT + sleepTimerBadgeSpace;
 
   const playlists = data?.playlists.playlist;
   const playlistById = useMemo(
@@ -454,10 +459,8 @@ export default function AddToPlaylistDetail() {
           ) : null
         }
       />
-      <LinearGradient
+      <Box
         pointerEvents="box-none"
-        colors={["transparent", "#000000"]}
-        locations={[0, 0.6]}
         style={{
           position: "absolute",
           left: 0,
@@ -467,6 +470,12 @@ export default function AddToPlaylistDetail() {
           justifyContent: "flex-end",
         }}
       >
+        <LinearGradient
+          pointerEvents="none"
+          colors={["transparent", "#000000"]}
+          locations={[0, 0.6]}
+          style={StyleSheet.absoluteFill}
+        />
         <Center style={{ marginBottom: floatingPlayerTop + 16 }}>
           <FadeOutScaleDown
             className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full"
@@ -478,7 +487,7 @@ export default function AddToPlaylistDetail() {
             </Text>
           </FadeOutScaleDown>
         </Center>
-      </LinearGradient>
+      </Box>
       <AlertDialog
         isOpen={showDuplicateDialog}
         onClose={handleCloseDuplicateDialog}

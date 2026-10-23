@@ -214,8 +214,13 @@ describe("fetchListenCount", () => {
     await expect(fetchListenCount()).resolves.toBe(12483);
   });
 
-  it("falls back to zero rather than undefined", async () => {
+  it("reports a missing count as null, not as zero listens", async () => {
     getMock.mockResolvedValue({ status: 200, data: {} });
+    await expect(fetchListenCount()).resolves.toBeNull();
+  });
+
+  it("keeps a real zero", async () => {
+    getMock.mockResolvedValue(ok({ count: 0 }));
     await expect(fetchListenCount()).resolves.toBe(0);
   });
 });

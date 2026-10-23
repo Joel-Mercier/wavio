@@ -76,7 +76,9 @@ jest.mock("@/services/navidromeIdMigration/detect", () => ({
   noteServerVersion: jest.fn(),
 }));
 jest.mock("@/services/serverHeaders", () => ({
+  authHeadersForUrl: () => undefined,
   customHeadersForUrl: () => ({}),
+  requestHeadersForUrl: () => ({}),
 }));
 
 import type { AxiosResponse } from "axios";

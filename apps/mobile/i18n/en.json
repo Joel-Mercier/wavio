@@ -91,6 +91,8 @@
 				"title": "Create",
 				"playlistTitle": "Playlist",
 				"playlistDescription": "Create a playlist with songs",
+				"playlistFolderTitle": "Folder",
+				"playlistFolderDescription": "Group your playlists in a folder",
 				"aiPlaylistTitle": "Playlist from a prompt",
 				"aiPlaylistDescription": "Describe what you want to hear and let AudioMuse-AI build it",
 				"fingerprintTitle": "Sonic fingerprint",
@@ -334,6 +336,17 @@
 				"favoriteErrorMessage": "An error occurred while adding artist to favorites",
 				"unfavoriteSuccessMessage": "Artist successfully removed from favorites",
 				"unfavoriteErrorMessage": "An error occurred while removing the artist from favorites"
+			},
+			"mixes": {
+				"createArtistMix": "Create artist mix",
+				"createGenreMix": "Create genre mix",
+				"title": "{{name}} Mix",
+				"featuring": "With {{names}} and more",
+				"empty": "Not enough songs in your library to build this mix",
+				"offline": "Mixes are built from your music server, which can't be reached right now",
+				"error": "The mix couldn't be generated",
+				"queued_one": "{{count}} song added to the queue",
+				"queued_other": "{{count}} songs added to the queue"
 			},
 			"favorites": {
 				"title": "Favorites",
@@ -592,6 +605,24 @@
 			"favoritePodcasts": {
 				"title": "Recent episodes",
 				"noServerFavorites": "You haven't favorited any podcasts yet. Open a podcast and tap the heart to add it here."
+			},
+			"playlistFolders": {
+				"newTitle": "New folder",
+				"editTitle": "Edit folder",
+				"namePlaceholder": "Folder name",
+				"nameTaken": "A folder with this name already exists",
+				"colorLabel": "Color",
+				"playlistsLabel": "Playlists",
+				"empty": "This folder is empty",
+				"emptyHint": "Edit the folder to add playlists, or use Move to folder on a playlist.",
+				"notFound": "This folder no longer exists",
+				"edit": "Edit this folder",
+				"delete": "Delete this folder",
+				"deleteConfirmTitle": "Delete this folder?",
+				"deleteConfirmDescription": "Its playlists go back to your library. They are not deleted.",
+				"moveToFolder": "Move to folder",
+				"removeFromFolder": "Remove from folder",
+				"newFolder": "New folder"
 			},
 			"newPlaylist": {
 				"title": "Give a name to your playlist",
@@ -1550,6 +1581,10 @@
 					"homeSectionsSheetDescription": "Turn sections off to hide them from the home screen",
 					"homeSectionsReorderHint": "Press and hold a section, then drag it to change its position in the feed",
 					"homeSectionsResetOrder": "Reset order",
+					"pinFavoritesShortcutLabel": "Pin Favorites shortcut",
+					"pinFavoritesShortcutDescription": "Keep Favorites first in the home shortcuts. When off, it moves like any other shortcut",
+					"homeShortcutsCountLabel": "Number of shortcuts",
+					"homeShortcutsCountDescription": "How many recent plays to show as shortcuts on the home screen",
 					"homeSections": {
 						"recentPlays": "Shortcuts",
 						"moreFromArtist": "More from an artist",
@@ -1578,6 +1613,18 @@
 						"showInfo": "Get info",
 						"addToPlaylist": "Add to playlist"
 					}
+				},
+				"libraryDisplaySettings": {
+					"title": "Library",
+					"playlistFoldersLabel": "Group playlists by name",
+					"playlistFoldersDescription": "Put playlists named like “{{example}}” in a “Rock” folder. Folders you create yourself always show.",
+					"separatorLabel": "Folder separator",
+					"separatorDescription": "Text between the folder name and the playlist name. Spaces count.",
+					"separatorCustom": "Custom",
+					"separatorCustomLabel": "Custom separator",
+					"separatorCustomPlaceholder": "e.g. \" of \"",
+					"separatorSaveAction": "Save",
+					"separatorPreview": "“{{example}}” → “Rock” › “80s”"
 				},
 				"hapticsSettings": {
 					"title": "Haptics",
@@ -1800,6 +1847,21 @@
 			"activity": {
 				"title": "Activity",
 				"empty": "Nothing here yet. Albums, artists and playlists you play will show up here.",
+				"tabs": {
+					"history": "History"
+				},
+				"listenbrainz": {
+					"notConnected": "Connect your ListenBrainz account to see your listening stats here.",
+					"noData": "No listens on ListenBrainz yet. Your stats will show up here once your plays start reaching it.",
+					"connectAction": "Connect ListenBrainz",
+					"settingsAction": "ListenBrainz settings"
+				},
+				"lastfm": {
+					"notConnected": "Connect your Last.fm account to see your listening stats here.",
+					"noData": "Nothing scrobbled to Last.fm yet. Your stats will show up here once your plays start reaching it.",
+					"connectAction": "Connect Last.fm",
+					"settingsAction": "Last.fm settings"
+				},
 				"plays_one": "{{count}} track played",
 				"plays_other": "{{count}} tracks played",
 				"sections": {
@@ -1881,7 +1943,11 @@
 				"createPlaylistNamePlaceholder": "My queue playlist",
 				"createPlaylistSuccessMessage": "Playlist created from queue",
 				"createPlaylistErrorMessage": "An error occurred while creating the playlist",
-				"sleepTimer": "Sleep timer"
+				"sleepTimer": "Sleep timer",
+				"endsAt": "Queue ends at {{time}} · {{remaining}} left",
+				"endsAround": "Queue ends around {{time}} · {{remaining}} left",
+				"sleepStopsAt": "Sleep timer stops playback at {{time}} · {{remaining}} left",
+				"sleepStopsAround": "Sleep timer stops playback around {{time}} · {{remaining}} left"
 			},
 			"tracks": {
 				"addToFavorites": "Add to favorites",
@@ -1994,6 +2060,7 @@
 					"similar": "Playing from similar songs",
 					"audiomuse": "Playing from AudioMuse-AI",
 					"listenbrainz": "Playing from ListenBrainz",
+					"mix": "Playing from mix",
 					"albumList": "Playing from albums",
 					"playlistList": "Playing from playlists"
 				},
@@ -2032,6 +2099,17 @@
 				"sleepTimerMinutes_one": "{{count}} minute",
 				"sleepTimerMinutes_other": "{{count}} minutes",
 				"sleepTimerActive": "Sleep timer · {{label}}",
+				"sleepTimerCustom": "Custom",
+				"sleepTimerHours": "Hours",
+				"sleepTimerMinutesLabel": "Minutes",
+				"sleepTimerStart": "Start timer",
+				"sleepTimerFinishTrack": "Finish current track",
+				"sleepTimerFinishTrackDescription": "When the timer runs out, stop at the end of the track instead of fading out mid-track",
+				"sleepTimerFinishing": "After this track",
+				"sleepTimerEndsAt": "Ends at {{time}}",
+				"sleepTimerEndsAround": "Ends around {{time}}",
+				"sleepTimerBadgeEndsAt": "Ends {{time}}",
+				"sleepTimerBadgeEndsAround": "Ends ~{{time}}",
 				"playbackSpeed": "Playback speed",
 				"playbackSpeedValue": "{{rate}}×",
 				"playbackSpeedNormal": "Normal",
@@ -2096,6 +2174,7 @@
 				"empty": "No libraries available"
 			},
 			"servers": {
+				"oidcToggleHelp": "Sign in to this server through the identity provider in front of it instead of with a password. Applies from the next sign-in.",
 				"title": "Servers",
 				"addServer": "Add server",
 				"namePlaceholder": "Enter server name",
@@ -2222,6 +2301,9 @@
 				"radioStation_other": "Radio stations",
 				"folder_one": "Folder",
 				"folder_other": "Folders",
+				"playlistFolder": "Playlist folder",
+				"playlistCount_one": "{{count}} playlist",
+				"playlistCount_other": "{{count}} playlists",
 				"song_one": "Song",
 				"song_other": "Songs",
 				"filters": {
@@ -2377,6 +2459,26 @@
 				"smbShareNotFound": "Connected, but there's no share called \"{{share}}\" on that host. Check the share name.",
 				"smbUnreachable": "Couldn't reach that host on port {{port}}. Check the address, and that the share uses SMB2 or newer — SMB1 isn't supported.",
 				"smbDialectUnsupported": "That host refused the connection because it requires SMB 3. On iPhone and iPad, Wavio speaks SMB 2.1 — allow SMB 2 on the share to connect.",
+				"ssoSignIn": "Sign in with single sign-on",
+				"ssoActiveTitle": "Single sign-on",
+				"ssoActiveDescription": "You'll sign in at {{host}}. No server password needed.",
+				"ssoActiveDescriptionGeneric": "You'll sign in through your server's identity provider. No server password needed.",
+				"ssoUsePassword": "Use a password instead",
+				"oidcToggle": "Single sign-on (OpenID Connect)",
+				"oidcToggleHelp": "Sign in through the identity provider in front of your server instead of with a password. Turned on automatically when the server advertises it.",
+				"oidcIssuerPlaceholder": "Issuer URL (found automatically when empty)",
+				"oidcClientIdPlaceholder": "Client ID (default: wavio)",
+				"oidcSettingsHelp": "Only needed if your server's proxy doesn't publish its sign-in, or your identity provider gave Wavio a different client ID.",
+				"oidcNotFound": "This server doesn't advertise single sign-on. Set the issuer URL in Advanced settings, or turn single sign-on off to use a password.",
+				"oidcDiscoveryFailed": "Couldn't read the identity provider's configuration. Check the issuer URL and that the provider is reachable from this device.",
+				"oidcSignInFailed": "Single sign-on failed: {{reason}}",
+				"oidcTokenRejected": "Signed in, but the server's proxy refused the access token. Check that the proxy accepts tokens issued to Wavio (audience and issuer).",
+				"oidcProxyRedirected": "The server's proxy answered with a sign-in page instead of accepting the access token. Configure it to accept bearer tokens on /rest.",
+				"oidcExtAuthMissing": "The proxy accepted your sign-in, but the server didn't trust the user it passed on. In Navidrome, add the proxy's address to ExtAuth.TrustedSources.",
+				"oidcNoServerAccount": "You're signed in, but the server has no account for you yet. Open the server's web page once through your proxy to create it, then try again.",
+				"oidcUsernameUnknown": "Signed in, but couldn't tell which server account is yours. Check that your proxy passes on the same username the server uses.",
+				"oidcSessionExpiredTitle": "Signed out",
+				"oidcSessionExpired": "Your single sign-on session ended. Sign in again to continue.",
 				"localInfoTitle": "Local library",
 				"localInfoFormatsTitle": "Supported formats",
 				"localInfoFormats": "Wavio scans the folders you select for MP3, FLAC, M4A, AAC, ALAC, OGG, Opus, WAV, WMA and AIFF files.",

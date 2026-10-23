@@ -18,6 +18,7 @@ import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import SleepTimerActionRow from "@/components/player/SleepTimerActionRow";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -224,6 +225,9 @@ export function PodcastEpisodeActionsProvider({
                       </HStack>
                     </FadeOutScaleDown>
                   ))}
+                <SleepTimerActionRow
+                  onPress={() => bottomSheetModalRef.current?.dismiss()}
+                />
               </VStack>
             </Box>
           )}

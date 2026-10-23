@@ -1,4 +1,6 @@
-import jellyfinApiInstance from "@/services/jellyfin/index";
+import jellyfinApiInstance, {
+  MUSIC_ARTIST_ITEM_TYPES,
+} from "@/services/jellyfin/index";
 import {
   mapBaseItemToAlbum,
   mapBaseItemToArtist,
@@ -45,7 +47,7 @@ async function requestItems(
       params: {
         UserId: userId(),
         Recursive: true,
-        ...(isArtist ? {} : { IncludeItemTypes: type }),
+        IncludeItemTypes: isArtist ? MUSIC_ARTIST_ITEM_TYPES : type,
         SearchTerm: searchTerm,
         Limit: limit,
         StartIndex: startIndex,

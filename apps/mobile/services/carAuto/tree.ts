@@ -11,6 +11,7 @@ import type {
   PlaylistWithSongs,
 } from "@/services/openSubsonic/types";
 import { fetchTopSongs } from "@/services/topSongs";
+import useApp from "@/stores/app";
 import { currentAuthScope } from "@/stores/auth";
 import usePodcasts, { podcastFavoritesForScope } from "@/stores/podcasts";
 import useRecentPlays from "@/stores/recentPlays";
@@ -330,7 +331,9 @@ export async function buildBrowseTree(): Promise<BrowseTreeBuild> {
   }
 
   // === Recently Played tab ===
-  const recentPlays = useRecentPlays.getState().recentPlays;
+  const recentPlays = useRecentPlays
+    .getState()
+    .recentPlays.slice(0, useApp.getState().homeShortcutsCount);
   tree["tab:recent"] = recentPlays
     // Skip the favorites pseudo-entry; Library → Playlists → Favorites covers it.
     .filter((p) => p.type !== "favorites")

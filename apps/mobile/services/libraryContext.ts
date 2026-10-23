@@ -1,4 +1,7 @@
-import { getCapabilities } from "@/services/backend/capabilities";
+import {
+  type BackendCapabilities,
+  getCapabilities,
+} from "@/services/backend/capabilities";
 import { currentAuthScope, useAuthBase } from "@/stores/auth";
 import {
   activeOverrides,
@@ -21,12 +24,17 @@ export type LibrarySearchContext = {
   multiFieldSearch: boolean;
 };
 
-export function currentLibrarySearchContext(): LibrarySearchContext {
-  const scope = currentAuthScope();
-  const capabilities = {
+/** useCapabilities, for callers outside React. */
+export function currentLibraryCapabilities(): BackendCapabilities {
+  return {
     ...getCapabilities(useAuthBase.getState().serverType),
     ...activeOverrides(useCapabilityOverridesBase.getState().disabledAt),
   };
+}
+
+export function currentLibrarySearchContext(): LibrarySearchContext {
+  const scope = currentAuthScope();
+  const capabilities = currentLibraryCapabilities();
   return {
     musicFolderId: scope
       ? useMusicFoldersBase.getState().selections[scope]

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { MAX_HOME_SHORTCUTS } from "@/config/homeShortcuts";
 import { createDynamicScopedStorage } from "@/config/storage";
 import { currentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
@@ -20,23 +21,34 @@ export type RecentPlay = {
   languages?: string;
 };
 
-let ensuredRecentPlayOnHydration: RecentPlay | null = {
+const FAVORITES_RECENT_PLAY: RecentPlay = {
   id: "favorites",
   title: "Favorites",
   type: "favorites",
 };
 
-export const setEnsuredRecentPlayOnHydration = (
-  recentPlay: RecentPlay | null,
-) => {
-  ensuredRecentPlayOnHydration = recentPlay;
+// Mirrors the pinFavoritesShortcut setting (services/homeShortcuts.ts) rather
+// than reading stores/app, which would pull i18n and MMKV into every importer.
+let favoritesPinned = true;
+
+export const setFavoritesPinned = (pinned: boolean) => {
+  favoritesPinned = pinned;
 };
+
+// The entry to move to the top so Favorites leads the list, or null when it
+// already does.
+const favoritesToPin = (items: RecentPlay[]): RecentPlay | null =>
+  items[0]?.id === FAVORITES_RECENT_PLAY.id
+    ? null
+    : (items.find((play) => play.id === FAVORITES_RECENT_PLAY.id) ??
+      FAVORITES_RECENT_PLAY);
 
 interface RecentPlaysStore {
   recentPlays: RecentPlay[];
   addRecentPlay: (recentPlay: RecentPlay) => void;
   refreshRecentPlay: (recentPlay: RecentPlay) => void;
   insertRecentPlayAtTop: (recentPlay: RecentPlay) => void;
+  pinFavorites: () => void;
   removeRecentPlay: (id: string) => void;
   clearRecentPlays: () => void;
   __reset: () => void;
@@ -80,23 +92,29 @@ const withRefreshedEntry = (
   return items.map((play) => (play.id === entry.id ? merged : play));
 };
 
-let storeRef: { getState: () => RecentPlaysStore } | null = null;
-
 const useRecentPlaysBase = create<RecentPlaysStore>()(
   persist(
     (set, get, store) => {
-      storeRef = store as unknown as { getState: () => RecentPlaysStore };
       // Returns the input array itself when it already satisfies the invariant,
       // so callers can tell "nothing changed" apart from "rebuilt identically"
-      // and skip the set() entirely.
+      // and skip the set() entirely. Pins before capping, so a pinned entry the
+      // list has not yet moved up (a scope rehydrated while it was unpinned)
+      // can't be cut.
       const pinFavoritesAndCap = (items: RecentPlay[]): RecentPlay[] => {
-        const capped = items.length > 8 ? items.slice(0, 8) : items;
-        const favIndex = capped.findIndex((p) => p.id === "favorites");
-        if (favIndex <= 0) return capped;
-        const pinned = capped.slice();
-        const [fav] = pinned.splice(favIndex, 1);
-        pinned.unshift(fav);
-        return pinned;
+        const favIndex = favoritesPinned
+          ? items.findIndex((p) => p.id === "favorites")
+          : -1;
+        const pinned =
+          favIndex > 0
+            ? [
+                items[favIndex],
+                ...items.slice(0, favIndex),
+                ...items.slice(favIndex + 1),
+              ]
+            : items;
+        return pinned.length > MAX_HOME_SHORTCUTS
+          ? pinned.slice(0, MAX_HOME_SHORTCUTS)
+          : pinned;
       };
       return {
         recentPlays: [],
@@ -140,6 +158,13 @@ const useRecentPlaysBase = create<RecentPlaysStore>()(
             return { recentPlays: pinFavoritesAndCap(newRecentPlays) };
           });
         },
+        // Writing before hydration would persist this list over the scope's
+        // stored one, so an unhydrated store picks the pin up on rehydrate.
+        pinFavorites: () => {
+          if (!store.persist.hasHydrated()) return;
+          const favorites = favoritesToPin(get().recentPlays);
+          if (favorites) get().insertRecentPlayAtTop(favorites);
+        },
         removeRecentPlay: (id: string) => {
           const { recentPlays } = get();
           const remaining = recentPlays.filter((play) => play.id !== id);
@@ -151,9 +176,9 @@ const useRecentPlaysBase = create<RecentPlaysStore>()(
         clearRecentPlays: () => {
           set((state) => {
             return {
-              recentPlays: state.recentPlays.filter(
-                (play) => play.id === "favorites",
-              ),
+              recentPlays: favoritesPinned
+                ? state.recentPlays.filter((play) => play.id === "favorites")
+                : [],
             };
           });
         },
@@ -168,17 +193,12 @@ const useRecentPlaysBase = create<RecentPlaysStore>()(
         createDynamicScopedStorage(currentAuthScope),
       ),
       onRehydrateStorage: () => {
-        return () => {
-          if (!ensuredRecentPlayOnHydration) return;
-          const state = (
-            storeRef as { getState: () => RecentPlaysStore }
-          ).getState();
-          const exists = state.recentPlays.some(
-            (play: RecentPlay) => play.id === ensuredRecentPlayOnHydration?.id,
-          );
-          if (!exists) {
-            state.insertRecentPlayAtTop(ensuredRecentPlayOnHydration);
-          }
+        // A scope last written while unpinned can hold Favorites below the
+        // top, so check its position, not just its presence.
+        return (state) => {
+          if (!state || !favoritesPinned) return;
+          const favorites = favoritesToPin(state.recentPlays);
+          if (favorites) state.insertRecentPlayAtTop(favorites);
         };
       },
       skipHydration: true,

@@ -6,7 +6,7 @@ import {
   isCredentialErrorCode,
   subsonicAuthParams,
 } from "@/services/openSubsonic/auth";
-import { customHeadersForUrl } from "@/services/serverHeaders";
+import { requestHeadersForUrl } from "@/services/serverHeaders";
 import { useAuthBase } from "@/stores/auth";
 
 // Corroborated sign-out for Subsonic error 40.
@@ -79,7 +79,7 @@ async function pingCredentials(url: string): Promise<Verdict> {
     const response = await createBareClient(
       url,
       PROBE_TIMEOUT_MS,
-      customHeadersForUrl(url),
+      requestHeadersForUrl(url),
     ).get("/rest/ping", {
       params: {
         ...subsonicAuthParams(),
