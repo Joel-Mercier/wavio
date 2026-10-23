@@ -91,6 +91,8 @@
 				"title": "创建",
 				"playlistTitle": "歌单",
 				"playlistDescription": "创建歌单",
+				"playlistFolderTitle": "文件夹",
+				"playlistFolderDescription": "将播放列表分组到文件夹中",
 				"aiPlaylistTitle": "根据提示生成的播放列表",
 				"aiPlaylistDescription": "描述你想听的内容，让AudioMuse-AI为你生成",
 				"fingerprintTitle": "声波指纹",
@@ -328,6 +330,16 @@
 				"unfavoriteSuccessMessage": "艺人已取消收藏",
 				"unfavoriteErrorMessage": "取消收藏艺人时发生错误",
 				"albumCount_other": "{{count}} 张专辑"
+			},
+			"mixes": {
+				"createArtistMix": "创建艺人混音专辑",
+				"createGenreMix": "创建流派混搭",
+				"title": "{{name}} 混合",
+				"featuring": "包括《 {{names}} 》等",
+				"empty": "您的音乐库中的歌曲不足以制作这个混音",
+				"offline": "混音由您的音乐服务器生成，但目前无法访问该服务器",
+				"error": "无法生成该混音",
+				"queued_other": "{{count}} 已添加到播放列表中的歌曲"
 			},
 			"favorites": {
 				"title": "收藏",
@@ -581,6 +593,24 @@
 			"favoritePodcasts": {
 				"title": "最近单集",
 				"noServerFavorites": "你还没有订阅任何播客。打开一个播客，点击心形图标即可订阅。"
+			},
+			"playlistFolders": {
+				"newTitle": "新建文件夹",
+				"editTitle": "编辑文件夹",
+				"namePlaceholder": "文件夹名称",
+				"nameTaken": "已经存在一个同名的文件夹",
+				"colorLabel": "颜色",
+				"playlistsLabel": "歌单",
+				"empty": "该文件夹为空",
+				"emptyHint": "编辑该文件夹以添加播放列表，或者在播放列表上使用“移至文件夹”功能。",
+				"notFound": "该文件夹已不存在",
+				"edit": "编辑此文件夹",
+				"delete": "删除此文件夹",
+				"deleteConfirmTitle": "删除此文件夹吗？",
+				"deleteConfirmDescription": "这些播放列表会返回您的资料库中。它们并未被删除。",
+				"moveToFolder": "移至文件夹",
+				"removeFromFolder": "从文件夹中移除",
+				"newFolder": "新建文件夹"
 			},
 			"newPlaylist": {
 				"title": "给歌单取个名字",
@@ -1423,8 +1453,8 @@
 					"checking": "查看…",
 					"upToDate": "您正在使用最新版本",
 					"checkFailed": "无法检查更新。请检查网络连接，然后重试。",
-					"rateLabel": "Rate Wavio",
-					"rateDescription": "Enjoying Wavio? A rating on Google Play helps other people find it",
+					"rateLabel": "为 Wavio 评分",
+					"rateDescription": "喜欢 Wavio 吗？在 Google Play 上给它评分，能帮助其他人发现这款应用",
 					"rateAction": "评分",
 					"currentVersionLabel": "当前版本"
 				},
@@ -1505,6 +1535,10 @@
 					"homeSectionsSheetDescription": "关闭板块以将其从主页上隐藏",
 					"homeSectionsReorderHint": "长按一个板块，然后将其拖动以更改其在信息流中的位置",
 					"homeSectionsResetOrder": "重置订单",
+					"pinFavoritesShortcutLabel": "固定“收藏”快捷方式",
+					"pinFavoritesShortcutDescription": "将“收藏夹”置于主页快捷方式的首位。关闭此功能后，其移动方式与其他快捷方式相同",
+					"homeShortcutsCountLabel": "快捷方式的数量",
+					"homeShortcutsCountDescription": "在主屏幕上显示多少个最近播放的剧目作为快捷方式",
 					"homeSections": {
 						"recentPlays": "快捷方式",
 						"moreFromArtist": "来自某位艺术家的更多内容",
@@ -1534,6 +1568,18 @@
 						"addToPlaylist": "加入歌单"
 					},
 					"homeSectionsCount_other": "{{count}} 显示"
+				},
+				"libraryDisplaySettings": {
+					"title": "音乐库",
+					"playlistFoldersLabel": "按名称对播放列表进行分组",
+					"playlistFoldersDescription": "将名称为“{{example}}”的播放列表放入“Rock”文件夹中。自己创建的文件夹始终会显示出来。",
+					"separatorLabel": "文件夹分隔符",
+					"separatorDescription": "文件夹名称与播放列表名称之间的文本。空格也会被计入。",
+					"separatorCustom": "自定义",
+					"separatorCustomLabel": "自定义分隔符",
+					"separatorCustomPlaceholder": "例如：“of”",
+					"separatorSaveAction": "保存",
+					"separatorPreview": "“{{example}}” → “摇滚” › “80年代”"
 				},
 				"hapticsSettings": {
 					"title": "触感反馈",
@@ -1581,16 +1627,16 @@
 						}
 					},
 					"mediaControlsLabel": "媒体通知按钮",
-					"mediaControlsDescription": "Pick the buttons shown on each side of previous, play/pause and next in the media notification and on the lock screen. If you pick only one button, Android shows it on the left. Favorite, shuffle and repeat are hidden for radio stations and podcast episodes.",
-					"mediaControlsLeftLabel": "Left button",
-					"mediaControlsRightLabel": "Right button",
+					"mediaControlsDescription": "在媒体通知和锁屏界面中，选择“上一首”、“播放/暂停”和“下一首”两侧显示的按钮。如果只选择一个按钮，Android 会将其显示在左侧。对于广播电台和播客剧集，“收藏”、“随机播放”和“循环播放”选项会被隐藏。",
+					"mediaControlsLeftLabel": "左键",
+					"mediaControlsRightLabel": "右键",
 					"mediaControlsButtons": {
-						"none": "None",
-						"seekBackward": "Back 10 s",
-						"seekForward": "Forward 10 s",
+						"none": "无",
+						"seekBackward": "返回 10 秒前",
+						"seekForward": "快进 10 秒",
 						"favorite": "收藏",
-						"shuffle": "Shuffle",
-						"repeat": "Repeat"
+						"shuffle": "随机播放",
+						"repeat": "重复"
 					},
 					"waveformSeekbarLabel": "波形寻址条",
 					"waveformSeekbarDescription": "显示歌曲的波形，而非普通的进度条。每个波形会在歌曲开始后几秒钟内分析一次，之后会重复使用。流媒体歌曲会为此额外下载一份低质量副本，因此会消耗更多数据——但绝不会通过蜂窝网络下载。播客、广播以及时长超过15分钟的歌曲将跳过此步骤。",
@@ -1755,6 +1801,21 @@
 			"activity": {
 				"title": "播放记录",
 				"empty": "暂无记录。你播放过的专辑、艺人和歌单将显示在这里。",
+				"tabs": {
+					"history": "历史"
+				},
+				"listenbrainz": {
+					"notConnected": "将您的 ListenBrainz 账户与本平台关联，即可在此查看您的收听统计数据。",
+					"noData": "ListenBrainz 上目前还没有收听记录。一旦您的播放次数开始计入，相关统计数据就会显示在这里。",
+					"connectAction": "连接 ListenBrainz",
+					"settingsAction": "ListenBrainz 设置"
+				},
+				"lastfm": {
+					"notConnected": "将您的 Last.fm 账户与本站关联，即可在此查看您的收听统计数据。",
+					"noData": "目前尚未向 Last.fm 同步任何播放记录。一旦您的播放记录开始同步到 Last.fm，相关统计数据就会显示在此处。",
+					"connectAction": "连接 Last.fm",
+					"settingsAction": "Last.fm 设置"
+				},
 				"sections": {
 					"today": "今天",
 					"yesterday": "昨天",
@@ -1829,7 +1890,11 @@
 				"createPlaylistNamePlaceholder": "我的队列歌单",
 				"createPlaylistSuccessMessage": "已从队列创建歌单",
 				"createPlaylistErrorMessage": "从队列创建歌单时发生错误",
-				"sleepTimer": "睡眠定时"
+				"sleepTimer": "睡眠定时",
+				"endsAt": "队尾位于 {{time}} ·  剩余 {{remaining}}",
+				"endsAround": "排队尾端位于 {{time}} 附近 · {{remaining}} 剩余",
+				"sleepStopsAt": "睡眠定时器将在剩余时间 {{time}} · {{remaining}} 时停止播放",
+				"sleepStopsAround": "睡眠定时器将在剩余时间约为 {{time}} · {{remaining}} 时停止播放"
 			},
 			"tracks": {
 				"addToFavorites": "加入收藏",
@@ -1908,7 +1973,7 @@
 					"favorite": "收藏",
 					"playCount": "播放次数",
 					"lastPlayed": "上次播放",
-					"added": "Added",
+					"added": "已添加",
 					"modified": "修改时间",
 					"albumPeak": "专辑回放峰值",
 					"trackPeak": "单曲回放峰值",
@@ -1922,7 +1987,7 @@
 				"title": "正在播放",
 				"notices": {
 					"sourceUnavailable": "无法播放该音轨——无法访问该文件。请检查您的服务器是否已开启，并且是否处于同一网络中。",
-					"formatUnsupported": "This device can't play the audio format of “{{track}}”.",
+					"formatUnsupported": "该设备无法播放“{{track}} ”格式的音频。",
 					"remoteTrackRefused": "{{name}} 无法播放“{{track}}”。请选择另一首歌曲，或在此设备上播放。",
 					"remoteLost": "已与 {{name}}失去联系。该设备已恢复播放功能。"
 				},
@@ -1939,6 +2004,7 @@
 					"similar": "播放自相似歌曲",
 					"audiomuse": "正在播放来自 AudioMuse-AI 的内容",
 					"listenbrainz": "正在播放来自 ListenBrainz 的音乐",
+					"mix": "从混音中播放",
 					"albumList": "从专辑中播放",
 					"playlistList": "从播放列表中播放"
 				},
@@ -1975,6 +2041,17 @@
 				"sleepTimerOff": "关闭",
 				"sleepTimerEndOfTrack": "定时到本曲目结束",
 				"sleepTimerActive": "睡眠定时 · {{label}}",
+				"sleepTimerCustom": "自定义",
+				"sleepTimerHours": "营业时间",
+				"sleepTimerMinutesLabel": "会议纪要",
+				"sleepTimerStart": "启动计时器",
+				"sleepTimerFinishTrack": "播放当前曲目至结束",
+				"sleepTimerFinishTrackDescription": "计时器时间用完时，请在曲目结尾处停止播放，而不是在曲目中途淡出",
+				"sleepTimerFinishing": "这首曲子之后",
+				"sleepTimerEndsAt": "截止于 {{time}}",
+				"sleepTimerEndsAround": "大约到这里结束 {{time}}",
+				"sleepTimerBadgeEndsAt": "完 {{time}}",
+				"sleepTimerBadgeEndsAround": "完 ~{{time}}",
 				"playbackSpeed": "播放速度",
 				"playbackSpeedValue": "{{rate}}×",
 				"playbackSpeedNormal": "正常",
@@ -2005,6 +2082,9 @@
 				"outputChromecastNoPlayServices": "Chromecast 需要 Google Play 服务，而该设备并未安装该服务。",
 				"outputChromecastNoPlayServicesHint": "需要 Google Play 服务",
 				"outputConnectErrorMessage": "无法播放 {{name}}。",
+				"outputAddRooms": "还可以继续玩",
+				"outputGroupVolume": "组交易量",
+				"outputGroupErrorMessage": "无法更改 {{name}} 上的组。",
 				"sleepTimerMinutes_other": "{{count}}分钟"
 			},
 			"shares": {
@@ -2036,6 +2116,7 @@
 				"empty": "暂无音乐库"
 			},
 			"servers": {
+				"oidcToggleHelp": "Sign in to this server through the identity provider in front of it instead of with a password. Applies from the next sign-in.",
 				"title": "服务器",
 				"addServer": "添加服务器",
 				"namePlaceholder": "请输入服务器名称",
@@ -2106,8 +2187,8 @@
 				"notAvailableOfflineMessage": "无法离线收听。请下载该内容以便在没有网络连接时收听。",
 				"advancedSettings": "高级设置",
 				"fallbackUrlHelp": "当无法访问主URL时使用。必须指向同一台服务器。",
-				"plainPasswordAuth": "Legacy password authentication",
-				"plainPasswordAuthHelp": "Sends your password with every request instead of a token. Only enable this if signing in works but the app keeps signing you out.",
+				"plainPasswordAuth": "传统密码认证",
+				"plainPasswordAuthHelp": "在每次请求中发送您的密码，而不是令牌。仅当登录成功但应用会不断将您强制注销时，才启用此选项。",
 				"cancel": "取消",
 				"close": "关闭",
 				"create": "创建",
@@ -2146,6 +2227,7 @@
 					"removeConfirmDescription_other": "{{count}} 已下载的歌曲将从本设备中删除。同时保存在其他专辑或播放列表中的歌曲将保留。"
 				},
 				"favorites": "收藏",
+				"playlistFolder": "播放列表文件夹",
 				"filters": {
 					"albums": "专辑",
 					"artists": "艺人",
@@ -2209,6 +2291,7 @@
 				"podcast_other": "播客",
 				"radioStation_other": "电台",
 				"folder_other": "文件夹",
+				"playlistCount_other": "{{count}} 播放列表",
 				"song_other": "歌曲",
 				"albumCount_other": "{{count}} 张专辑",
 				"songCount_other": "{{count}} 首歌",
@@ -2299,6 +2382,26 @@
 				"smbShareNotFound": "已连接，但该主机上没有名为“{{share}}”的共享。请检查共享名称。",
 				"smbUnreachable": "无法通过端口 {{port}}连接到该主机。请检查地址，并确保该共享使用 SMB2 或更高版本——SMB1 不受支持。",
 				"smbDialectUnsupported": "该主机拒绝了连接，因为它要求使用 SMB 3。在 iPhone 和 iPad 上，Wavio 支持 SMB 2.1——请在共享设置中允许 SMB 2 以建立连接。",
+				"ssoSignIn": "Sign in with single sign-on",
+				"ssoActiveTitle": "Single sign-on",
+				"ssoActiveDescription": "You'll sign in at {{host}}. No server password needed.",
+				"ssoActiveDescriptionGeneric": "You'll sign in through your server's identity provider. No server password needed.",
+				"ssoUsePassword": "Use a password instead",
+				"oidcToggle": "Single sign-on (OpenID Connect)",
+				"oidcToggleHelp": "Sign in through the identity provider in front of your server instead of with a password. Turned on automatically when the server advertises it.",
+				"oidcIssuerPlaceholder": "Issuer URL (found automatically when empty)",
+				"oidcClientIdPlaceholder": "Client ID (default: wavio)",
+				"oidcSettingsHelp": "Only needed if your server's proxy doesn't publish its sign-in, or your identity provider gave Wavio a different client ID.",
+				"oidcNotFound": "This server doesn't advertise single sign-on. Set the issuer URL in Advanced settings, or turn single sign-on off to use a password.",
+				"oidcDiscoveryFailed": "Couldn't read the identity provider's configuration. Check the issuer URL and that the provider is reachable from this device.",
+				"oidcSignInFailed": "Single sign-on failed: {{reason}}",
+				"oidcTokenRejected": "Signed in, but the server's proxy refused the access token. Check that the proxy accepts tokens issued to Wavio (audience and issuer).",
+				"oidcProxyRedirected": "The server's proxy answered with a sign-in page instead of accepting the access token. Configure it to accept bearer tokens on /rest.",
+				"oidcExtAuthMissing": "The proxy accepted your sign-in, but the server didn't trust the user it passed on. In Navidrome, add the proxy's address to ExtAuth.TrustedSources.",
+				"oidcNoServerAccount": "You're signed in, but the server has no account for you yet. Open the server's web page once through your proxy to create it, then try again.",
+				"oidcUsernameUnknown": "Signed in, but couldn't tell which server account is yours. Check that your proxy passes on the same username the server uses.",
+				"oidcSessionExpiredTitle": "Signed out",
+				"oidcSessionExpired": "Your single sign-on session ended. Sign in again to continue.",
 				"localInfoTitle": "本地音乐库",
 				"localInfoFormatsTitle": "支持格式",
 				"localInfoFormats": "Wavio 会扫描您选择的文件夹中的 MP3、FLAC、M4A、AAC、ALAC、OGG、Opus、WAV、WMA 和 AIFF 文件。",

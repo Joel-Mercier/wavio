@@ -91,6 +91,8 @@
 				"title": "Создать",
 				"playlistTitle": "Плейлист",
 				"playlistDescription": "Создай плейлист с треками",
+				"playlistFolderTitle": "Папка",
+				"playlistFolderDescription": "Сгруппируйте свои плейлисты в папку",
 				"aiPlaylistTitle": "Плейлист по запросу",
 				"aiPlaylistDescription": "Опишите, что вы хотите услышать, и позвольте AudioMuse-AI создать это",
 				"fingerprintTitle": "Звуковой отпечаток",
@@ -346,6 +348,19 @@
 				"albumCount_few": "{{count}} релиза",
 				"albumCount_many": "{{count}} релизов",
 				"albumCount_other": "{{count}} релизов"
+			},
+			"mixes": {
+				"createArtistMix": "Создать плейлист исполнителя",
+				"createGenreMix": "Создать смесь жанров",
+				"title": "{{name}} Смешать",
+				"featuring": "С участием  « {{names}} »  и других",
+				"empty": "В вашей медиатеке недостаточно песен для создания этого плейлиста",
+				"offline": "Миксы создаются на основе данных с вашего музыкального сервера, доступ к которому в данный момент невозможен",
+				"error": "Смесь не удалось сгенерировать",
+				"queued_one": "{{count}} песня добавлена в очередь",
+				"queued_few": "{{count}} песни, добавленные в очередь",
+				"queued_many": "{{count}} песни, добавленные в очередь",
+				"queued_other": "{{count}} песни, добавленные в очередь"
 			},
 			"favorites": {
 				"title": "Любимые треки",
@@ -614,6 +629,24 @@
 			"favoritePodcasts": {
 				"title": "Недавние эпизоды",
 				"noServerFavorites": "У тебя пока нет избранных подкастов. Открой любой подкаст и нажми на сердечко, чтобы добавить его сюда."
+			},
+			"playlistFolders": {
+				"newTitle": "Новая папка",
+				"editTitle": "Редактировать папку",
+				"namePlaceholder": "Название папки",
+				"nameTaken": "Папка с таким именем уже существует",
+				"colorLabel": "Цвет",
+				"playlistsLabel": "Плейлисты",
+				"empty": "Эта папка пуста",
+				"emptyHint": "Отредактируйте папку, чтобы добавить плейлисты, или воспользуйтесь функцией «Переместить в папку» для плейлиста.",
+				"notFound": "Эта папка больше не существует",
+				"edit": "Изменить эту папку",
+				"delete": "Удалить эту папку",
+				"deleteConfirmTitle": "Удалить эту папку?",
+				"deleteConfirmDescription": "Эти плейлисты возвращаются в вашу медиатеку. Они не удаляются.",
+				"moveToFolder": "Переместить в папку",
+				"removeFromFolder": "Удалить из папки",
+				"newFolder": "Новая папка"
 			},
 			"newPlaylist": {
 				"title": "Придумай название плейлиста",
@@ -1552,8 +1585,8 @@
 					"checking": "Проверяем...",
 					"upToDate": "Установлена последняя версия",
 					"checkFailed": "Не удалось проверить наличие обновлений. Проверь интернет соединение и попробуй снова.",
-					"rateLabel": "Rate Wavio",
-					"rateDescription": "Enjoying Wavio? A rating on Google Play helps other people find it",
+					"rateLabel": "Оцените Wavio",
+					"rateDescription": "Вам нравится Wavio? Оставьте отзыв в Google Play — это поможет другим пользователям найти приложение",
 					"rateAction": "Оценить",
 					"currentVersionLabel": "Текущая версия"
 				},
@@ -1634,6 +1667,10 @@
 					"homeSectionsSheetDescription": "Отключите разделы, чтобы скрыть их с главного экрана",
 					"homeSectionsReorderHint": "Нажмите и удерживайте элемент, а затем перетащите его, чтобы изменить его положение в ленте",
 					"homeSectionsResetOrder": "Сбросить заказ",
+					"pinFavoritesShortcutLabel": "Закрепить ярлык «Избранное»",
+					"pinFavoritesShortcutDescription": "Установите «Избранное» на первое место в списке ярлыков на главном экране. Если эта функция отключена, ярлык перемещается так же, как и любой другой ярлык",
+					"homeShortcutsCountLabel": "Количество ярлыков",
+					"homeShortcutsCountDescription": "Сколько последних плейлистов отображать в виде ярлыков на главном экране",
 					"homeSections": {
 						"recentPlays": "Ярлыки",
 						"moreFromArtist": "Больше от исполнителя",
@@ -1666,6 +1703,18 @@
 					"homeSectionsCount_few": "{{count}} показано",
 					"homeSectionsCount_many": "{{count}} показано",
 					"homeSectionsCount_other": "{{count}} показано"
+				},
+				"libraryDisplaySettings": {
+					"title": "Моя медиатека",
+					"playlistFoldersLabel": "Сгруппировать плейлисты по названию",
+					"playlistFoldersDescription": "Поместите плейлисты с такими названиями, как «{{example}}», в папку «Rock». Папки, которые вы создаете самостоятельно, всегда отображаются.",
+					"separatorLabel": "Разделитель папок",
+					"separatorDescription": "Текст, расположенный между названием папки и названием плейлиста. Пробелы учитываются.",
+					"separatorCustom": "Пользовательский",
+					"separatorCustomLabel": "Пользовательский разделитель",
+					"separatorCustomPlaceholder": "например, «из»",
+					"separatorSaveAction": "Сохранить",
+					"separatorPreview": "«{{example}}» → «Рок» › «80-е»"
 				},
 				"hapticsSettings": {
 					"title": "Тактильная отдача",
@@ -1716,16 +1765,16 @@
 						}
 					},
 					"mediaControlsLabel": "Кнопки уведомлений в приложениях",
-					"mediaControlsDescription": "Pick the buttons shown on each side of previous, play/pause and next in the media notification and on the lock screen. If you pick only one button, Android shows it on the left. Favorite, shuffle and repeat are hidden for radio stations and podcast episodes.",
-					"mediaControlsLeftLabel": "Left button",
-					"mediaControlsRightLabel": "Right button",
+					"mediaControlsDescription": "Выберите кнопки, отображаемые по обе стороны от кнопок «Назад», «Воспроизведение/Пауза» и «Вперед» в уведомлениях о мультимедиа и на экране блокировки. Если вы выберете только одну кнопку, Android отобразит её слева. Кнопки «Избранное», «Случайное воспроизведение» и «Повтор» скрыты для радиостанций и эпизодов подкастов.",
+					"mediaControlsLeftLabel": "Левая кнопка",
+					"mediaControlsRightLabel": "Правая кнопка",
 					"mediaControlsButtons": {
-						"none": "None",
-						"seekBackward": "Back 10 s",
-						"seekForward": "Forward 10 s",
+						"none": "Нет",
+						"seekBackward": "Назад на 10 с",
+						"seekForward": "Перейти на 10 секунд вперед",
 						"favorite": "Избранное",
-						"shuffle": "Shuffle",
-						"repeat": "Repeat"
+						"shuffle": "Перемешать",
+						"repeat": "Повторить"
 					},
 					"waveformSeekbarLabel": "Полоса прокрутки формы сигнала",
 					"waveformSeekbarDescription": "Отображать график сигнала трека вместо обычной полосы прогресса. Каждый график сигнала анализируется один раз — через несколько секунд после начала воспроизведения трека — и затем используется повторно. Для потоковых треков в целях реализации этой функции загружается дополнительная копия низкого качества, поэтому при этом расходуется больше данных — но никогда через сотовую сеть. Эта функция не применяется к подкастам, радиопередачам и трекам продолжительностью более 15 минут.",
@@ -1890,6 +1939,21 @@
 			"activity": {
 				"title": "Недавние",
 				"empty": "Здесь пока ничего нет. Альбомы, исполнители и плейлисты появятся тут, когда ты начнешь воспроизведение",
+				"tabs": {
+					"history": "История"
+				},
+				"listenbrainz": {
+					"notConnected": "Подключите свою учетную запись ListenBrainz, чтобы просматривать здесь статистику прослушивания.",
+					"noData": "На ListenBrainz пока нет прослушиваний. Ваша статистика появится здесь, как только начнет накапливаться информация о прослушиваниях.",
+					"connectAction": "Подключиться к ListenBrainz",
+					"settingsAction": "Настройки ListenBrainz"
+				},
+				"lastfm": {
+					"notConnected": "Подключите свою учетную запись Last.fm, чтобы просматривать здесь статистику прослушивания.",
+					"noData": "Пока что на Last.fm не было добавлено ни одной записи. Ваша статистика появится здесь, как только начнется отслеживание ваших прослушиваний.",
+					"connectAction": "Подключить Last.fm",
+					"settingsAction": "Настройки Last.fm"
+				},
 				"sections": {
 					"today": "Сегодня",
 					"yesterday": "Вчера",
@@ -1985,7 +2049,11 @@
 				"createPlaylistNamePlaceholder": "Мой плейлист из очереди",
 				"createPlaylistSuccessMessage": "Плейлист из очереди успешно создан",
 				"createPlaylistErrorMessage": "Произошла ошибка при создании плейлиста",
-				"sleepTimer": "Таймер сна"
+				"sleepTimer": "Таймер сна",
+				"endsAt": "Очередь заканчивается на сайте {{time}} ·  Осталось {{remaining}}",
+				"endsAround": "Очередь заканчивается примерно на сайте {{time}} · {{remaining}}",
+				"sleepStopsAt": "Таймер сна остановит воспроизведение, когда останется {{time}} · {{remaining}}",
+				"sleepStopsAround": "Таймер сна останавливает воспроизведение примерно через {{time}} · {{remaining}} оставшегося времени"
 			},
 			"tracks": {
 				"addToFavorites": "Добавить в избранное",
@@ -2067,7 +2135,7 @@
 					"favorite": "Избранное",
 					"playCount": "Количество прослушиваний",
 					"lastPlayed": "Последнее прослушивание",
-					"added": "Added",
+					"added": "Добавлено",
 					"modified": "Изменено",
 					"albumPeak": "Пик альбома",
 					"trackPeak": "Пик трека",
@@ -2084,7 +2152,7 @@
 				"title": "Играет сейчас",
 				"notices": {
 					"sourceUnavailable": "Не удалось воспроизвести этот трек — файл недоступен. Убедитесь, что ваш сервер включен и находится в той же сети.",
-					"formatUnsupported": "This device can't play the audio format of “{{track}}”.",
+					"formatUnsupported": "Это устройство не поддерживает воспроизведение аудиоформата «{{track}}».",
 					"remoteTrackRefused": "{{name}} Не удалось воспроизвести «{{track}}». Выберите другой трек или воспроизведите его на этом устройстве.",
 					"remoteLost": "Потеряна связь с {{name}}. На этом устройстве воспроизведение снова работает."
 				},
@@ -2101,6 +2169,7 @@
 					"similar": "Похожие треки",
 					"audiomuse": "Воспроизведение из AudioMuse-AI",
 					"listenbrainz": "Воспроизведение с ListenBrainz",
+					"mix": "Воспроизведение из микса",
 					"albumList": "Из альбомов",
 					"playlistList": "Из плейлистов"
 				},
@@ -2137,6 +2206,17 @@
 				"sleepTimerOff": "Выкл.",
 				"sleepTimerEndOfTrack": "В конце трека",
 				"sleepTimerActive": "Таймер сна · {{label}}",
+				"sleepTimerCustom": "Пользовательский",
+				"sleepTimerHours": "Часы работы",
+				"sleepTimerMinutesLabel": "Протокол",
+				"sleepTimerStart": "Запустить таймер",
+				"sleepTimerFinishTrack": "Завершить воспроизведение текущего трека",
+				"sleepTimerFinishTrackDescription": "Когда таймер истечет, остановитесь в конце трека, а не затухайте звук посередине трека",
+				"sleepTimerFinishing": "После этой композиции",
+				"sleepTimerEndsAt": "Заканчивается в {{time}}",
+				"sleepTimerEndsAround": "Заканчивается примерно {{time}}",
+				"sleepTimerBadgeEndsAt": "Конец {{time}}",
+				"sleepTimerBadgeEndsAround": "Конец ~{{time}}",
 				"playbackSpeed": "Скорость воспроизведения",
 				"playbackSpeedValue": "{{rate}}×",
 				"playbackSpeedNormal": "Нормальный",
@@ -2167,6 +2247,9 @@
 				"outputChromecastNoPlayServices": "Для работы Chromecast требуются службы Google Play, которых на этом устройстве нет.",
 				"outputChromecastNoPlayServicesHint": "Требуется наличие сервисов Google Play",
 				"outputConnectErrorMessage": "Не удалось воспроизвести файл по адресу {{name}}.",
+				"outputAddRooms": "Также играйте в",
+				"outputGroupVolume": "Объем группы",
+				"outputGroupErrorMessage": "Не удалось изменить группу на сайте {{name}}.",
 				"sleepTimerMinutes_one": "{{count}} минута",
 				"sleepTimerMinutes_few": "{{count}} минуты",
 				"sleepTimerMinutes_many": "{{count}} минут",
@@ -2204,6 +2287,7 @@
 				"empty": "Нет библиотек"
 			},
 			"servers": {
+				"oidcToggleHelp": "Sign in to this server through the identity provider in front of it instead of with a password. Applies from the next sign-in.",
 				"title": "Серверы",
 				"addServer": "Добавить сервер",
 				"namePlaceholder": "Название сервера",
@@ -2274,7 +2358,7 @@
 				"notAvailableOfflineMessage": "Недоступно в офлайн-режиме. Скачай чтобы слушать без интернета.",
 				"advancedSettings": "Расширенные настройки",
 				"fallbackUrlHelp": "Используется, если основной URL недоступен. Должен указывать на тот же сервер.",
-				"plainPasswordAuth": "Legacy password authentication",
+				"plainPasswordAuth": "Устаревшая аутентификация по паролю",
 				"plainPasswordAuthHelp": "Отправляет ваш пароль с каждым запросом вместо токена. Используйте только если вход в систему проходит, но приложение постоянно вас разлогинивает.",
 				"cancel": "Отмена",
 				"close": "Закрыть",
@@ -2326,6 +2410,7 @@
 					"removeConfirmDescription_other": "{{count}} Загруженные песни будут удалены с этого устройства. Песни, сохраненные также в другом альбоме или плейлисте, останутся."
 				},
 				"favorites": "Любимые треки",
+				"playlistFolder": "Папка «Плейлисты»",
 				"filters": {
 					"albums": "Альбомы",
 					"artists": "Исполнители",
@@ -2407,6 +2492,10 @@
 				"folder_few": "Папки",
 				"folder_many": "Папок",
 				"folder_other": "Папок",
+				"playlistCount_one": "{{count}} плейлист",
+				"playlistCount_few": "{{count}} плейлисты",
+				"playlistCount_many": "{{count}} плейлисты",
+				"playlistCount_other": "{{count}} плейлисты",
 				"song_one": "Песня",
 				"song_few": "Песни",
 				"song_many": "Песен",
@@ -2521,6 +2610,26 @@
 				"smbShareNotFound": "Подключение установлено, но на этом хосте нет общего ресурса с именем «{{share}}». Проверьте название общего ресурса.",
 				"smbUnreachable": "Не удалось установить соединение с этим хостом по порту {{port}}. Проверьте адрес и убедитесь, что для общего ресурса используется протокол SMB2 или более поздней версии — SMB1 не поддерживается.",
 				"smbDialectUnsupported": "Этот хост отклонил подключение, поскольку требует SMB 3. На iPhone и iPad приложение Wavio поддерживает только SMB 2.1 — разрешите SMB 2 в настройках общего доступа, чтобы установить соединение.",
+				"ssoSignIn": "Sign in with single sign-on",
+				"ssoActiveTitle": "Single sign-on",
+				"ssoActiveDescription": "You'll sign in at {{host}}. No server password needed.",
+				"ssoActiveDescriptionGeneric": "You'll sign in through your server's identity provider. No server password needed.",
+				"ssoUsePassword": "Use a password instead",
+				"oidcToggle": "Single sign-on (OpenID Connect)",
+				"oidcToggleHelp": "Sign in through the identity provider in front of your server instead of with a password. Turned on automatically when the server advertises it.",
+				"oidcIssuerPlaceholder": "Issuer URL (found automatically when empty)",
+				"oidcClientIdPlaceholder": "Client ID (default: wavio)",
+				"oidcSettingsHelp": "Only needed if your server's proxy doesn't publish its sign-in, or your identity provider gave Wavio a different client ID.",
+				"oidcNotFound": "This server doesn't advertise single sign-on. Set the issuer URL in Advanced settings, or turn single sign-on off to use a password.",
+				"oidcDiscoveryFailed": "Couldn't read the identity provider's configuration. Check the issuer URL and that the provider is reachable from this device.",
+				"oidcSignInFailed": "Single sign-on failed: {{reason}}",
+				"oidcTokenRejected": "Signed in, but the server's proxy refused the access token. Check that the proxy accepts tokens issued to Wavio (audience and issuer).",
+				"oidcProxyRedirected": "The server's proxy answered with a sign-in page instead of accepting the access token. Configure it to accept bearer tokens on /rest.",
+				"oidcExtAuthMissing": "The proxy accepted your sign-in, but the server didn't trust the user it passed on. In Navidrome, add the proxy's address to ExtAuth.TrustedSources.",
+				"oidcNoServerAccount": "You're signed in, but the server has no account for you yet. Open the server's web page once through your proxy to create it, then try again.",
+				"oidcUsernameUnknown": "Signed in, but couldn't tell which server account is yours. Check that your proxy passes on the same username the server uses.",
+				"oidcSessionExpiredTitle": "Signed out",
+				"oidcSessionExpired": "Your single sign-on session ended. Sign in again to continue.",
 				"localInfoTitle": "Локальная медиатека",
 				"localInfoFormatsTitle": "Поддерживаемые форматы",
 				"localInfoFormats": "Wavio сканирует выбранные папки на наличие файлов MP3, FLAC, M4A, AAC, ALAC, OGG, Opus, WAV, WMA и AIFF.",

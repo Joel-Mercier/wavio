@@ -91,6 +91,8 @@
 				"title": "Crea",
 				"playlistTitle": "Playlist",
 				"playlistDescription": "Crea una playlist con delle canzoni",
+				"playlistFolderTitle": "Cartella",
+				"playlistFolderDescription": "Raggruppa le tue playlist in una cartella",
 				"aiPlaylistTitle": "Playlist creata a partire da un suggerimento",
 				"aiPlaylistDescription": "Descrivi ciò che desideri ascoltare e lascia che AudioMuse-AI lo realizzi",
 				"fingerprintTitle": "Impronta sonora",
@@ -334,6 +336,17 @@
 				"unfavoriteErrorMessage": "Si è verificato un errore durante la rimozione dell'artista dai preferiti",
 				"albumCount_one": "{{count}} album",
 				"albumCount_other": "{{count}} album"
+			},
+			"mixes": {
+				"createArtistMix": "Crea una playlist di artisti",
+				"createGenreMix": "Crea un mix di generi",
+				"title": "{{name}} Mescola",
+				"featuring": "Con {{names}} e altri ancora",
+				"empty": "Non ci sono abbastanza brani nella tua libreria per creare questa playlist",
+				"offline": "I mix vengono creati dal tuo server musicale, che al momento non è raggiungibile",
+				"error": "Non è stato possibile generare il mix",
+				"queued_one": "{{count}} brano aggiunto alla coda",
+				"queued_other": "{{count}} brani aggiunti alla coda"
 			},
 			"favorites": {
 				"title": "Preferiti",
@@ -592,6 +605,24 @@
 			"favoritePodcasts": {
 				"title": "Episodi recenti",
 				"noServerFavorites": "Non hai ancora aggiunto nessun podcast ai preferiti. Apri un podcast e tocca il cuore per aggiungerlo qui."
+			},
+			"playlistFolders": {
+				"newTitle": "Nuova cartella",
+				"editTitle": "Modifica cartella",
+				"namePlaceholder": "Nome della cartella",
+				"nameTaken": "Esiste già una cartella con questo nome",
+				"colorLabel": "Colore",
+				"playlistsLabel": "Playlist",
+				"empty": "Questa cartella è vuota",
+				"emptyHint": "Modifica la cartella per aggiungere playlist oppure utilizza l'opzione \"Sposta nella cartella\" su una playlist.",
+				"notFound": "Questa cartella non esiste più",
+				"edit": "Modifica questa cartella",
+				"delete": "Elimina questa cartella",
+				"deleteConfirmTitle": "Elimina questa cartella?",
+				"deleteConfirmDescription": "Le playlist vengono riportate nella tua libreria. Non vengono eliminate.",
+				"moveToFolder": "Sposta nella cartella",
+				"removeFromFolder": "Rimuovi dalla cartella",
+				"newFolder": "Nuova cartella"
 			},
 			"newPlaylist": {
 				"title": "Assegna un nome alla tua playlist",
@@ -1466,8 +1497,8 @@
 					"checking": "Controllo di…",
 					"upToDate": "Stai utilizzando l'ultima versione",
 					"checkFailed": "Impossibile verificare la disponibilità di aggiornamenti. Controlla la connessione e riprova.",
-					"rateLabel": "Rate Wavio",
-					"rateDescription": "Enjoying Wavio? A rating on Google Play helps other people find it",
+					"rateLabel": "Vota Wavio",
+					"rateDescription": "Ti piace Wavio? Lascia una recensione su Google Play per aiutare gli altri a trovarlo",
 					"rateAction": "Tasso",
 					"currentVersionLabel": "Versione attuale"
 				},
@@ -1548,6 +1579,10 @@
 					"homeSectionsSheetDescription": "Disattiva le sezioni per nasconderle dalla home page",
 					"homeSectionsReorderHint": "Tieni premuta una sezione, quindi trascinala per modificarne la posizione nel feed",
 					"homeSectionsResetOrder": "Reimposta l'ordine",
+					"pinFavoritesShortcutLabel": "Collegamento ai preferiti",
+					"pinFavoritesShortcutDescription": "Mantieni i Preferiti al primo posto tra i collegamenti della schermata iniziale. Se questa opzione è disattivata, il collegamento si comporta come qualsiasi altro collegamento",
+					"homeShortcutsCountLabel": "Numero di scorciatoie",
+					"homeShortcutsCountDescription": "Quanti brani ascoltati di recente visualizzare come collegamenti sulla schermata iniziale",
 					"homeSections": {
 						"recentPlays": "Scorciatoie",
 						"moreFromArtist": "Altro da un artista",
@@ -1578,6 +1613,18 @@
 					},
 					"homeSectionsCount_one": "{{count}} mostrato",
 					"homeSectionsCount_other": "{{count}} mostrato"
+				},
+				"libraryDisplaySettings": {
+					"title": "Libreria",
+					"playlistFoldersLabel": "Raggruppa le playlist in base al nome",
+					"playlistFoldersDescription": "Inserisci le playlist con nomi del tipo “{{example}}” in una cartella denominata “Rock”. Le cartelle che crei tu vengono sempre visualizzate.",
+					"separatorLabel": "Separatore di cartelle",
+					"separatorDescription": "Testo compreso tra il nome della cartella e il nome della playlist. Gli spazi contano.",
+					"separatorCustom": "Personalizzato",
+					"separatorCustomLabel": "Separatore personalizzato",
+					"separatorCustomPlaceholder": "ad es. \"di\"",
+					"separatorSaveAction": "Salva",
+					"separatorPreview": "“{{example}}” → “Rock” › “Anni ’80”"
 				},
 				"hapticsSettings": {
 					"title": "Feedback tattile",
@@ -1626,16 +1673,16 @@
 						}
 					},
 					"mediaControlsLabel": "Pulsanti di notifica multimediali",
-					"mediaControlsDescription": "Pick the buttons shown on each side of previous, play/pause and next in the media notification and on the lock screen. If you pick only one button, Android shows it on the left. Favorite, shuffle and repeat are hidden for radio stations and podcast episodes.",
-					"mediaControlsLeftLabel": "Left button",
-					"mediaControlsRightLabel": "Right button",
+					"mediaControlsDescription": "Seleziona i pulsanti visualizzati ai lati dei pulsanti “Precedente”, “Riproduci/Pausa” e “Successivo” nella notifica multimediale e nella schermata di blocco. Se selezioni un solo pulsante, Android lo visualizza a sinistra. I pulsanti “Preferiti”, “Riproduzione casuale” e “Ripeti” sono nascosti per le stazioni radio e gli episodi dei podcast.",
+					"mediaControlsLeftLabel": "Pulsante sinistro",
+					"mediaControlsRightLabel": "Tasto destro",
 					"mediaControlsButtons": {
-						"none": "None",
-						"seekBackward": "Back 10 s",
-						"seekForward": "Forward 10 s",
+						"none": "Nessuno",
+						"seekBackward": "Indietro di 10 secondi",
+						"seekForward": "Avanti di 10 secondi",
 						"favorite": "Preferiti",
-						"shuffle": "Shuffle",
-						"repeat": "Repeat"
+						"shuffle": "Riproduzione casuale",
+						"repeat": "Ripeti"
 					},
 					"waveformSeekbarLabel": "Barra di ricerca della forma d'onda",
 					"waveformSeekbarDescription": "Mostra la forma d'onda del brano invece di una semplice barra di avanzamento. Ogni forma d'onda viene analizzata una sola volta, pochi secondi dopo l'inizio del brano, e poi riutilizzata. Per farlo, i brani in streaming scaricano una copia aggiuntiva a bassa qualità, quindi questa funzione consuma più dati — ma mai tramite rete mobile. Questa funzione viene disattivata per i podcast, la radio e i brani di durata superiore a 15 minuti.",
@@ -1800,6 +1847,21 @@
 			"activity": {
 				"title": "Attività",
 				"empty": "Qui non c'è ancora nulla. Gli album, gli artisti e le playlist che ascolti appariranno qui.",
+				"tabs": {
+					"history": "Storia"
+				},
+				"listenbrainz": {
+					"notConnected": "Collega il tuo account ListenBrainz per visualizzare qui le tue statistiche di ascolto.",
+					"noData": "Non ci sono ancora ascolti su ListenBrainz. Le tue statistiche appariranno qui non appena i tuoi ascolti inizieranno a essere registrati.",
+					"connectAction": "Connettiti a ListenBrainz",
+					"settingsAction": "Impostazioni di ListenBrainz"
+				},
+				"lastfm": {
+					"notConnected": "Collega il tuo account Last.fm per visualizzare qui le tue statistiche di ascolto.",
+					"noData": "Non è stato ancora inviato nulla a Last.fm. Le tue statistiche appariranno qui non appena i tuoi ascolti inizieranno a essere registrati.",
+					"connectAction": "Collega Last.fm",
+					"settingsAction": "Impostazioni di Last.fm"
+				},
 				"sections": {
 					"today": "Oggi",
 					"yesterday": "Ieri",
@@ -1881,7 +1943,11 @@
 				"createPlaylistNamePlaceholder": "La mia playlist in coda",
 				"createPlaylistSuccessMessage": "Playlist creata dalla coda",
 				"createPlaylistErrorMessage": "Si è verificato un errore durante la creazione della playlist",
-				"sleepTimer": "Timer di spegnimento"
+				"sleepTimer": "Timer di spegnimento",
+				"endsAt": "La coda termina a {{time}} ·  rimangono {{remaining}}",
+				"endsAround": "La coda termina all'incirca a {{time}} · {{remaining}} a sinistra",
+				"sleepStopsAt": "Il timer di spegnimento interrompe la riproduzione quando mancano {{time}} · {{remaining}} a",
+				"sleepStopsAround": "Il timer di spegnimento interrompe la riproduzione quando mancano circa {{time}} · {{remaining}} al termine"
 			},
 			"tracks": {
 				"addToFavorites": "Aggiungi ai preferiti",
@@ -1961,7 +2027,7 @@
 					"favorite": "Preferiti",
 					"playCount": "Numero di riproduzioni",
 					"lastPlayed": "Ultima riproduzione",
-					"added": "Added",
+					"added": "Aggiunto",
 					"modified": "Modificato",
 					"albumPeak": "Posizione massima in classifica dell'album",
 					"trackPeak": "Punto di picco della traccia",
@@ -1976,7 +2042,7 @@
 				"title": "In riproduzione",
 				"notices": {
 					"sourceUnavailable": "Non è stato possibile riprodurre quel brano: il file non era accessibile. Verifica che il tuo server sia acceso e che si trovi sulla stessa rete.",
-					"formatUnsupported": "This device can't play the audio format of “{{track}}”.",
+					"formatUnsupported": "Questo dispositivo non è in grado di riprodurre il formato audio “{{track}}”.",
 					"remoteTrackRefused": "{{name}} Non è stato possibile riprodurre “{{track}}”. Scegli un altro brano oppure riproducilo su questo dispositivo.",
 					"remoteLost": "Il contatto con {{name}}è stato perso. La riproduzione è nuovamente attiva su questo dispositivo."
 				},
@@ -1993,6 +2059,7 @@
 					"similar": "Brani simili",
 					"audiomuse": "Riproduzione da AudioMuse-AI",
 					"listenbrainz": "Riproduzione da ListenBrainz",
+					"mix": "Riproduzione da mix",
 					"albumList": "Riproduzione dagli album",
 					"playlistList": "Riproduzione dalla playlist"
 				},
@@ -2029,6 +2096,17 @@
 				"sleepTimerOff": "Spento",
 				"sleepTimerEndOfTrack": "Fine del brano",
 				"sleepTimerActive": "Timer di spegnimento · {{label}}",
+				"sleepTimerCustom": "Personalizzato",
+				"sleepTimerHours": "Orari",
+				"sleepTimerMinutesLabel": "Verbale",
+				"sleepTimerStart": "Avvia il timer",
+				"sleepTimerFinishTrack": "Termina il brano corrente",
+				"sleepTimerFinishTrackDescription": "Quando il timer arriva a zero, fermati alla fine del brano invece di terminare gradualmente a metà brano",
+				"sleepTimerFinishing": "Dopo questo brano",
+				"sleepTimerEndsAt": "Termina alle {{time}}",
+				"sleepTimerEndsAround": "Finisce più o meno {{time}}",
+				"sleepTimerBadgeEndsAt": "Fine {{time}}",
+				"sleepTimerBadgeEndsAround": "Fine ~{{time}}",
 				"playbackSpeed": "Velocità di riproduzione",
 				"playbackSpeedValue": "{{rate}}×",
 				"playbackSpeedNormal": "Normale",
@@ -2059,6 +2137,9 @@
 				"outputChromecastNoPlayServices": "Chromecast richiede i servizi Google Play, che questo dispositivo non possiede.",
 				"outputChromecastNoPlayServicesHint": "Richiede i servizi Google Play",
 				"outputConnectErrorMessage": "Impossibile riprodurre il file su {{name}}.",
+				"outputAddRooms": "Gioca anche su",
+				"outputGroupVolume": "Volume del gruppo",
+				"outputGroupErrorMessage": "Impossibile modificare il gruppo su {{name}}.",
 				"sleepTimerMinutes_one": "{{count}} minuto",
 				"sleepTimerMinutes_other": "{{count}} minuti"
 			},
@@ -2092,6 +2173,7 @@
 				"empty": "Non ci sono librerie disponibili"
 			},
 			"servers": {
+				"oidcToggleHelp": "Sign in to this server through the identity provider in front of it instead of with a password. Applies from the next sign-in.",
 				"title": "Server",
 				"addServer": "Aggiungi server",
 				"namePlaceholder": "Inserisci il nome del server",
@@ -2206,6 +2288,7 @@
 					"removeConfirmDescription_other": "{{count}} I brani scaricati verranno eliminati da questo dispositivo. I brani salvati anche in un altro album o in un'altra playlist verranno mantenuti."
 				},
 				"favorites": "Preferiti",
+				"playlistFolder": "Cartella delle playlist",
 				"filters": {
 					"albums": "Album",
 					"artists": "Artisti",
@@ -2275,6 +2358,8 @@
 				"radioStation_other": "Stazioni radio",
 				"folder_one": "Cartella",
 				"folder_other": "Cartelle",
+				"playlistCount_one": "{{count}} playlist",
+				"playlistCount_other": "{{count}} playlist",
 				"song_one": "Canzone",
 				"song_other": "Canzoni",
 				"albumCount_one": "{{count}} album",
@@ -2373,6 +2458,26 @@
 				"smbShareNotFound": "È connesso, ma su quell'host non è presente alcuna condivisione denominata \"{{share}}\". Verificare il nome della condivisione.",
 				"smbUnreachable": "Impossibile raggiungere quell'host sulla porta {{port}}. Verificare l'indirizzo e assicurarsi che la condivisione utilizzi SMB2 o una versione successiva: SMB1 non è supportato.",
 				"smbDialectUnsupported": "Quel host ha rifiutato la connessione perché richiede SMB 3. Su iPhone e iPad, Wavio supporta SMB 2.1: abilita SMB 2 sulla condivisione per consentirne la connessione.",
+				"ssoSignIn": "Sign in with single sign-on",
+				"ssoActiveTitle": "Single sign-on",
+				"ssoActiveDescription": "You'll sign in at {{host}}. No server password needed.",
+				"ssoActiveDescriptionGeneric": "You'll sign in through your server's identity provider. No server password needed.",
+				"ssoUsePassword": "Use a password instead",
+				"oidcToggle": "Single sign-on (OpenID Connect)",
+				"oidcToggleHelp": "Sign in through the identity provider in front of your server instead of with a password. Turned on automatically when the server advertises it.",
+				"oidcIssuerPlaceholder": "Issuer URL (found automatically when empty)",
+				"oidcClientIdPlaceholder": "Client ID (default: wavio)",
+				"oidcSettingsHelp": "Only needed if your server's proxy doesn't publish its sign-in, or your identity provider gave Wavio a different client ID.",
+				"oidcNotFound": "This server doesn't advertise single sign-on. Set the issuer URL in Advanced settings, or turn single sign-on off to use a password.",
+				"oidcDiscoveryFailed": "Couldn't read the identity provider's configuration. Check the issuer URL and that the provider is reachable from this device.",
+				"oidcSignInFailed": "Single sign-on failed: {{reason}}",
+				"oidcTokenRejected": "Signed in, but the server's proxy refused the access token. Check that the proxy accepts tokens issued to Wavio (audience and issuer).",
+				"oidcProxyRedirected": "The server's proxy answered with a sign-in page instead of accepting the access token. Configure it to accept bearer tokens on /rest.",
+				"oidcExtAuthMissing": "The proxy accepted your sign-in, but the server didn't trust the user it passed on. In Navidrome, add the proxy's address to ExtAuth.TrustedSources.",
+				"oidcNoServerAccount": "You're signed in, but the server has no account for you yet. Open the server's web page once through your proxy to create it, then try again.",
+				"oidcUsernameUnknown": "Signed in, but couldn't tell which server account is yours. Check that your proxy passes on the same username the server uses.",
+				"oidcSessionExpiredTitle": "Signed out",
+				"oidcSessionExpired": "Your single sign-on session ended. Sign in again to continue.",
 				"localInfoTitle": "Libreria Locale",
 				"localInfoFormatsTitle": "Formati supportati",
 				"localInfoFormats": "Wavio esegue la scansione delle cartelle selezionate alla ricerca di file MP3, FLAC, M4A, AAC, ALAC, OGG, Opus, WAV, WMA e AIFF.",

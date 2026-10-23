@@ -91,6 +91,8 @@
 				"title": "Criar",
 				"playlistTitle": "Lista de reprodução",
 				"playlistDescription": "Crie uma lista de reprodução com músicas",
+				"playlistFolderTitle": "Pasta",
+				"playlistFolderDescription": "Agrupe suas listas de reprodução em uma pasta",
 				"aiPlaylistTitle": "Lista de reprodução a partir de uma sugestão",
 				"aiPlaylistDescription": "Descreva o que você quer ouvir e deixe que o AudioMuse-AI crie isso para você",
 				"fingerprintTitle": "Impressão digital sonora",
@@ -334,6 +336,17 @@
 				"unfavoriteErrorMessage": "Ocorreu um erro ao remover o artista dos favoritos",
 				"albumCount_one": "{{count}} álbum",
 				"albumCount_other": "{{count}} álbuns"
+			},
+			"mixes": {
+				"createArtistMix": "Criar playlist de um artista",
+				"createGenreMix": "Criar uma mistura de gêneros",
+				"title": "{{name}} Misturar",
+				"featuring": "Com {{names}} e outros",
+				"empty": "Não há músicas suficientes na sua biblioteca para criar essa playlist",
+				"offline": "As mixagens são criadas a partir do seu servidor de música, que não está acessível no momento",
+				"error": "Não foi possível gerar a mixagem",
+				"queued_one": "{{count}} música adicionada à fila",
+				"queued_other": "{{count}} músicas adicionadas à fila"
 			},
 			"favorites": {
 				"title": "Favoritos",
@@ -592,6 +605,24 @@
 			"favoritePodcasts": {
 				"title": "Episódios recentes",
 				"noServerFavorites": "Você ainda não adicionou nenhum podcast aos favoritos. Abra um podcast e toque no coração para adicioná-lo aqui."
+			},
+			"playlistFolders": {
+				"newTitle": "Nova pasta",
+				"editTitle": "Editar pasta",
+				"namePlaceholder": "Nome da pasta",
+				"nameTaken": "Já existe uma pasta com esse nome",
+				"colorLabel": "Cor",
+				"playlistsLabel": "Listas de reprodução",
+				"empty": "Esta pasta está vazia",
+				"emptyHint": "Edite a pasta para adicionar listas de reprodução ou use a opção “Mover para a pasta” em uma lista de reprodução.",
+				"notFound": "Essa pasta não existe mais",
+				"edit": "Editar esta pasta",
+				"delete": "Exclua esta pasta",
+				"deleteConfirmTitle": "Deseja excluir esta pasta?",
+				"deleteConfirmDescription": "Suas listas de reprodução voltam para a sua biblioteca. Elas não são excluídas.",
+				"moveToFolder": "Mover para a pasta",
+				"removeFromFolder": "Remover da pasta",
+				"newFolder": "Nova pasta"
 			},
 			"newPlaylist": {
 				"title": "Dê um nome à sua lista de reprodução",
@@ -1466,8 +1497,8 @@
 					"checking": "Verificando…",
 					"upToDate": "Você está na versão mais recente",
 					"checkFailed": "Não foi possível verificar se há atualizações. Verifique sua conexão e tente novamente.",
-					"rateLabel": "Rate Wavio",
-					"rateDescription": "Enjoying Wavio? A rating on Google Play helps other people find it",
+					"rateLabel": "Avalie o Wavio",
+					"rateDescription": "Está gostando do Wavio? Uma avaliação no Google Play ajuda outras pessoas a encontrá-lo",
 					"rateAction": "Taxa",
 					"currentVersionLabel": "Versão atual"
 				},
@@ -1548,6 +1579,10 @@
 					"homeSectionsSheetDescription": "Desative as seções para ocultá-las da tela inicial",
 					"homeSectionsReorderHint": "Mantenha pressionada uma seção e, em seguida, arraste-a para alterar sua posição no feed",
 					"homeSectionsResetOrder": "Redefinir pedido",
+					"pinFavoritesShortcutLabel": "Fixar atalho dos Favoritos",
+					"pinFavoritesShortcutDescription": "Mantenha os Favoritos em primeiro lugar nos atalhos da tela inicial. Quando desativado, ele se comporta como qualquer outro atalho",
+					"homeShortcutsCountLabel": "Número de atalhos",
+					"homeShortcutsCountDescription": "Quantos programas assistidos recentemente devem ser exibidos como atalhos na tela inicial",
 					"homeSections": {
 						"recentPlays": "Atalhos",
 						"moreFromArtist": "Mais obras de um artista",
@@ -1578,6 +1613,18 @@
 					},
 					"homeSectionsCount_one": "{{count}} mostrado",
 					"homeSectionsCount_other": "{{count}} mostrado"
+				},
+				"libraryDisplaySettings": {
+					"title": "Biblioteca",
+					"playlistFoldersLabel": "Agrupar playlists por nome",
+					"playlistFoldersDescription": "Coloque playlists com nomes como “{{example}}” em uma pasta chamada “Rock”. As pastas que você mesmo criar sempre serão exibidas.",
+					"separatorLabel": "Separador de pastas",
+					"separatorDescription": "Texto entre o nome da pasta e o nome da lista de reprodução. Os espaços são considerados.",
+					"separatorCustom": "Personalizado",
+					"separatorCustomLabel": "Separador personalizado",
+					"separatorCustomPlaceholder": "por exemplo, “de”",
+					"separatorSaveAction": "Salvar",
+					"separatorPreview": "“{{example}}” → “Rock” › “Anos 80”"
 				},
 				"hapticsSettings": {
 					"title": "Feedback tátil",
@@ -1626,16 +1673,16 @@
 						}
 					},
 					"mediaControlsLabel": "Botões de notificação de mídia",
-					"mediaControlsDescription": "Pick the buttons shown on each side of previous, play/pause and next in the media notification and on the lock screen. If you pick only one button, Android shows it on the left. Favorite, shuffle and repeat are hidden for radio stations and podcast episodes.",
-					"mediaControlsLeftLabel": "Left button",
-					"mediaControlsRightLabel": "Right button",
+					"mediaControlsDescription": "Selecione os botões exibidos ao lado de “Anterior”, “Reproduzir/Pausar” e “Próximo” na notificação de mídia e na tela de bloqueio. Se você selecionar apenas um botão, o Android o exibirá à esquerda. Os botões “Favoritos”, “Aleatório” e “Repetir” ficam ocultos para estações de rádio e episódios de podcast.",
+					"mediaControlsLeftLabel": "Botão esquerdo",
+					"mediaControlsRightLabel": "Botão direito",
 					"mediaControlsButtons": {
-						"none": "None",
-						"seekBackward": "Back 10 s",
-						"seekForward": "Forward 10 s",
+						"none": "Nenhum",
+						"seekBackward": "Voltar 10 s",
+						"seekForward": "Avançar 10 s",
 						"favorite": "Favorito",
-						"shuffle": "Shuffle",
-						"repeat": "Repeat"
+						"shuffle": "Reproduzir aleatoriamente",
+						"repeat": "Repetir"
 					},
 					"waveformSeekbarLabel": "Barra de navegação pela forma de onda",
 					"waveformSeekbarDescription": "Exiba a forma de onda da faixa em vez de uma simples barra de progresso. Cada forma de onda é analisada uma vez, alguns segundos após o início da faixa, e depois reutilizada. Para isso, as faixas transmitidas baixam uma cópia adicional de baixa qualidade, o que consome mais dados — mas nunca pela rede móvel. Esse recurso é ignorado para podcasts, rádio e faixas com duração superior a 15 minutos.",
@@ -1800,6 +1847,21 @@
 			"activity": {
 				"title": "Atividade",
 				"empty": "Ainda não há nada aqui. Os álbuns, artistas e playlists que você ouvir aparecerão aqui.",
+				"tabs": {
+					"history": "História"
+				},
+				"listenbrainz": {
+					"notConnected": "Conecte sua conta do ListenBrainz para ver suas estatísticas de audição aqui.",
+					"noData": "Ainda não há reproduções no ListenBrainz. Suas estatísticas aparecerão aqui assim que suas reproduções começarem a ser registradas.",
+					"connectAction": "Conecte-se ao ListenBrainz",
+					"settingsAction": "Configurações do ListenBrainz"
+				},
+				"lastfm": {
+					"notConnected": "Conecte sua conta do Last.fm para ver suas estatísticas de audição aqui.",
+					"noData": "Ainda não foi registrado nada no Last.fm. Suas estatísticas aparecerão aqui assim que suas reproduções começarem a ser registradas no site.",
+					"connectAction": "Conectar-se ao Last.fm",
+					"settingsAction": "Configurações do Last.fm"
+				},
 				"sections": {
 					"today": "Hoje",
 					"yesterday": "Ontem",
@@ -1881,7 +1943,11 @@
 				"createPlaylistNamePlaceholder": "Minha lista de reprodução da fila",
 				"createPlaylistSuccessMessage": "Lista de reprodução criada a partir da fila",
 				"createPlaylistErrorMessage": "Ocorreu um erro ao criar a lista de reprodução",
-				"sleepTimer": "Temporizador de desligamento automático"
+				"sleepTimer": "Temporizador de desligamento automático",
+				"endsAt": "A fila termina em {{time}} · {{remaining}} restantes",
+				"endsAround": "A fila termina por volta de {{time}} · {{remaining}} restantes",
+				"sleepStopsAt": "O temporizador de desligamento interrompe a reprodução quando restarem {{time}} · {{remaining}}",
+				"sleepStopsAround": "O temporizador de desligamento interrompe a reprodução quando restarem cerca de {{time}} · {{remaining}}"
 			},
 			"tracks": {
 				"addToFavorites": "Adicionar aos favoritos",
@@ -1976,7 +2042,7 @@
 				"title": "Em exibição agora",
 				"notices": {
 					"sourceUnavailable": "Não foi possível reproduzir essa faixa — o arquivo não estava acessível. Verifique se o seu servidor está ligado e na mesma rede.",
-					"formatUnsupported": "This device can't play the audio format of “{{track}}”.",
+					"formatUnsupported": "Este aparelho não consegue reproduzir o formato de áudio “{{track}}”.",
 					"remoteTrackRefused": "{{name}} Não foi possível reproduzir “{{track}}”. Escolha outra faixa ou reproduza neste aparelho.",
 					"remoteLost": "Perdeu contato com {{name}}. A reprodução voltou a funcionar neste dispositivo."
 				},
@@ -1993,6 +2059,7 @@
 					"similar": "Reproduzindo músicas semelhantes",
 					"audiomuse": "Reproduzindo a partir do AudioMuse-AI",
 					"listenbrainz": "Reproduzindo do ListenBrainz",
+					"mix": "Reproduzindo a partir da mixagem",
 					"albumList": "Reprodução a partir de álbuns",
 					"playlistList": "Reprodução a partir de listas de reprodução"
 				},
@@ -2029,6 +2096,17 @@
 				"sleepTimerOff": "Desligado",
 				"sleepTimerEndOfTrack": "Fim da faixa",
 				"sleepTimerActive": "Temporizador de desligamento · {{label}}",
+				"sleepTimerCustom": "Personalizado",
+				"sleepTimerHours": "Horário de funcionamento",
+				"sleepTimerMinutesLabel": "Ata",
+				"sleepTimerStart": "Iniciar o cronômetro",
+				"sleepTimerFinishTrack": "Terminar a faixa atual",
+				"sleepTimerFinishTrackDescription": "Quando o tempo acabar, pare no final da faixa, em vez de diminuir o volume gradualmente no meio da faixa",
+				"sleepTimerFinishing": "Depois dessa faixa",
+				"sleepTimerEndsAt": "Termina às {{time}}",
+				"sleepTimerEndsAround": "Termina por aí {{time}}",
+				"sleepTimerBadgeEndsAt": "Fim {{time}}",
+				"sleepTimerBadgeEndsAround": "Fim ~{{time}}",
 				"playbackSpeed": "Velocidade de reprodução",
 				"playbackSpeedValue": "{{rate}}×",
 				"playbackSpeedNormal": "Normal",
@@ -2059,6 +2137,9 @@
 				"outputChromecastNoPlayServices": "O Chromecast precisa dos Serviços do Google Play, que este dispositivo não possui.",
 				"outputChromecastNoPlayServicesHint": "Requer os serviços do Google Play",
 				"outputConnectErrorMessage": "Não foi possível reproduzir o arquivo em {{name}}.",
+				"outputAddRooms": "Jogue também em",
+				"outputGroupVolume": "Volume do grupo",
+				"outputGroupErrorMessage": "Não foi possível alterar o grupo em {{name}}.",
 				"sleepTimerMinutes_one": "{{count}} minuto",
 				"sleepTimerMinutes_other": "{{count}} minutos"
 			},
@@ -2092,6 +2173,7 @@
 				"empty": "Não há bibliotecas disponíveis"
 			},
 			"servers": {
+				"oidcToggleHelp": "Sign in to this server through the identity provider in front of it instead of with a password. Applies from the next sign-in.",
 				"title": "Servidores",
 				"addServer": "Adicionar servidor",
 				"namePlaceholder": "Digite o nome do servidor",
@@ -2206,6 +2288,7 @@
 					"removeConfirmDescription_other": "{{count}} As músicas baixadas serão excluídas deste aparelho. As músicas que também estiverem salvas em outro álbum ou lista de reprodução serão mantidas."
 				},
 				"favorites": "Favoritos",
+				"playlistFolder": "Pasta de playlists",
 				"filters": {
 					"albums": "Álbuns",
 					"artists": "Artistas",
@@ -2275,6 +2358,8 @@
 				"radioStation_other": "Estações de rádio",
 				"folder_one": "Pasta",
 				"folder_other": "Pastas",
+				"playlistCount_one": "{{count}} lista de reprodução",
+				"playlistCount_other": "{{count}} listas de reprodução",
 				"song_one": "Música",
 				"song_other": "Músicas",
 				"albumCount_one": "{{count}} álbum",
@@ -2373,6 +2458,26 @@
 				"smbShareNotFound": "Conectado, mas não há nenhum compartilhamento chamado “{{share}}” nesse host. Verifique o nome do compartilhamento.",
 				"smbUnreachable": "Não foi possível acessar esse host na porta {{port}}. Verifique o endereço e se o compartilhamento utiliza SMB2 ou uma versão mais recente — o SMB1 não é compatível.",
 				"smbDialectUnsupported": "Esse servidor recusou a conexão porque exige SMB 3. No iPhone e no iPad, o Wavio é compatível com SMB 2.1 — habilite o SMB 2 no compartilhamento para que a conexão seja estabelecida.",
+				"ssoSignIn": "Sign in with single sign-on",
+				"ssoActiveTitle": "Single sign-on",
+				"ssoActiveDescription": "You'll sign in at {{host}}. No server password needed.",
+				"ssoActiveDescriptionGeneric": "You'll sign in through your server's identity provider. No server password needed.",
+				"ssoUsePassword": "Use a password instead",
+				"oidcToggle": "Single sign-on (OpenID Connect)",
+				"oidcToggleHelp": "Sign in through the identity provider in front of your server instead of with a password. Turned on automatically when the server advertises it.",
+				"oidcIssuerPlaceholder": "Issuer URL (found automatically when empty)",
+				"oidcClientIdPlaceholder": "Client ID (default: wavio)",
+				"oidcSettingsHelp": "Only needed if your server's proxy doesn't publish its sign-in, or your identity provider gave Wavio a different client ID.",
+				"oidcNotFound": "This server doesn't advertise single sign-on. Set the issuer URL in Advanced settings, or turn single sign-on off to use a password.",
+				"oidcDiscoveryFailed": "Couldn't read the identity provider's configuration. Check the issuer URL and that the provider is reachable from this device.",
+				"oidcSignInFailed": "Single sign-on failed: {{reason}}",
+				"oidcTokenRejected": "Signed in, but the server's proxy refused the access token. Check that the proxy accepts tokens issued to Wavio (audience and issuer).",
+				"oidcProxyRedirected": "The server's proxy answered with a sign-in page instead of accepting the access token. Configure it to accept bearer tokens on /rest.",
+				"oidcExtAuthMissing": "The proxy accepted your sign-in, but the server didn't trust the user it passed on. In Navidrome, add the proxy's address to ExtAuth.TrustedSources.",
+				"oidcNoServerAccount": "You're signed in, but the server has no account for you yet. Open the server's web page once through your proxy to create it, then try again.",
+				"oidcUsernameUnknown": "Signed in, but couldn't tell which server account is yours. Check that your proxy passes on the same username the server uses.",
+				"oidcSessionExpiredTitle": "Signed out",
+				"oidcSessionExpired": "Your single sign-on session ended. Sign in again to continue.",
 				"localInfoTitle": "Biblioteca local",
 				"localInfoFormatsTitle": "Formatos compatíveis",
 				"localInfoFormats": "O Wavio verifica as pastas que você selecionar em busca de arquivos nos formatos MP3, FLAC, M4A, AAC, ALAC, OGG, Opus, WAV, WMA e AIFF.",

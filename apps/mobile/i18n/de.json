@@ -91,6 +91,8 @@
 				"title": "Erstellen",
 				"playlistTitle": "Wiedergabeliste",
 				"playlistDescription": "Eine Wiedergabeliste mit Titeln erstellen",
+				"playlistFolderTitle": "Ordner",
+				"playlistFolderDescription": "Fasse deine Wiedergabelisten in einem Ordner zusammen",
 				"aiPlaylistTitle": "Playlist anhand einer Vorgabe",
 				"aiPlaylistDescription": "Beschreiben Sie, was Sie hören möchten, und lassen Sie AudioMuse-AI es erstellen",
 				"fingerprintTitle": "Schallfingerabdruck",
@@ -334,6 +336,17 @@
 				"unfavoriteErrorMessage": "Beim Entfernen des Interpreten aus den Favoriten ist ein Fehler aufgetreten",
 				"albumCount_one": "{{count}} Album",
 				"albumCount_other": "{{count}} Alben"
+			},
+			"mixes": {
+				"createArtistMix": "Künstler-Mix erstellen",
+				"createGenreMix": "Genre-Mix erstellen",
+				"title": "{{name}} Mischen",
+				"featuring": "Mit „ {{names}} “ und weiteren Titeln",
+				"empty": "In deiner Mediathek sind nicht genügend Titel vorhanden, um diesen Mix zu erstellen",
+				"offline": "Die Mixes werden von Ihrem Musikserver zusammengestellt, auf den derzeit nicht zugegriffen werden kann.",
+				"error": "Der Mix konnte nicht erstellt werden",
+				"queued_one": "{{count}} Titel zur Warteschlange hinzugefügt",
+				"queued_other": "{{count}} Zur Warteschlange hinzugefügte Titel"
 			},
 			"favorites": {
 				"title": "Favoriten",
@@ -592,6 +605,24 @@
 			"favoritePodcasts": {
 				"title": "Aktuelle Folgen",
 				"noServerFavorites": "Du hast noch keine Podcasts zu Deinen Favoriten hinzugefügt. Öffne einen Podcast und tippe auf das Herz, um ihn hier hinzuzufügen."
+			},
+			"playlistFolders": {
+				"newTitle": "Neuer Ordner",
+				"editTitle": "Ordner bearbeiten",
+				"namePlaceholder": "Ordnername",
+				"nameTaken": "Ein Ordner mit diesem Namen existiert bereits.",
+				"colorLabel": "Farbe",
+				"playlistsLabel": "Wiedergabelisten",
+				"empty": "Dieser Ordner ist leer",
+				"emptyHint": "Bearbeiten Sie den Ordner, um Wiedergabelisten hinzuzufügen, oder wählen Sie bei einer Wiedergabeliste die Option „In Ordner verschieben“.",
+				"notFound": "Dieser Ordner existiert nicht mehr.",
+				"edit": "Diesen Ordner bearbeiten",
+				"delete": "Diesen Ordner löschen",
+				"deleteConfirmTitle": "Diesen Ordner löschen?",
+				"deleteConfirmDescription": "Die Wiedergabelisten werden in Ihre Mediathek zurückverschoben. Sie werden nicht gelöscht.",
+				"moveToFolder": "In Ordner verschieben",
+				"removeFromFolder": "Aus dem Ordner entfernen",
+				"newFolder": "Neuer Ordner"
 			},
 			"newPlaylist": {
 				"title": "Gib Deiner Wiedergabeliste einen Namen",
@@ -1466,8 +1497,8 @@
 					"checking": "… überprüfen",
 					"upToDate": "Sie nutzen die aktuellste Version.",
 					"checkFailed": "Es konnten keine Updates gefunden werden. Überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
-					"rateLabel": "Rate Wavio",
-					"rateDescription": "Enjoying Wavio? A rating on Google Play helps other people find it",
+					"rateLabel": "Wavio bewerten",
+					"rateDescription": "Gefällt dir Wavio? Eine Bewertung bei Google Play hilft anderen Nutzern, die App zu finden.",
 					"rateAction": "Bewertung",
 					"currentVersionLabel": "Aktuelle Version"
 				},
@@ -1548,6 +1579,10 @@
 					"homeSectionsSheetDescription": "Deaktivieren Sie Kategorien, um sie auf der Startseite auszublenden",
 					"homeSectionsReorderHint": "Halten Sie einen Beitrag gedrückt und ziehen Sie ihn dann an eine andere Stelle im Feed.",
 					"homeSectionsResetOrder": "Bestellung zurücksetzen",
+					"pinFavoritesShortcutLabel": "Verknüpfung „Favoriten anheften“",
+					"pinFavoritesShortcutDescription": "„Favoriten“ an erster Stelle in den Startseiten-Verknüpfungen beibehalten. Wenn diese Option deaktiviert ist, verhält sich die Verknüpfung wie jede andere auch.",
+					"homeShortcutsCountLabel": "Anzahl der Verknüpfungen",
+					"homeShortcutsCountDescription": "Wie viele kürzlich abgespielte Titel sollen als Verknüpfungen auf dem Startbildschirm angezeigt werden?",
 					"homeSections": {
 						"recentPlays": "Verknüpfungen",
 						"moreFromArtist": "Mehr von einem Künstler",
@@ -1578,6 +1613,18 @@
 					},
 					"homeSectionsCount_one": "{{count}} dargestellt",
 					"homeSectionsCount_other": "{{count}} dargestellt"
+				},
+				"libraryDisplaySettings": {
+					"title": "Bibliothek",
+					"playlistFoldersLabel": "Playlists nach Namen gruppieren",
+					"playlistFoldersDescription": "Lege Wiedergabelisten mit Namen wie „{{example}}“ in einem Ordner namens „Rock“ ab. Von dir selbst erstellte Ordner werden immer angezeigt.",
+					"separatorLabel": "Ordnertrennzeichen",
+					"separatorDescription": "Text zwischen dem Ordnernamen und dem Namen der Wiedergabeliste. Leerzeichen werden mitgezählt.",
+					"separatorCustom": "Benutzerdefiniert",
+					"separatorCustomLabel": "Benutzerdefiniertes Trennzeichen",
+					"separatorCustomPlaceholder": "z. B. „von“",
+					"separatorSaveAction": "Speichern",
+					"separatorPreview": "„{{example}}“ → „Rock“ › „80er“"
 				},
 				"hapticsSettings": {
 					"title": "Haptik",
@@ -1626,16 +1673,16 @@
 						}
 					},
 					"mediaControlsLabel": "Schaltflächen für Medienbenachrichtigungen",
-					"mediaControlsDescription": "Pick the buttons shown on each side of previous, play/pause and next in the media notification and on the lock screen. If you pick only one button, Android shows it on the left. Favorite, shuffle and repeat are hidden for radio stations and podcast episodes.",
-					"mediaControlsLeftLabel": "Left button",
-					"mediaControlsRightLabel": "Right button",
+					"mediaControlsDescription": "Wählen Sie die Schaltflächen aus, die in der Medienbenachrichtigung und auf dem Sperrbildschirm neben „Zurück“, „Wiedergabe/Pause“ und „Weiter“ angezeigt werden. Wenn Sie nur eine Schaltfläche auswählen, zeigt Android diese auf der linken Seite an. Die Schaltflächen „Favorit“, „Zufallswiedergabe“ und „Wiederholen“ sind bei Radiosendern und Podcast-Folgen ausgeblendet.",
+					"mediaControlsLeftLabel": "Linke Taste",
+					"mediaControlsRightLabel": "Rechte Maustaste",
 					"mediaControlsButtons": {
-						"none": "None",
-						"seekBackward": "Back 10 s",
-						"seekForward": "Forward 10 s",
+						"none": "Keine",
+						"seekBackward": "10 Sekunden zurück",
+						"seekForward": "10 Sekunden vorspulen",
 						"favorite": "Favorit",
-						"shuffle": "Shuffle",
-						"repeat": "Repeat"
+						"shuffle": "Zufallswiedergabe",
+						"repeat": "Wiederholen"
 					},
 					"waveformSeekbarLabel": "Wellenform-Suchleiste",
 					"waveformSeekbarDescription": "Zeige die Wellenform des Titels anstelle eines einfachen Fortschrittsbalkens an. Jede Wellenform wird einmalig analysiert – einige Sekunden nach Beginn eines Titels – und anschließend wiederverwendet. Für gestreamte Titel wird zu diesem Zweck eine zusätzliche Kopie in niedriger Qualität heruntergeladen, wodurch mehr Daten verbraucht werden – jedoch niemals über das Mobilfunknetz. Bei Podcasts, Radio und Titeln, die länger als 15 Minuten sind, wird diese Funktion übersprungen.",
@@ -1800,6 +1847,21 @@
 			"activity": {
 				"title": "Aktivität",
 				"empty": "Hier ist noch nichts zu sehen. Alben, Interpreten und Wiedergabelisten, die Du abspielst, werden hier angezeigt.",
+				"tabs": {
+					"history": "Geschichte"
+				},
+				"listenbrainz": {
+					"notConnected": "Verbinden Sie Ihr ListenBrainz-Konto, um hier Ihre Hörstatistiken einzusehen.",
+					"noData": "Auf ListenBrainz gibt es noch keine Hörer. Deine Statistiken werden hier angezeigt, sobald deine Wiedergaben dort erfasst werden.",
+					"connectAction": "Mit ListenBrainz verbinden",
+					"settingsAction": "ListenBrainz-Einstellungen"
+				},
+				"lastfm": {
+					"notConnected": "Verbinde dein Last.fm-Konto, um hier deine Hörstatistiken anzuzeigen.",
+					"noData": "Es wurde noch nichts an Last.fm gescrobbelt. Deine Statistiken werden hier angezeigt, sobald deine Wiedergaben dort erfasst werden.",
+					"connectAction": "Mit Last.fm verbinden",
+					"settingsAction": "Last.fm-Einstellungen"
+				},
 				"sections": {
 					"today": "Heute",
 					"yesterday": "Gestern",
@@ -1881,7 +1943,11 @@
 				"createPlaylistNamePlaceholder": "Meine Warteschlangen-Playlist",
 				"createPlaylistSuccessMessage": "Aus der Warteschlange erstellte Wiedergabeliste",
 				"createPlaylistErrorMessage": "Beim Erstellen der Wiedergabeliste ist ein Fehler aufgetreten",
-				"sleepTimer": "Sleep-Timer"
+				"sleepTimer": "Sleep-Timer",
+				"endsAt": "Die Warteschlange endet bei {{time}} · {{remaining}} bleibt übrig",
+				"endsAround": "Die Warteschlange endet bei etwa {{time}} · {{remaining}} links",
+				"sleepStopsAt": "Der Sleep-Timer stoppt die Wiedergabe bei {{time}} · {{remaining}} verbleibend",
+				"sleepStopsAround": "Der Sleep-Timer beendet die Wiedergabe, wenn noch etwa {{time}} · {{remaining}} übrig sind"
 			},
 			"tracks": {
 				"addToFavorites": "Zu den Favoriten hinzufügen",
@@ -1961,7 +2027,7 @@
 					"favorite": "Favorit",
 					"playCount": "Anzahl der Wiedergaben",
 					"lastPlayed": "Zuletzt gespielt",
-					"added": "Added",
+					"added": "Hinzugefügt",
 					"modified": "Geändert",
 					"albumPeak": "Höchste Platzierung des Albums",
 					"trackPeak": "Spitzenwert verfolgen",
@@ -1976,7 +2042,7 @@
 				"title": "Wird gerade abgespielt",
 				"notices": {
 					"sourceUnavailable": "Der Titel konnte nicht abgespielt werden – die Datei war nicht erreichbar. Bitte überprüfen Sie, ob Ihr Server eingeschaltet ist und sich im selben Netzwerk befindet.",
-					"formatUnsupported": "This device can't play the audio format of “{{track}}”.",
+					"formatUnsupported": "Dieses Gerät kann das Audioformat „{{track}} “ nicht wiedergeben.",
 					"remoteTrackRefused": "{{name}} „{{track}}“ konnte nicht abgespielt werden. Wähle einen anderen Titel aus oder spiele ihn auf diesem Gerät ab.",
 					"remoteLost": "Der Kontakt zu {{name}}ist unterbrochen. Die Wiedergabe auf diesem Gerät funktioniert wieder."
 				},
@@ -1993,6 +2059,7 @@
 					"similar": "Ähnliche Songs abspielen",
 					"audiomuse": "Wiedergabe über AudioMuse-AI",
 					"listenbrainz": "Wird über ListenBrainz abgespielt",
+					"mix": "Wiedergabe aus dem Mix",
 					"albumList": "Wiedergabe von Alben",
 					"playlistList": "Wiedergabe aus Wiedergabelisten"
 				},
@@ -2029,6 +2096,17 @@
 				"sleepTimerOff": "Aus",
 				"sleepTimerEndOfTrack": "Ende des Titels",
 				"sleepTimerActive": "Sleep-Timer · {{label}}",
+				"sleepTimerCustom": "Benutzerdefiniert",
+				"sleepTimerHours": "Öffnungszeiten",
+				"sleepTimerMinutesLabel": "Protokoll",
+				"sleepTimerStart": "Timer starten",
+				"sleepTimerFinishTrack": "Aktuellen Titel beenden",
+				"sleepTimerFinishTrackDescription": "Wenn die Zeit abgelaufen ist, halte am Ende des Titels an, anstatt den Titel mitten im Titel ausklingen zu lassen.",
+				"sleepTimerFinishing": "Nach diesem Titel",
+				"sleepTimerEndsAt": "Endet um {{time}}",
+				"sleepTimerEndsAround": "Endet ungefähr bei {{time}}",
+				"sleepTimerBadgeEndsAt": "Ende {{time}}",
+				"sleepTimerBadgeEndsAround": "Ende ~{{time}}",
 				"playbackSpeed": "Wiedergabegeschwindigkeit",
 				"playbackSpeedValue": "{{rate}}×",
 				"playbackSpeedNormal": "Normal",
@@ -2059,6 +2137,9 @@
 				"outputChromecastNoPlayServices": "Chromecast benötigt Google Play-Dienste, über die dieses Gerät nicht verfügt.",
 				"outputChromecastNoPlayServicesHint": "Erfordert Google Play-Dienste",
 				"outputConnectErrorMessage": "Die Wiedergabe unter {{name}} war nicht möglich.",
+				"outputAddRooms": "Spiele auch weiter",
+				"outputGroupVolume": "Gruppenvolumen",
+				"outputGroupErrorMessage": "Die Gruppe unter {{name}} konnte nicht geändert werden.",
 				"sleepTimerMinutes_one": "{{count}} Minute",
 				"sleepTimerMinutes_other": "{{count}} Minuten"
 			},
@@ -2092,6 +2173,7 @@
 				"empty": "Es sind keine Bibliotheken verfügbar"
 			},
 			"servers": {
+				"oidcToggleHelp": "Sign in to this server through the identity provider in front of it instead of with a password. Applies from the next sign-in.",
 				"title": "Server",
 				"addServer": "Server hinzufügen",
 				"namePlaceholder": "Servernamen eingeben",
@@ -2162,8 +2244,8 @@
 				"notAvailableOfflineMessage": "Offline nicht verfügbar. Laden Sie die Datei herunter, um sie ohne Internetverbindung anzuhören.",
 				"advancedSettings": "Erweiterte Einstellungen",
 				"fallbackUrlHelp": "Wird verwendet, wenn die Haupt-URL nicht erreichbar ist. Muss auf denselben Server verweisen.",
-				"plainPasswordAuth": "Legacy password authentication",
-				"plainPasswordAuthHelp": "Sends your password with every request instead of a token. Only enable this if signing in works but the app keeps signing you out.",
+				"plainPasswordAuth": "Authentifizierung mit altem Passwort",
+				"plainPasswordAuthHelp": "Bei jeder Anfrage wird Ihr Passwort anstelle eines Tokens übermittelt. Aktivieren Sie diese Option nur, wenn die Anmeldung zwar funktioniert, die App Sie jedoch immer wieder abmeldet.",
 				"cancel": "Abbrechen",
 				"close": "Schließen",
 				"create": "Erstellen",
@@ -2206,6 +2288,7 @@
 					"removeConfirmDescription_other": "{{count}} Heruntergeladene Titel werden von diesem Gerät gelöscht. Titel, die auch in einem anderen Album oder einer anderen Wiedergabeliste gespeichert sind, bleiben erhalten."
 				},
 				"favorites": "Favoriten",
+				"playlistFolder": "Playlist-Ordner",
 				"filters": {
 					"albums": "Alben",
 					"artists": "Interpreten",
@@ -2275,6 +2358,8 @@
 				"radioStation_other": "Radiosender",
 				"folder_one": "Ordner",
 				"folder_other": "Ordner",
+				"playlistCount_one": "{{count}} Playlist",
+				"playlistCount_other": "{{count}} Playlists",
 				"song_one": "Titel",
 				"song_other": "Titel",
 				"albumCount_one": "{{count}} Album",
@@ -2373,6 +2458,26 @@
 				"smbShareNotFound": "Die Verbindung wurde hergestellt, aber auf diesem Host gibt es keine Freigabe mit dem Namen „{{share}}“. Überprüfen Sie den Namen der Freigabe.",
 				"smbUnreachable": "Der Host unter dem Port {{port}}konnte nicht erreicht werden. Überprüfen Sie die Adresse und stellen Sie sicher, dass die Freigabe SMB2 oder eine neuere Version verwendet – SMB1 wird nicht unterstützt.",
 				"smbDialectUnsupported": "Dieser Host hat die Verbindung abgelehnt, da SMB 3 erforderlich ist. Auf dem iPhone und dem iPad unterstützt Wavio SMB 2.1 – aktivieren Sie SMB 2 für die Freigabe, um eine Verbindung herzustellen.",
+				"ssoSignIn": "Sign in with single sign-on",
+				"ssoActiveTitle": "Single sign-on",
+				"ssoActiveDescription": "You'll sign in at {{host}}. No server password needed.",
+				"ssoActiveDescriptionGeneric": "You'll sign in through your server's identity provider. No server password needed.",
+				"ssoUsePassword": "Use a password instead",
+				"oidcToggle": "Single sign-on (OpenID Connect)",
+				"oidcToggleHelp": "Sign in through the identity provider in front of your server instead of with a password. Turned on automatically when the server advertises it.",
+				"oidcIssuerPlaceholder": "Issuer URL (found automatically when empty)",
+				"oidcClientIdPlaceholder": "Client ID (default: wavio)",
+				"oidcSettingsHelp": "Only needed if your server's proxy doesn't publish its sign-in, or your identity provider gave Wavio a different client ID.",
+				"oidcNotFound": "This server doesn't advertise single sign-on. Set the issuer URL in Advanced settings, or turn single sign-on off to use a password.",
+				"oidcDiscoveryFailed": "Couldn't read the identity provider's configuration. Check the issuer URL and that the provider is reachable from this device.",
+				"oidcSignInFailed": "Single sign-on failed: {{reason}}",
+				"oidcTokenRejected": "Signed in, but the server's proxy refused the access token. Check that the proxy accepts tokens issued to Wavio (audience and issuer).",
+				"oidcProxyRedirected": "The server's proxy answered with a sign-in page instead of accepting the access token. Configure it to accept bearer tokens on /rest.",
+				"oidcExtAuthMissing": "The proxy accepted your sign-in, but the server didn't trust the user it passed on. In Navidrome, add the proxy's address to ExtAuth.TrustedSources.",
+				"oidcNoServerAccount": "You're signed in, but the server has no account for you yet. Open the server's web page once through your proxy to create it, then try again.",
+				"oidcUsernameUnknown": "Signed in, but couldn't tell which server account is yours. Check that your proxy passes on the same username the server uses.",
+				"oidcSessionExpiredTitle": "Signed out",
+				"oidcSessionExpired": "Your single sign-on session ended. Sign in again to continue.",
 				"localInfoTitle": "Lokale Bibliothek",
 				"localInfoFormatsTitle": "Unterstützte Formate",
 				"localInfoFormats": "Wavio durchsucht die ausgewählten Ordner nach MP3-, FLAC-, M4A-, AAC-, ALAC-, OGG-, Opus-, WAV-, WMA- und AIFF-Dateien.",
