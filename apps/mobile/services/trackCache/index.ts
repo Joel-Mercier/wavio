@@ -4,6 +4,7 @@ import {
   cacheEstimatedBytes,
   cacheFetchUrl,
 } from "@/services/backend/streaming";
+import { ensureFreshAccessToken } from "@/services/oidc/session";
 import { requestHeadersForUrl } from "@/services/serverHeaders";
 import { currentAuthScope, useAuthBase } from "@/stores/auth";
 import useOffline from "@/stores/offline";
@@ -288,6 +289,7 @@ export async function cacheTrack(track: CacheableTrack): Promise<boolean> {
     safeDelete(dir);
     dir.create({ idempotent: true, intermediates: true });
 
+    await ensureFreshAccessToken();
     let result: File;
     try {
       // Destination is the *directory*: expo-file-system then names the file

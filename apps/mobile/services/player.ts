@@ -44,6 +44,10 @@ import {
 import { downloadedFileIsReadable } from "@/services/offline/downloadDestination";
 import { enqueueOfflineMutation } from "@/services/offlineMutations/enqueue";
 import { drainOfflineMutations } from "@/services/offlineMutations/replay";
+import {
+  activeOidcKey,
+  recoverFromUnauthorized,
+} from "@/services/oidc/session";
 import type {
   AlbumID3,
   AlbumList2,
@@ -90,6 +94,7 @@ import {
 import { maybeRequestReview, noteCountedPlay } from "@/services/reviewPrompt";
 import { isActiveServerUrl, rewriteQueueRoutes } from "@/services/routeSwap";
 import {
+  authHeadersForUrl,
   customHeadersForUrl,
   mergeCustomHeaders,
 } from "@/services/serverHeaders";
@@ -201,6 +206,10 @@ let lastReportedPlaybackError: string | null = null;
 // to try. Cleared once anything plays, so a queue made only of such tracks (or a
 // repeat-all loop over one) stops instead of cycling through them forever.
 const unsupportedSkippedIds = new Set<string>();
+// When each track last got a token-refresh retry (single sign-on), so a proxy
+// that keeps refusing fresh tokens can't loop reload → error → reload.
+const tokenRetriedAt = new Map<string, number>();
+const TOKEN_RETRY_WINDOW_MS = 60_000;
 
 function isScrobblable(track: QueueTrack): boolean {
   return track.source !== "podcast";
@@ -717,6 +726,21 @@ function effectivePosition(raw: number): number {
   return raw + streamStartOffset;
 }
 
+// The OS media controls read the engine's own clock, which restarts near 0 on a
+// stream reloaded at an offset, and take a stream served without a length for a
+// live one. Tell them where a transcoded stream starts (null for any other
+// source) so they show track time and hand their seeks back as `remoteSeek`.
+// Must run right before the replace, so the new source's first update uses it.
+function syncSessionStreamOffset(offsetSeconds: number | null) {
+  try {
+    player.setLockScreenStreamOffset(
+      offsetSeconds == null ? null : Math.round(offsetSeconds * 1000),
+    );
+  } catch (error) {
+    logSwallowed("syncSessionStreamOffset", error);
+  }
+}
+
 // Resolve the freshest source for a track. Queue entries can become stale —
 // a track enqueued before it was downloaded still holds its streamUrl, and
 // vice versa. Always re-check the offline registry at load time. `timeOffset`
@@ -726,11 +750,15 @@ function effectivePosition(raw: number): number {
 // `okhttp/*` as its User-Agent unless told otherwise — the signature Cloudflare
 // scores as a bot. Identify the app the same way the API clients do. Ignored
 // for offline/file sources, which never reach the network stack.
+// The `Authorization` the loaded source was created with. ExoPlayer keeps it for
+// every range request of the track, so under single sign-on it goes stale while
+// the rest of the app moves on to refreshed tokens — see retryAfterTokenRefresh.
+let loadedSourceAuthorization: string | undefined;
+
 function audioSource(uri: string) {
-  return {
-    uri,
-    headers: mergeCustomHeaders(uri, { "User-Agent": USER_AGENT }),
-  };
+  const headers = mergeCustomHeaders(uri, { "User-Agent": USER_AGENT });
+  loadedSourceAuthorization = headers.Authorization;
+  return { uri, headers };
 }
 
 // `transcoded` says whether the URL just built asks the server for a transcode,
@@ -916,12 +944,14 @@ function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
   const remoteArtwork = lockScreenArtworkUrl(track);
   const cached = cachedArtworkUri(remoteArtwork, { verify: true });
   // Prefer the mirrored file. Failing that, pass the remote URL only when it
-  // would actually load — with custom headers configured the native fetch is
-  // guaranteed to 403, so sending it just burns a request and logs a failure.
+  // would actually load — when the server needs headers (configured ones, or a
+  // single-sign-on session's bearer token) the bare native fetch is guaranteed
+  // to be refused, so sending it just burns a request and logs a failure.
   // A local (file://) artwork needs no mirroring and passes straight through.
   const initialArtwork =
     cached ??
-    (remoteArtwork && customHeadersForUrl(remoteArtwork)
+    (remoteArtwork &&
+    (customHeadersForUrl(remoteArtwork) || authHeadersForUrl(remoteArtwork))
       ? undefined
       : remoteArtwork);
   const metadata = toLockScreenMetadata(track, initialArtwork);
@@ -1055,6 +1085,7 @@ function loadTrack(track: QueueTrack | null, autoplay: boolean) {
     clearLockScreen(player);
     loadedTrackId = null;
     loadedTranscode = null;
+    syncSessionStreamOffset(null);
     return;
   }
   isLoading = true;
@@ -1084,6 +1115,7 @@ function loadTrack(track: QueueTrack | null, autoplay: boolean) {
     isOffline,
     isRadio: track.isRadio ?? false,
   });
+  syncSessionStreamOffset(transcoded ? streamStartOffset : null);
   player.replace(audioSource(url));
   player.volume = getReplayGainFactor(track);
   applyPlaybackRate(track);
@@ -1271,6 +1303,71 @@ async function describeFailedSource(resolved: {
   }
 }
 
+// Pick a track back up where it failed, on a source rebuilt with the current
+// headers.
+function reloadInPlace(track: QueueTrack, seconds: number) {
+  if (isTranscodedStream(track)) {
+    reloadAtOffset(track, seconds);
+    player.play();
+    return;
+  }
+  const { url } = resolveTrackUrl(track);
+  syncSessionStreamOffset(null);
+  player.replace(audioSource(url));
+  player.volume = getReplayGainFactor(track);
+  applyPlaybackRate(track);
+  pendingResumeId = track.id;
+  pendingResumeAt = seconds;
+  try {
+    player.seekTo(seconds);
+  } catch (error) {
+    logSwallowed("seek after token refresh", error);
+  }
+  player.play();
+}
+
+// ExoPlayer and AVPlayer keep the headers a source was created with for every
+// range request of the track, so under single sign-on a seek or re-buffer after
+// the access token expired is refused by the proxy — surfacing as the same bare
+// "Source error" as everything else.
+//
+// When the token has rotated since the source was built, that's the explanation:
+// reload in place with the current one. Probing the URL would not tell — it
+// goes out with the *current* token and succeeds, which on device sent this
+// case down the generic retry and restarted the track from 0. Only with an
+// unchanged token is the URL asked: a 401 then means the token itself is
+// refused, worth a forced refresh. Anything else goes back through the normal
+// failure handling.
+async function retryAfterTokenRefresh(
+  track: QueueTrack,
+  url: string,
+  position: number,
+  status: AudioStatus,
+) {
+  const rotated =
+    loadedSourceAuthorization !== mergeCustomHeaders(url, {}).Authorization;
+  const refreshed =
+    rotated ||
+    ((await describeFailedSource({ url, isOffline: false })).probeStatus ===
+      401 &&
+      (await recoverFromUnauthorized()));
+  if (useQueue.getState().getCurrent()?.id !== track.id) return;
+  lastReportedPlaybackError = null;
+  if (refreshed) {
+    reportBreadcrumb("player", "token-refresh-reload", { trackId: track.id });
+    reloadInPlace(track, position);
+    return;
+  }
+  handlePlaybackStatus(status);
+}
+
+function canRetryAfterTokenRefresh(trackId: string): boolean {
+  const last = tokenRetriedAt.get(trackId);
+  if (last && Date.now() - last < TOKEN_RETRY_WINDOW_MS) return false;
+  tokenRetriedAt.set(trackId, Date.now());
+  return true;
+}
+
 function handlePlaybackStatus(status: AudioStatus) {
   // A genuine engine-level playback failure (decode error, dead stream URL,
   // unreadable offline file). expo-audio clears `error` on a fresh load /
@@ -1280,6 +1377,22 @@ function handlePlaybackStatus(status: AudioStatus) {
     const current = useQueue.getState().getCurrent();
     const resolved = current ? resolveTrackUrl(current) : null;
     const needsNetwork = resolved ? !resolved.isOffline : true;
+    if (
+      current &&
+      resolved &&
+      !resolved.isOffline &&
+      !current.isRadio &&
+      activeOidcKey() &&
+      canRetryAfterTokenRefresh(current.id)
+    ) {
+      void retryAfterTokenRefresh(
+        current,
+        resolved.url,
+        effectivePosition(player.currentTime ?? 0),
+        status,
+      );
+      return;
+    }
     // A device that can't decode the source (e.g. ALAC ExoPlayer advertises but
     // fails to decode) — re-arm this track to stream through a server transcode
     // and reload it once, before treating it as a failure. A downloaded file
@@ -2243,6 +2356,7 @@ function reloadAtOffset(track: QueueTrack, seconds: number) {
   streamStartOffset = Math.max(0, seconds);
   const { url, transcoded } = resolveTrackUrl(track, streamStartOffset);
   loadedTranscode = { trackId: track.id, active: transcoded };
+  syncSessionStreamOffset(transcoded ? streamStartOffset : null);
   player.replace(audioSource(url));
   player.volume = getReplayGainFactor(track);
   applyPlaybackRate(track);

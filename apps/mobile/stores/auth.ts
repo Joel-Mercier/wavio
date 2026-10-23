@@ -8,13 +8,19 @@ import { smbDisconnect } from "@/modules/smb";
 import {
   hasNetworkServerType,
   isSingletonServerType,
+  usesSubsonicAuthType,
 } from "@/services/backend/serverTraits";
-import { setSessionCredentials } from "@/services/serverHeaders";
+import {
+  setSessionBearer,
+  setSessionCredentials,
+} from "@/services/serverHeaders";
+import { oidcSessionKey, useOidcBase } from "@/stores/oidc";
 import { useServerExtensionsBase } from "@/stores/serverExtensions";
 import {
   headerRowSchema,
   refineFallbackUrl,
   refineHeaderRows,
+  refineOidcIssuer,
   type ServerType,
   serverTypeSchema,
 } from "@/stores/servers";
@@ -65,6 +71,14 @@ export const loginSchema = z
     // Force Subsonic legacy password auth for this server (remote Subsonic
     // types only). Always present, defaulting to false = negotiate as usual.
     plainPasswordAuth: z.boolean(),
+    // Which sign-in button was pressed. "oidc" signs in through the server's
+    // SSO proxy, where the username and password become optional — the proxy
+    // vouches for the user (see services/oidc/).
+    authMethod: z.enum(["password", "oidc"]),
+    // Manual SSO settings, for a proxy that doesn't publish where its sign-in
+    // lives. Both empty means discover them.
+    oidcIssuer: z.string().trim(),
+    oidcClientId: z.string().trim(),
   })
   .superRefine((data, ctx) => {
     if (!hasNetworkServerType(data.type)) return;
@@ -78,6 +92,14 @@ export const loginSchema = z
         message: url.error.issues[0]?.message,
       });
     }
+    refineOidcIssuer(
+      data.authMethod === "oidc" && usesSubsonicAuthType(data.type),
+      data.oidcIssuer,
+      ctx,
+    );
+    // Single sign-on hides the credential fields: the proxy vouches for the
+    // user. Only the Subsonic backends offer it.
+    if (data.authMethod === "oidc" && usesSubsonicAuthType(data.type)) return;
     const username = z.string().min(1).trim().safeParse(data.username);
     if (!username.success) {
       ctx.addIssue({
@@ -108,8 +130,14 @@ export type JellyfinSession = {
   isAdmin: boolean;
 };
 
+// How the session proves who it is. "oidc" sessions carry an access token from
+// the server's single-sign-on proxy (stores/oidc.ts), with or without a
+// Subsonic password behind it.
+export type AuthMethod = "password" | "oidc";
+
 export type LoginOptions = {
   serverType?: ServerType;
+  authMethod?: AuthMethod;
   navidrome?: NavidromeNativeSession | null;
   jellyfin?: JellyfinSession | null;
   subsonicSalt?: string | null;
@@ -138,6 +166,7 @@ type AuthStore = {
   password: string;
   isAuthenticated: boolean;
   serverType: ServerType;
+  authMethod: AuthMethod;
   token: string | null;
   userId: string | null;
   isAdmin: boolean;
@@ -171,6 +200,7 @@ export const useAuthBase = create<AuthStore>()(
       password: "",
       isAuthenticated: false,
       serverType: "navidrome",
+      authMethod: "password",
       token: null,
       userId: null,
       isAdmin: false,
@@ -198,6 +228,7 @@ export const useAuthBase = create<AuthStore>()(
           password: password.trim(),
           isAuthenticated: true,
           serverType,
+          authMethod: options.authMethod ?? "password",
           token: navidrome?.token ?? null,
           userId: jellyfin?.userId ?? navidrome?.userId ?? null,
           isAdmin: jellyfin?.isAdmin ?? navidrome?.isAdmin ?? false,
@@ -259,6 +290,7 @@ export const useAuthBase = create<AuthStore>()(
           password: "",
           isAuthenticated: false,
           serverType: "navidrome",
+          authMethod: "password",
           token: null,
           userId: null,
           isAdmin: false,
@@ -331,6 +363,22 @@ const publishSessionCredentials = (state: AuthStore): void => {
 };
 publishSessionCredentials(useAuthBase.getState());
 useAuthBase.subscribe(publishSessionCredentials);
+
+// The SSO half of the same job. Also re-run on every token store change, which
+// is how a refreshed access token reaches the player and image loader.
+const publishSessionBearer = (): void => {
+  const { isAuthenticated, authMethod, serverId, username } =
+    useAuthBase.getState();
+  const accessToken =
+    isAuthenticated && authMethod === "oidc"
+      ? useOidcBase.getState().sessions[oidcSessionKey(serverId, username)]
+          ?.accessToken
+      : undefined;
+  setSessionBearer(accessToken ? { serverId, accessToken } : null);
+};
+publishSessionBearer();
+useAuthBase.subscribe(publishSessionBearer);
+useOidcBase.subscribe(publishSessionBearer);
 
 // SMB is the other half of that: its credentials stay inside the native module,
 // which holds an authenticated session and a bound loopback listener for as long

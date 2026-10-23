@@ -15,6 +15,13 @@ export const GLOBAL_KEYS = [
   "radioStations",
 ] as const;
 
+// Global stores deliberately left out of a backup. A backup leaves the device
+// through the share sheet (cloud drives, chat apps, email), and these hold
+// standing credentials rather than settings:
+// - `oidc`: single-sign-on refresh tokens. A restored SSO server just asks for
+//   a fresh sign-in, the same way a restored password server does.
+export const BACKUP_EXCLUDED_GLOBAL_KEYS = ["oidc"] as const;
+
 // Persisted stores namespaced per (server, user) via createDynamicScopedStorage
 // — their MMKV keys look like `<scope>:<name>` (the queue uses `<scope>:queueStore:*`).
 // Used to recover scopes from storage when the `users` list is incomplete, so

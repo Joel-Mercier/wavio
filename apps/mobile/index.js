@@ -7,6 +7,9 @@ import { startCarAutoSession } from "./services/carAuto/session";
 // Keeps the shortcuts store's Favorites pin in step with the setting before any
 // rehydrate, headless car boot included.
 import { startHomeShortcutsSync } from "./services/homeShortcuts";
+// Keeps a single-sign-on session's access token fresh ahead of expiry while
+// anything might use it — a headless car boot plays through the proxy too.
+import { startOidcRefreshScheduler } from "./services/oidc/refreshScheduler";
 // Keeps the OS media controls pointed at whatever owns playback. Wired here
 // rather than from a screen for the same reason: a headless boot has no React
 // tree, and a remote session restored at launch still has to claim the controls.
@@ -37,4 +40,10 @@ try {
   startRecoveryPollGate();
 } catch (e) {
   console.warn("[network] failed to start recovery poll gate", e);
+}
+
+try {
+  startOidcRefreshScheduler();
+} catch (e) {
+  console.warn("[oidc] failed to start token refresh scheduler", e);
 }

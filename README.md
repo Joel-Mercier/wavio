@@ -94,6 +94,7 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 - Activity screen, recently played tracks grouped by source
 - Share screen with shareable links (Navidrome only)
 - Servers screen with multiple servers support, advanced server settings like fallback URL and mTLS support
+- Single sign-on (OpenID Connect) for Navidrome and OpenSubsonic servers behind an authenticating reverse proxy: enter the server URL and sign in at your identity provider. See [docs/single-sign-on.md](docs/single-sign-on.md) for the server-side setup
 - Settings screen with server scanning, offline downloads, playback, content, display, backup and security settings
 - Audio quality settings, endless playback, replay gain, equalizer and sleep timer
 - Profile screen with user playlists

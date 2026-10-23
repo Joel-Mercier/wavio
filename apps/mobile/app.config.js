@@ -35,7 +35,18 @@ module.exports = ({ config }) => {
     // package, so three installed variants never disambiguate against each
     // other). Expo Router derives the path from the URL rather than from a
     // prefix list, so the extra scheme costs nothing at runtime.
-    scheme: [variant.scheme, config.scheme],
+    //
+    // The reverse-DNS scheme is the single-sign-on redirect (RFC 8252 §7.1,
+    // services/oidc/redirect.ts), so it follows the package: each variant gets
+    // only its own callback, never an app chooser between three installs.
+    scheme: [
+      variant.scheme,
+      ...config.scheme.map((scheme) =>
+        scheme === config.android.package
+          ? `${config.android.package}${variant.suffix}`
+          : scheme,
+      ),
+    ],
     android: {
       ...config.android,
       package: `${config.android.package}${variant.suffix}`,

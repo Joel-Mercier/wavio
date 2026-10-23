@@ -29,12 +29,22 @@ const reauth = reauthenticateNavidrome as jest.MockedFunction<
   typeof reauthenticateNavidrome
 >;
 
+// Navidrome reads its JWT from `X-ND-Authorization` only; `Authorization` is
+// left to whatever proxy guards the server (an SSO bearer token).
 const authHeaderOf = (config: AxiosRequestConfig): string | undefined => {
   const headers = config.headers as
-    | { get?: (name: string) => unknown; Authorization?: unknown }
+    | { get?: (name: string) => unknown; "X-ND-Authorization"?: unknown }
     | undefined;
-  const value = headers?.get?.("Authorization") ?? headers?.Authorization;
+  const value =
+    headers?.get?.("X-ND-Authorization") ?? headers?.["X-ND-Authorization"];
   return value == null ? undefined : String(value);
+};
+
+const proxyAuthHeaderOf = (config: AxiosRequestConfig): unknown => {
+  const headers = config.headers as
+    | { get?: (name: string) => unknown }
+    | undefined;
+  return headers?.get?.("Authorization");
 };
 
 const unauthorized = (config: AxiosRequestConfig) =>
@@ -104,6 +114,24 @@ describe("navidrome native 401 auto-reauth interceptor", () => {
     expect(sentAuth[0]).toBe("Bearer expired-token");
     expect(sentAuth[1]).toBe("Bearer fresh-token");
     expect(rsp.data).toEqual([{ id: "s1" }]);
+  });
+
+  it("leaves Authorization free for a proxy in front of the server", async () => {
+    let seen: unknown = "unset";
+    navidromeApiInstance.defaults.adapter = async (config) => {
+      seen = proxyAuthHeaderOf(config);
+      return {
+        status: 200,
+        statusText: "OK",
+        headers: {},
+        config,
+        data: [],
+      } as AxiosResponse;
+    };
+
+    await navidromeApiInstance.get("/song");
+
+    expect(seen == null || seen === "").toBe(true);
   });
 
   it("acquires a token on the first call when the session has none (post-upgrade)", async () => {

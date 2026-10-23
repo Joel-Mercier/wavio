@@ -87,8 +87,7 @@ function buildAuthCache(): Map<string, AuthEntry> {
   const map = new Map<string, AuthEntry>();
   const { servers, users } = useServersBase.getState();
 
-  const register = (server: Server, username: string, password: string) => {
-    const value = basicAuthHeader(username, password);
+  const register = (server: Server, value: string) => {
     for (const url of [server.url, server.fallbackUrl]) {
       if (!url) continue;
       const origin = originKeyFromUrl(url);
@@ -105,7 +104,8 @@ function buildAuthCache(): Map<string, AuthEntry> {
     // switch still resolves its credentials (same reason this map is
     // address-keyed rather than keyed by server id).
     const user = users.find((u) => u.serverId === server.id && u.password);
-    if (user?.password) register(server, user.username, user.password);
+    if (user?.password)
+      register(server, basicAuthHeader(user.username, user.password));
   }
 
   // The active session last, so it wins. This is what makes a share work
@@ -115,7 +115,19 @@ function buildAuthCache(): Map<string, AuthEntry> {
   const active = session;
   if (active) {
     const server = servers.find((s) => s.id === active.serverId);
-    if (server) register(server, active.username, active.password);
+    if (server)
+      register(server, basicAuthHeader(active.username, active.password));
+  }
+
+  // A single-sign-on session's access token. Same origin-keyed registration,
+  // for the same reason: the proxy in front of the server checks it on every
+  // request, including the native ones that never see an axios instance. Only
+  // the active session's — a token is short-lived and refreshed on use, so
+  // there's no saved one worth attaching for another server.
+  const sso = bearer;
+  if (sso) {
+    const server = servers.find((s) => s.id === sso.serverId);
+    if (server) register(server, `Bearer ${sso.accessToken}`);
   }
   return map;
 }
@@ -148,12 +160,37 @@ export function setSessionCredentials(next: SessionCredentials): void {
   invalidate();
 }
 
+/** The signed-in single-sign-on session's access token. */
+export type SessionBearer = { serverId: string; accessToken: string } | null;
+
+let bearer: SessionBearer = null;
+
+/**
+ * Publish the active session's OIDC access token, on sign-in and after every
+ * refresh. Pushed from stores/auth for the same reason as
+ * `setSessionCredentials`.
+ */
+export function setSessionBearer(next: SessionBearer): void {
+  if (
+    bearer?.serverId === next?.serverId &&
+    bearer?.accessToken === next?.accessToken
+  )
+    return;
+  bearer = next;
+  invalidate();
+}
+
 function authMap(): Map<string, AuthEntry> {
   if (!auth) auth = buildAuthCache();
   return auth;
 }
 
-function authHeadersForUrl(
+/**
+ * The credentials this app itself attaches for `url`'s server — a share's HTTP
+ * Basic or an SSO session's bearer token — without the user's own headers.
+ * For axios instances, which set the user's headers separately.
+ */
+export function authHeadersForUrl(
   url: string | undefined,
 ): Record<string, string> | undefined {
   if (!url) return undefined;
@@ -376,8 +413,9 @@ export function configuredHeaderNames(): Set<string> {
   for (const headers of headerMap().values()) {
     for (const name of Object.keys(headers)) next.add(name.toLowerCase());
   }
-  // Not user-configured, but it carries a WebDAV share's password and reaches
-  // the same breadcrumbs, so it belongs on the same scrub list.
+  // Not user-configured, but it carries a WebDAV share's password or an SSO
+  // access token and reaches the same breadcrumbs, so it belongs on the same
+  // scrub list.
   if (authMap().size > 0) next.add("authorization");
   names = next;
   return next;
@@ -388,6 +426,7 @@ export function __resetCustomHeadersCache(): void {
   cache = null;
   auth = null;
   session = null;
+  bearer = null;
   outbound = null;
   wrapped = new Map();
   names = null;

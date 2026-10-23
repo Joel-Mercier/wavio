@@ -10,6 +10,10 @@ import { parseSmbUrl, splitDomainUser } from "@/services/fileSource/smbAddress";
 import { isMultistatus } from "@/services/fileSource/webdavMultistatus";
 import { buildAuthorizationHeader } from "@/services/jellyfin/index";
 import { USER_AGENT } from "@/services/network";
+import {
+  ensureFreshAccessToken,
+  recoverFromUnauthorized,
+} from "@/services/oidc/session";
 import { subsonicAuthParams } from "@/services/openSubsonic/auth";
 import {
   customHeadersForUrl,
@@ -78,23 +82,34 @@ export function createBareClient(
 // would pin the whole app to it. The same hazard is documented for login in
 // services/auth/authenticate.ts. Requiring the envelope also means a route whose
 // credentials don't work there (error 40 / 401) is refused rather than adopted.
+//
+// A single-sign-on session's token rides along (requestHeadersForUrl carries
+// the session's credentials), and a 401 gets one forced refresh and a second
+// try before counting as a failure. Without that, a token the proxy started
+// refusing would read as "server unreachable" — which flips React Query's
+// onlineManager and takes the whole app offline over a refreshable token.
 async function probeSubsonic(
   url: string,
   signal: AbortSignal,
 ): Promise<boolean> {
-  const response = await createBareClient(
-    url,
-    undefined,
-    customHeadersForUrl(url),
-  ).get("/rest/ping", {
-    signal,
-    params: {
-      ...subsonicAuthParams(),
-      v: openSubsonicApiVersion,
-      c: clientName,
-      f: "json",
-    },
-  });
+  const ping = () =>
+    createBareClient(url, undefined, requestHeadersForUrl(url)).get(
+      "/rest/ping",
+      {
+        signal,
+        params: {
+          ...subsonicAuthParams(),
+          v: openSubsonicApiVersion,
+          c: clientName,
+          f: "json",
+        },
+        validateStatus: () => true,
+      },
+    );
+  let response = await ping();
+  if (response.status === 401 && (await recoverFromUnauthorized())) {
+    response = await ping();
+  }
   return response.data?.["subsonic-response"]?.status === "ok";
 }
 
@@ -172,6 +187,10 @@ async function probeSmb(url: string): Promise<boolean> {
 export async function probeUrl(url: string): Promise<boolean> {
   const { serverType } = useAuthBase.getState();
   if (!url || !hasNetworkServerType(serverType)) return false;
+
+  // Before the probe's own deadline starts: a refresh is a round trip to the
+  // IdP, and spending the probe's budget on it would fail a healthy server.
+  await ensureFreshAccessToken();
 
   const controller = new AbortController();
   const abortTimer = setBackgroundTimeout(

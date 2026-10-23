@@ -63,6 +63,7 @@ jest.mock("expo-audio", () => {
     setPlaybackRate: jest.fn(),
     setActiveForLockScreen: jest.fn(),
     updateLockScreenMetadata: jest.fn(),
+    setLockScreenStreamOffset: jest.fn(),
     setMediaButtons: jest.fn(),
     setLockScreenControls: jest.fn(),
     clearLockScreenControls: jest.fn(),
@@ -119,6 +120,8 @@ const { __player: player } = jest.requireMock("expo-audio") as {
   __player: {
     replace: jest.Mock;
     seekTo: jest.Mock;
+    addListener: jest.Mock;
+    setLockScreenStreamOffset: jest.Mock;
   };
 };
 
@@ -138,6 +141,7 @@ beforeEach(() => {
   mockTranscodeActive.value = true;
   player.replace.mockClear();
   player.seekTo.mockClear();
+  player.setLockScreenStreamOffset.mockClear();
   useOffline.setState({ downloadedTracks: {} } as never);
   useQueue.setState({
     queue: [],
@@ -189,5 +193,45 @@ describe("seeking a transcoded stream", () => {
     seekTo(60);
 
     expect(player.seekTo).toHaveBeenCalledWith(60);
+  });
+});
+
+// The OS media controls read the engine's clock, which restarts near 0 on a
+// stream reloaded at an offset: they have to be told where it starts, before the
+// new source loads, or the notification seek bar freezes or jumps back.
+describe("the OS media controls on a transcoded stream", () => {
+  const lastOffset = () =>
+    player.setLockScreenStreamOffset.mock.calls.at(-1)?.[0] as number | null;
+
+  test("learn the offset before the reloaded stream replaces the old one", () => {
+    playTracks([track("a")], 0);
+    expect(lastOffset()).toBe(0);
+
+    seekTo(60);
+
+    expect(lastOffset()).toBe(60_000);
+    expect(
+      player.setLockScreenStreamOffset.mock.invocationCallOrder.at(-1),
+    ).toBeLessThan(player.replace.mock.invocationCallOrder.at(-1) as number);
+  });
+
+  test("get no offset for a source that seeks natively", () => {
+    mockTranscodeActive.value = false;
+    playTracks([track("a")], 0);
+
+    expect(lastOffset()).toBeNull();
+  });
+
+  test("hand their seeks back as a reload at the new offset", () => {
+    playTracks([track("a")], 0);
+    const remoteSeek = player.addListener.mock.calls.find(
+      ([event]) => event === "remoteSeek",
+    )?.[1] as (positionMs: number) => void;
+
+    remoteSeek(90_000);
+
+    expect(player.seekTo).not.toHaveBeenCalled();
+    expect(lastLoadedUrl()).toContain("timeOffset=90");
+    expect(lastOffset()).toBe(90_000);
   });
 });

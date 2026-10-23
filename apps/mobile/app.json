@@ -5,7 +5,7 @@
     "version": "1.4.0",
     "orientation": "default",
     "icon": "./assets/images/splash-icon-dark.png",
-    "scheme": "wavio",
+    "scheme": ["wavio", "com.jmercier.wavio"],
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#000000",
     "ios": {

@@ -17,7 +17,9 @@ import {
 import { sessionUsernameFor } from "@/services/auth/sessionUsername";
 import { hasNetworkServerType } from "@/services/backend/serverTraits";
 import { reportError, scrubUrl } from "@/services/errorReporting";
+import { refreshOidcSession } from "@/services/oidc/session";
 import { useAuthBase } from "@/stores/auth";
+import { oidcSessionKey, useOidcBase } from "@/stores/oidc";
 import { useServersBase } from "@/stores/servers";
 
 // Blank spinner gate shown while silently re-authenticating into a saved server
@@ -53,7 +55,17 @@ export default function SwitchingScreen() {
       .users.find(
         (u) => u.serverId === params.serverId && u.username === params.username,
       );
-    if (!server || !hasNetworkServerType(server.type) || !user?.password) {
+    const ssoKey =
+      server?.oidc && user
+        ? oidcSessionKey(server.id, user.username)
+        : undefined;
+    const sso = ssoKey ? useOidcBase.getState().sessions[ssoKey] : undefined;
+    if (
+      !server ||
+      !hasNetworkServerType(server.type) ||
+      !user ||
+      (!user.password && !sso)
+    ) {
       goToManualLogin();
       return;
     }
@@ -69,27 +81,54 @@ export default function SwitchingScreen() {
     );
     try {
       setError(false);
+      // The saved refresh token stands in for the password. A refresh the IdP
+      // refuses outright has already dropped the session, and only a manual
+      // sign-in can mint another.
+      const accessToken =
+        ssoKey && sso ? await refreshOidcSession(ssoKey) : undefined;
+      if (ssoKey && !accessToken) {
+        goToManualLogin();
+        return;
+      }
+      const password = user.password ?? "";
       const { options, activeUrl } = await authenticateWithFallback(
         server.type,
         server.url,
         server.fallbackUrl,
         username,
-        user.password,
+        password,
         server.headers,
         server.plainPasswordAuth,
+        accessToken
+          ? {
+              accessToken,
+              idToken: ssoKey
+                ? useOidcBase.getState().sessions[ssoKey]?.idToken
+                : undefined,
+            }
+          : undefined,
       );
-      if (username !== user.username) {
+      const sessionUsername = options.username ?? username;
+      if (sessionUsername !== user.username) {
         useServersBase.getState().addOrUpdateUser({
           serverId: server.id,
-          username,
+          username: sessionUsername,
           password: user.password,
         });
+      }
+      if (ssoKey && sso) {
+        const current = useOidcBase.getState().sessions[ssoKey];
+        const nextKey = oidcSessionKey(server.id, sessionUsername);
+        if (current && nextKey !== ssoKey) {
+          useOidcBase.getState().setSession(nextKey, current);
+          useOidcBase.getState().removeSession(ssoKey);
+        }
       }
       useAuthBase.getState().login({
         serverId: server.id,
         url: activeUrl,
-        username,
-        password: user.password,
+        username: sessionUsername,
+        password,
         ...options,
       });
     } catch (err) {

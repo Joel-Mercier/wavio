@@ -1,6 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
-import { GLOBAL_KEYS, SCOPED_STORE_NAMES } from "@/services/backupStoreKeys";
+import {
+  BACKUP_EXCLUDED_GLOBAL_KEYS,
+  GLOBAL_KEYS,
+  SCOPED_STORE_NAMES,
+} from "@/services/backupStoreKeys";
 
 // Drift guard: every persisted zustand store must be covered by the backup
 // lists in services/backup.ts, otherwise its data is silently dropped from
@@ -73,7 +77,11 @@ describe("backup store coverage", () => {
   it("lists every global store in GLOBAL_KEYS", () => {
     const missing = stores
       .filter((s) => !s.scoped)
-      .filter((s) => !(GLOBAL_KEYS as readonly string[]).includes(s.name))
+      .filter(
+        (s) =>
+          !(GLOBAL_KEYS as readonly string[]).includes(s.name) &&
+          !(BACKUP_EXCLUDED_GLOBAL_KEYS as readonly string[]).includes(s.name),
+      )
       .map((s) => `${s.name} (${s.file})`);
     expect(missing).toEqual([]);
   });

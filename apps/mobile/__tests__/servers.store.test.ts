@@ -630,7 +630,26 @@ describe("server schemas", () => {
     fallbackUrl: "",
     headers: [],
     plainPasswordAuth: false,
+    sso: false,
+    oidcIssuer: "",
+    oidcClientId: "",
     ...over,
+  });
+
+  it("validates a typed SSO issuer only while single sign-on is on", () => {
+    const bad = { oidcIssuer: "auth.example.com" };
+    expect(addServerFormSchema.safeParse(addForm(bad)).success).toBe(true);
+    expect(
+      addServerFormSchema.safeParse(addForm({ ...bad, sso: true })).success,
+    ).toBe(false);
+    expect(
+      editServerFormSchema.safeParse(addForm({ ...bad, sso: true })).success,
+    ).toBe(false);
+    expect(
+      addServerFormSchema.safeParse(
+        addForm({ sso: true, oidcIssuer: "https://auth.example.com/realms/x" }),
+      ).success,
+    ).toBe(true);
   });
 
   it("accepts a blank fallbackUrl", () => {
@@ -753,5 +772,36 @@ describe("server schemas", () => {
     expect(
       serverUserSchema.safeParse({ serverId: "abc", username: "   " }).success,
     ).toBe(false);
+  });
+});
+
+describe("oidc server config", () => {
+  beforeEach(reset);
+
+  it("editServer sets, normalizes and clears single sign-on", () => {
+    const created = useServersBase
+      .getState()
+      .addServer({ name: "A", url: "https://a.example.com" });
+    const edit = (oidc: { issuer?: string; clientId?: string } | null) =>
+      useServersBase.getState().editServer(created.id, { oidc });
+    const current = () =>
+      useServersBase.getState().getServerById(created.id)?.oidc;
+
+    edit({ issuer: "  ", clientId: " custom " });
+    expect(current()).toEqual({ clientId: "custom" });
+    edit(null);
+    expect(current()).toBeUndefined();
+  });
+
+  it("leaves single sign-on alone when an edit doesn't touch it", () => {
+    const created = useServersBase.getState().addServer({
+      name: "A",
+      url: "https://a.example.com",
+      oidc: {},
+    });
+    useServersBase.getState().editServer(created.id, { name: "B" });
+    expect(useServersBase.getState().getServerById(created.id)?.oidc).toEqual(
+      {},
+    );
   });
 });
