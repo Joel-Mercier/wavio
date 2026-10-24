@@ -23,16 +23,16 @@
 				"yourPlaylists": "Twoje playlisty",
 				"starred": "Twoje ulubione",
 				"songsByGenre": "Utwory {{genre}}",
-				"albumsByGenre": "{{genre}} albumów",
+				"albumsByGenre": "Albumy {{genre}}",
 				"albumsByDecade": "Albumy z {{decade}}s",
 				"moreFromArtist": "Więcej od {{artist}}",
 				"moreFrom": "Więcej od",
 				"podcasts": "Podcasty",
-				"internetRadioStations": "Internet radiowy stacje",
+				"internetRadioStations": "Internetowe stacje radiowe",
 				"playErrorMessage": "Wystąpił błąd podczas uruchamiania odtwarzania",
 				"customize": {
 					"music": {
-						"title": "Dostosuj swoją stronę domową",
+						"title": "Dostosuj stronę domową",
 						"description": "Wybierz które sekcje pojawiają się i w jakiej kolejności"
 					},
 					"podcasts": {
@@ -95,10 +95,10 @@
 				"playlistFolderDescription": "Grupuj swoje playlisty w folderze",
 				"aiPlaylistTitle": "Lista odtwarzania z zapytania",
 				"aiPlaylistDescription": "Opisz co chcesz usłyszeć, i pozwól by AudioMuse-AI ją zbudował",
-				"fingerprintTitle": "Odcisk dźwiękowy",
+				"fingerprintTitle": "Soniczny odcisk palca",
 				"fingerprintDescription": "Wygeneruj listę odtwarzania na podstawie twoich unikalnych nawyków słuchania",
 				"moodPlaylistTitle": "Lista odtwarzania z nastroju",
-				"moodPlaylistDescription": "Wybierz nastrój i wypełnij playlistę utworami, które brzmi jak to",
+				"moodPlaylistDescription": "Wybierz nastrój i wypełnij playlistę utworami, które brzmią jak to",
 				"songPathTitle": "Ścieżka piosenki",
 				"songPathDescription": "Podróżuj stopniowo z jednej piosenki do drugiej, jeden mały krok w danym czasie",
 				"smartPlaylistTitle": "Inteligentna lista odtwarzania",
@@ -117,17 +117,17 @@
 					"placeholder": "Utwory na deszczowe popołudnie",
 					"action": "Wygeneruj",
 					"newPrompt": "Nowy monit",
-					"failed": "AudioMuse-AI nie można zbudować listy odtwarzania. Spróbuj ponownie lub przeformułuj swój komunikat.",
+					"failed": "AudioMuse-AI nie mógł zbudować listy odtwarzania. Spróbuj ponownie lub przeformułuj swój komunikat.",
 					"noResults": "Nic w twojej bibliotece nie pasuje do tego pytania."
 				},
 				"fingerprint": {
-					"title": "Odcisk dźwiękowy",
+					"title": "Soniczny odcisk palca",
 					"description": "AudioMuse-AI buduje profil z utworów, które odtwarzasz najbardziej, a następnie znajdziesz w bibliotece utwory, które brzmi najbliżej niej.",
 					"countLabel": "Liczba wyników",
 					"countHint": "Między {{min}} a {{max}}. Pierwsze 20 to utwory, z których wykonałeś odcisk palca, więc większa liczba oznacza więcej odkryć.",
 					"action": "Wygeneruj",
 					"newFingerprint": "Nowy odcisk palca",
-					"failed": "AudioMuse-AI nie można zbudować odcisku palca. Sprawdź dane serwera mediów w ustawieniach.",
+					"failed": "AudioMuse-AI nie może zbudować odcisku palca. Sprawdź dane serwera mediów w ustawieniach.",
 					"noResults": "AudioMuse-AI nie mógł znaleźć wystarczającej ilości historii słuchania, aby zbudować odcisk palca."
 				},
 				"similar": {
@@ -137,12 +137,12 @@
 					"countHint": "Między {{min}} a {{max}}.",
 					"limitPerArtistLabel": "Limit piosenek na wykonawcę",
 					"limitPerArtistDescription": "Zachowuje jednego artysty przed przejęciem wyników.",
-					"radiusLabel": "podobieństwo promienia",
+					"radiusLabel": "Podobieństwo promieniowe",
 					"radiusDescription": "Grupy dopasowują się według ich bliskości i zamówią je na łagodniejsze przejście.",
 					"action": "Znajdź podobne utwory",
 					"newSearch": "Nowe wyszukiwanie",
-					"failed": "Muzeum AudioMuse-AI nie można znaleźć podobnych utworów. Spróbuj ponownie za chwilę.",
-					"noResults": "Muzeum AudioMuse-AI nie przeanalizowało tego utworu, więc nie ma nic do porównania z nim."
+					"failed": "AudioMuse-AI nie może znaleźć podobnych utworów. Spróbuj ponownie za chwilę.",
+					"noResults": "AudioMuse-AI nie przeanalizował tego utworu, więc nie ma nic do porównania z nim."
 				},
 				"mood": {
 					"title": "Lista odtwarzania z nastroju",
@@ -179,14 +179,14 @@
 					"retry": "Ponów próbę",
 					"failed": "AudioMuse-AI nie można zbudować listy odtwarzania. Spróbuj ponownie za chwilę.",
 					"noResults": "Nic w twojej bibliotece nie brzmi wystarczająco blisko tego.",
-					"styleCount_one": "Styl {{count}}",
-					"styleCount_few": "{{count}} styles",
-					"styleCount_many": "{{count}} styles",
-					"styleCount_other": "{{count}} styles",
+					"styleCount_one": "{{count}} styl",
+					"styleCount_few": "{{count}} style",
+					"styleCount_many": "{{count}} style",
+					"styleCount_other": "{{count}} style",
 					"styleSongs_one": "{{count}} piosenka w tym stylu",
-					"styleSongs_few": "Utwory {{count}} w tym stylu",
-					"styleSongs_many": "Utwory {{count}} w tym stylu",
-					"styleSongs_other": "Utwory {{count}} w tym stylu"
+					"styleSongs_few": "{{count}} utwory w tym stylu",
+					"styleSongs_many": "{{count}} utwory w tym stylu",
+					"styleSongs_other": "{{count}} utwory w tym stylu"
 				},
 				"path": {
 					"title": "Ścieżka piosenki",
@@ -992,7 +992,7 @@
 							"lyricsSearch": "Szukaj według tekstów",
 							"lyricsSearchDetail": "Znajdź piosenki według tego, o czym są słowa piosenki, a nie przez ich dokładne sformułowanie.",
 							"lyricsSearchHint": "Użyj zakładki tekstów w wyszukiwaniu.",
-							"fingerprint": "Odcisk dźwiękowy",
+							"fingerprint": "Soniczny odcisk palca",
 							"fingerprintDetail": "Wygeneruj listę odtwarzania na podstawie twoich unikalnych nawyków słuchania",
 							"fingerprintHint": "Utwórz jeden z przycisku + w swojej bibliotece lub z zakładki Utwórz",
 							"similarTracks": "Podobne ścieżki dźwiękowe",
@@ -1021,7 +1021,7 @@
 							"libraryAnalyzed_other": "Analizowane utwory {{count}}"
 						},
 						"fingerprint": {
-							"title": "Odcisk dźwiękowy",
+							"title": "Soniczny odcisk palca",
 							"description": "Odcisk palca jest zbudowany z Twojej historii odtwarzania, którą AudioMuse-AI czyta z Twojego serwera multimedialnego. Potrzebuje tam konta — jego token API nie wystarczy.",
 							"jellyfinUserLabel": "Nazwa użytkownika lub identyfikator użytkownika Jellyfin",
 							"jellyfinUserPlaceholder": "Twoja nazwa użytkownika na serwerze multimediów",
@@ -1224,7 +1224,7 @@
 							"importMissing_other": "{{count}} uwielbionych utworów nie jest w Twojej bibliotece.",
 							"importFailedCount_one": "{{count}} favourite couldn't be saved.",
 							"importFailedCount_few": "{{count}} ulubionych nie może zostać zapisanych.",
-							"importFailedCount_many": "{{count}} ulubionych nie może zostać zapisany.",
+							"importFailedCount_many": "{{count}} ulubionych nie może zostać zapisanych.",
 							"importFailedCount_other": "{{count}} ulubionych nie może zostać zapisanych.",
 							"importTruncated_one": "Sprawdzono tylko Twoją najnowszą miłość {{count}}.",
 							"importTruncated_few": "Sprawdzono tylko twoje najnowsze miłośniki {{count}}.",
@@ -1722,7 +1722,7 @@
 					"enabledDescription": "Wibruj przy interakcjach, takich jak przewijanie indeksu alfabetu"
 				},
 				"internetRadioStationsSettings": {
-					"title": "Internet radiowy stacje",
+					"title": "Internetowe stacje radiowe",
 					"enabledLabel": "Katalog przeglądarki radiowej",
 					"enabledDescription": "Przeglądaj i przeszukaj miliony stacji z katalogu Radio Browser. Wyłącz aby używać tylko stacji serwera.",
 					"countryLabel": "W związku z powyższym Komisja stwierdza, że w okresie objętym dochodzeniem przeglądowym przywóz produktu objętego postępowaniem z ChRL nie mógł zostać objęty środkami antydumpingowymi.",
