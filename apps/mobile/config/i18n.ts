@@ -10,6 +10,7 @@ import zodEn from "zod/v4/locales/en.js";
 import zodEs from "zod/v4/locales/es.js";
 import zodFr from "zod/v4/locales/fr.js";
 import zodIt from "zod/v4/locales/it.js";
+import zodPl from "zod/v4/locales/pl.js";
 import zodPtBr from "zod/v4/locales/pt-BR.js";
 import zodRu from "zod/v4/locales/ru.js";
 import zodCn from "zod/v4/locales/zh-CN.js";
@@ -18,6 +19,7 @@ import en from "@/i18n/en.json";
 import es from "@/i18n/es.json";
 import fr from "@/i18n/fr.json";
 import it from "@/i18n/it.json";
+import pl from "@/i18n/pl.json";
 import ptBr from "@/i18n/pt-BR.json";
 import ru from "@/i18n/ru.json";
 import zhCn from "@/i18n/zh-CN.json";
@@ -31,6 +33,7 @@ const resources = {
   "pt-BR": ptBr,
   "zh-CN": zhCn,
   ru,
+  pl,
 };
 
 export type TSupportedLanguages = keyof typeof resources;
@@ -47,6 +50,7 @@ export const LanguageNames: Record<TSupportedLanguages, string> = {
   "pt-BR": "Português (Brasil)",
   "zh-CN": "简体中文",
   ru: "Русский",
+  pl: "Polski",
 };
 
 const zodLocales = {
@@ -58,6 +62,7 @@ const zodLocales = {
   it: zodIt,
   es: zodEs,
   "pt-BR": zodPtBr,
+  pl: zodPl,
 } satisfies Record<TSupportedLanguages, () => { localeError: unknown }>;
 
 export function applyZodLocale(locale: TSupportedLanguages) {

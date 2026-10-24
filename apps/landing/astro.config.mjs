@@ -12,7 +12,7 @@ export default defineConfig({
       provider: fontProviders.google(),
       weights: [400, 500, 600, 700, 800, 900],
       styles: ["normal"],
-      subsets: ["latin", "cyrillic"],
+      subsets: ["latin", "latin-ext", "cyrillic"],
     },
     {
       name: "Noto Sans SC",
@@ -25,7 +25,7 @@ export default defineConfig({
   ],
 
   i18n: {
-    locales: ["en", "fr", "de", "it", "es", "pt-br", "ru", "zh-cn"],
+    locales: ["en", "fr", "de", "it", "es", "pt-br", "ru", "zh-cn", "pl"],
     defaultLocale: "en",
     routing: {
       prefixDefaultLocale: false,

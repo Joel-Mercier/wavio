@@ -2,6 +2,7 @@ import de from "./de.json";
 import en from "./en.json";
 import fr from "./fr.json";
 import it from "./it.json";
+import pl from "./pl.json";
 import ru from "./ru.json";
 import es from "./es.json";
 import ptBr from "./pt-BR.json";
@@ -16,6 +17,7 @@ export const languages = {
   es: "Español",
   "pt-br": "Português (Brasil)",
   "zh-cn": "简体中文",
+  pl: "Polski",
 } as const;
 
 export type Lang = keyof typeof languages;
@@ -53,4 +55,5 @@ export const ui: Record<Lang, UiStrings> = {
   es: withFallback(es),
   "pt-br": withFallback(ptBr),
   "zh-cn": withFallback(zhCn),
+  pl: withFallback(pl),
 };
