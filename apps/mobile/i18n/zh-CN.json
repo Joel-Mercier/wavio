@@ -15,6 +15,7 @@
 				"mostPlayedTracks": "最常播放的曲目",
 				"topRated": "最受好评",
 				"random": "随机",
+				"leastPlayed": "Try something new",
 				"randomSongs": "随机歌曲",
 				"artists": "艺人",
 				"createdForYou": "专为您打造",
@@ -58,6 +59,7 @@
 					"highest": "最受好评",
 					"frequent": "最常播放",
 					"random": "随机播放",
+					"leastPlayed": "Try something new",
 					"nowPlaying": "正在听"
 				}
 			},
