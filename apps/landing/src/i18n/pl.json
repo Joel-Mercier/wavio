@@ -14,19 +14,19 @@
 		"tag": "Otwartoźródłowy odtwarzacz muzyki",
 		"titleLines": [
 			[
-				"Twoje",
+				"Twoja",
 				"muzyka,"
 			],
 			[
 				"Twój",
-				"gracz,"
+				"odtwarzacz,"
 			]
 		],
 		"titleAccent": "droga.",
 		"lead": "Odtwarzacz muzyki Androida dla Navidrome, Jellyfin i OpenSubsonic lub lokalna biblioteka. Zbudowane dla ludzi, którzy posiadają swoją bibliotekę i chcą, aby czuły się jak dom."
 	},
 	"cta": {
-		"getItOn": "ZDOBĄDŹ NA",
+		"getItOn": "POBIERZ NA",
 		"googlePlay": "Google Play",
 		"githubRelease": "Pobierz na GitHub"
 	},
@@ -38,17 +38,17 @@
 	"highlightsLabel": "Co dostajesz",
 	"highlights": [
 		"Otwarte źródło, licencjonowane MIT",
-		"Brak reklam, kiedykolwiek",
+		"Nigdy żadnych reklam",
 		"Brak śledzenia, bez telemetrii",
 		"Działa w pełni offline",
 		"Android Auto gotowe",
 		"Navidrome, Jellyfin & OpenSubsonic, lokalna biblioteka"
 	],
 	"features": {
-		"headingPre": "Gracz który",
+		"headingPre": "Odtwarzacz który",
 		"headingEm": "szanuje",
-		"headingPost": "Twoja biblioteka.",
-		"sub": "Każdy ekran jest zbudowany w sposób, w jaki naprawdę słuchasz. Szybkie, ciche, całkowicie na twoim regulaminie.",
+		"headingPost": "twoją bibliotekę.",
+		"sub": "Każdy ekran został zaprojektowany z myślą o tym, jak naprawdę słuchasz muzyki. Szybki, cichy i całkowicie dostosowany do Twoich potrzeb.",
 		"home": {
 			"label": "Strona główna",
 			"title": "Twoja biblioteka, pięknie posortowana.",
@@ -56,15 +56,15 @@
 		},
 		"audiophile": {
 			"label": "Dźwięk",
-			"title": "Nie głośno.",
+			"title": "Dostrojone, a nie głośne.",
 			"desc": "Ustawienia jakości dźwięku, niekończące się odtwarzanie, ponowne odtwarzanie, system EQ."
 		},
 		"offline": {
 			"label": "Offline",
-			"title": "Zrzuć go z sieci."
+			"title": "Odłącz ją od sieci."
 		},
 		"quote": {
-			"label": "Brak ciągów",
+			"label": "Bez zobowiązań",
 			"title": "Brak reklam. Brak kont. Brak śledzenia. Sposób, w jaki aplikacje muzyczne były używane."
 		},
 		"playlists": {
@@ -197,7 +197,7 @@
 			{
 				"num": "03",
 				"title": "Co pozostaje na Twoim urządzeniu",
-				"body": "<p>To work as a music player, Wavio stores the following locally, on your phone only:</p>\n\t\t\t\t\t<ul>\n\t\t\t\t\t\t<li>Server connection details (URL, username, and an encrypted password or token) for each server you add.</li>\n\t\t\t\t\t\t<li>Your playback queue, recently played and recently searched items, sleep timer and equalizer settings, and other app preferences.</li>\n\t\t\t\t\t\t<li>Tracks you choose to download for offline listening, plus cached album art and metadata fetched from your server.</li>\n\t\t\t\t\t\t\t<li>Podcast API credentials (Taddy) if you enable podcasts.</li>\n\t\t\t\t\t</ul>\n\t\t\t\t\t<p>This information lives in app-private storage, and uninstalling Wavio removes all of it. The one exception is a track you explicitly save to your device: that file is written to your phone's shared Music folder, so it stays there after the app is gone, until you delete it yourself.</p>"
+				"body": "<p>Aby działać jako odtwarzacz muzyczny, Wavio przechowuje lokalnie, wyłącznie na Twoim telefonie, następujące dane:</p>\n\t\t\t\t\t<ul>\n\t\t\t\t\t\t<li>Dane połączenia z serwerem (adres URL, nazwa użytkownika oraz zaszyfrowane hasło lub token) dla każdego dodanego serwera.</li>\n\t\t\t\t\t\t<li>Twoją kolejkę odtwarzania, ostatnio odtwarzane i wyszukiwane, ustawienia wyłącznika czasowego i korektora oraz inne preferencje aplikacji.</li>\n\t\t\t\t\t\t<li>Utwory, które zdecydujesz się pobrać do słuchania w trybie offline, a także zapisane w pamięci podręcznej okładki albumów i metadane pobrane z Twojego serwera.</li>\n\t\t\t\t\t\t\t<li>Dane uwierzytelniające do API podcastów (Taddy), jeśli włączysz obsługę podcastów.</li>\n\t\t\t\t\t</ul>\n\t\t\t\t\t<p>Informacje te są przechowywane w prywatnej pamięci aplikacji, a odinstalowanie Wavio powoduje ich całkowite usunięcie. Jedynym wyjątkiem są utwory, które użytkownik wyraźnie zapisuje na swoim urządzeniu: pliki te są zapisywane we wspólnym folderze „Muzyka” w telefonie, więc pozostają tam po usunięciu aplikacji, dopóki użytkownik sam ich nie usunie.</p>"
 			},
 			{
 				"num": "04",
