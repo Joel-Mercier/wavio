@@ -214,7 +214,7 @@
 					"lyricsSongsOnly": "Ścieżka podążająca za tekstami piosenek biegnie między dwoma piosenkami.",
 					"lyricsLabel": "Obserwuj teksty piosenek",
 					"lyricsDescription": "Przekrocza, o co chodzi raczej o piosenki, a nie jak brzmią.",
-					"blendLabel": "Blend",
+					"blendLabel": "Miks",
 					"blendDescription": "Jak daleko kończy się nastrój lub kotwica od drugiego.",
 					"lengthLabel": "Utwory w ścieżce",
 					"lengthHint": "Pomiędzy {{min}} i {{max}}licząc oba końce. Więcej utworów oznacza mniejszy, łatwiejszy krok.",
