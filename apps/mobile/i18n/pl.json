@@ -15,7 +15,7 @@
 				"mostPlayedTracks": "Najczęściej odtwarzane utwory",
 				"topRated": "Najwyżej oceniane",
 				"random": "Losowo",
-				"leastPlayed": "Try something new",
+				"leastPlayed": "Wypróbuj coś nowego",
 				"randomSongs": "Losowe utwory",
 				"artists": "Artyści",
 				"createdForYou": "Utworzono dla Ciebie",
@@ -59,7 +59,7 @@
 					"highest": "Najwyżej oceniane",
 					"frequent": "Najczęściej odtwarzane",
 					"random": "Losowo",
-					"leastPlayed": "Try something new",
+					"leastPlayed": "Wypróbuj coś nowego",
 					"nowPlaying": "Słuchaj teraz"
 				}
 			},
