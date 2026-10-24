@@ -16,7 +16,10 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import { Box } from "@/components/ui/box";
-import { useInfiniteAlbumList2 } from "@/hooks/backend/useLists";
+import {
+  useInfiniteAlbumList2,
+  useInfiniteLeastPlayedAlbums,
+} from "@/hooks/backend/useLists";
 import { useIsPlaying } from "@/hooks/player";
 import { useAlbumScreenLayout } from "@/hooks/useAlbumScreenLayout";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
@@ -58,7 +61,10 @@ export default function HomeSectionDetail() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  const { type } = useLocalSearchParams<{ type: AlbumListType }>();
+  const { type } = useLocalSearchParams<{
+    type: AlbumListType | "leastPlayed";
+  }>();
+  const isLeastPlayed = type === "leastPlayed";
   const { width } = useWindowDimensions();
   const { layout, toggle } = useAlbumScreenLayout(`home-section:${type}`);
   const gridColumns =
@@ -77,6 +83,18 @@ export default function HomeSectionDetail() {
   const scrollHandler = useAnimatedScrollHandler((event) => {
     offsetY.value = event.contentOffset.y;
   });
+  const albumListQuery = useInfiniteAlbumList2(
+    {
+      type: isLeastPlayed ? "random" : type,
+      size: 12,
+      musicFolderId,
+    },
+    { enabled: !isLeastPlayed },
+  );
+  const leastPlayedQuery = useInfiniteLeastPlayedAlbums(
+    { size: 12, musicFolderId },
+    { enabled: isLeastPlayed },
+  );
   const {
     data,
     isLoading,
@@ -84,15 +102,20 @@ export default function HomeSectionDetail() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteAlbumList2({
-    type,
-    size: 12,
-    musicFolderId,
-  });
-  const albums = useMemo(
-    () => data?.pages.flatMap((page) => page.albumList2?.album ?? []) ?? [],
-    [data],
-  );
+  } = isLeastPlayed ? leastPlayedQuery : albumListQuery;
+  // Random pools from an unseeded backend (local, Jellyfin) can overlap.
+  const albums = useMemo(() => {
+    const seen = new Set<string>();
+    return (
+      data?.pages
+        .flatMap((page) => page.albumList2?.album ?? [])
+        .filter((album) => {
+          if (seen.has(album.id)) return false;
+          seen.add(album.id);
+          return true;
+        }) ?? []
+    );
+  }, [data]);
   const heading = t(`app.home.sections.${type}`);
   const source = useMemo<QueueSource>(
     () => ({ type: "albumList", name: heading, id: type }),

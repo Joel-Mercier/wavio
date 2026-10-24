@@ -3,6 +3,7 @@ import {
   type AlbumListType,
   getAlbumList,
   getAlbumList2,
+  getLeastPlayedAlbums,
   getMostPlayedSongs,
   getNowPlaying,
   getRandomSongs,
@@ -94,6 +95,35 @@ export const useInfiniteAlbumList2 = (
         0,
       );
     },
+    enabled: options?.enabled,
+  });
+};
+
+export const useLeastPlayedAlbums = (
+  params: { size?: number; musicFolderId?: string },
+  options?: { enabled?: boolean },
+) => {
+  return useQuery({
+    queryKey: ["leastPlayedAlbums", params],
+    queryFn: () => getLeastPlayedAlbums(params),
+    enabled: options?.enabled,
+  });
+};
+
+export const useInfiniteLeastPlayedAlbums = (
+  params: { size?: number; musicFolderId?: string },
+  options?: { enabled?: boolean },
+) => {
+  const size = params.size ?? 20;
+  return useInfiniteQuery({
+    queryKey: ["leastPlayedAlbums:infinite", { ...params, size }],
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) =>
+      getLeastPlayedAlbums({ ...params, size, offset: pageParam }),
+    // Each page trims its pool, so a page can come back short (or empty) while
+    // the server still has albums: only an empty pool ends the list.
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.poolCount === 0 ? undefined : allPages.length * size,
     enabled: options?.enabled,
   });
 };

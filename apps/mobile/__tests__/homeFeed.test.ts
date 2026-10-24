@@ -3,6 +3,7 @@ import {
   getCapabilities,
 } from "@/services/backend/capabilities";
 import type { AlbumID3, Genre } from "@/services/openSubsonic/types";
+import type { ServerType } from "@/stores/servers";
 import {
   availableHomeSections,
   buildHomeFeed,
@@ -103,6 +104,46 @@ describe("buildHomeFeed hidden sections", () => {
     for (const section of build()) {
       expect(catalogKeys.has(homeSectionSettingKey(section))).toBe(true);
     }
+  });
+});
+
+describe("least played albums section", () => {
+  it("is offered on every server type", () => {
+    const serverTypes: ServerType[] = [
+      "navidrome",
+      "opensubsonic",
+      "jellyfin",
+      "local",
+      "webdav",
+      "smb",
+    ];
+    for (const serverType of serverTypes) {
+      const ids = buildHomeFeed({
+        seedAlbums,
+        genres,
+        availability: {
+          capabilities: getCapabilities(serverType),
+          integrations: { listenBrainz: false, lastFm: false },
+        },
+        sessionSeed: 42,
+        hiddenSections: [],
+        order: [],
+      }).map((s) => s.id);
+      expect(ids).toContain("leastPlayedAlbums");
+    }
+  });
+
+  it("sits right after the random albums row by default", () => {
+    const ids = build().map((s) => s.id);
+    expect(ids.indexOf("leastPlayedAlbums")).toBe(
+      ids.indexOf("albumList:random") + 1,
+    );
+  });
+
+  it("can be hidden", () => {
+    expect(build(["leastPlayedAlbums"]).map((s) => s.id)).not.toContain(
+      "leastPlayedAlbums",
+    );
   });
 });
 

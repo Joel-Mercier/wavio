@@ -14,6 +14,7 @@ import ArtistCarouselSection from "@/components/home/sections/ArtistCarouselSect
 import BecauseYouListenedSection from "@/components/home/sections/BecauseYouListenedSection";
 import CreatedForYouSection from "@/components/home/sections/CreatedForYouSection";
 import InternetRadioSection from "@/components/home/sections/InternetRadioSection";
+import LeastPlayedAlbumsSection from "@/components/home/sections/LeastPlayedAlbumsSection";
 import NowPlayingSection from "@/components/home/sections/NowPlayingSection";
 import PlaylistCarouselSection from "@/components/home/sections/PlaylistCarouselSection";
 import PodcastCarouselSection from "@/components/home/sections/PodcastCarouselSection";
@@ -56,6 +57,7 @@ const BACKFILL_START_DELAY_MS = 800;
 // content. Dynamic genre/decade/artist rows change via a fresh sessionSeed.
 const HOME_REFRESH_KEYS = [
   ["albumList2"],
+  ["leastPlayedAlbums"],
   ["randomSongs"],
   ["mostPlayedSongs"],
   ["songsByGenre"],
@@ -266,6 +268,8 @@ export default function HomeScreen() {
               sectionIndex={index}
             />
           );
+        case "leastPlayedAlbums":
+          return <LeastPlayedAlbumsSection sectionIndex={index} />;
         case "randomArtists":
           return (
             <ArtistCarouselSection

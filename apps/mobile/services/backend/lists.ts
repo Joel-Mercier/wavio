@@ -9,6 +9,7 @@ import * as NA from "@/services/navidrome/albums";
 import * as N from "@/services/navidrome/songs";
 import type { AlbumListType } from "@/services/openSubsonic/lists";
 import * as S from "@/services/openSubsonic/lists";
+import { leastPlayed } from "@/utils/leastPlayed";
 
 export type { AlbumListType } from "@/services/openSubsonic/lists";
 
@@ -44,6 +45,48 @@ export const getAlbumList2 = dispatch(
   J.getAlbumList2,
   L.getAlbumList2,
 );
+// The Subsonic spec has no least-played list and no sort order, but every
+// backend serves `random` with a per-album playCount (Jellyfin's summed from
+// its tracks): take a random pool and
+// keep its least-played slice. `offset` counts result rows, so page n reads
+// pool n. `poolCount` is the untrimmed size, so pagination can tell "server
+// ran out" from "nothing left after trimming".
+const LEAST_PLAYED_POOL_FACTOR = 4;
+const SUBSONIC_MAX_LIST_SIZE = 500;
+
+const getRandomAlbumPool = dispatch(
+  (params: Parameters<typeof S.getAlbumList2>[1]) =>
+    S.getAlbumList2("random", params),
+  J.getRandomAlbumsWithPlayCounts,
+  (params: Parameters<typeof L.getAlbumList2>[1]) =>
+    L.getAlbumList2("random", params),
+);
+
+export const getLeastPlayedAlbums = async ({
+  size = 20,
+  offset = 0,
+  musicFolderId,
+}: {
+  size?: number;
+  offset?: number;
+  musicFolderId?: string;
+} = {}) => {
+  const poolSize = Math.min(
+    size * LEAST_PLAYED_POOL_FACTOR,
+    SUBSONIC_MAX_LIST_SIZE,
+  );
+  const response = await getRandomAlbumPool({
+    size: poolSize,
+    offset: Math.floor(offset / size) * poolSize,
+    musicFolderId,
+  });
+  const pool = response?.albumList2?.album ?? [];
+  return {
+    ...response,
+    albumList2: { ...response?.albumList2, album: leastPlayed(pool, size) },
+    poolCount: pool.length,
+  };
+};
 export const getNowPlaying = dispatch(
   S.getNowPlaying,
   J.getNowPlaying,

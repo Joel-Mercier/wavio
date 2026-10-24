@@ -15,6 +15,7 @@
 				"mostPlayedTracks": "Most played tracks",
 				"topRated": "Top rated",
 				"random": "Random",
+				"leastPlayed": "Try something new",
 				"randomSongs": "Random songs",
 				"artists": "Artists",
 				"createdForYou": "Created for you",
@@ -58,6 +59,7 @@
 					"highest": "Top rated",
 					"frequent": "Most played",
 					"random": "Random",
+					"leastPlayed": "Try something new",
 					"nowPlaying": "Listening now"
 				}
 			},

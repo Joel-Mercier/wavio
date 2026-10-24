@@ -69,7 +69,14 @@ jest.mock("@/config/i18n", () => ({
 }));
 
 jest.mock("@/services/jellyfin/mappers", () => ({
-  mapBaseItemToAlbum: (item: { Id: string }) => ({ id: item.Id }),
+  mapBaseItemToAlbum: (item: {
+    Id: string;
+    UserData?: { PlayCount?: number; LastPlayedDate?: string };
+  }) => ({
+    id: item.Id,
+    playCount: item.UserData?.PlayCount,
+    played: item.UserData?.LastPlayedDate,
+  }),
   mapBaseItemToChild: jest.fn(),
   mapBaseItemToArtist: jest.fn(),
   COMMON_FIELDS: "",
@@ -78,7 +85,9 @@ jest.mock("@/services/jellyfin/mappers", () => ({
 import axios from "axios";
 import { getAlbumList2 as backendGetAlbumList2 } from "@/services/backend/lists";
 import {
+  __resetAlbumPlayStats,
   __resetLatestUnsupported,
+  getRandomAlbumsWithPlayCounts,
   getAlbumList2 as jellyfinGetAlbumList2,
 } from "@/services/jellyfin/lists";
 import { getAlbumList2 as localGetAlbumList2 } from "@/services/local/lists";
@@ -92,6 +101,7 @@ beforeEach(() => {
   mockNavidromeGet.mockReset();
   mockQueryAlbums.mockReset();
   __resetLatestUnsupported();
+  __resetAlbumPlayStats();
   useAuthBase.setState({ serverId: "jf-1" });
 });
 
@@ -296,6 +306,298 @@ describe("jellyfin getAlbumList2", () => {
     const params = mockJellyfinGet.mock.calls[0][1].params;
     expect(params.SortBy).toBe("Random");
     expect(params.SortOrder).toBeUndefined();
+  });
+});
+
+// Jellyfin never writes an album's own UserData.PlayCount (measured on 12.2:
+// 0 on every album with 26 played tracks), so the least-played pool sums it.
+describe("jellyfin getRandomAlbumsWithPlayCounts", () => {
+  it("sums each album's played-track counts in one request", async () => {
+    mockJellyfinGet
+      .mockResolvedValueOnce({
+        data: { Items: [{ Id: "a" }, { Id: "b" }, { Id: "c" }] },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          Items: [
+            { AlbumId: "a", UserData: { PlayCount: 3 } },
+            { AlbumId: "a", UserData: { PlayCount: 2 } },
+            { AlbumId: "c", UserData: { PlayCount: 1 } },
+            { UserData: { PlayCount: 9 } },
+          ],
+        },
+      });
+
+    const result = await getRandomAlbumsWithPlayCounts({ size: 3 });
+
+    expect(mockJellyfinGet.mock.calls[0][1].params).toMatchObject({
+      IncludeItemTypes: "MusicAlbum",
+      SortBy: "Random",
+      Limit: 3,
+    });
+    expect(mockJellyfinGet.mock.calls[1][1].params).toMatchObject({
+      IncludeItemTypes: "Audio",
+      AlbumIds: "a,b,c",
+      Filters: "IsPlayed",
+    });
+    expect(
+      result.albumList2.album?.map(({ id, playCount }) => ({ id, playCount })),
+    ).toEqual([
+      { id: "a", playCount: 5 },
+      { id: "b", playCount: 0 },
+      { id: "c", playCount: 1 },
+    ]);
+  });
+
+  it("skips the track request for an empty pool", async () => {
+    mockJellyfinGet.mockResolvedValueOnce({ data: { Items: [] } });
+
+    const result = await getRandomAlbumsWithPlayCounts({ size: 3 });
+
+    expect(mockJellyfinGet).toHaveBeenCalledTimes(1);
+    expect(result.albumList2.album).toEqual([]);
+  });
+});
+
+describe("jellyfin frequent albums", () => {
+  const playedTracks = {
+    data: {
+      Items: [
+        {
+          Id: "t1",
+          AlbumId: "low",
+          UserData: { PlayCount: 1, LastPlayedDate: "2026-10-20" },
+        },
+        {
+          Id: "t2",
+          AlbumId: "top",
+          UserData: { PlayCount: 4, LastPlayedDate: "2026-10-01" },
+        },
+        {
+          Id: "t3",
+          AlbumId: "top",
+          UserData: { PlayCount: 3, LastPlayedDate: "2026-10-10" },
+        },
+        {
+          Id: "t4",
+          AlbumId: "tieOld",
+          UserData: { PlayCount: 2, LastPlayedDate: "2026-09-01" },
+        },
+        {
+          Id: "t5",
+          AlbumId: "tieNew",
+          UserData: { PlayCount: 2, LastPlayedDate: "2026-10-22" },
+        },
+      ],
+    },
+  };
+  // /Items?Ids= is not guaranteed to answer in the order asked.
+  const albumsById = (ids: string) => ({
+    data: {
+      Items: ids
+        .split(",")
+        .reverse()
+        .map((Id) => ({ Id })),
+    },
+  });
+
+  it("ranks played albums by summed track plays, then by last play", async () => {
+    mockJellyfinGet.mockImplementation((_path, { params }) =>
+      Promise.resolve(params.Ids ? albumsById(params.Ids) : playedTracks),
+    );
+
+    const rsp = await jellyfinGetAlbumList2("frequent", {
+      size: 10,
+      musicFolderId: "lib",
+    });
+
+    expect(mockJellyfinGet.mock.calls[0][1].params).toMatchObject({
+      IncludeItemTypes: "Audio",
+      Filters: "IsPlayed",
+      ParentId: "lib",
+      SortBy: "DatePlayed",
+      SortOrder: "Descending",
+      Limit: 1000,
+    });
+    expect(rsp.albumList2.album).toEqual([
+      { id: "top", playCount: 7, played: "2026-10-10" },
+      { id: "tieNew", playCount: 2, played: "2026-10-22" },
+      { id: "tieOld", playCount: 2, played: "2026-09-01" },
+      { id: "low", playCount: 1, played: "2026-10-20" },
+    ]);
+  });
+
+  it("reverses the play order for an ascending browse", async () => {
+    mockJellyfinGet.mockImplementation((_path, { params }) =>
+      Promise.resolve(params.Ids ? albumsById(params.Ids) : playedTracks),
+    );
+
+    const rsp = await jellyfinGetAlbumList2("frequent", { order: "asc" });
+
+    expect(rsp.albumList2.album?.map((album) => album.id)).toEqual([
+      "low",
+      "tieNew",
+      "tieOld",
+      "top",
+    ]);
+  });
+
+  // A counted play refetches this list, so after the first full read only the
+  // plays newer than the last one seen are fetched, in a small page.
+  it("tops up with the plays since the last read instead of rereading", async () => {
+    mockJellyfinGet.mockImplementation((_path, { params }) =>
+      Promise.resolve(params.Ids ? albumsById(params.Ids) : playedTracks),
+    );
+    await jellyfinGetAlbumList2("frequent", { size: 10 });
+
+    mockJellyfinGet.mockReset();
+    mockJellyfinGet.mockImplementation((_path, { params }) =>
+      Promise.resolve(
+        params.Ids
+          ? albumsById(params.Ids)
+          : {
+              data: {
+                Items: [
+                  {
+                    Id: "low-track",
+                    AlbumId: "low",
+                    UserData: { PlayCount: 9, LastPlayedDate: "2026-10-24" },
+                  },
+                  {
+                    Id: "seen",
+                    AlbumId: "tieNew",
+                    UserData: { PlayCount: 2, LastPlayedDate: "2026-10-22" },
+                  },
+                ],
+              },
+            },
+      ),
+    );
+    const rsp = await jellyfinGetAlbumList2("frequent", { size: 10 });
+
+    expect(mockJellyfinGet.mock.calls[0][1].params).toMatchObject({
+      SortBy: "DatePlayed",
+      Limit: 10,
+      StartIndex: 0,
+    });
+    expect(
+      mockJellyfinGet.mock.calls.filter(
+        ([, { params }]) => params.IncludeItemTypes === "Audio",
+      ),
+    ).toHaveLength(1);
+    expect(rsp.albumList2.album?.map((album) => album.id)).toEqual([
+      "low",
+      "top",
+      "tieNew",
+      "tieOld",
+    ]);
+  });
+
+  it("orders recently played albums by their latest track play", async () => {
+    mockJellyfinGet.mockImplementation((_path, { params }) =>
+      Promise.resolve(params.Ids ? albumsById(params.Ids) : playedTracks),
+    );
+
+    const rsp = await jellyfinGetAlbumList2("recent", { size: 10 });
+
+    expect(rsp.albumList2.album?.map((album) => album.id)).toEqual([
+      "tieNew",
+      "low",
+      "top",
+      "tieOld",
+    ]);
+    expect(
+      mockJellyfinGet.mock.calls.some(
+        ([, { params }]) => params.IncludeItemTypes === "MusicAlbum",
+      ),
+    ).toBe(false);
+  });
+
+  it("reverses the recency order for an ascending browse", async () => {
+    mockJellyfinGet.mockImplementation((_path, { params }) =>
+      Promise.resolve(params.Ids ? albumsById(params.Ids) : playedTracks),
+    );
+
+    const rsp = await jellyfinGetAlbumList2("recent", { order: "asc" });
+
+    expect(rsp.albumList2.album?.map((album) => album.id)).toEqual([
+      "tieOld",
+      "top",
+      "low",
+      "tieNew",
+    ]);
+  });
+
+  it("leaves albums with no play date out of recently played", async () => {
+    mockJellyfinGet.mockImplementation((_path, { params }) =>
+      Promise.resolve(
+        params.Ids
+          ? albumsById(params.Ids)
+          : {
+              data: {
+                Items: [
+                  ...playedTracks.data.Items,
+                  { Id: "marked", AlbumId: "marked", UserData: {} },
+                ],
+              },
+            },
+      ),
+    );
+
+    const recent = await jellyfinGetAlbumList2("recent", { size: 10 });
+    const frequent = await jellyfinGetAlbumList2("frequent", { size: 10 });
+
+    expect(recent.albumList2.album?.map((album) => album.id)).not.toContain(
+      "marked",
+    );
+    expect(frequent.albumList2.album?.map((album) => album.id)).toContain(
+      "marked",
+    );
+  });
+
+  // Home refetches both lists after every counted play: one ledger serves both.
+  it("shares one history read between most and recently played", async () => {
+    mockJellyfinGet.mockImplementation((_path, { params }) =>
+      Promise.resolve(params.Ids ? albumsById(params.Ids) : playedTracks),
+    );
+
+    await Promise.all([
+      jellyfinGetAlbumList2("frequent", { size: 10 }),
+      jellyfinGetAlbumList2("recent", { size: 10 }),
+    ]);
+
+    expect(
+      mockJellyfinGet.mock.calls.filter(
+        ([, { params }]) => params.IncludeItemTypes === "Audio",
+      ),
+    ).toHaveLength(1);
+  });
+
+  it("ranks once per browse and pages through that ranking", async () => {
+    mockJellyfinGet.mockImplementation((_path, { params }) =>
+      Promise.resolve(params.Ids ? albumsById(params.Ids) : playedTracks),
+    );
+
+    await jellyfinGetAlbumList2("frequent", { size: 2, offset: 0 });
+    const second = await jellyfinGetAlbumList2("frequent", {
+      size: 2,
+      offset: 2,
+    });
+    const past = await jellyfinGetAlbumList2("frequent", {
+      size: 2,
+      offset: 4,
+    });
+
+    const trackReads = mockJellyfinGet.mock.calls.filter(
+      ([, { params }]) => params.IncludeItemTypes === "Audio",
+    );
+    expect(trackReads).toHaveLength(1);
+    expect(second.albumList2.album?.map((album) => album.id)).toEqual([
+      "tieOld",
+      "low",
+    ]);
+    expect(past.albumList2.album).toEqual([]);
+    expect(mockJellyfinGet).toHaveBeenCalledTimes(3);
   });
 });
 
