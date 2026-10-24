@@ -15,6 +15,7 @@
 				"mostPlayedTracks": "На повторе",
 				"topRated": "Лучшие",
 				"random": "Вперемешку",
+				"leastPlayed": "Try something new",
 				"randomSongs": "Случайные треки",
 				"artists": "Исполнители",
 				"createdForYou": "Создано специально для вас",
@@ -58,6 +59,7 @@
 					"highest": "Лучшие",
 					"frequent": "Популярные",
 					"random": "Вперемешку",
+					"leastPlayed": "Try something new",
 					"nowPlaying": "Сейчас играет"
 				}
 			},

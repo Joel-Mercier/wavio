@@ -15,6 +15,7 @@
 				"mostPlayedTracks": "Najczęściej odtwarzane utwory",
 				"topRated": "Najwyżej oceniane",
 				"random": "Losowo",
+				"leastPlayed": "Try something new",
 				"randomSongs": "Losowe utwory",
 				"artists": "Artyści",
 				"createdForYou": "Utworzono dla Ciebie",
@@ -58,6 +59,7 @@
 					"highest": "Najwyżej oceniane",
 					"frequent": "Najczęściej odtwarzane",
 					"random": "Losowo",
+					"leastPlayed": "Try something new",
 					"nowPlaying": "Słuchaj teraz"
 				}
 			},
@@ -214,7 +216,7 @@
 					"lyricsSongsOnly": "Ścieżka podążająca za tekstami piosenek biegnie między dwoma piosenkami.",
 					"lyricsLabel": "Obserwuj teksty piosenek",
 					"lyricsDescription": "Przekrocza, o co chodzi raczej o piosenki, a nie jak brzmią.",
-					"blendLabel": "Blend",
+					"blendLabel": "Miks",
 					"blendDescription": "Jak daleko kończy się nastrój lub kotwica od drugiego.",
 					"lengthLabel": "Utwory w ścieżce",
 					"lengthHint": "Pomiędzy {{min}} i {{max}}licząc oba końce. Więcej utworów oznacza mniejszy, łatwiejszy krok.",

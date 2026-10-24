@@ -15,6 +15,7 @@
 				"mostPlayedTracks": "Titres les plus écoutés",
 				"topRated": "Les mieux notés",
 				"random": "Au hasard",
+				"leastPlayed": "Try something new",
 				"randomSongs": "Morceaux aléatoires",
 				"artists": "Artistes",
 				"createdForYou": "Conçu pour vous",
@@ -58,6 +59,7 @@
 					"highest": "Les mieux notés",
 					"frequent": "Les plus joués",
 					"random": "Au hasard",
+					"leastPlayed": "Try something new",
 					"nowPlaying": "À l'écoute en ce moment"
 				}
 			},
