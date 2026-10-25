@@ -3,7 +3,7 @@
 		"homeTitle": "Wavio. Twoja muzyka, Twój gracz, droga.",
 		"homeDescription": "Otwartoźródłowy odtwarzacz muzyki Android dla Navidrome, Jellyfin i OpenSubsonic lub lokalna biblioteka. Bez reklam, bez śledzenia, w pełni gotowy.",
 		"privacyTitle": "Polityka prywatności. Wavio",
-		"privacyDescription": "Wavio działa całkowicie na twoim urządzeniu i rozmawia tylko z serwerem muzycznym i usługami innych firm, które konfigurowasz. Nie zbieramy, nie sprzedajemy ani nie udostępniamy Twoich danych."
+		"privacyDescription": "Wavio działa całkowicie na twoim urządzeniu i rozmawia tylko z serwerem muzycznym i usługami innych firm, które konfigurujesz. Nie zbieramy, nie sprzedajemy ani nie udostępniamy Twoich danych."
 	},
 	"nav": {
 		"features": "Funkcje",
@@ -77,7 +77,7 @@
 		},
 		"queue": {
 			"label": "Kolejka",
-			"title": "Kolejka którą kontrolujesz.",
+			"title": "Kolejka którą naprawdę kontrolujesz.",
 			"desc": "Zmień kolejność, edycję, wyczyścić. Zapisz bieżącą kolejkę jako playlistę za jednym dotknięciem."
 		},
 		"servers": {
