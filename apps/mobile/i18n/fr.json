@@ -1940,6 +1940,8 @@
 				"nextFrom": "Suite de {{name}}",
 				"nextUp": "À suivre",
 				"removeFromQueue": "Retirer de la file",
+				"removedTrackFromQueueMessage": "“{{title}}” removed from queue",
+				"undo": "Undo",
 				"createPlaylist": "Créer une playlist depuis la file",
 				"createPlaylistTitle": "Nouvelle playlist depuis la file",
 				"createPlaylistNamePlaceholder": "Ma playlist depuis la file",
