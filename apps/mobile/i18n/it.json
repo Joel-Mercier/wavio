@@ -1940,6 +1940,8 @@
 				"nextFrom": "A seguire da {{name}}",
 				"nextUp": "Il prossimo",
 				"removeFromQueue": "Rimuovi dalla coda",
+				"removedTrackFromQueueMessage": "“{{title}}” removed from queue",
+				"undo": "Undo",
 				"createPlaylist": "Crea una playlist dalla coda",
 				"createPlaylistTitle": "Nuova playlist dalla coda",
 				"createPlaylistNamePlaceholder": "La mia playlist in coda",
