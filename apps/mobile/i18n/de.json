@@ -1940,6 +1940,8 @@
 				"nextFrom": "Weiter zu {{name}}",
 				"nextUp": "Als Nächstes",
 				"removeFromQueue": "Aus der Warteschlange entfernen",
+				"removedTrackFromQueueMessage": "“{{title}}” removed from queue",
+				"undo": "Undo",
 				"createPlaylist": "Wiedergabeliste aus der Warteschlange erstellen",
 				"createPlaylistTitle": "Neue Wiedergabeliste aus der Warteschlange",
 				"createPlaylistNamePlaceholder": "Meine Warteschlangen-Playlist",
