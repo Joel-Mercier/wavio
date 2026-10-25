@@ -1940,6 +1940,8 @@
 				"nextFrom": "Next from {{name}}",
 				"nextUp": "Next up",
 				"removeFromQueue": "Remove from queue",
+				"removedTrackFromQueueMessage": "“{{title}}” removed from queue",
+				"undo": "Undo",
 				"createPlaylist": "Create playlist from queue",
 				"createPlaylistTitle": "New playlist from queue",
 				"createPlaylistNamePlaceholder": "My queue playlist",

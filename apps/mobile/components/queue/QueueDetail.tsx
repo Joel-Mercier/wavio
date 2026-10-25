@@ -40,6 +40,7 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { useQueueRemovalToast } from "@/hooks/useQueueRemovalToast";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { Child } from "@/services/openSubsonic/types";
 import { play as playLocal, startTrackRadio } from "@/services/player";
@@ -125,6 +126,21 @@ export default function QueueDetail() {
     useQueue.getState().setCurrentIndex(index);
     playLocal();
   }, []);
+
+  const showRemovalToast = useQueueRemovalToast();
+  const handleSwipeRemove = useCallback(
+    (index: number, row: Child) => {
+      const { queue: current, currentIndex: cursor } = useQueue.getState();
+      const removed = current[index];
+      if (!removed || removed.id !== row.id || index <= (cursor ?? -1)) {
+        return false;
+      }
+      useQueue.getState().removeAtIndices([index]);
+      showRemovalToast([{ track: removed, index }]);
+      return true;
+    },
+    [showRemovalToast],
+  );
   const hasCurrent =
     currentIndex != null && currentIndex >= 0 && currentIndex < queue.length;
   const playingTrackId = hasCurrent ? queue[currentIndex]?.id : undefined;
@@ -479,7 +495,13 @@ export default function QueueDetail() {
           activeIndex={activeTab === "queue" ? 0 : 1}
           onTabPress={handleTabPress}
         />
-        <Box className="px-6 flex-1">
+        {/* The queue list runs edge to edge so the swipe panels behind its rows
+            aren't clipped by the screen padding; its rows pad themselves. */}
+        <Box
+          className={cn("flex-1", {
+            "px-6": activeTab !== "queue" || isEmpty || editMode,
+          })}
+        >
           {activeTab === "recentlyPlayed" ? (
             historyTracks.length === 0 ? (
               <VStack className="flex-1 items-center justify-center">
@@ -559,7 +581,7 @@ export default function QueueDetail() {
                   return (
                     <Heading
                       size="sm"
-                      className="text-gray-300 mt-6 mb-2"
+                      className="text-gray-300 mt-6 mb-2 px-6"
                       numberOfLines={1}
                     >
                       {item.label}
@@ -567,17 +589,26 @@ export default function QueueDetail() {
                   );
                 }
                 return item.track.source === "podcast" ? (
-                  <QueuePodcastListItem
-                    track={item.track}
-                    index={item.index}
-                    onPress={handleQueueItemPress}
-                  />
+                  <Box className="px-6">
+                    <QueuePodcastListItem
+                      track={item.track}
+                      index={item.index}
+                      onPress={handleQueueItemPress}
+                    />
+                  </Box>
                 ) : (
                   <TrackListItem
                     track={tracks[item.index]}
                     index={item.index}
+                    queueIndex={item.index}
+                    onSwipeRemove={
+                      item.index > (currentIndex ?? -1)
+                        ? handleSwipeRemove
+                        : undefined
+                    }
                     onPress={handleQueueItemPress}
                     disableFirstItemMargin={item.index === currentIndex}
+                    className="px-6"
                   />
                 );
               }}

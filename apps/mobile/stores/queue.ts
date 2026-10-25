@@ -103,6 +103,7 @@ interface QueueStore {
   updateTrack: (id: string, patch: Partial<QueueTrack>) => void;
   removeByIds: (ids: string[]) => void;
   removeAtIndices: (indices: number[]) => void;
+  restoreAt: (track: QueueTrack, index: number) => void;
   move: (from: number, to: number) => void;
 
   next: () => void;
@@ -260,6 +261,20 @@ function reconcileOriginalOrder(
 
 function laneStart(currentIndex: number | null): number {
   return currentIndex != null ? currentIndex + 1 : 0;
+}
+
+// Positions of `id` the cursor has yet to reach. The current track and the
+// played head are left out, so removing these never interrupts playback.
+export function upcomingIndicesOf(
+  queue: QueueTrack[],
+  currentIndex: number | null,
+  id: string,
+): number[] {
+  const indices: number[] = [];
+  for (let i = laneStart(currentIndex); i < queue.length; i++) {
+    if (queue[i].id === id) indices.push(i);
+  }
+  return indices;
 }
 
 // Index just past the manual lane: the run of queuedManually tracks that
@@ -647,6 +662,33 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
         currentIndex: nextIndex,
         originalOrderIds: state.shuffle
           ? reconcileOriginalOrder(state.originalOrderIds, filtered, nextIndex)
+          : null,
+      } as Partial<QueueStore>;
+    });
+  },
+
+  // Undo for a single removal. Playback may have moved on since, so the slot is
+  // clamped ahead of the cursor and onto the track's own side of the manual
+  // lane, which keeps the lane one contiguous run.
+  restoreAt: (track, index) => {
+    set((state) => {
+      const start = laneStart(state.currentIndex);
+      const laneEnd = manualLaneEnd(state.queue, state.currentIndex);
+      const at = track.queuedManually
+        ? Math.min(Math.max(index, start), laneEnd)
+        : Math.min(Math.max(index, laneEnd), state.queue.length);
+      const merged = state.queue.slice();
+      merged.splice(at, 0, track);
+      const fitted = makeRoomFor(merged, state.currentIndex, at, 1);
+      return {
+        queue: fitted.queue,
+        currentIndex: fitted.currentIndex,
+        originalOrderIds: state.shuffle
+          ? reconcileOriginalOrder(
+              state.originalOrderIds,
+              fitted.queue,
+              fitted.currentIndex,
+            )
           : null,
       } as Partial<QueueStore>;
     });

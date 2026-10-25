@@ -27,6 +27,7 @@ import useQueue, {
   MAX_QUEUE_TRACKS,
   peekNextTrack,
   peekNextTracks,
+  upcomingIndicesOf,
 } from "@/stores/queue";
 
 type TestTrack = { id: string; url: string };
@@ -304,6 +305,108 @@ describe("queue store - removals and move", () => {
     expect(get().queue.map((t) => t.id)).toEqual(["t3", "t4", "t1", "t2"]);
     // currentIndex 0 remains since move didn't target current
     expect(get().currentIndex).toBe(0);
+  });
+});
+
+describe("queue store - upcomingIndicesOf", () => {
+  test("skips the played head and the current track", () => {
+    get().setQueue(
+      [...makeTracks(3), { id: "t2", url: "url://t2" }, { id: "t1", url: "" }],
+      1,
+    );
+    expect(upcomingIndicesOf(get().queue, get().currentIndex, "t2")).toEqual([
+      3,
+    ]);
+    expect(upcomingIndicesOf(get().queue, get().currentIndex, "t1")).toEqual([
+      4,
+    ]);
+  });
+
+  test("finds every copy across the manual lane and the context", () => {
+    get().setQueue(makeTracks(4), 0);
+    get().addToQueue({ id: "t3", url: "url://t3" });
+    expect(ids()).toEqual(["t1", "t3", "t2", "t3", "t4"]);
+    expect(upcomingIndicesOf(get().queue, get().currentIndex, "t3")).toEqual([
+      1, 3,
+    ]);
+  });
+
+  test("covers the whole queue when nothing is current", () => {
+    useQueue.setState({ queue: makeTracks(2), currentIndex: null });
+    expect(upcomingIndicesOf(get().queue, null, "t1")).toEqual([0]);
+  });
+
+  test("removing them keeps the current track and the rest of the lane", () => {
+    get().setQueue(makeTracks(3), 0);
+    get().addToQueue([
+      { id: "t2", url: "url://t2" },
+      { id: "t9", url: "url://t9" },
+    ]);
+    get().removeAtIndices(
+      upcomingIndicesOf(get().queue, get().currentIndex, "t2"),
+    );
+    expect(ids()).toEqual(["t1", "t9", "t3"]);
+    expect(get().currentIndex).toBe(0);
+    expect(get().queue[1].queuedManually).toBe(true);
+  });
+});
+
+describe("queue store - restoreAt", () => {
+  test("puts a removed context track back where it was", () => {
+    get().setQueue(makeTracks(4), 0);
+    const removed = get().queue[2];
+    get().removeAtIndices([2]);
+    get().restoreAt(removed, 2);
+    expect(ids()).toEqual(["t1", "t2", "t3", "t4"]);
+    expect(get().currentIndex).toBe(0);
+  });
+
+  test("puts a removed manual track back inside the lane", () => {
+    get().setQueue(makeTracks(3), 0);
+    get().addToQueue([
+      { id: "q1", url: "url://q1" },
+      { id: "q2", url: "url://q2" },
+    ]);
+    const removed = get().queue[1];
+    get().removeAtIndices([1]);
+    get().restoreAt(removed, 1);
+    expect(ids()).toEqual(["t1", "q1", "q2", "t2", "t3"]);
+    expect(get().queue[1].queuedManually).toBe(true);
+  });
+
+  test("keeps a context track out of the lane added since", () => {
+    get().setQueue(makeTracks(4), 0);
+    const removed = get().queue[1];
+    get().removeAtIndices([1]);
+    get().addToQueue({ id: "q1", url: "url://q1" });
+    get().restoreAt(removed, 1);
+    expect(ids()).toEqual(["t1", "q1", "t2", "t3", "t4"]);
+    expect(get().queue[1].queuedManually).toBe(true);
+  });
+
+  test("restores every removed copy in ascending order", () => {
+    get().setQueue(makeTracks(3), 0);
+    get().addToQueue({ id: "t3", url: "url://t3" });
+    const removed = upcomingIndicesOf(
+      get().queue,
+      get().currentIndex,
+      "t3",
+    ).map((index) => ({ track: get().queue[index], index }));
+    get().removeAtIndices(removed.map((entry) => entry.index));
+    for (const { track, index } of removed) get().restoreAt(track, index);
+    expect(ids()).toEqual(["t1", "t3", "t2", "t3"]);
+    expect(get().queue[1].queuedManually).toBe(true);
+    expect(get().queue[3].queuedManually).toBeUndefined();
+  });
+
+  test("lands ahead of the cursor once playback has passed the slot", () => {
+    get().setQueue(makeTracks(5), 0);
+    const removed = get().queue[1];
+    get().removeAtIndices([1]);
+    get().setCurrentIndex(2);
+    get().restoreAt(removed, 1);
+    expect(ids()).toEqual(["t1", "t3", "t4", "t2", "t5"]);
+    expect(get().currentIndex).toBe(2);
   });
 });
 

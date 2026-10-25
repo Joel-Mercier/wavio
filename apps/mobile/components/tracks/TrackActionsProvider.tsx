@@ -20,6 +20,7 @@ import ListChecks from "lucide-react-native/icons/list-checks";
 import ListMusic from "lucide-react-native/icons/list-music";
 import ListPlus from "lucide-react-native/icons/list-plus";
 import ListStart from "lucide-react-native/icons/list-start";
+import ListX from "lucide-react-native/icons/list-x";
 import Radar from "lucide-react-native/icons/radar";
 import Share2 from "lucide-react-native/icons/share-2";
 import Sparkles from "lucide-react-native/icons/sparkles";
@@ -82,6 +83,7 @@ import {
 } from "@/hooks/offline";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import { useQueueRemovalToast } from "@/hooks/useQueueRemovalToast";
 import { isTlsTrustFailure } from "@/services/errorReporting";
 import { isPermanentWriteRefusal } from "@/services/notFound";
 import { offlineDownloadService } from "@/services/offline";
@@ -93,7 +95,7 @@ import useAudioMuse, {
 } from "@/stores/audioMuse";
 import usePlaylistsStore from "@/stores/playlists";
 import usePlaylistTargets from "@/stores/playlistTargets";
-import useQueue from "@/stores/queue";
+import useQueue, { type QueueTrack, upcomingIndicesOf } from "@/stores/queue";
 import useTrackSelection from "@/stores/trackSelection";
 import { artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
@@ -103,6 +105,7 @@ import { TOAST_DURATION } from "@/utils/toastDuration";
 export interface TrackActionsContextValue {
   index?: number;
   handleRemoveFromPlaylist?: (index: string) => void;
+  queueIndex?: number;
 }
 
 export interface TrackActionsApi {
@@ -116,6 +119,22 @@ export interface TrackActionsApi {
   showInfo: (track: Child) => void;
   rate: (track: Child) => void;
   toggleFavorite: (track: Child) => void;
+}
+
+// From the Queue screen the sheet knows the exact row; anywhere else it only
+// knows the id, so every upcoming copy of the track goes.
+function removableQueueIndices(
+  queue: QueueTrack[],
+  currentIndex: number | null,
+  trackId: string,
+  queueIndex: number | undefined,
+): number[] {
+  if (queueIndex === undefined) {
+    return upcomingIndicesOf(queue, currentIndex, trackId);
+  }
+  return queueIndex > (currentIndex ?? -1) && queue[queueIndex]?.id === trackId
+    ? [queueIndex]
+    : [];
 }
 
 const TrackActionsContext = createContext<TrackActionsApi | null>(null);
@@ -150,6 +169,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   const audioMuseSimilarAvailable = useAudioMuse(selectSimilarTracksAvailable);
   const audioMuseSongPathAvailable = useAudioMuse(selectSongPathAvailable);
   const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
+  const showRemovalToast = useQueueRemovalToast();
 
   // Only `mutate` is referentially stable on a mutation result, and the
   // memoized `api` below reaches every track row through context — depend on
@@ -178,6 +198,16 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     downloadProgress?.status === "downloading" ||
     downloadProgress?.status === "pending";
   const [ctx, setCtx] = useState<TrackActionsContextValue>({});
+  const isUpcomingInQueue = useQueue((state) =>
+    track
+      ? removableQueueIndices(
+          state.queue,
+          state.currentIndex,
+          track.id,
+          ctx.queueIndex,
+        ).length > 0
+      : false,
+  );
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
@@ -430,6 +460,22 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         </Toast>
       ),
     });
+  };
+
+  const handleRemoveFromQueuePress = () => {
+    if (!track) return;
+    bottomSheetModalRef.current?.dismiss();
+    const { queue, currentIndex, removeAtIndices } = useQueue.getState();
+    const indices = removableQueueIndices(
+      queue,
+      currentIndex,
+      track.id,
+      ctx.queueIndex,
+    );
+    if (indices.length === 0) return;
+    const removed = indices.map((index) => ({ track: queue[index], index }));
+    removeAtIndices(indices);
+    showRemovalToast(removed);
   };
 
   const handleSharePress = () => {
@@ -1051,6 +1097,19 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
+                {isUpcomingInQueue && (
+                  <FadeOutScaleDown
+                    testID="track-remove-from-queue-button"
+                    onPress={handleRemoveFromQueuePress}
+                  >
+                    <HStack className="items-center">
+                      <ListX size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.queue.removeFromQueue")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
                 <FadeOutScaleDown
                   testID="track-select-multiple-button"
                   onPress={handleSelectMultiplePress}
