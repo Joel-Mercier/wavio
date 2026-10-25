@@ -59,6 +59,7 @@ import RemoveDownloadsDialog from "@/components/offline/RemoveDownloadsDialog";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import RatingModal from "@/components/RatingModal";
 import ShuffleToggle from "@/components/ShuffleToggle";
+import ShareOptionsSheet from "@/components/shares/ShareOptionsSheet";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
@@ -81,6 +82,7 @@ import {
   useUnstar,
 } from "@/hooks/backend/useMediaAnnotation";
 import { useCreateShare } from "@/hooks/backend/useSharing";
+import { useCanTranscodeShares } from "@/hooks/navidrome/useShares";
 import {
   type DownloadCollectionMeta,
   useCollectionDownload,
@@ -95,6 +97,7 @@ import { useIsOnline } from "@/hooks/useIsOnline";
 import { useRefreshRecentPlay } from "@/hooks/useRefreshRecentPlay";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
+import type { ShareLinkOptions } from "@/services/backend/sharing";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
 import useQueue, { type QueueSource } from "@/stores/queue";
@@ -135,9 +138,11 @@ export default function AlbumDetail() {
   const isWideLayout = useApp((s) => s.isWideLayout);
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetShareOptionsModalRef = useRef<BottomSheetModal>(null);
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
   const doShare = useCreateShare();
+  const canTranscodeShares = useCanTranscodeShares();
   const doSetRating = useSetRating();
   const capabilities = useCapabilities();
   const isOnline = useIsOnline();
@@ -373,9 +378,9 @@ export default function AlbumDetail() {
     useTrackSelection.getState().enter();
   };
 
-  const handleSharePress = () => {
+  const createShareLink = (options?: ShareLinkOptions) => {
     doShare.mutate(
-      { id },
+      { id, ...options },
       {
         onSuccess: (data) => {
           setClipboardText(data?.shares?.share?.[0]?.url ?? "");
@@ -412,6 +417,15 @@ export default function AlbumDetail() {
         },
       },
     );
+  };
+
+  const handleSharePress = () => {
+    if (canTranscodeShares) {
+      bottomSheetModalRef.current?.dismiss();
+      bottomSheetShareOptionsModalRef.current?.present();
+      return;
+    }
+    createShareLink();
   };
 
   const handleAddToPlaylistPress = () => {
@@ -1110,6 +1124,10 @@ export default function AlbumDetail() {
         ListEmptyComponent={<EmptyDisplay />}
         // contentContainerStyle={{ paddingHorizontal: 24 }}
         showsVerticalScrollIndicator={false}
+      />
+      <ShareOptionsSheet
+        sheetRef={bottomSheetShareOptionsModalRef}
+        onConfirm={createShareLink}
       />
       <CenteredBottomSheetModal
         ref={bottomSheetShareModalRef}

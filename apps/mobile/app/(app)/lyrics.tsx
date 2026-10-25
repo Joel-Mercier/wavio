@@ -22,6 +22,7 @@ import { openOutputSheet } from "@/components/player/OutputSheet";
 import PlaybackSlider from "@/components/player/PlaybackSlider";
 import PlayerSheets from "@/components/player/PlayerSheets";
 import ShareLinkSheet from "@/components/player/ShareLinkSheet";
+import ShareOptionsSheet from "@/components/shares/ShareOptionsSheet";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
@@ -33,6 +34,7 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { useCreateShare } from "@/hooks/backend/useSharing";
+import { useCanTranscodeShares } from "@/hooks/navidrome/useShares";
 import {
   useIsPlaying,
   useIsTwoColumnPlayer,
@@ -43,6 +45,7 @@ import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useKeepScreenAwake } from "@/hooks/useKeepScreenAwake";
+import type { ShareLinkOptions } from "@/services/backend/sharing";
 import { togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
 import useCast from "@/stores/cast";
@@ -74,6 +77,7 @@ export default function LyricsScreen() {
   const queryClient = useQueryClient();
   const actionsSheetRef = useRef<BottomSheetModal>(null);
   const shareSheetRef = useRef<BottomSheetModal>(null);
+  const shareOptionsSheetRef = useRef<BottomSheetModal>(null);
   const layersSheetRef = useRef<BottomSheetModal>(null);
   const [shareUrl, setShareUrl] = useState("");
   const jukeboxActive = useJukebox((s) => s.active);
@@ -96,6 +100,7 @@ export default function LyricsScreen() {
   const hasLayers = hasTranslations || hasPronunciation;
   useKeepScreenAwake(lyricsKeepScreenOn && isPlaying, "lyrics");
   const doShare = useCreateShare();
+  const canTranscodeShares = useCanTranscodeShares();
   const isRadio = !!playingTrack?.isRadio;
   const headerTextShadow = {
     textShadowColor: "rgba(0,0,0,0.4)",
@@ -126,45 +131,54 @@ export default function LyricsScreen() {
     layersSheetRef.current?.present();
   };
 
+  const createShareLink = (options?: ShareLinkOptions) => {
+    if (!playingTrack) return;
+    doShare.mutate(
+      { id: playingTrack.id, ...options },
+      {
+        onSuccess: (data) => {
+          setShareUrl(data?.shares?.share?.[0]?.url ?? "");
+          queryClient.invalidateQueries({ queryKey: ["shares"] });
+          shareSheetRef.current?.present();
+          toast.show({
+            placement: "top",
+            duration: TOAST_DURATION.default,
+            render: () => (
+              <Toast action="success">
+                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
+                <ToastDescription>
+                  {t("app.tracks.shareSuccessMessage")}
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+        onError: () => {
+          toast.show({
+            placement: "top",
+            duration: TOAST_DURATION.default,
+            render: () => (
+              <Toast action="error">
+                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
+                <ToastDescription>
+                  {t("app.tracks.shareErrorMessage")}
+                </ToastDescription>
+              </Toast>
+            ),
+          });
+        },
+      },
+    );
+  };
+
   const handleSharePress = () => {
     if (!playingTrack) return;
     if (capabilities.sharing && isOnline) {
-      doShare.mutate(
-        { id: playingTrack.id },
-        {
-          onSuccess: (data) => {
-            setShareUrl(data?.shares?.share?.[0]?.url ?? "");
-            queryClient.invalidateQueries({ queryKey: ["shares"] });
-            shareSheetRef.current?.present();
-            toast.show({
-              placement: "top",
-              duration: TOAST_DURATION.default,
-              render: () => (
-                <Toast action="success">
-                  <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-                  <ToastDescription>
-                    {t("app.tracks.shareSuccessMessage")}
-                  </ToastDescription>
-                </Toast>
-              ),
-            });
-          },
-          onError: () => {
-            toast.show({
-              placement: "top",
-              duration: TOAST_DURATION.default,
-              render: () => (
-                <Toast action="error">
-                  <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
-                  <ToastDescription>
-                    {t("app.tracks.shareErrorMessage")}
-                  </ToastDescription>
-                </Toast>
-              ),
-            });
-          },
-        },
-      );
+      if (canTranscodeShares) {
+        shareOptionsSheetRef.current?.present();
+      } else {
+        createShareLink();
+      }
       return;
     }
     const lyricsText = lyrics?.line
@@ -319,6 +333,10 @@ export default function LyricsScreen() {
         actionsSheetRef={actionsSheetRef}
         playingTrack={playingTrack ?? null}
         hideLyricsAction
+      />
+      <ShareOptionsSheet
+        sheetRef={shareOptionsSheetRef}
+        onConfirm={createShareLink}
       />
       <ShareLinkSheet sheetRef={shareSheetRef} url={shareUrl} />
       <LyricsLayersSheet

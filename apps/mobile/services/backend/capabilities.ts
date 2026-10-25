@@ -93,6 +93,10 @@ export type BackendCapabilities = {
   // False on Jellyfin, whose `SearchTerm` matches the item name alone — there
   // such a query returns nothing at all. See services/libraryMatch.ts.
   multiFieldSearch: boolean;
+  // A share link can be created transcoded to a chosen format and bitrate.
+  // Subsonic createShare has no such parameter; Navidrome's native POST
+  // /api/share does, and it needs the native session (see isNavidromeNative).
+  shareTranscoding: boolean;
 };
 
 const SUBSONIC: BackendCapabilities = {
@@ -135,6 +139,7 @@ const SUBSONIC: BackendCapabilities = {
   serverScrobbleLinkStatus: false,
   serverLastFmLinkStatus: false,
   multiFieldSearch: true,
+  shareTranscoding: false,
 };
 
 const NAVIDROME: BackendCapabilities = {
@@ -153,6 +158,7 @@ const NAVIDROME: BackendCapabilities = {
   // podcasts are self-hosted on-device instead (same flow as the local library;
   // see services/backend/podcasts.ts).
   podcasts: true,
+  shareTranscoding: true,
 };
 
 const JELLYFIN: BackendCapabilities = {
@@ -202,6 +208,7 @@ const JELLYFIN: BackendCapabilities = {
   // `SearchTerm` matches the item name only, so anything but the bare title
   // comes back empty.
   multiFieldSearch: false,
+  shareTranscoding: false,
 };
 
 // On-device library: no remote server, everything is derived from files the
@@ -249,6 +256,7 @@ const LOCAL: BackendCapabilities = {
   serverScrobbleLinkStatus: false,
   serverLastFmLinkStatus: false,
   multiFieldSearch: true,
+  shareTranscoding: false,
 };
 
 // Network file share (WebDAV): the same on-device index as LOCAL — the indexer

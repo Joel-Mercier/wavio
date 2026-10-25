@@ -2169,7 +2169,19 @@
 				"mediaType_album": "Album",
 				"mediaType_podcast": "Podcast",
 				"mediaType_audiobook": "Audiobook",
-				"mediaType_video": "Video"
+				"mediaType_video": "Video",
+				"shareOptionsTitle": "Share link",
+				"downloadable": "Allow downloads",
+				"downloadableDescription": "Let people with the link download the files.",
+				"originalFormat": "Original format",
+				"originalFormatDescription": "Serve the files as they are on the server. Turn off to have the server convert them to a lighter format for this link.",
+				"format": "Format",
+				"maxBitRate": "Max bitrate",
+				"bitRateValue": "{{bitrate}} kbps",
+				"create": "Create link",
+				"formatReadOnly": "Format: {{format}} · {{bitrate}} kbps",
+				"formatReadOnlyNoBitRate": "Format: {{format}}",
+				"formatReadOnlyHelp": "The format can't be changed after the share is created."
 			},
 			"libraries": {
 				"title": "Libraries",

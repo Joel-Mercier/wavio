@@ -23,6 +23,7 @@ import FieldError, {
   handleFieldBlur,
   showFieldError,
 } from "@/components/forms/FieldError";
+import { SettingsToggleRow } from "@/components/settings/SettingsRows";
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -55,6 +56,11 @@ import {
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
 import { useDeleteShare, useUpdateShare } from "@/hooks/backend/useSharing";
+import {
+  useCanTranscodeShares,
+  useNavidromeShares,
+  useShareDownloadsEnabled,
+} from "@/hooks/navidrome/useShares";
 import type { Share } from "@/services/openSubsonic/types";
 import { artworkUrl } from "@/utils/artwork";
 import { logError } from "@/utils/log";
@@ -64,6 +70,7 @@ import { TOAST_DURATION } from "@/utils/toastDuration";
 const updateShareSchema = z.object({
   description: z.string().trim().optional(),
   expires: z.number().optional(),
+  downloadable: z.boolean().optional(),
 });
 
 export default function ShareListItem({ share }: { share: Share }) {
@@ -83,11 +90,22 @@ export default function ShareListItem({ share }: { share: Share }) {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const doDeleteShare = useDeleteShare();
   const doUpdateShare = useUpdateShare();
+  const canTranscodeShares = useCanTranscodeShares();
+  const { data: navidromeShares } = useNavidromeShares(
+    showEditAlertDialog && canTranscodeShares,
+  );
+  const navidromeShare = navidromeShares?.find(({ id }) => id === share.id);
+  const downloadsEnabled = useShareDownloadsEnabled(
+    showEditAlertDialog && canTranscodeShares,
+  );
   const toast = useToast();
   const form = useForm({
     defaultValues: {
       description: share.description,
       expires: share.expires ? new Date(share.expires).getTime() : undefined,
+      // Subsonic getShares doesn't report it, so the field starts empty and
+      // falls back to the native record; left untouched, the server keeps it.
+      downloadable: undefined,
     } as z.input<typeof updateShareSchema>,
     validators: {
       onChange: updateShareSchema,
@@ -98,6 +116,7 @@ export default function ShareListItem({ share }: { share: Share }) {
           id: share.id,
           description: value.description,
           expires: value.expires,
+          downloadable: value.downloadable,
         },
         {
           onSuccess: () => {
@@ -470,6 +489,39 @@ export default function ShareListItem({ share }: { share: Share }) {
                 </FormControl>
               )}
             </form.Field>
+            {navidromeShare && downloadsEnabled ? (
+              <form.Field name="downloadable">
+                {(field) => (
+                  <SettingsToggleRow
+                    label={t("app.shares.downloadable")}
+                    description={t("app.shares.downloadableDescription")}
+                    value={
+                      field.state.value ?? navidromeShare.downloadable ?? false
+                    }
+                    onToggle={field.handleChange}
+                  />
+                )}
+              </form.Field>
+            ) : null}
+            {navidromeShare ? (
+              <VStack className="my-4 gap-y-1">
+                <Text className="text-md text-white">
+                  {navidromeShare.format
+                    ? navidromeShare.maxBitRate
+                      ? t("app.shares.formatReadOnly", {
+                          format: navidromeShare.format.toUpperCase(),
+                          bitrate: navidromeShare.maxBitRate,
+                        })
+                      : t("app.shares.formatReadOnlyNoBitRate", {
+                          format: navidromeShare.format.toUpperCase(),
+                        })
+                    : t("app.shares.originalFormat")}
+                </Text>
+                <Text className="text-sm text-primary-100">
+                  {t("app.shares.formatReadOnlyHelp")}
+                </Text>
+              </VStack>
+            ) : null}
           </AlertDialogBody>
           <AlertDialogFooter className="items-center justify-center">
             <FadeOutScaleDown

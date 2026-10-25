@@ -38,6 +38,7 @@ import InternetRadioStationActions from "@/components/internetRadioStations/Inte
 import LrclibPickerSheet from "@/components/player/LrclibPickerSheet";
 import ShareLinkSheet from "@/components/player/ShareLinkSheet";
 import SleepTimerActionRow from "@/components/player/SleepTimerActionRow";
+import ShareOptionsSheet from "@/components/shares/ShareOptionsSheet";
 import TrackInfoModal from "@/components/tracks/TrackInfoModal";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -52,6 +53,7 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { useSong } from "@/hooks/backend/useBrowsing";
 import { useCreateShare } from "@/hooks/backend/useSharing";
+import { useCanTranscodeShares } from "@/hooks/navidrome/useShares";
 import {
   useIsCollectionAvailableOffline,
   useIsDetailCached,
@@ -59,6 +61,7 @@ import {
 import { usePlaybackProgress } from "@/hooks/player";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import type { ShareLinkOptions } from "@/services/backend/sharing";
 import { isTlsTrustFailure } from "@/services/errorReporting";
 import { getCurrentTime } from "@/services/player";
 import { saveTrackToDevice } from "@/services/saveTrackToDevice";
@@ -138,7 +141,9 @@ export default function PlayerSheets({
   const lyricsPickerRef = lyricsPickerSheetRef ?? ownLyricsPickerSheetRef;
   const bottomSheetArtistsModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetShareOptionsModalRef = useRef<BottomSheetModal>(null);
   const doShare = useCreateShare();
+  const canTranscodeShares = useCanTranscodeShares();
   const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
 
   const isRadio = !!playingTrack?.isRadio;
@@ -424,10 +429,10 @@ export default function PlayerSheets({
     });
   };
 
-  const handleSharePress = () => {
+  const createShareLink = (options?: ShareLinkOptions) => {
     if (!playingTrack) return;
     doShare.mutate(
-      { id: playingTrack.id },
+      { id: playingTrack.id, ...options },
       {
         onSuccess: (data) => {
           actionsSheetRef.current?.dismiss();
@@ -463,6 +468,16 @@ export default function PlayerSheets({
         },
       },
     );
+  };
+
+  const handleSharePress = () => {
+    if (!playingTrack) return;
+    if (canTranscodeShares) {
+      actionsSheetRef.current?.dismiss();
+      bottomSheetShareOptionsModalRef.current?.present();
+      return;
+    }
+    createShareLink();
   };
 
   const handleDownloadPress = async () => {
@@ -901,6 +916,10 @@ export default function PlayerSheets({
         </BottomSheetScrollView>
       </BottomSheetModalComponent>
       <LrclibPickerSheet sheetRef={lyricsPickerRef} track={playingTrack} />
+      <ShareOptionsSheet
+        sheetRef={bottomSheetShareOptionsModalRef}
+        onConfirm={createShareLink}
+      />
       <ShareLinkSheet sheetRef={bottomSheetShareModalRef} url={shareUrl} />
       <TrackInfoModal
         isOpen={showInfoModal}

@@ -46,6 +46,7 @@ import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import RatingModal from "@/components/RatingModal";
+import ShareOptionsSheet from "@/components/shares/ShareOptionsSheet";
 import TrackInfoModal from "@/components/tracks/TrackInfoModal";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -75,6 +76,7 @@ import {
 } from "@/hooks/backend/useMediaAnnotation";
 import { useUpdatePlaylist } from "@/hooks/backend/usePlaylists";
 import { useCreateShare } from "@/hooks/backend/useSharing";
+import { useCanTranscodeShares } from "@/hooks/navidrome/useShares";
 import {
   useDownloadProgress,
   useIsCollectionAvailableOffline,
@@ -84,6 +86,7 @@ import {
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useQueueRemovalToast } from "@/hooks/useQueueRemovalToast";
+import type { ShareLinkOptions } from "@/services/backend/sharing";
 import { isTlsTrustFailure } from "@/services/errorReporting";
 import { isPermanentWriteRefusal } from "@/services/notFound";
 import { offlineDownloadService } from "@/services/offline";
@@ -177,6 +180,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   const doFavorite = useStar();
   const doUnfavorite = useUnstar();
   const doShare = useCreateShare();
+  const canTranscodeShares = useCanTranscodeShares();
   const doSetRating = useSetRating();
   const doUpdatePlaylist = useUpdatePlaylist();
 
@@ -216,6 +220,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
 
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetShareOptionsModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetArtistsModalRef = useRef<BottomSheetModal>(null);
 
   const open = useCallback(
@@ -478,10 +483,10 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     showRemovalToast(removed);
   };
 
-  const handleSharePress = () => {
+  const createShareLink = (options?: ShareLinkOptions) => {
     if (!track) return;
     doShare.mutate(
-      { id: track.id },
+      { id: track.id, ...options },
       {
         onSuccess: (data) => {
           bottomSheetModalRef.current?.dismiss();
@@ -517,6 +522,16 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         },
       },
     );
+  };
+
+  const handleSharePress = () => {
+    if (!track) return;
+    if (canTranscodeShares) {
+      bottomSheetModalRef.current?.dismiss();
+      bottomSheetShareOptionsModalRef.current?.present();
+      return;
+    }
+    createShareLink();
   };
 
   const handleAddToPlaylistPress = () => {
@@ -935,6 +950,10 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
           </Box>
         </BottomSheetScrollView>
       </CenteredBottomSheetModal>
+      <ShareOptionsSheet
+        sheetRef={bottomSheetShareOptionsModalRef}
+        onConfirm={createShareLink}
+      />
       <CenteredBottomSheetModal
         ref={bottomSheetShareModalRef}
         enableHalfExpand={false}

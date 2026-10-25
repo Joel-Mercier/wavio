@@ -55,6 +55,7 @@ import ShuffleToggle from "@/components/ShuffleToggle";
 import SortOptionsSheet, {
   useSortFieldLabel,
 } from "@/components/SortOptionsSheet";
+import ShareOptionsSheet from "@/components/shares/ShareOptionsSheet";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import {
   AlertDialog,
@@ -84,6 +85,7 @@ import {
   useUpdatePlaylist,
 } from "@/hooks/backend/usePlaylists";
 import { useCreateShare } from "@/hooks/backend/useSharing";
+import { useCanTranscodeShares } from "@/hooks/navidrome/useShares";
 import { useSmartPlaylist } from "@/hooks/navidrome/useSmartPlaylists";
 import {
   type DownloadCollectionMeta,
@@ -99,6 +101,7 @@ import { useRefreshRecentPlay } from "@/hooks/useRefreshRecentPlay";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { useTrackSort } from "@/hooks/useTrackSort";
+import type { ShareLinkOptions } from "@/services/backend/sharing";
 import { forgetDeletedPlaylist } from "@/services/forgetPlaylist";
 import { isNotFoundError } from "@/services/notFound";
 import type { Child } from "@/services/openSubsonic/types";
@@ -164,6 +167,7 @@ export default function PlaylistDetail() {
   const screenBottomPadding = useScreenBottomPadding();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetShareOptionsModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetMoveToFolderModalRef = useRef<BottomSheetModal>(null);
   // Set once this playlist is known not to exist any more, by either path.
@@ -209,6 +213,7 @@ export default function PlaylistDetail() {
   const doDeletePlaylist = useDeletePlaylist();
   const doUpdatePlaylist = useUpdatePlaylist();
   const doShare = useCreateShare();
+  const canTranscodeShares = useCanTranscodeShares();
   const capabilities = useCapabilities();
   const isOnline = useIsOnline();
   // A saved sort whose field isn't offerable right now (e.g. genre, on a
@@ -456,9 +461,9 @@ export default function PlaylistDetail() {
     );
   };
 
-  const handleSharePress = () => {
+  const createShareLink = (options?: ShareLinkOptions) => {
     doShare.mutate(
-      { id },
+      { id, ...options },
       {
         onSuccess: (data) => {
           setClipboardText(data?.shares?.share?.[0]?.url ?? "");
@@ -495,6 +500,15 @@ export default function PlaylistDetail() {
         },
       },
     );
+  };
+
+  const handleSharePress = () => {
+    if (canTranscodeShares) {
+      bottomSheetModalRef.current?.dismiss();
+      bottomSheetShareOptionsModalRef.current?.present();
+      return;
+    }
+    createShareLink();
   };
 
   const isPlaying = useIsPlaying();
@@ -1056,6 +1070,10 @@ export default function PlaylistDetail() {
           paddingBottom: screenBottomPadding,
         }}
         showsVerticalScrollIndicator={false}
+      />
+      <ShareOptionsSheet
+        sheetRef={bottomSheetShareOptionsModalRef}
+        onConfirm={createShareLink}
       />
       <CenteredBottomSheetModal
         ref={bottomSheetShareModalRef}

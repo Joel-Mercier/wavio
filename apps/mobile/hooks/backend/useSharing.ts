@@ -3,19 +3,22 @@ import {
   createShare,
   deleteShare,
   getShares,
+  type ShareLinkOptions,
   updateShare,
 } from "@/services/backend/sharing";
 
 export const useCreateShare = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (params: {
-      id: string;
-      description?: string;
-      expires?: number;
-    }) => {
-      const { id, description, expires } = params;
-      return createShare(id, { description, expires });
+    mutationFn: (
+      params: {
+        id: string;
+        description?: string;
+        expires?: number;
+      } & ShareLinkOptions,
+    ) => {
+      const { id, ...options } = params;
+      return createShare(id, options);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["shares"] });
@@ -52,9 +55,10 @@ export const useUpdateShare = () => {
       id: string;
       description?: string;
       expires?: number;
+      downloadable?: boolean;
     }) => {
-      const { id, description, expires } = params;
-      return updateShare(id, { description, expires });
+      const { id, ...options } = params;
+      return updateShare(id, options);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["shares"] });
