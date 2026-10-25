@@ -1940,6 +1940,8 @@
 				"nextFrom": "A continuación, de {{name}}",
 				"nextUp": "A continuación",
 				"removeFromQueue": "Eliminar de la cola",
+				"removedTrackFromQueueMessage": "“{{title}}” removed from queue",
+				"undo": "Undo",
 				"createPlaylist": "Crear una lista de reproducción a partir de la cola",
 				"createPlaylistTitle": "Nueva lista de reproducción de la cola",
 				"createPlaylistNamePlaceholder": "Mi lista de reproducción en cola",
