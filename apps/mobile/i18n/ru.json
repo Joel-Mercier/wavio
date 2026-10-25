@@ -2046,6 +2046,8 @@
 				"nextFrom": "Далее от {{name}}",
 				"nextUp": "Далее",
 				"removeFromQueue": "Удалить из очереди",
+				"removedTrackFromQueueMessage": "“{{title}}” removed from queue",
+				"undo": "Undo",
 				"createPlaylist": "Создать плейлист из очереди",
 				"createPlaylistTitle": "Новый плейлист из очереди",
 				"createPlaylistNamePlaceholder": "Мой плейлист из очереди",
