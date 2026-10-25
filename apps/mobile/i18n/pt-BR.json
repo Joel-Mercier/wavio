@@ -1940,6 +1940,8 @@
 				"nextFrom": "A seguir, de {{name}}",
 				"nextUp": "A seguir",
 				"removeFromQueue": "Remover da fila",
+				"removedTrackFromQueueMessage": "“{{title}}” removed from queue",
+				"undo": "Undo",
 				"createPlaylist": "Criar lista de reprodução a partir da fila",
 				"createPlaylistTitle": "Nova lista de reprodução da fila",
 				"createPlaylistNamePlaceholder": "Minha lista de reprodução da fila",
