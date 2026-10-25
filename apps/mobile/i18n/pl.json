@@ -2046,6 +2046,8 @@
 				"nextFrom": "Następny z {{name}}",
 				"nextUp": "Następny góra",
 				"removeFromQueue": "Usuń z kolejki",
+				"removedTrackFromQueueMessage": "“{{title}}” removed from queue",
+				"undo": "Undo",
 				"createPlaylist": "Utwórz playlistę z kolejki",
 				"createPlaylistTitle": "Nowa lista odtwarzania z kolejki",
 				"createPlaylistNamePlaceholder": "Moja kolejka odtwarzania",
