@@ -1887,6 +1887,8 @@
 				"nextFrom": "接下来来自 {{name}}",
 				"nextUp": "接下来",
 				"removeFromQueue": "从队列中移除",
+				"removedTrackFromQueueMessage": "“{{title}}” removed from queue",
+				"undo": "Undo",
 				"createPlaylist": "从队列中创建歌单",
 				"createPlaylistTitle": "从队列新建歌单",
 				"createPlaylistNamePlaceholder": "我的队列歌单",
