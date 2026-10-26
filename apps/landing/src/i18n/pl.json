@@ -87,28 +87,28 @@
 		},
 		"sleep": {
 			"label": "Czas uśpienia",
-			"title": "Zanikanie gracefly.",
+			"title": "Łagodne zanikanie.",
 			"desc": "Zaplanuj łagodne zanikanie, aby twój ulubiony album mógł Cię przewozić."
 		},
 		"podcasts": {
 			"label": "Podcasty",
-			"title": "Dowiedz się czegoś wszędzie tam, gdzie chodzisz.",
-			"desc": "Szukaj, obserwuj i graj w podcasty wspierane przez Taddy. Twoje ścieżki i programy pod jednym dachem."
+			"title": "Dowiedz się czegoś, gdziekolwiek się znajdziesz.",
+			"desc": "Szukaj, obserwuj i odtwarzaj podcasty wspierane przez Taddy. Twoje ścieżki i programy pod jednym dachem."
 		},
 		"radio": {
 			"label": "Radio internetowe",
-			"title": "Dostrajaj gdziekolwiek.",
-			"desc": "Strumieniuj internetowe stacje radiowe ze swojego serwera za pomocą dotknięcia. Przeglądaj, zapisz i słuchaj na żywo."
+			"title": "Słuchaj gdziekolwiek.",
+			"desc": "Strumieniuj internetowe stacje radiowe ze swojego serwera za pomocą dotknięcia. Przeglądaj, zapisuj i słuchaj na żywo."
 		},
 		"lyrics": {
 			"label": "Tekst piosenki",
-			"title": "Sing along, synchronizacja.",
-			"desc": "Zsynchronizowano teksty piosenek z LRCLib, przewijając linię z ścieżką."
+			"title": "Śpiewaj razem.",
+			"desc": "Zsynchronizowane teksty piosenek z LRCLib, przewijające się linia po linii zgodnie z muzyką."
 		},
 		"widgets": {
-			"label": "Widżety ekranu głównego",
-			"title": "Patrząc wstecz.",
-			"desc": "Teraz odtwarzane i ostatnio odtwarzane, bezpośrednio na ekranie głównym Androida. Nie trzeba otwierać aplikacji."
+			"label": "Widżety na ekranie głównym",
+			"title": "Na pierwszy rzut oka.",
+			"desc": "Teraz odtwarzane i ostatnio odtwarzane, bezpośrednio na ekranie głównym Androida. Bez potrzeby otwierania aplikacji."
 		}
 	},
 	"integrations": {
@@ -202,7 +202,7 @@
 			{
 				"num": "04",
 				"title": "Co widzi Twój serwer muzyczny",
-				"body": "<p>When you connect Wavio to a Navidrome, Jellyfin, or OpenSubsonic instance, the app communicates directly with that server using the credentials you provide. The server will typically log your IP address, the requests you make, and your listening activity, just like any other client would.</p>\n\t\t\t\t\t<p>Wavio can also play music without any such server. A local library is read straight from your phone's own storage, and nothing about it leaves the device. An SMB or WebDAV network share is contacted directly, on your network, with the credentials you enter, and whatever that machine logs is between you and it.</p>\n\t\t\t\t\t<p>Wavio's contributors do not operate any of these servers or shares and have no access to what they log. Please consult the privacy policy of whatever you connect to.</p>"
+				"body": "<p>Po podłączeniu aplikacji Wavio do serwera Navidrome, Jellyfin lub OpenSubsonic aplikacja komunikuje się bezpośrednio z tym serwerem, korzystając z podanych przez Ciebie danych uwierzytelniających. Serwer zazwyczaj rejestruje Twój adres IP, wysyłane przez Ciebie żądania oraz aktywność związaną ze słuchaniem muzyki, tak jak w przypadku każdego innego klienta.</p>\n\t\t\t\t\t<p>Wavio może również odtwarzać muzykę bez udziału takiego serwera. Lokalna biblioteka jest odczytywana bezpośrednio z pamięci telefonu, a żadne dane z niej nie opuszczają urządzenia. Połączenie z udziałem sieciowym SMB lub WebDAV nawiguje się bezpośrednio w sieci użytkownika przy użyciu wprowadzonych danych uwierzytelniających, a wszelkie dane rejestrowane przez to urządzenie pozostają wyłącznie między użytkownikiem a serwerem.</p>\n\t\t\t\t\t<p>Twórcy aplikacji Wavio nie obsługują żadnego z tych serwerów ani udziałów sieciowych i nie mają dostępu do rejestrowanych przez nie danych. Prosimy o zapoznanie się z polityką prywatności serwisu, z którym się łączysz.</p>"
 			},
 			{
 				"num": "05",
