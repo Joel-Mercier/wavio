@@ -1528,6 +1528,8 @@
 					"scanMusicLibraryAction": "Digitalizar",
 					"scanOnWifiOnlyLabel": "Digitalizar apenas por Wi-Fi",
 					"scanOnWifiOnlyDescription": "Na primeira varredura, são lidas as tags de todos os arquivos no compartilhamento, o que pode consumir muitos dados móveis.",
+					"searchAllLibrariesLabel": "Search every library",
+					"searchAllLibrariesDescription": "Search finds music in all your libraries, even when you browse just some of them.",
 					"coverArtLabel": "Capas em pastas",
 					"coverArtDescription": "Quando uma faixa não possui capa própria, o Wavio utiliza um arquivo de imagem localizado ao lado dela, como cover.jpg, folder.png ou artist.jpg. A imagem da pasta também tem prioridade sobre uma capa incorporada ao arquivo, de modo que você pode alterar a arte do álbum sem precisar reetiquetá-lo. Uma pasta de álbum sem imagem pode herdar uma da pasta acima quando todo o conteúdo abaixo dela pertence ao mesmo álbum, e é isso que faz com que os layouts de CD1/CD2 funcionem. São suportados os formatos JPEG, PNG, WebP e GIF.",
 					"albumArtNamesLabel": "Nomes dos arquivos das capas de álbuns",
@@ -2206,7 +2208,12 @@
 				"title": "Bibliotecas",
 				"allLibraries": "Todas as bibliotecas",
 				"default": "Biblioteca padrão",
-				"empty": "Não há bibliotecas disponíveis"
+				"empty": "Não há bibliotecas disponíveis",
+				"pickOneOrMore": "Pick one or more",
+				"selectionSeparator": ", ",
+				"searchCoversAll": "Search still looks in every library.",
+				"selectionMore_one": "+{{count}}",
+				"selectionMore_other": "+{{count}}"
 			},
 			"servers": {
 				"oidcToggleHelp": "Entrar nesse servidor através do provedor de identidade na sua frente ao invés de com uma senha. Aplica-se a partir do próximo login.",
