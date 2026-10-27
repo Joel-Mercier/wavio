@@ -15,6 +15,33 @@ export const GLOBAL_KEYS = [
   "radioStations",
 ] as const;
 
+// Credentials removed from a store's persisted `state` before it goes into a
+// backup file, and again when one is restored (so an older file that still
+// carries them can't bring them back). No password, token or API key ever
+// leaves the device in a backup: restoring routes through a fresh sign-in, and
+// each integration asks to be reconnected.
+//
+// Deleted rather than blanked, so the restored store falls back to its own
+// initial value (an env-seeded Taddy key, `isConnected: false`). Connection
+// flags are listed alongside the credential they vouch for, or a restored store
+// would claim to be connected with no key.
+//
+// `auth` and `servers` are handled in services/backup.ts itself (the session's
+// identity is kept for the re-login prompt; saved passwords and custom header
+// values are dropped from nested objects). A drift guard in
+// __tests__/backup.store-coverage.test.ts fails when a persisted store gains a
+// credential-looking field that isn't listed here.
+export const BACKUP_SECRET_FIELDS: Readonly<Record<string, readonly string[]>> =
+  {
+    podcasts: ["taddyPodcastsApiKey", "taddyPodcastsUserId"],
+    listenBrainzStore: ["token"],
+    lastFmStore: ["sessionKey", "sessionInvalid"],
+    lidarrStore: ["apiKey", "isConnected"],
+    soulsyncStore: ["apiKey", "isConnected"],
+    tidarrStore: ["apiKey", "isConnected"],
+    audioMuseStore: ["apiToken", "isConnected", "fingerprintSecret"],
+  };
+
 // Global stores deliberately left out of a backup. A backup leaves the device
 // through the share sheet (cloud drives, chat apps, email), and these hold
 // standing credentials rather than settings:
@@ -57,8 +84,8 @@ export const SCOPED_STORE_NAMES = [
 // the destination. ListenBrainz dedupes on (user, listened_at, recording_msid)
 // and every queued listen carries the absolute timestamp it was played at, so a
 // restored queue draining alongside the original device's is collapsed server
-// side rather than double-counted — and restoring the token/settings is the
-// whole point of backing the integration up.
+// side rather than double-counted. Its token is stripped (BACKUP_SECRET_FIELDS),
+// so the queue drains only once the user reconnects.
 //
 // The Last.fm store travels for the same reason, with one caveat worth knowing:
 // Last.fm dedupes on (user, artist, track, timestamp) rather than on a submission

@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import * as z from "zod";
+import AutoBackupSettings from "@/components/settings/AutoBackupSettings";
 import ConfirmActionDialog from "@/components/settings/ConfirmActionDialog";
 import { SettingsActionRow } from "@/components/settings/SettingsRows";
 import SettingsScreenScaffold from "@/components/settings/SettingsScreenScaffold";
@@ -9,8 +10,8 @@ import { VStack } from "@/components/ui/vstack";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
 import { exportBackup, pickBackupFile, restoreBackup } from "@/services/backup";
 import { useAuthBase } from "@/stores/auth";
+import { useServersBase } from "@/stores/servers";
 import { logError } from "@/utils/log";
-import { switchToServer } from "@/utils/switchServer";
 
 export default function BackupRestoreSection() {
   const { t } = useTranslation();
@@ -35,17 +36,24 @@ export default function BackupRestoreSection() {
     }
   };
 
-  // Finishing a restore re-routes through the logout → re-login flow so React
-  // Query and the per-account stores are rebuilt cleanly for the restored
-  // server, instead of being hot-swapped in place (which mixes content).
+  // Finishing a restore always ends on the login form, never the silent
+  // switch: a backup carries no password or token, and whoever restores one
+  // has to prove they can sign in to its server. Going through logout also
+  // rebuilds React Query and the per-account stores cleanly for the restored
+  // server instead of hot-swapping them in place (which mixes content).
   const handleFinishRestore = () => {
     setShowRestartRequiredAlertDialog(false);
     const target = restoreTarget;
     setRestoreTarget(null);
+    useAuthBase.getState().logout();
     if (target?.serverId) {
-      switchToServer(router, target.serverId, target.username ?? undefined);
+      useServersBase.getState().setCurrentServer(target.serverId);
+      const params = new URLSearchParams({
+        serverId: target.serverId,
+        ...(target.username ? { username: target.username } : {}),
+      });
+      router.replace(`/(auth)/login?${params.toString()}` as never);
     } else {
-      useAuthBase.getState().logout();
       router.replace("/(auth)/login");
     }
   };
@@ -117,6 +125,7 @@ export default function BackupRestoreSection() {
           actionLabel={t("app.settings.backupSettings.restoreAction")}
           onPress={() => setShowRestoreConfirmAlertDialog(true)}
         />
+        <AutoBackupSettings />
       </VStack>
     </SettingsScreenScaffold>
   );

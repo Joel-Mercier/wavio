@@ -1,0 +1,34 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+group = 'expo.modules.autobackup'
+version = '0.0.1'
+
+def expoModulesCorePlugin = new File(project(":expo-modules-core").projectDir.absolutePath, "ExpoModulesCorePlugin.gradle")
+apply from: expoModulesCorePlugin
+applyKotlinExpoModulesCorePlugin()
+useCoreDependencies()
+useExpoPublishing()
+
+android {
+  namespace "expo.modules.autobackup"
+  compileSdk rootProject.ext.compileSdkVersion ?: 36
+  defaultConfig {
+    minSdkVersion rootProject.ext.minSdkVersion ?: 26
+    targetSdkVersion rootProject.ext.targetSdkVersion ?: 36
+  }
+  buildFeatures {
+    buildConfig true
+  }
+}
+
+dependencies {
+  implementation project(':expo-modules-core')
+  // The worker starts the JS runtime when it fires with no Activity. Same reason
+  // and same unpinned form as car-auto: expo-modules-core keeps React Native off
+  // our compile classpath, and the root project plugin resolves the version.
+  implementation "com.facebook.react:react-android"
+  // 2.11.x carries Kotlin 2.1 metadata; keep an eye on that when bumping (see
+  // the cast-framework hold-back for what a newer metadata version breaks).
+  implementation "androidx.work:work-runtime-ktx:2.11.2"
+}

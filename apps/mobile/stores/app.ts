@@ -38,6 +38,10 @@ export type CellularStreamFormat = StreamFormat | "same";
 // stretching, so the number of tracks a user picks is a ceiling and not a
 // promise (a lossless library reaches the cap far sooner than a lossy one).
 export const TRACK_CACHE_COUNTS = [3, 5, 10, 20] as const;
+export const AUTO_BACKUP_KEEP_MIN = 1;
+export const AUTO_BACKUP_KEEP_MAX = 30;
+export const AUTO_BACKUP_KEEP_DEFAULT = 7;
+
 export type TrackCacheCount = (typeof TRACK_CACHE_COUNTS)[number];
 
 export const TRACK_CACHE_BUDGETS_MB = [250, 500, 1000, 2000] as const;
@@ -246,6 +250,21 @@ interface AppStore {
   setTrackCacheOnCellular: (trackCacheOnCellular: boolean) => void;
   autoSignOutOnServerUnreachable: boolean;
   setAutoSignOutOnServerUnreachable: (enabled: boolean) => void;
+  // Daily automatic backup (issue #262) into a SAF tree the user picked, so
+  // Android-only for the same reason as downloadLocationUri. The time is minutes
+  // after local midnight. Travels in a backup, and like downloadLocationUri the
+  // folder grant doesn't survive onto another device: it shows as unavailable
+  // there until re-picked.
+  autoBackupEnabled: boolean;
+  setAutoBackupEnabled: (enabled: boolean) => void;
+  autoBackupMinuteOfDay: number;
+  setAutoBackupMinuteOfDay: (minuteOfDay: number) => void;
+  autoBackupFolderUri: string | null;
+  setAutoBackupFolderUri: (folderUri: string | null) => void;
+  // How many automatic backups the folder keeps; older ones are pruned after
+  // each run. Clamped to AUTO_BACKUP_KEEP_MIN..MAX.
+  autoBackupKeepCount: number;
+  setAutoBackupKeepCount: (keepCount: number) => void;
   // Only scan a network file share's library over Wi-Fi. A first scan reads the
   // tag region of every file on the share, which on a large library is a lot of
   // metered data — and unlike playback it isn't something the user asked for at
@@ -512,6 +531,27 @@ export const useAppBase = create<AppStore>()(
       autoSignOutOnServerUnreachable: false,
       setAutoSignOutOnServerUnreachable: (enabled: boolean) => {
         set({ autoSignOutOnServerUnreachable: enabled });
+      },
+      autoBackupEnabled: false,
+      setAutoBackupEnabled: (enabled: boolean) => {
+        set({ autoBackupEnabled: enabled });
+      },
+      autoBackupMinuteOfDay: 3 * 60,
+      setAutoBackupMinuteOfDay: (minuteOfDay: number) => {
+        set({ autoBackupMinuteOfDay: minuteOfDay });
+      },
+      autoBackupFolderUri: null,
+      setAutoBackupFolderUri: (folderUri: string | null) => {
+        set({ autoBackupFolderUri: folderUri });
+      },
+      autoBackupKeepCount: AUTO_BACKUP_KEEP_DEFAULT,
+      setAutoBackupKeepCount: (keepCount: number) => {
+        set({
+          autoBackupKeepCount: Math.min(
+            AUTO_BACKUP_KEEP_MAX,
+            Math.max(AUTO_BACKUP_KEEP_MIN, Math.round(keepCount)),
+          ),
+        });
       },
       scanOnWifiOnly: true,
       setScanOnWifiOnly: (enabled: boolean) => {
