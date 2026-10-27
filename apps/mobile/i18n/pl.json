@@ -1616,6 +1616,8 @@
 					"scanMusicLibraryAction": "Skanuj",
 					"scanOnWifiOnlyLabel": "Skanuj tylko przez Wi-Fi",
 					"scanOnWifiOnlyDescription": "Pierwsze skanowanie odczytuje tagi z każdego pliku udostępnionego, który może użyć wielu danych mobilnych.",
+					"searchAllLibrariesLabel": "Search every library",
+					"searchAllLibrariesDescription": "Search finds music in all your libraries, even when you browse just some of them.",
 					"coverArtLabel": "Okładka w folderach",
 					"coverArtDescription": "Gdy utwór nie ma własnej okładki, Wavio używa obok niego pliku obrazu, takiego jak cover.jpg, folder.png lub artist.jpg. Obraz folderu ma również pierwszeństwo przed okładką osadzoną w pliku, więc możesz zmienić grafikę albumu bez przeciągania jej. Folder albumu bez obrazu może dziedziczyć jeden z folderu powyżej, gdy wszystko pod nim należy do tego samego albumu, co sprawia, że układy CD1 / CD2 działają. Obsługiwane są JPEG, PNG, WebP i GIF.",
 					"albumArtNamesLabel": "Nazwy plików okładek albumu",
@@ -2320,7 +2322,14 @@
 				"title": "Biblioteki",
 				"allLibraries": "Wszystkie biblioteki",
 				"default": "Domyślna biblioteka",
-				"empty": "Brak dostępnych bibliotek"
+				"empty": "Brak dostępnych bibliotek",
+				"pickOneOrMore": "Pick one or more",
+				"selectionSeparator": ", ",
+				"searchCoversAll": "Search still looks in every library.",
+				"selectionMore_one": "+{{count}}",
+				"selectionMore_few": "+{{count}}",
+				"selectionMore_many": "+{{count}}",
+				"selectionMore_other": "+{{count}}"
 			},
 			"servers": {
 				"oidcToggleHelp": "Zaloguj się na ten serwer przez dostawcę tożsamości przed nim, a nie hasłem. Odnosi się do następnego logowania.",
