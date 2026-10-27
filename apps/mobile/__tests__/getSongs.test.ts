@@ -264,7 +264,7 @@ describe("jellyfin getSongs", () => {
     const rsp = await jellyfinGetSongs({
       query: "bicep",
       size: 50,
-      musicFolderId: "folder-1",
+      musicFolderIds: ["folder-1"],
     });
 
     expect(rsp.songs.song?.map((song) => song.id)).toEqual(["a"]);

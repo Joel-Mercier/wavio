@@ -292,16 +292,23 @@ export async function subsonicRequest<T>(
 // (deleted/reindexed on the server → code 70). Resolve that "data not found" to
 // an empty payload so the UI shows an empty state instead of an error, and don't
 // report it as a bug.
+//
+// Several folders go out as the key repeated (`musicFolderId=1&musicFolderId=2`),
+// which is how Navidrome reads a multi-library selection. Only Navidrome is ever
+// handed more than one (the `multiMusicFolderSelection` capability).
 export async function folderScopedRequest<T>(
   path: string,
-  params: Record<string, unknown>,
+  {
+    musicFolderIds,
+    ...params
+  }: Record<string, unknown> & { musicFolderIds?: string[] },
   emptyPayload: T,
 ): Promise<OpenSubsonicResponse<T>["subsonic-response"]> {
   try {
     return await subsonicRequest<T>(
       path,
-      params,
-      {},
+      { ...params, musicFolderId: musicFolderIds },
+      { paramsSerializer: { indexes: null } },
       {
         notFoundIsExpected: true,
       },

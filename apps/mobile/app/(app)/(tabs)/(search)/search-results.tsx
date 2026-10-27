@@ -21,9 +21,9 @@ import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { useSearch3 } from "@/hooks/backend/useSearching";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
+import useSearchMusicFolderIds from "@/hooks/useSearchMusicFolderIds";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
 import useAudioMuse from "@/stores/audioMuse";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import useRecentSearches from "@/stores/recentSearches";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
@@ -41,7 +41,7 @@ export default function SearchResultsScreen() {
   const [activeTabIndex, setActiveTabIndex] = useState(0);
   const screenBottomPadding = useScreenBottomPadding();
   const insets = useSafeAreaInsets();
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useSearchMusicFolderIds();
   const addRecentSearch = useRecentSearches((store) => store.addRecentSearch);
   const audioMuseConnected = useAudioMuse((store) => store.isConnected);
   const clapEnabled = useAudioMuse((store) => store.clapEnabled);
@@ -76,7 +76,7 @@ export default function SearchResultsScreen() {
       songOffset: 0,
       artistCount: 12,
       artistOffset: 0,
-      musicFolderId,
+      musicFolderIds,
     },
     // Held back while an AudioMuse tab is showing, so opening the screen fires
     // one search instead of every tab's at once.

@@ -107,13 +107,13 @@ const fetchAllLovedTracks = async ({
 
 export async function importLovedTracks({
   userName,
-  musicFolderId,
+  musicFolderIds,
   multiFieldSearch,
   signal,
   onProgress,
 }: {
   userName: string;
-  musicFolderId?: string;
+  musicFolderIds?: string[];
   multiFieldSearch?: boolean;
   signal?: AbortSignal;
   onProgress?: (progress: LovedImportProgress) => void;
@@ -139,7 +139,7 @@ export async function importLovedTracks({
     recordingMbid: track.mbid,
   }));
   const matches = await matchTracksToLibrary(externals, {
-    musicFolderId,
+    musicFolderIds,
     signal,
     multiFieldSearch,
   });

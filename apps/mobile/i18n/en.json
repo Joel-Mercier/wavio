@@ -1528,6 +1528,8 @@
 					"scanMusicLibraryAction": "Scan",
 					"scanOnWifiOnlyLabel": "Scan on Wi-Fi only",
 					"scanOnWifiOnlyDescription": "A first scan reads tags from every file on the share, which can use a lot of mobile data.",
+					"searchAllLibrariesLabel": "Search every library",
+					"searchAllLibrariesDescription": "Search finds music in all your libraries, even when you browse just some of them.",
 					"coverArtLabel": "Cover art in folders",
 					"coverArtDescription": "When a track has no cover of its own, Wavio uses an image file sitting next to it, such as cover.jpg, folder.png or artist.jpg. A folder image also takes precedence over a cover embedded in the file, so you can change an album's artwork without retagging it. An album folder with no image can inherit one from the folder above when everything under it belongs to the same album, which is what makes CD1 / CD2 layouts work. JPEG, PNG, WebP and GIF are supported.",
 					"albumArtNamesLabel": "Album cover filenames",
@@ -2207,7 +2209,12 @@
 				"title": "Libraries",
 				"allLibraries": "All libraries",
 				"default": "Default library",
-				"empty": "No libraries available"
+				"empty": "No libraries available",
+				"pickOneOrMore": "Pick one or more",
+				"selectionSeparator": ", ",
+				"selectionMore_one": "+{{count}}",
+				"selectionMore_other": "+{{count}}",
+				"searchCoversAll": "Search still looks in every library."
 			},
 			"servers": {
 				"oidcToggleHelp": "Sign in to this server through the identity provider in front of it instead of with a password. Applies from the next sign-in.",

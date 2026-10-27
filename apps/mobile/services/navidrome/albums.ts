@@ -72,7 +72,7 @@ export const getAlbumList2 = async (
     offset = 0,
     genre,
     order,
-    musicFolderId,
+    musicFolderIds,
   }: {
     size?: number;
     offset?: number;
@@ -85,7 +85,7 @@ export const getAlbumList2 = async (
     fromYear?: number;
     toYear?: number;
     order?: SortDirection;
-    musicFolderId?: string;
+    musicFolderIds?: string[];
   } = {},
 ): Promise<{ albumList2: AlbumList2 }> => {
   if (useAuthBase.getState().serverType !== "navidrome") {
@@ -99,7 +99,7 @@ export const getAlbumList2 = async (
       // `_end` is exclusive, so this asks for exactly `size` rows.
       _end: offset + size,
       genre,
-      library_id: musicFolderId,
+      library_id: musicFolderIds,
     },
   });
   return {

@@ -66,7 +66,7 @@ type CountKey = (typeof SECTIONS)[number]["count"];
 type OffsetKey = (typeof SECTIONS)[number]["offset"];
 
 type SearchOptions = Partial<Record<CountKey | OffsetKey, number>> & {
-  musicFolderId?: string;
+  musicFolderIds?: string[];
 };
 
 type SearchResult = Partial<Record<SectionKey, Array<{ id: string }>>>;

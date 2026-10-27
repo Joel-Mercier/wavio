@@ -56,14 +56,14 @@ function paramsFor(
     fromYear,
     toYear,
     genre,
-    musicFolderId,
+    musicFolderIds,
   }: {
     size?: number;
     offset?: number;
     fromYear?: number;
     toYear?: number;
     genre?: string;
-    musicFolderId?: string;
+    musicFolderIds?: string[];
     // Applied by albumParams below rather than here, so each `case` keeps
     // stating the direction it serves by default.
     order?: SortDirection;
@@ -76,7 +76,7 @@ function paramsFor(
     Fields: FIELDS,
     Limit: size,
     StartIndex: offset,
-    ParentId: musicFolderId,
+    ParentId: musicFolderIds?.[0],
   };
   switch (type) {
     case "random":
@@ -186,7 +186,7 @@ async function fetchAlbums(
             // approximately `size` albums back.
             Limit: size * 4,
             Fields: FIELDS,
-            ParentId: opts.musicFolderId,
+            ParentId: opts.musicFolderIds?.[0],
             ImageTypeLimit: 1,
             EnableImageTypes: "Primary,Backdrop,Banner,Thumb",
           },
@@ -305,7 +305,7 @@ const ledgerReads = new Map<string, Promise<PlayLedger>>();
 
 async function topUpPlayLedger(
   key: string,
-  musicFolderId: string | undefined,
+  musicFolderIds: string[] | undefined,
 ): Promise<PlayLedger> {
   const ledger: PlayLedger = playLedgers.get(key) ?? { tracks: new Map() };
   const since = ledger.watermark;
@@ -316,7 +316,7 @@ async function topUpPlayLedger(
       params: {
         UserId: userId(),
         ...PLAYED_TRACKS_PARAMS,
-        ParentId: musicFolderId,
+        ParentId: musicFolderIds?.[0],
         SortBy: "DatePlayed",
         SortOrder: "Descending",
         StartIndex: start,
@@ -344,11 +344,11 @@ async function topUpPlayLedger(
   return ledger;
 }
 
-function readPlayLedger(musicFolderId: string | undefined) {
-  const key = [serverKey(), userId(), musicFolderId ?? ""].join("|");
+function readPlayLedger(musicFolderIds: string[] | undefined) {
+  const key = [serverKey(), userId(), musicFolderIds?.[0] ?? ""].join("|");
   const pending = ledgerReads.get(key);
   if (pending) return pending;
-  const read = topUpPlayLedger(key, musicFolderId).finally(() =>
+  const read = topUpPlayLedger(key, musicFolderIds).finally(() =>
     ledgerReads.delete(key),
   );
   ledgerReads.set(key, read);
@@ -392,13 +392,17 @@ async function fetchAlbumsByPlays(
   type: "frequent" | "recent",
   opts: Parameters<typeof paramsFor>[1],
 ): Promise<BaseItemDto[]> {
-  const { size = 20, offset = 0, musicFolderId, order = "desc" } = opts;
-  const key = [serverKey(), userId(), musicFolderId ?? "", type, order].join(
-    "|",
-  );
+  const { size = 20, offset = 0, musicFolderIds, order = "desc" } = opts;
+  const key = [
+    serverKey(),
+    userId(),
+    musicFolderIds?.[0] ?? "",
+    type,
+    order,
+  ].join("|");
   let ranking = offset > 0 ? albumRankings.get(key) : undefined;
   if (!ranking) {
-    const ledger = await readPlayLedger(musicFolderId);
+    const ledger = await readPlayLedger(musicFolderIds);
     ranking = rankAlbums(sumByAlbum(ledger.tracks.values()), type, order);
     albumRankings.set(key, ranking);
   }
@@ -441,11 +445,11 @@ export const getRandomAlbumsWithPlayCounts = async (
 export const getMostPlayedSongs = async ({
   size = 20,
   offset = 0,
-  musicFolderId,
+  musicFolderIds,
 }: {
   size?: number;
   offset?: number;
-  musicFolderId?: string;
+  musicFolderIds?: string[];
 } = {}) => {
   const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
     params: {
@@ -458,7 +462,7 @@ export const getMostPlayedSongs = async ({
       Limit: size,
       StartIndex: offset,
       Fields: FIELDS,
-      ParentId: musicFolderId,
+      ParentId: musicFolderIds?.[0],
     },
   });
   const songs: Songs = {
@@ -479,13 +483,13 @@ export const getRandomSongs = async ({
   fromYear,
   toYear,
   genre,
-  musicFolderId,
+  musicFolderIds,
 }: {
   size?: number;
   fromYear?: number;
   toYear?: number;
   genre?: string;
-  musicFolderId?: string;
+  musicFolderIds?: string[];
 }) => {
   const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
     params: {
@@ -496,7 +500,7 @@ export const getRandomSongs = async ({
       Limit: size,
       Fields: FIELDS,
       Genres: genre,
-      ParentId: musicFolderId,
+      ParentId: musicFolderIds?.[0],
       Years:
         fromYear != null && toYear != null
           ? Array.from(
@@ -523,7 +527,7 @@ const SEARCH_WINDOW = 200;
 
 const fetchAudio = async (
   params: Record<string, unknown>,
-  musicFolderId?: string,
+  musicFolderIds?: string[],
 ) => {
   const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
     params: {
@@ -533,7 +537,7 @@ const fetchAudio = async (
       SortBy: "SortName",
       SortOrder: "Ascending",
       Fields: FIELDS,
-      ParentId: musicFolderId,
+      ParentId: musicFolderIds?.[0],
       ...params,
     },
   });
@@ -550,13 +554,13 @@ const fetchAudio = async (
 // getMusicDirectory can't browse an artist by ParentId), so a Recursive /Items
 // query scoped to a music folder never returns them. /Artists is the endpoint
 // that does, and its ids are what the ArtistIds filter expects.
-const searchArtistIds = async (query: string, musicFolderId?: string) => {
+const searchArtistIds = async (query: string, musicFolderIds?: string[]) => {
   const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Artists", {
     params: {
       UserId: userId(),
       SearchTerm: query,
       Limit: SEARCH_HINTS,
-      ParentId: musicFolderId,
+      ParentId: musicFolderIds?.[0],
       IncludeItemTypes: MUSIC_ARTIST_ITEM_TYPES,
     },
   });
@@ -564,7 +568,7 @@ const searchArtistIds = async (query: string, musicFolderId?: string) => {
 };
 
 // Albums are ordinary descendants, so they do come back from /Items.
-const searchAlbumIds = async (query: string, musicFolderId?: string) => {
+const searchAlbumIds = async (query: string, musicFolderIds?: string[]) => {
   const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
     params: {
       UserId: userId(),
@@ -572,7 +576,7 @@ const searchAlbumIds = async (query: string, musicFolderId?: string) => {
       IncludeItemTypes: "MusicAlbum",
       SearchTerm: query,
       Limit: SEARCH_HINTS,
-      ParentId: musicFolderId,
+      ParentId: musicFolderIds?.[0],
     },
   });
   return (rsp.data?.Items ?? []).map((item) => item.Id).filter(Boolean);
@@ -582,24 +586,24 @@ const searchSongs = async (
   query: string,
   size: number,
   offset: number,
-  musicFolderId?: string,
+  musicFolderIds?: string[],
 ) => {
   const [byName, artistIds, albumIds] = await Promise.all([
-    fetchAudio({ SearchTerm: query, Limit: SEARCH_WINDOW }, musicFolderId),
-    searchArtistIds(query, musicFolderId),
-    searchAlbumIds(query, musicFolderId),
+    fetchAudio({ SearchTerm: query, Limit: SEARCH_WINDOW }, musicFolderIds),
+    searchArtistIds(query, musicFolderIds),
+    searchAlbumIds(query, musicFolderIds),
   ]);
   const [byArtist, byAlbum] = await Promise.all([
     artistIds.length
       ? fetchAudio(
           { ArtistIds: artistIds.join(","), Limit: SEARCH_WINDOW },
-          musicFolderId,
+          musicFolderIds,
         )
       : [],
     albumIds.length
       ? fetchAudio(
           { AlbumIds: albumIds.join(","), Limit: SEARCH_WINDOW },
-          musicFolderId,
+          musicFolderIds,
         )
       : [],
   ]);
@@ -635,18 +639,18 @@ export const getSongs = async ({
   size = 50,
   offset = 0,
   sort,
-  musicFolderId,
+  musicFolderIds,
 }: {
   query?: string;
   size?: number;
   offset?: number;
   sort?: SongSortType;
-  musicFolderId?: string;
+  musicFolderIds?: string[];
 } = {}) => {
   const { field, direction } = parseSortType(sort ?? "defaultAsc");
   const sortBy = SONG_SORT_BY[field];
   const items = query
-    ? await searchSongs(query, size, offset, musicFolderId)
+    ? await searchSongs(query, size, offset, musicFolderIds)
     : await fetchAudio(
         {
           Limit: size,
@@ -656,7 +660,7 @@ export const getSongs = async ({
             SortOrder: direction === "desc" ? "Descending" : "Ascending",
           }),
         },
-        musicFolderId,
+        musicFolderIds,
       );
   const songs: Songs = { song: items.map(mapBaseItemToChild) };
   return fakeEnvelope({ songs });
@@ -667,8 +671,8 @@ export const getSongsByGenre = async (
   {
     count = 20,
     offset = 0,
-    musicFolderId,
-  }: { count?: number; offset?: number; musicFolderId?: string },
+    musicFolderIds,
+  }: { count?: number; offset?: number; musicFolderIds?: string[] },
 ) => {
   const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
     params: {
@@ -680,7 +684,7 @@ export const getSongsByGenre = async (
       Limit: count,
       StartIndex: offset,
       Fields: FIELDS,
-      ParentId: musicFolderId,
+      ParentId: musicFolderIds?.[0],
     },
   });
   const songs: Songs = {
@@ -723,7 +727,7 @@ async function getFavorites(type: "MusicAlbum" | "Audio" | "MusicArtist") {
   return rsp.data?.Items ?? [];
 }
 
-export const getStarred = async (_params: { musicFolderId?: string }) => {
+export const getStarred = async (_params: { musicFolderIds?: string[] }) => {
   const [albums, songs, artists] = await Promise.all([
     getFavorites("MusicAlbum"),
     getFavorites("Audio"),
@@ -737,7 +741,7 @@ export const getStarred = async (_params: { musicFolderId?: string }) => {
   return fakeEnvelope({ starred });
 };
 
-export const getStarred2 = async (_params: { musicFolderId?: string }) => {
+export const getStarred2 = async (_params: { musicFolderIds?: string[] }) => {
   const [albums, songs, artists] = await Promise.all([
     getFavorites("MusicAlbum"),
     getFavorites("Audio"),

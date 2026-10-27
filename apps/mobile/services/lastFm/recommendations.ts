@@ -49,7 +49,7 @@ export async function fetchLastFmSimilarSongs(
   });
   if (similar.length === 0) return [];
 
-  const { musicFolderId, multiFieldSearch } = currentLibrarySearchContext();
+  const { musicFolderIds, multiFieldSearch } = currentLibrarySearchContext();
   const matches = await matchTracksToLibrary(
     similar.map((track, index) => ({
       // Last.fm can name the same recording twice under different mbids, so the
@@ -60,7 +60,7 @@ export async function fetchLastFmSimilarSongs(
       durationMs: track.durationMs,
       recordingMbid: track.mbid,
     })),
-    { musicFolderId, multiFieldSearch, signal },
+    { musicFolderIds, multiFieldSearch, signal },
   );
 
   // Order is Last.fm's, best match first, and matchTracksToLibrary preserves it.

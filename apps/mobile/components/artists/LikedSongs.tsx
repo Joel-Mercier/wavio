@@ -60,7 +60,7 @@ import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { playTracks, togglePlayPause } from "@/services/player";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
@@ -86,8 +86,8 @@ export default function LikedSongs() {
   const screenBottomPadding = useScreenBottomPadding();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const { data } = useArtist(id);
-  const musicFolderId = useCurrentMusicFolderId();
-  const { data: starredData } = useStarred2({ musicFolderId });
+  const musicFolderIds = useCurrentMusicFolderIds();
+  const { data: starredData } = useStarred2({ musicFolderIds });
   const likedSongs =
     starredData?.starred2?.song?.filter((song) => song.artistId === id) ?? [];
   const likedAlbums =

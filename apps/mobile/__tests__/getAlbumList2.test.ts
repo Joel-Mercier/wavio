@@ -408,7 +408,7 @@ describe("jellyfin frequent albums", () => {
 
     const rsp = await jellyfinGetAlbumList2("frequent", {
       size: 10,
-      musicFolderId: "lib",
+      musicFolderIds: ["lib"],
     });
 
     expect(mockJellyfinGet.mock.calls[0][1].params).toMatchObject({

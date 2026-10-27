@@ -5,7 +5,11 @@ import { isSingletonServerType } from "@/services/backend/serverTraits";
 import { SCOPED_STORE_NAMES } from "@/services/backupStoreKeys";
 import { reportError } from "@/services/errorReporting";
 import { useAuthBase } from "@/stores/auth";
-import { useMusicFoldersBase } from "@/stores/musicFolders";
+import {
+  type MusicFolderSelection,
+  normalizeMusicFolderSelection,
+  useMusicFoldersBase,
+} from "@/stores/musicFolders";
 import { usePodcastsBase } from "@/stores/podcasts";
 import { useRadioStationsBase } from "@/stores/radioStations";
 import type { Server, ServerUser } from "@/stores/servers";
@@ -183,16 +187,14 @@ export function remapMusicFolderSelections(
   remap: ScopeRemap,
 ): Record<string, unknown> | null {
   return rewriteGlobalBlob("musicFolders", (state) => {
-    const selections = state.selections as
-      | Record<string, string | undefined>
-      | undefined;
+    const selections = state.selections as Record<string, unknown> | undefined;
     if (!selections) return false;
     let changed = false;
-    const next: Record<string, string | undefined> = {};
+    const next: Record<string, MusicFolderSelection> = {};
     for (const [scope, value] of Object.entries(selections)) {
       const to = remap.get(scope);
       if (to) changed = true;
-      next[to ?? scope] = value;
+      next[to ?? scope] = normalizeMusicFolderSelection(value);
     }
     if (!changed) return false;
     state.selections = next;

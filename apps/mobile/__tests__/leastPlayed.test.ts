@@ -61,13 +61,13 @@ describe("getLeastPlayedAlbums", () => {
 
     const result = await getLeastPlayedAlbums({
       size: 2,
-      musicFolderId: "lib-1",
+      musicFolderIds: ["lib-1"],
     });
 
     expect(mockGetAlbumList2).toHaveBeenCalledWith("random", {
       size: 8,
       offset: 0,
-      musicFolderId: "lib-1",
+      musicFolderIds: ["lib-1"],
     });
     expect(result.albumList2.album.map((a) => a.id)).toEqual(["b", "d"]);
     expect(result.poolCount).toBe(4);
@@ -81,7 +81,7 @@ describe("getLeastPlayedAlbums", () => {
     expect(mockGetAlbumList2).toHaveBeenCalledWith("random", {
       size: 48,
       offset: 96,
-      musicFolderId: undefined,
+      musicFolderIds: undefined,
     });
   });
 
@@ -93,7 +93,7 @@ describe("getLeastPlayedAlbums", () => {
     expect(mockGetAlbumList2).toHaveBeenCalledWith("random", {
       size: 500,
       offset: 500,
-      musicFolderId: undefined,
+      musicFolderIds: undefined,
     });
   });
 

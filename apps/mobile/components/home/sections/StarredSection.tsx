@@ -5,7 +5,7 @@ import { useSectionEnabled } from "@/components/home/enabledSections";
 import HomeSection from "@/components/home/sections/HomeSection";
 import { ALBUM_CAROUSEL_SKELETON } from "@/components/home/sections/skeletons";
 import { useStarred2 } from "@/hooks/backend/useLists";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 
 interface StarredSectionProps {
   sectionIndex: number;
@@ -14,9 +14,9 @@ interface StarredSectionProps {
 function StarredSection({ sectionIndex }: StarredSectionProps) {
   const enabled = useSectionEnabled(sectionIndex);
   const { t } = useTranslation();
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const { data, isLoading, error } = useStarred2(
-    { musicFolderId },
+    { musicFolderIds },
     { enabled },
   );
   const albums = data?.starred2?.album?.slice(0, 12);

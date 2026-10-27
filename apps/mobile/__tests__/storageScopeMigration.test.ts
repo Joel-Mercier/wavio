@@ -63,6 +63,8 @@ const mockSetStates = {
   radioStations: jest.fn(),
 };
 jest.mock("@/stores/musicFolders", () => ({
+  normalizeMusicFolderSelection: (value: unknown) =>
+    typeof value === "string" ? [value] : value,
   useMusicFoldersBase: {
     setState: (s: unknown) => mockSetStates.musicFolders(s),
   },
@@ -383,7 +385,7 @@ describe("runStorageScopeMigration", () => {
     expect(mockFiles.has(`/doc/SQLite/local-library-${NEW}.db`)).toBe(true);
   });
 
-  it("rekeys the musicFolders selections map", () => {
+  it("rekeys the musicFolders selections map, lifting a legacy id into a list", () => {
     mockMem.set("servers", remoteServers());
     mockMem.set(`${OLD}:bookmarks`, "b");
     mockMem.set("musicFolders", wrap({ selections: { [OLD]: "folder-9" } }));
@@ -391,7 +393,7 @@ describe("runStorageScopeMigration", () => {
     runStorageScopeMigration();
 
     expect(mockSetStates.musicFolders.mock.calls[0][0].selections).toEqual({
-      [NEW]: "folder-9",
+      [NEW]: ["folder-9"],
     });
   });
 

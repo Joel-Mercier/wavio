@@ -20,8 +20,8 @@ import { Text } from "@/components/ui/text";
 import { useSearch3 } from "@/hooks/backend/useSearching";
 import useDebounce from "@/hooks/useDebounce";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
+import useSearchMusicFolderIds from "@/hooks/useSearchMusicFolderIds";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import useRecentSearches, { type RecentSearch } from "@/stores/recentSearches";
 import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
@@ -56,7 +56,7 @@ export default function RecentSearchesScreen() {
   useEffect(() => {
     debounce(() => setDebouncedQuery(query));
   }, [query, debounce]);
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useSearchMusicFolderIds();
   const { data, isLoading, error } = useSearch3(debouncedQuery, {
     albumCount: 12,
     albumOffset: 0,
@@ -64,7 +64,7 @@ export default function RecentSearchesScreen() {
     songOffset: 0,
     artistCount: 12,
     artistOffset: 0,
-    musicFolderId,
+    musicFolderIds,
   });
 
   const searchData = useMemo(() => {

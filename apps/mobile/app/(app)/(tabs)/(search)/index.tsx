@@ -39,7 +39,7 @@ import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { Genre } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import useAuth from "@/stores/auth";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import {
   GENRE_SORT_FIELDS,
   GENRE_SORT_SPECS,
@@ -77,8 +77,8 @@ export default function SearchScreen() {
   const sortFieldLabel = useSortFieldLabel();
   const router = useRouter();
   const screenBottomPadding = useScreenBottomPadding();
-  const musicFolderId = useCurrentMusicFolderId();
-  const { data, isLoading, error } = useGenres({ musicFolderId });
+  const musicFolderIds = useCurrentMusicFolderIds();
+  const { data, isLoading, error } = useGenres({ musicFolderIds });
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const numColumns = gridColumnCount(width, {

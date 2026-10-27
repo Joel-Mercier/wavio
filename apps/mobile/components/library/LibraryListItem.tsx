@@ -40,7 +40,7 @@ import type {
   ArtistID3,
   Playlist,
 } from "@/services/openSubsonic/types";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import type { PodcastSource } from "@/stores/podcasts";
 import useRadioStations, {
   type RadioStationSource,
@@ -205,7 +205,7 @@ export default function LibraryListItem({
   const { t, i18n } = useTranslation();
   const isOnline = useIsOnline();
   const offlineModeEnabled = useOfflineModeEnabled();
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const { sortParam } = useSongSort();
   const { listParams: albumListParams } = useAlbumSort();
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -410,23 +410,23 @@ export default function LibraryListItem({
         // Same rule as allTracks below: `order` is undefined in the album-list
         // type's own direction and JSON.stringify drops it, so the default sort
         // reproduces the exact key it had before the browse could be reordered.
-        return ["albumList2:infinite", { ...albumListParams, musicFolderId }];
+        return ["albumList2:infinite", { ...albumListParams, musicFolderIds }];
       case "allArtists":
-        return ["artists", { musicFolderId }];
+        return ["artists", { musicFolderIds }];
       case "allTracks":
         // `sort` is undefined in the backend's own order, and JSON.stringify
         // drops it — so the unsorted key is byte-identical to what it was
         // before the browse could sort.
         return [
           "songs:infinite",
-          { query: "", size: 50, sort: sortParam, musicFolderId },
+          { query: "", size: 50, sort: sortParam, musicFolderIds },
         ];
       case "folder":
-        return ["indexes", { musicFolderId: item.id }];
+        return ["indexes", { musicFolderIds: item.id }];
       default:
         return null;
     }
-  }, [type.id, item.id, musicFolderId, sortParam, albumListParams]);
+  }, [type.id, item.id, musicFolderIds, sortParam, albumListParams]);
   const isDetailCached = useIsDetailCached(detailKey);
 
   // Downloaded badge: albums/playlists show it when the collection is available

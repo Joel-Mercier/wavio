@@ -86,7 +86,7 @@ import { ARTIST_SCREEN_SIMILAR_PARAMS } from "@/services/mixes/artistMix";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { artworkUrl } from "@/utils/artwork";
@@ -153,7 +153,7 @@ export default function ArtistDetail() {
     isLoading: isLoadingTopSongs,
     error: topSongsError,
   } = useTopSongs(data?.artist?.name ?? "", { count: 10, id });
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   // Summed from the discography rather than fetched: the all-songs list itself
   // costs one request per album, which the artist screen shouldn't pay just to
   // label a link.
@@ -164,11 +164,11 @@ export default function ArtistDetail() {
   );
   const { data: appearancesData } = useArtistAppearances(id, {
     name: data?.artist?.name,
-    musicFolderId,
+    musicFolderIds,
   });
   const appearsOnAlbums: AlbumID3[] =
     appearancesData?.artistAppearances?.album ?? [];
-  const { data: starredData } = useStarred2({ musicFolderId });
+  const { data: starredData } = useStarred2({ musicFolderIds });
   const likedSongs =
     starredData?.starred2?.song?.filter((song) => song.artistId === id) ?? [];
   const likedAlbums =

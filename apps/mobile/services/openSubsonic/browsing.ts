@@ -74,13 +74,13 @@ export const getArtistInfo2 = async (
   });
 
 export const getArtists = async ({
-  musicFolderId,
+  musicFolderIds,
 }: {
-  musicFolderId?: string;
+  musicFolderIds?: string[];
 }) =>
   folderScopedRequest<{ artists: ArtistsID3 }>(
     "/rest/getArtists",
-    { musicFolderId },
+    { musicFolderIds },
     { artists: { ignoredArticles: "", index: [] } },
   );
 
@@ -88,15 +88,15 @@ export const getGenres = async () =>
   subsonicRequest<{ genres: Genres }>("/rest/getGenres");
 
 export const getIndexes = async ({
-  musicFolderId,
+  musicFolderIds,
   ifModifiedSince,
 }: {
-  musicFolderId?: string;
+  musicFolderIds?: string[];
   ifModifiedSince?: number;
 }) =>
   folderScopedRequest<{ indexes: Indexes }>(
     "/rest/getIndexes",
-    { musicFolderId, ifModifiedSince },
+    { musicFolderIds, ifModifiedSince },
     { indexes: { ignoredArticles: "", lastModified: 0, index: [] } },
   );
 
@@ -269,7 +269,7 @@ export const getVideos = async () =>
 
 export const getArtistAppearances = async (
   id: string,
-  { name, musicFolderId }: { name?: string; musicFolderId?: string } = {},
+  { name, musicFolderIds }: { name?: string; musicFolderIds?: string[] } = {},
 ) => {
   const album: AlbumID3[] = [];
   if (!name) {
@@ -280,7 +280,7 @@ export const getArtistAppearances = async (
       artistCount: 0,
       albumCount: 0,
       songCount: 500,
-      musicFolderId,
+      musicFolderIds,
     }),
     // Raw call on purpose: a failed envelope just skips the own-albums filter
     // below instead of throwing like subsonicRequest would.

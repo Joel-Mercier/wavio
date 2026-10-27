@@ -6,7 +6,7 @@ import { useSectionEnabled } from "@/components/home/enabledSections";
 import HomeSection from "@/components/home/sections/HomeSection";
 import { ALBUM_CAROUSEL_SKELETON } from "@/components/home/sections/skeletons";
 import { useLeastPlayedAlbums } from "@/hooks/backend/useLists";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 
 const SEE_ALL_HREF: Href = {
   pathname: "/(app)/(tabs)/(home)/least-played",
@@ -16,9 +16,9 @@ const SEE_ALL_HREF: Href = {
 function LeastPlayedAlbumsSection({ sectionIndex }: { sectionIndex: number }) {
   const { t } = useTranslation();
   const enabled = useSectionEnabled(sectionIndex);
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const { data, isLoading, error } = useLeastPlayedAlbums(
-    { size: 12, musicFolderId },
+    { size: 12, musicFolderIds },
     { enabled },
   );
   const albums = data?.albumList2?.album;

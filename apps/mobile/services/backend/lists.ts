@@ -65,11 +65,11 @@ const getRandomAlbumPool = dispatch(
 export const getLeastPlayedAlbums = async ({
   size = 20,
   offset = 0,
-  musicFolderId,
+  musicFolderIds,
 }: {
   size?: number;
   offset?: number;
-  musicFolderId?: string;
+  musicFolderIds?: string[];
 } = {}) => {
   const poolSize = Math.min(
     size * LEAST_PLAYED_POOL_FACTOR,
@@ -78,7 +78,7 @@ export const getLeastPlayedAlbums = async ({
   const response = await getRandomAlbumPool({
     size: poolSize,
     offset: Math.floor(offset / size) * poolSize,
-    musicFolderId,
+    musicFolderIds,
   });
   const pool = response?.albumList2?.album ?? [];
   return {

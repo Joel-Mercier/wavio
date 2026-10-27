@@ -272,6 +272,11 @@ interface AppStore {
   // spending someone's data plan is not a decision the app gets to make.
   scanOnWifiOnly: boolean;
   setScanOnWifiOnly: (enabled: boolean) => void;
+  // The Search tab looks through every library even while browsing is narrowed
+  // to some of them (issue #259: keep singles out of album browsing, but still
+  // find them by name). Off by default, which scopes search like everything else.
+  searchAllLibraries: boolean;
+  setSearchAllLibraries: (enabled: boolean) => void;
   // Re-walk an index-backed library by itself, so files added or removed on a
   // share show up without anyone pressing anything. Cheap by construction: the
   // indexer skips every file whose size and mtime are unchanged, so a sync that
@@ -556,6 +561,10 @@ export const useAppBase = create<AppStore>()(
       scanOnWifiOnly: true,
       setScanOnWifiOnly: (enabled: boolean) => {
         set({ scanOnWifiOnly: enabled });
+      },
+      searchAllLibraries: false,
+      setSearchAllLibraries: (enabled: boolean) => {
+        set({ searchAllLibraries: enabled });
       },
       autoLibrarySync: true,
       setAutoLibrarySync: (enabled: boolean) => {

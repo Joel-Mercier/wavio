@@ -51,14 +51,14 @@ export const getMusicFolders = async () => {
   return localEnvelope({ musicFolders: { musicFolder } });
 };
 
-export const getArtists = async (_opts: { musicFolderId?: string } = {}) => {
+export const getArtists = async (_opts: { musicFolderIds?: string[] } = {}) => {
   const rows = await queryArtists();
   const index = buildArtistIndex(rows.map(mapAggToArtist));
   return localEnvelope({ artists: { ignoredArticles: "", index } });
 };
 
 export const getIndexes = async (
-  _opts: { musicFolderId?: string; ifModifiedSince?: number } = {},
+  _opts: { musicFolderIds?: string[]; ifModifiedSince?: number } = {},
 ) => {
   const rows = await queryArtists();
   // Indexes uses the lighter `Artist` shape (id + name) rather than ArtistID3.
@@ -258,7 +258,9 @@ export const getTopSongs = async (
   return localEnvelope({ topSongs: { song: rows.map(mapRowToChild) } });
 };
 
-export const getGenres = async (_params: { musicFolderId?: string } = {}) => {
+export const getGenres = async (
+  _params: { musicFolderIds?: string[] } = {},
+) => {
   const rows = await queryGenres();
   return localEnvelope({ genres: { genre: rows.map(mapGenreRow) } });
 };
@@ -268,7 +270,7 @@ export const getGenres = async (_params: { musicFolderId?: string } = {}) => {
 // screen simply omits the section instead of hitting localUnsupported().
 export const getArtistAppearances = async (
   _id: string,
-  _opts: { name?: string; musicFolderId?: string } = {},
+  _opts: { name?: string; musicFolderIds?: string[] } = {},
 ) => {
   const album: AlbumID3[] = [];
   return localEnvelope({ artistAppearances: { album } });

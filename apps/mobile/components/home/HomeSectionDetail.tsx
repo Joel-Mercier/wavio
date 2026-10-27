@@ -28,7 +28,7 @@ import { getAlbum } from "@/services/backend/browsing";
 import type { AlbumListType } from "@/services/openSubsonic/lists";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 import { gridColumnCount } from "@/utils/grid";
@@ -75,7 +75,7 @@ export default function HomeSectionDetail() {
           maxColumns: 5,
         })
       : 1;
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => ({
     opacity: interpolate(offsetY.value, [0, 50], [0, 1], Extrapolation.CLAMP),
@@ -87,12 +87,12 @@ export default function HomeSectionDetail() {
     {
       type: isLeastPlayed ? "random" : type,
       size: 12,
-      musicFolderId,
+      musicFolderIds,
     },
     { enabled: !isLeastPlayed },
   );
   const leastPlayedQuery = useInfiniteLeastPlayedAlbums(
-    { size: 12, musicFolderId },
+    { size: 12, musicFolderIds },
     { enabled: isLeastPlayed },
   );
   const {

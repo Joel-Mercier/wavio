@@ -6,7 +6,7 @@ import HomeSection from "@/components/home/sections/HomeSection";
 import { ALBUM_CAROUSEL_SKELETON } from "@/components/home/sections/skeletons";
 import { useAlbumList2 } from "@/hooks/backend/useLists";
 import type { AlbumListType } from "@/services/backend/lists";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 
 interface AlbumCarouselSectionProps {
   title: string;
@@ -30,9 +30,9 @@ function AlbumCarouselSection({
   size = 12,
 }: AlbumCarouselSectionProps) {
   const enabled = useSectionEnabled(sectionIndex);
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const { data, isLoading, error } = useAlbumList2(
-    { type, size, musicFolderId, genre, fromYear, toYear },
+    { type, size, musicFolderIds, genre, fromYear, toYear },
     { enabled },
   );
   const albums = data?.albumList2?.album;

@@ -10,7 +10,7 @@ jest.mock("@/stores/lastFm", () => ({
 }));
 jest.mock("@/services/libraryContext", () => ({
   currentLibrarySearchContext: () => ({
-    musicFolderId: "folder-1",
+    musicFolderIds: ["folder-1"],
     multiFieldSearch: true,
   }),
 }));
@@ -203,7 +203,7 @@ describe("fetchLastFmSimilarSongs", () => {
         },
       ],
       expect.objectContaining({
-        musicFolderId: "folder-1",
+        musicFolderIds: ["folder-1"],
         multiFieldSearch: true,
       }),
     );

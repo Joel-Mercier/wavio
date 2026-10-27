@@ -34,7 +34,7 @@ import type { ArtistID3, IndexID3 } from "@/services/openSubsonic/types";
 import { buildArtistIndex, hasCJK } from "@/services/pinyinIndex";
 import { createSearchIndex } from "@/services/searchIndex";
 import useApp from "@/stores/app";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import {
   ARTIST_SORT_FIELDS,
   type ArtistSortType,
@@ -68,7 +68,7 @@ export default function AllArtistsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const form = useForm({ defaultValues: { query: "" } });
   const query = useSelector(form.store, (state) => state.values.query);
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -89,7 +89,7 @@ export default function AllArtistsScreen() {
     data: serverData,
     isLoading: isLoadingServer,
     error,
-  } = useArtists({ musicFolderId });
+  } = useArtists({ musicFolderIds });
   // Offline fall back to artists derived from downloaded album collections so
   // an extended-offline library keeps its artist browse without a cached
   // server response; only derived while server data is absent. The fallback

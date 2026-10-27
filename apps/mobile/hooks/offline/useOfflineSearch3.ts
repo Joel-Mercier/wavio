@@ -25,7 +25,7 @@ type OfflineSearch3Params = {
   albumOffset?: number;
   songCount?: number;
   songOffset?: number;
-  musicFolderId?: string;
+  musicFolderIds?: string[];
 };
 
 const EMPTY_INDEX = createOfflineSearchIndex({
@@ -71,7 +71,7 @@ export function useOfflineSearch3(
     downloadedCollections,
   ]);
 
-  // musicFolderId is ignored offline: downloads and the persisted cache aren't
+  // musicFolderIds is ignored offline: downloads and the persisted cache aren't
   // folder-scoped, so there's nothing to filter on. `data` is undefined for an
   // empty query, mirroring the online `enabled: query.length > 0` gate.
   const data = useMemo(() => {

@@ -86,7 +86,7 @@ describe("importLovedTracks", () => {
 
     await importLovedTracks({
       userName: "someone",
-      musicFolderId: "folder-2",
+      musicFolderIds: ["folder-2"],
       multiFieldSearch: false,
     });
 
@@ -100,7 +100,7 @@ describe("importLovedTracks", () => {
         },
       ],
       expect.objectContaining({
-        musicFolderId: "folder-2",
+        musicFolderIds: ["folder-2"],
         multiFieldSearch: false,
       }),
     );

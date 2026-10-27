@@ -298,11 +298,11 @@ describe("matchTracksToLibrary", () => {
   it("passes the music folder through to the search", async () => {
     always(song({ id: "lib-1" }));
 
-    await matchTracksToLibrary([external()], { musicFolderId: "folder-2" });
+    await matchTracksToLibrary([external()], { musicFolderIds: ["folder-2"] });
 
     expect(search3Mock).toHaveBeenCalledWith(
       "Cascade",
-      expect.objectContaining({ musicFolderId: "folder-2" }),
+      expect.objectContaining({ musicFolderIds: ["folder-2"] }),
     );
   });
 });

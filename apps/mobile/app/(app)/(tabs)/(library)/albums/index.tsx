@@ -38,7 +38,7 @@ import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { createSearchMatcher, toSearchHaystack } from "@/services/searchText";
 import useApp from "@/stores/app";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import {
   ALBUM_SORT_SPECS,
   type AlbumSortField,
@@ -67,7 +67,7 @@ export default function AllAlbumsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const { width } = useWindowDimensions();
   const { layout, toggle } = useAlbumScreenLayout("library-albums");
   const gridColumns =
@@ -123,7 +123,7 @@ export default function AllAlbumsScreen() {
     isFetchingNextPage,
     refetch: refetchBrowse,
   } = useInfiniteAlbumList2(
-    { ...listParams, musicFolderId },
+    { ...listParams, musicFolderIds },
     { enabled: !isSearching },
   );
   const {
@@ -135,7 +135,7 @@ export default function AllAlbumsScreen() {
     albumOffset: 0,
     artistCount: 0,
     songCount: 0,
-    musicFolderId,
+    musicFolderIds,
   });
 
   const browseAlbums = useMemo(

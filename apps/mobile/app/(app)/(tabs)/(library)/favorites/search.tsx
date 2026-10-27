@@ -24,7 +24,7 @@ import { useTrackSort } from "@/hooks/useTrackSort";
 import type { Child } from "@/services/openSubsonic/types";
 import { createSearchIndex } from "@/services/searchIndex";
 import useApp from "@/stores/app";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
 import { sortItems } from "@/utils/sort";
@@ -39,12 +39,12 @@ export default function FavoritesSearch() {
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const sort = useApp((store) => store.favoritesSort);
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const {
     data: starredData,
     isLoading,
     error,
-  } = useStarred2({ musicFolderId });
+  } = useStarred2({ musicFolderIds });
   const { activeSort } = useTrackSort(starredData?.starred2?.song, sort);
   const form = useForm({
     defaultValues: {

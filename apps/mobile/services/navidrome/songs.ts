@@ -45,11 +45,11 @@ function mapNavidromeSongToChild(song: NavidromeSong): Child {
 export const getMostPlayedSongs = async ({
   size = 20,
   offset = 0,
-  musicFolderId,
+  musicFolderIds,
 }: {
   size?: number;
   offset?: number;
-  musicFolderId?: string;
+  musicFolderIds?: string[];
 } = {}): Promise<{ songs: Songs }> => {
   if (useAuthBase.getState().serverType !== "navidrome") {
     return { songs: { song: [] } };
@@ -60,7 +60,7 @@ export const getMostPlayedSongs = async ({
       _order: "DESC",
       _start: offset,
       _end: offset + size,
-      library_id: musicFolderId,
+      library_id: musicFolderIds,
     },
   });
   // Only surface tracks actually played (mirrors Jellyfin IsPlayed / local
@@ -99,13 +99,13 @@ export const getSongs = async ({
   size = 50,
   offset = 0,
   sort,
-  musicFolderId,
+  musicFolderIds,
 }: {
   query?: string;
   size?: number;
   offset?: number;
   sort?: SongSortType;
-  musicFolderId?: string;
+  musicFolderIds?: string[];
 } = {}): Promise<{ songs: Songs }> => {
   const { field, direction } = parseSortType(sort ?? "defaultAsc");
   const rsp = await navidromeApiInstance.get<NavidromeSong[]>("/song", {
@@ -115,7 +115,7 @@ export const getSongs = async ({
       _start: offset,
       // `_end` is exclusive, so this asks for exactly `size` rows.
       _end: offset + size,
-      library_id: musicFolderId,
+      library_id: musicFolderIds,
     },
   });
   return {

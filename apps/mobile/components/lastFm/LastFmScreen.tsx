@@ -38,7 +38,7 @@ import {
 import { drainLastFmQueue } from "@/services/lastFm/scrobbler";
 import { refreshLastFmServerState } from "@/services/lastFm/serverState";
 import useLastFm from "@/stores/lastFm";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import { invalidateKeys } from "@/utils/invalidateKeys";
 import { AbortedError } from "@/utils/rateLimitedQueue";
 import { cn } from "@/utils/tailwind";
@@ -78,7 +78,7 @@ export default function LastFmScreen() {
   const canConnect = hasLastFmCredentials();
 
   const queryClient = useQueryClient();
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const { multiFieldSearch } = useCapabilities();
   // Reading the loves needs the device online; favouriting the matches needs the
   // music server too, and only the effective value knows about that (a local
@@ -155,7 +155,7 @@ export default function LastFmScreen() {
     try {
       const result = await importLovedTracks({
         userName,
-        musicFolderId,
+        musicFolderIds,
         multiFieldSearch,
         signal: controller.signal,
         onProgress: (progress) => {

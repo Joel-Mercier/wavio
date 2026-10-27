@@ -152,7 +152,7 @@ export const getArtist = async (id: string) => {
 
 export const getArtistAppearances = async (
   id: string,
-  _opts: { name?: string; musicFolderId?: string } = {},
+  _opts: { name?: string; musicFolderIds?: string[] } = {},
 ) => {
   const rsp = await fetchItems(
     {
@@ -238,9 +238,9 @@ export const getArtistInfo2 = async (
 };
 
 export const getArtists = async ({
-  musicFolderId,
+  musicFolderIds,
 }: {
-  musicFolderId?: string;
+  musicFolderIds?: string[];
 }) => {
   const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>(
     "/Artists/AlbumArtists",
@@ -249,7 +249,7 @@ export const getArtists = async ({
         UserId: userId(),
         Recursive: true,
         IncludeItemTypes: MUSIC_ARTIST_ITEM_TYPES,
-        ParentId: musicFolderId,
+        ParentId: musicFolderIds?.[0],
         Fields: COMMON_FIELDS,
         SortBy: "SortName",
       },
@@ -263,9 +263,9 @@ export const getArtists = async ({
 };
 
 export const getGenres = async ({
-  musicFolderId,
+  musicFolderIds,
 }: {
-  musicFolderId?: string;
+  musicFolderIds?: string[];
 } = {}) => {
   const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>(
     "/MusicGenres",
@@ -273,7 +273,7 @@ export const getGenres = async ({
       params: {
         UserId: userId(),
         Fields: "ChildCount",
-        ParentId: musicFolderId,
+        ParentId: musicFolderIds?.[0],
       },
     },
   );
@@ -284,12 +284,12 @@ export const getGenres = async ({
 };
 
 export const getIndexes = async ({
-  musicFolderId,
+  musicFolderIds,
 }: {
-  musicFolderId?: string;
+  musicFolderIds?: string[];
   ifModifiedSince?: number;
 }) => {
-  const artistsRsp = await getArtists({ musicFolderId });
+  const artistsRsp = await getArtists({ musicFolderIds });
   const indexes: Indexes = {
     ignoredArticles: "",
     lastModified: Date.now(),

@@ -107,7 +107,7 @@ function comboQuery(external: ExternalTrack): string {
 
 async function searchCandidates(
   query: string,
-  musicFolderId?: string,
+  musicFolderIds?: string[],
 ): Promise<Child[]> {
   if (!query) return [];
   try {
@@ -115,7 +115,7 @@ async function searchCandidates(
       songCount: CANDIDATE_COUNT,
       albumCount: 0,
       artistCount: 0,
-      musicFolderId,
+      musicFolderIds,
     });
     return response.searchResult3?.song ?? [];
   } catch {
@@ -226,12 +226,12 @@ function dedupeById(candidates: Child[]): Child[] {
 export async function matchTracksToLibrary<T extends ExternalTrack>(
   externals: readonly T[],
   {
-    musicFolderId,
+    musicFolderIds,
     signal,
     concurrency = MATCH_CONCURRENCY,
     multiFieldSearch = true,
   }: {
-    musicFolderId?: string;
+    musicFolderIds?: string[];
     signal?: AbortSignal;
     concurrency?: number;
     /**
@@ -249,7 +249,7 @@ export async function matchTracksToLibrary<T extends ExternalTrack>(
     concurrency,
     async (external) => {
       assertNotAborted(signal);
-      let pool = await searchCandidates(titleQuery(external), musicFolderId);
+      let pool = await searchCandidates(titleQuery(external), musicFolderIds);
       let scored = rank(external, pool);
 
       // Only when the first pass failed: a generic title ("Home", "Alive") whose
@@ -258,7 +258,7 @@ export async function matchTracksToLibrary<T extends ExternalTrack>(
         assertNotAborted(signal);
         pool = dedupeById([
           ...pool,
-          ...(await searchCandidates(comboQuery(external), musicFolderId)),
+          ...(await searchCandidates(comboQuery(external), musicFolderIds)),
         ]);
         scored = rank(external, pool);
       }

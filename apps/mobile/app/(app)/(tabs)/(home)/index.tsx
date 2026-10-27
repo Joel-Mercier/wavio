@@ -34,7 +34,7 @@ import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { getIsEffectivelyOnline } from "@/services/network";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import { buildHomeFeed, type HomeSectionDescriptor } from "@/utils/homeFeed";
 import { invalidateKeys } from "@/utils/invalidateKeys";
 
@@ -81,7 +81,7 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const screenBottomPadding = useScreenBottomPadding();
   const availability = useHomeSectionAvailability();
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const hiddenHomeSections = useApp((store) => store.hiddenHomeSections);
   const homeSectionOrder = useApp((store) => store.homeSectionOrder);
   const queryClient = useQueryClient();
@@ -106,19 +106,19 @@ export default function HomeScreen() {
   const { data: recentlyPlayedData } = useAlbumList2({
     type: "recent",
     size: 12,
-    musicFolderId,
+    musicFolderIds,
   });
   const { data: newestData } = useAlbumList2({
     type: "newest",
     size: 12,
-    musicFolderId,
+    musicFolderIds,
   });
   const { data: frequentData } = useAlbumList2({
     type: "frequent",
     size: 12,
-    musicFolderId,
+    musicFolderIds,
   });
-  const { data: genresData } = useGenres({ musicFolderId });
+  const { data: genresData } = useGenres({ musicFolderIds });
 
   const seedAlbums = useMemo<AlbumID3[]>(() => {
     const out: AlbumID3[] = [];

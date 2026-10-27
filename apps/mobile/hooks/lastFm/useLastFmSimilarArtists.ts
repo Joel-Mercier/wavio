@@ -10,7 +10,7 @@ import {
 } from "@/services/lastFm/recommendations";
 import { fetchSimilarArtists } from "@/services/lastFm/similar";
 import { retryUnlessClientError } from "@/services/retry";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import { mulberry32 } from "@/utils/shuffle";
 
 // Asked for generously because most of a Last.fm similar-artists list won't be
@@ -52,10 +52,10 @@ export function useLastFmBecauseYouListened({
   sessionSeed?: number;
 } = {}) {
   const { userName, isEnabled } = useLastFmEnabled(enabled);
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
 
   const topArtists = useLastFmTopArtists("1month", { enabled });
-  const library = useArtists({ musicFolderId }, { enabled: isEnabled });
+  const library = useArtists({ musicFolderIds }, { enabled: isEnabled });
 
   const libraryArtists = useMemo(
     () =>
@@ -86,7 +86,7 @@ export function useLastFmBecauseYouListened({
       "lastfm",
       "becauseYouListened",
       userName,
-      musicFolderId,
+      musicFolderIds,
       seeds,
       libraryArtists.length,
     ],

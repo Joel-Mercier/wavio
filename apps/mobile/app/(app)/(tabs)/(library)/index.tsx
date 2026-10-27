@@ -6,6 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/icons/arrow-down";
 import ArrowUp from "lucide-react-native/icons/arrow-up";
+import ChevronDown from "lucide-react-native/icons/chevron-down";
 import LayoutGrid from "lucide-react-native/icons/layout-grid";
 import List from "lucide-react-native/icons/list";
 import Plus from "lucide-react-native/icons/plus";
@@ -30,6 +31,7 @@ import AddBottomSheet from "@/components/AddBottomSheet";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import LibraryPickerSheet from "@/components/libraries/LibraryPickerSheet";
 import LibraryListItem, {
   type Favorites,
   type LibraryAllAlbums,
@@ -66,6 +68,7 @@ import {
 import { useAlbumScreenLayout } from "@/hooks/useAlbumScreenLayout";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import useLibraryPicker from "@/hooks/useLibraryPicker";
 import { usePlaylistFolderOptions } from "@/hooks/usePlaylistFolderOptions";
 import {
   useScopedPodcastFavorites,
@@ -88,7 +91,7 @@ import useApp, {
   type LibrarySortField,
 } from "@/stores/app";
 import useAuth from "@/stores/auth";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import usePodcasts from "@/stores/podcasts";
 import { gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
@@ -136,7 +139,11 @@ const LIBRARY_FILTERS: LibraryBucketFilter[] = [
 ];
 
 export default function LibraryScreen() {
-  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
+  const [white, emerald500, primary100] = Uniwind.getCSSVariable([
+    "--color-white",
+    "--color-emerald-500",
+    "--color-primary-100",
+  ]) as string[];
   const { t } = useTranslation();
   const setShowDrawer = useApp((store) => store.setShowDrawer);
   const username = useAuth((store) => store.username);
@@ -173,9 +180,11 @@ export default function LibraryScreen() {
       : 1;
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetModalSortRef = useRef<BottomSheetModal>(null);
+  const libraryPickerRef = useRef<BottomSheetModal>(null);
+  const libraryPicker = useLibraryPicker();
   const filterScrollRef = useRef<ScrollViewInstance>(null);
   const listRef = useRef<LegendListRef>(null);
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const isOnline = useIsOnline();
   const queryClient = useQueryClient();
   const downloadedCollections = useDownloadedCollections();
@@ -187,7 +196,7 @@ export default function LibraryScreen() {
     isFetching: isFetchingStarred,
     error: starredError,
     refetch: refetchStarred,
-  } = useStarred2({ musicFolderId });
+  } = useStarred2({ musicFolderIds });
   const {
     data: playlistsData,
     isLoading: isLoadingPlaylists,
@@ -538,7 +547,7 @@ export default function LibraryScreen() {
             className={cn("px-6 pb-6", { "pt-6": !isWideLayout })}
           >
             <HStack className="items-center justify-between">
-              <HStack className="items-center gap-x-4">
+              <HStack className="items-center gap-x-4 flex-1 mr-4">
                 <FadeOutScaleDown
                   testID="open-drawer-button"
                   onPress={() => setShowDrawer(true)}
@@ -549,9 +558,43 @@ export default function LibraryScreen() {
                     </AvatarFallbackText>
                   </Avatar>
                 </FadeOutScaleDown>
-                <Heading className="text-white" size="2xl">
-                  {t("app.library.title")}
-                </Heading>
+                {libraryPicker.canPick ? (
+                  <FadeOutScaleDown
+                    testID="library-picker-button"
+                    className="shrink"
+                    onPress={() => libraryPickerRef.current?.present()}
+                  >
+                    <Heading className="text-white" size="2xl">
+                      {t("app.library.title")}
+                    </Heading>
+                    <HStack className="items-center gap-x-1">
+                      <Text
+                        numberOfLines={1}
+                        className={cn("text-sm font-medium shrink", {
+                          "text-emerald-500": libraryPicker.isNarrowed,
+                          "text-primary-100": !libraryPicker.isNarrowed,
+                        })}
+                      >
+                        {libraryPicker.summary}
+                      </Text>
+                      {libraryPicker.summaryExtra && (
+                        <Text className="text-sm font-medium text-emerald-500">
+                          {libraryPicker.summaryExtra}
+                        </Text>
+                      )}
+                      <ChevronDown
+                        size={16}
+                        color={
+                          libraryPicker.isNarrowed ? emerald500 : primary100
+                        }
+                      />
+                    </HStack>
+                  </FadeOutScaleDown>
+                ) : (
+                  <Heading className="text-white" size="2xl">
+                    {t("app.library.title")}
+                  </Heading>
+                )}
               </HStack>
               <HStack className="items-center gap-x-4">
                 <FadeOutScaleDown
@@ -714,6 +757,9 @@ export default function LibraryScreen() {
         />
       )}
       <AddBottomSheet ref={bottomSheetModalRef} />
+      {libraryPicker.canPick && (
+        <LibraryPickerSheet sheetRef={libraryPickerRef} />
+      )}
       <SortOptionsSheet
         ref={bottomSheetModalSortRef}
         fields={LIBRARY_SORT_FIELDS}

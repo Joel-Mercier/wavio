@@ -42,7 +42,7 @@ import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import { createSearchMatcher, toSearchHaystack } from "@/services/searchText";
 import useApp from "@/stores/app";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import useQueue, { MAX_QUEUE_TRACKS, type QueueSource } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
@@ -80,7 +80,7 @@ export default function AllTracksScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const { showErrorToast } = useSettingsToast();
   const form = useForm({ defaultValues: { query: "" } });
   const query = useSelector(form.store, (state) => state.values.query);
@@ -130,7 +130,7 @@ export default function AllTracksScreen() {
     query: debouncedQuery,
     size: PAGE_SIZE,
     sort: sortParam,
-    musicFolderId,
+    musicFolderIds,
   });
   const serverSongs = useMemo(
     () => data?.pages.flatMap((page) => page.songs?.song ?? []) ?? [],
@@ -235,7 +235,7 @@ export default function AllTracksScreen() {
         size: PLAY_PAGE_SIZE,
         offset,
         sort: sortParam,
-        musicFolderId,
+        musicFolderIds,
       });
       const pageSongs = page.songs?.song ?? [];
       if (pageSongs.length === 0) break;
@@ -257,7 +257,7 @@ export default function AllTracksScreen() {
       // fallback and fail the whole press. Stop and hand back what we have.
       const page = await getRandomSongs({
         size: PLAY_PAGE_SIZE,
-        musicFolderId,
+        musicFolderIds,
       }).catch(() => null);
       if (!page) break;
       for (const song of page.songs?.song ?? []) {
