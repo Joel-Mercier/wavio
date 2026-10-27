@@ -2078,6 +2078,7 @@
 				"sleepTimerEndsAround": "大约到这里结束 {{time}}",
 				"sleepTimerBadgeEndsAt": "完 {{time}}",
 				"sleepTimerBadgeEndsAround": "完 ~{{time}}",
+				"showFloatingPlayer": "Show player",
 				"playbackSpeed": "播放速度",
 				"playbackSpeedValue": "{{rate}}×",
 				"playbackSpeedNormal": "正常",
