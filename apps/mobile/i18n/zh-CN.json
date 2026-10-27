@@ -1484,6 +1484,8 @@
 					"scanMusicLibraryAction": "扫描",
 					"scanOnWifiOnlyLabel": "仅限通过 Wi-Fi 扫描",
 					"scanOnWifiOnlyDescription": "首次扫描会读取共享文件夹中每个文件的标签，这可能会消耗大量移动数据。",
+					"searchAllLibrariesLabel": "Search every library",
+					"searchAllLibrariesDescription": "Search finds music in all your libraries, even when you browse just some of them.",
 					"coverArtLabel": "文件夹中的封面图",
 					"coverArtDescription": "当某首歌曲没有自己的封面时，Wavio 会使用与其位于同一目录下的图像文件，例如 cover.jpg、folder.png 或 artist.jpg。文件夹图像的优先级也高于文件中嵌入的封面，因此您可以更改专辑封面而无需重新标记。 当某个专辑文件夹下所有内容均属于同一张专辑时，即使该文件夹本身没有图片，也可以从其上级文件夹继承图片，这正是 CD1 / CD2 布局能够正常工作的原因。支持的格式包括 JPEG、PNG、WebP 和 GIF。",
 					"albumArtNamesLabel": "专辑封面文件名",
@@ -2149,7 +2151,11 @@
 				"title": "音乐库",
 				"allLibraries": "全部音乐库",
 				"default": "默认音乐库",
-				"empty": "暂无音乐库"
+				"empty": "暂无音乐库",
+				"pickOneOrMore": "Pick one or more",
+				"selectionSeparator": ", ",
+				"searchCoversAll": "Search still looks in every library.",
+				"selectionMore_other": "+{{count}}"
 			},
 			"servers": {
 				"oidcToggleHelp": "通过前面的身份提供商而不是密码登录到这个服务器。从下一个登录中应用。",
