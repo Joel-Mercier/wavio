@@ -823,7 +823,9 @@ export default function AlbumDetail() {
           item: AlbumListRow;
           index: number;
         }) => {
-          if (isLoading) {
+          // A cold start can render one more frame with a stale placeholder row
+          // after isLoading flips, so the row itself decides, not isLoading.
+          if (isLoading || !item.kind) {
             return (
               <TrackListItemSkeleton
                 index={index}
