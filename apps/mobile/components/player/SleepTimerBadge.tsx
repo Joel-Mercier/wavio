@@ -1,4 +1,3 @@
-import { usePathname } from "expo-router";
 import Timer from "lucide-react-native/icons/timer";
 import { useTranslation } from "react-i18next";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
@@ -7,13 +6,11 @@ import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { openSleepTimerSheet } from "@/components/player/SleepTimerSheet";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
-import { usePlayingTrack } from "@/hooks/player";
+import { useIsFloatingPlayerVisible } from "@/hooks/player";
 import { useSleepTimerEnd } from "@/hooks/player/usePlaybackEnd";
 import { useFormatClockTime } from "@/hooks/useFormatClockTime";
 import { isSleepTimerActive, useSleepTimer } from "@/services/sleepTimer";
 import useApp from "@/stores/app";
-import useFloatingPlayer from "@/stores/floatingPlayer";
-import { hidesFloatingPlayer } from "@/utils/floatingPlayerRoutes";
 
 export const SLEEP_TIMER_BADGE_HEIGHT = 28;
 export const SLEEP_TIMER_BADGE_GAP = 6;
@@ -42,18 +39,8 @@ export function useSleepTimerLabel(): string | null {
 export function useSleepTimerBadgeSpace(): number {
   const active = useSleepTimer(isSleepTimerActive);
   const isWideLayout = useApp((s) => s.isWideLayout);
-  const playingTrack = usePlayingTrack();
-  const playerHidden = useFloatingPlayer((s) => s.hidden);
-  const pathname = usePathname();
-  if (
-    !active ||
-    isWideLayout ||
-    !playingTrack ||
-    playerHidden ||
-    hidesFloatingPlayer(pathname)
-  ) {
-    return 0;
-  }
+  const playerVisible = useIsFloatingPlayerVisible();
+  if (!active || isWideLayout || !playerVisible) return 0;
   return SLEEP_TIMER_BADGE_HEIGHT + SLEEP_TIMER_BADGE_GAP;
 }
 

@@ -27,13 +27,12 @@ import {
   ToastTitle,
   useToast,
 } from "@/components/ui/toast";
-import { usePlayingTrack } from "@/hooks/player";
+import { useIsFloatingPlayerVisible } from "@/hooks/player";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import useApp from "@/stores/app";
 import useQueue from "@/stores/queue";
 import useTrackSelection from "@/stores/trackSelection";
 import { childToTrack } from "@/utils/childToTrack";
-import { hidesFloatingPlayer } from "@/utils/floatingPlayerRoutes";
 import { TOAST_DURATION } from "@/utils/toastDuration";
 
 // Gap between the bar and whatever chrome sits below it.
@@ -87,7 +86,7 @@ export default function TrackSelectionBar() {
   const insets = useSafeAreaInsets();
   const isOnline = useIsOnline();
   const isWideLayout = useApp((state) => state.isWideLayout);
-  const playingTrack = usePlayingTrack();
+  const playerVisible = useIsFloatingPlayerVisible();
   const sleepTimerBadgeSpace = useSleepTimerBadgeSpace();
 
   // The bar is mounted at the (app) layout, alongside the floating player and
@@ -95,7 +94,6 @@ export default function TrackSelectionBar() {
   // bar through BottomTabBarHeightContext and has to stack the same constants
   // by hand. It stops above the player rather than replacing it, so playback
   // stays reachable while a selection is open.
-  const playerVisible = !!playingTrack && !hidesFloatingPlayer(pathname);
   const bottom = isWideLayout
     ? insets.bottom + 12
     : insets.bottom +

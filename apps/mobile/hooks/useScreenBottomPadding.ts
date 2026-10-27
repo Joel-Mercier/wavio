@@ -1,4 +1,3 @@
-import { usePathname } from "expo-router";
 import { BottomTabBarHeightContext } from "expo-router/js-tabs";
 import { useContext } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -8,9 +7,9 @@ import {
   TRACK_SELECTION_BAR_GAP,
   TRACK_SELECTION_BAR_HEIGHT,
 } from "@/components/tracks/TrackSelectionBar";
+import { useIsFloatingPlayerVisible } from "@/hooks/player";
 import useApp from "@/stores/app";
 import useTrackSelection from "@/stores/trackSelection";
-import { hidesFloatingPlayer } from "@/utils/floatingPlayerRoutes";
 
 // Gap reserved between the floating player and the last list item.
 const FLOATING_PLAYER_CONTENT_GAP = 24;
@@ -29,11 +28,15 @@ const FLOATING_PLAYER_CONTENT_GAP = 24;
 // the context directly rather than through useBottomTabBarHeight is deliberate —
 // the hook throws off-navigator, and this hook is called from components that
 // render on both sides of it.
-export function useScreenBottomPadding() {
+//
+// `floating` is for content pinned over the screen (FloatingSubmitButton) rather
+// than scrolled to: it keeps the gap even with no chrome under it, instead of
+// sitting flush on the tab bar or the screen edge.
+export function useScreenBottomPadding({ floating = false } = {}) {
   const isWideLayout = useApp((s) => s.isWideLayout);
   const insets = useSafeAreaInsets();
   const bottomTabBarHeight = useContext(BottomTabBarHeightContext);
-  const pathname = usePathname();
+  const playerVisible = useIsFloatingPlayerVisible();
   // A third piece of conditional chrome: the multi-select bar stacks on top of
   // the player rather than replacing it, so while a selection is open every
   // screen owes it its height as well — otherwise the rows the user is picking
@@ -47,16 +50,16 @@ export function useScreenBottomPadding() {
     : 0;
 
   if (isWideLayout) {
-    return selectionActive
+    return selectionActive || floating
       ? insets.bottom + selectionSpace + FLOATING_PLAYER_CONTENT_GAP
       : insets.bottom;
   }
 
   const chromeBase = bottomTabBarHeight ?? insets.bottom;
-  const playerSpace = hidesFloatingPlayer(pathname)
-    ? 0
-    : FLOATING_PLAYER_HEIGHT + sleepTimerBadgeSpace;
-  if (playerSpace === 0 && !selectionActive) return chromeBase;
+  const playerSpace = playerVisible
+    ? FLOATING_PLAYER_HEIGHT + sleepTimerBadgeSpace
+    : 0;
+  if (playerSpace === 0 && !selectionActive && !floating) return chromeBase;
   // The gap is counted once, above whichever pieces of chrome are stacked.
   return (
     chromeBase + playerSpace + selectionSpace + FLOATING_PLAYER_CONTENT_GAP
