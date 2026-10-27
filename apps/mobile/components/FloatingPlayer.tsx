@@ -25,6 +25,7 @@ import ImageWithFallback from "@/components/ImageWithFallback";
 import MovingText from "@/components/MovingText";
 import { OFFLINE_BANNER_HEIGHT } from "@/components/OfflineBanner";
 import PlayPauseButton from "@/components/PlayPauseButton";
+import FloatingPlayerRestoreBadge from "@/components/player/FloatingPlayerRestoreBadge";
 import { openOutputSheet } from "@/components/player/OutputSheet";
 import PlaybackProgressBar from "@/components/player/PlaybackProgressBar";
 import SleepTimerBadge from "@/components/player/SleepTimerBadge";
@@ -146,6 +147,11 @@ export default function FloatingPlayer() {
 
   const handlePress = () => {
     router.navigate("/player");
+  };
+
+  const handleRestorePress = () => {
+    setHidden(false);
+    translateY.value = withTiming(0, { duration: 220 });
   };
 
   const handlePlayPausePress = () => {
@@ -508,23 +514,28 @@ export default function FloatingPlayer() {
     );
   }
 
+  const bottom =
+    insets.bottom +
+    TAB_BAR_CONTENT_HEIGHT +
+    (isOnline ? 0 : OFFLINE_BANNER_HEIGHT);
+
   if (hidden) {
-    return null;
+    return (
+      <Box
+        pointerEvents="box-none"
+        className="absolute right-0 left-0"
+        style={{ bottom }}
+      >
+        <FloatingPlayerRestoreBadge onPress={handleRestorePress} />
+      </Box>
+    );
   }
 
   return (
     <Animated.View
       pointerEvents="box-none"
       className="absolute right-0 left-0"
-      style={[
-        dismissStyle,
-        {
-          bottom:
-            insets.bottom +
-            TAB_BAR_CONTENT_HEIGHT +
-            (isOnline ? 0 : OFFLINE_BANNER_HEIGHT),
-        },
-      ]}
+      style={[dismissStyle, { bottom }]}
     >
       <SleepTimerBadge />
       <GestureDetector gesture={composedGesture}>

@@ -2,6 +2,7 @@ import { BottomTabBarHeightContext } from "expo-router/js-tabs";
 import { useContext } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
+import { useFloatingPlayerRestoreBadgeSpace } from "@/components/player/FloatingPlayerRestoreBadge";
 import { useSleepTimerBadgeSpace } from "@/components/player/SleepTimerBadge";
 import {
   TRACK_SELECTION_BAR_GAP,
@@ -44,6 +45,7 @@ export function useScreenBottomPadding({ floating = false } = {}) {
   const selectionActive = useTrackSelection((state) => state.active);
   const measuredBarHeight = useTrackSelection((state) => state.barHeight);
   const sleepTimerBadgeSpace = useSleepTimerBadgeSpace();
+  const restoreBadgeSpace = useFloatingPlayerRestoreBadgeSpace();
   const selectionSpace = selectionActive
     ? TRACK_SELECTION_BAR_GAP +
       (measuredBarHeight || TRACK_SELECTION_BAR_HEIGHT)
@@ -56,10 +58,17 @@ export function useScreenBottomPadding({ floating = false } = {}) {
   }
 
   const chromeBase = bottomTabBarHeight ?? insets.bottom;
+  // A swiped-away player leaves only its restore badge behind, reserved without
+  // the content gap so it costs no more than the sleep-timer badge does.
+  if (!playerVisible && !selectionActive) {
+    return (
+      chromeBase +
+      Math.max(restoreBadgeSpace, floating ? FLOATING_PLAYER_CONTENT_GAP : 0)
+    );
+  }
   const playerSpace = playerVisible
     ? FLOATING_PLAYER_HEIGHT + sleepTimerBadgeSpace
-    : 0;
-  if (playerSpace === 0 && !selectionActive && !floating) return chromeBase;
+    : restoreBadgeSpace;
   // The gap is counted once, above whichever pieces of chrome are stacked.
   return (
     chromeBase + playerSpace + selectionSpace + FLOATING_PLAYER_CONTENT_GAP

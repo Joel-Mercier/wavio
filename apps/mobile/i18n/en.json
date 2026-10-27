@@ -2136,6 +2136,7 @@
 				"sleepTimerEndsAround": "Ends around {{time}}",
 				"sleepTimerBadgeEndsAt": "Ends {{time}}",
 				"sleepTimerBadgeEndsAround": "Ends ~{{time}}",
+				"showFloatingPlayer": "Show player",
 				"playbackSpeed": "Playback speed",
 				"playbackSpeedValue": "{{rate}}×",
 				"playbackSpeedNormal": "Normal",
