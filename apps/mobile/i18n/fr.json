@@ -1528,6 +1528,8 @@
 					"scanMusicLibraryAction": "Scanner",
 					"scanOnWifiOnlyLabel": "Scanner en Wi-Fi uniquement",
 					"scanOnWifiOnlyDescription": "Lors d'un premier balayage, le système lit les balises de chaque fichier présent sur le partage, ce qui peut entraîner une consommation importante de données mobiles.",
+					"searchAllLibrariesLabel": "Search every library",
+					"searchAllLibrariesDescription": "Search finds music in all your libraries, even when you browse just some of them.",
 					"coverArtLabel": "Pochettes d'albums dans des dossiers",
 					"coverArtDescription": "Lorsqu'un titre ne dispose pas de sa propre pochette, Wavio utilise un fichier image situé à côté de celui-ci, tel que « cover.jpg », « folder.png » ou « artist.jpg ». Une image de dossier a également la priorité sur une pochette intégrée au fichier ; vous pouvez ainsi modifier la pochette d'un album sans avoir à le réétiqueter. Un dossier d'album sans image peut en hériter une du dossier supérieur lorsque tous les éléments qu'il contient appartiennent au même album, ce qui permet le fonctionnement des structures de type CD1 / CD2. Les formats JPEG, PNG, WebP et GIF sont pris en charge.",
 					"albumArtNamesLabel": "Noms de fichiers des pochettes d'album",
@@ -2206,7 +2208,12 @@
 				"title": "Bibliothèques",
 				"allLibraries": "Toutes les bibliothèques",
 				"default": "Bibliothèque par défaut",
-				"empty": "Aucune bibliothèque disponible"
+				"empty": "Aucune bibliothèque disponible",
+				"pickOneOrMore": "Pick one or more",
+				"selectionSeparator": ", ",
+				"searchCoversAll": "Search still looks in every library.",
+				"selectionMore_one": "+{{count}}",
+				"selectionMore_other": "+{{count}}"
 			},
 			"servers": {
 				"oidcToggleHelp": "Connectez-vous à ce serveur via le fournisseur d'identité qui lui est associé, plutôt qu'à l'aide d'un mot de passe. Cette modification s'appliquera dès votre prochaine connexion.",
