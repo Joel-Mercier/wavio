@@ -2243,6 +2243,7 @@
 				"sleepTimerEndsAround": "Kończy się wokół {{time}}",
 				"sleepTimerBadgeEndsAt": "Koniec {{time}}",
 				"sleepTimerBadgeEndsAround": "Koniec ~{{time}}",
+				"showFloatingPlayer": "Show player",
 				"playbackSpeed": "Szybkość odtwarzania",
 				"playbackSpeedValue": "{{rate}}×",
 				"playbackSpeedNormal": "Normalny",
