@@ -1528,6 +1528,8 @@
 					"scanMusicLibraryAction": "Escanear",
 					"scanOnWifiOnlyLabel": "Escanear solo a través de Wi-Fi",
 					"scanOnWifiOnlyDescription": "En la primera exploración se leen las etiquetas de todos los archivos del recurso compartido, lo que puede consumir una gran cantidad de datos móviles.",
+					"searchAllLibrariesLabel": "Search every library",
+					"searchAllLibrariesDescription": "Search finds music in all your libraries, even when you browse just some of them.",
 					"coverArtLabel": "Portadas en carpetas",
 					"coverArtDescription": "Cuando una pista no tiene carátula propia, Wavio utiliza un archivo de imagen que se encuentre junto a ella, como «cover.jpg», «folder.png» o «artist.jpg». La imagen de una carpeta también tiene prioridad sobre una carátula incrustada en el archivo, por lo que puedes cambiar la carátula de un álbum sin necesidad de volver a etiquetarlo. Una carpeta de álbum sin imagen puede heredar una de la carpeta superior cuando todo lo que contiene pertenece al mismo álbum, lo que permite que funcionen las estructuras de tipo «CD1 / CD2». Se admiten los formatos JPEG, PNG, WebP y GIF.",
 					"albumArtNamesLabel": "Nombres de los archivos de las carátulas de los álbumes",
@@ -2206,7 +2208,12 @@
 				"title": "Bibliotecas",
 				"allLibraries": "Todas las bibliotecas",
 				"default": "Biblioteca predeterminada",
-				"empty": "No hay bibliotecas disponibles"
+				"empty": "No hay bibliotecas disponibles",
+				"pickOneOrMore": "Pick one or more",
+				"selectionSeparator": ", ",
+				"searchCoversAll": "Search still looks in every library.",
+				"selectionMore_one": "+{{count}}",
+				"selectionMore_other": "+{{count}}"
 			},
 			"servers": {
 				"oidcToggleHelp": "Inicia sesión en este servidor a través del proveedor de identidad frente a él en lugar de con una contraseña. Aplica desde el siguiente inicio de sesión.",
