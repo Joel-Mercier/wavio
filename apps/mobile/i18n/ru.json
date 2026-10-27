@@ -1616,6 +1616,8 @@
 					"scanMusicLibraryAction": "Скан",
 					"scanOnWifiOnlyLabel": "Сканировать только через Wi-Fi",
 					"scanOnWifiOnlyDescription": "При первом сканировании считываются метки из каждого файла в общем ресурсе, что может привести к значительному расходу мобильного трафика.",
+					"searchAllLibrariesLabel": "Search every library",
+					"searchAllLibrariesDescription": "Search finds music in all your libraries, even when you browse just some of them.",
 					"coverArtLabel": "Изображения на обложках в папках",
 					"coverArtDescription": "Если у трека нет собственной обложки, Wavio использует файл изображения, расположенный рядом с ним, например cover.jpg, folder.png или artist.jpg. Изображение папки также имеет приоритет над обложкой, встроенной в файл, поэтому вы можете изменить обложку альбома без необходимости перемаркировки. Папка альбома без изображения может унаследовать изображение из вышестоящей папки, если все файлы в ней относятся к одному и тому же альбому — именно благодаря этому работают макеты типа «CD1 / CD2». Поддерживаются форматы JPEG, PNG, WebP и GIF.",
 					"albumArtNamesLabel": "Имена файлов обложек альбомов",
@@ -2320,7 +2322,14 @@
 				"title": "Библиотеки",
 				"allLibraries": "Все библиотеки",
 				"default": "Библиотека по умолчанию",
-				"empty": "Нет библиотек"
+				"empty": "Нет библиотек",
+				"pickOneOrMore": "Pick one or more",
+				"selectionSeparator": ", ",
+				"searchCoversAll": "Search still looks in every library.",
+				"selectionMore_one": "+{{count}}",
+				"selectionMore_few": "+{{count}}",
+				"selectionMore_many": "+{{count}}",
+				"selectionMore_other": "+{{count}}"
 			},
 			"servers": {
 				"oidcToggleHelp": "Войдите на этот сервер через поставщика идентификации перед ним вместо пароля. Применяется от следующего входа.",
