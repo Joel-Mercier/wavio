@@ -1528,6 +1528,8 @@
 					"scanMusicLibraryAction": "Scansione",
 					"scanOnWifiOnlyLabel": "Scansione solo tramite Wi-Fi",
 					"scanOnWifiOnlyDescription": "Una prima scansione legge i tag di ogni file presente nella condivisione, il che può comportare un elevato consumo di dati mobili.",
+					"searchAllLibrariesLabel": "Search every library",
+					"searchAllLibrariesDescription": "Search finds music in all your libraries, even when you browse just some of them.",
 					"coverArtLabel": "Copertine nelle cartelle",
 					"coverArtDescription": "Quando un brano non dispone di una copertina propria, Wavio utilizza un file immagine presente nella stessa cartella, come ad esempio cover.jpg, folder.png o artist.jpg. L'immagine della cartella ha inoltre la precedenza su una copertina incorporata nel file, quindi è possibile modificare la copertina di un album senza doverlo ritaggare. Una cartella di un album priva di immagine può ereditarne una dalla cartella superiore quando tutti i contenuti al suo interno appartengono allo stesso album: è proprio questo che rende possibile il funzionamento dei layout CD1 / CD2. Sono supportati i formati JPEG, PNG, WebP e GIF.",
 					"albumArtNamesLabel": "Nomi dei file delle copertine degli album",
@@ -2206,7 +2208,12 @@
 				"title": "Librerie",
 				"allLibraries": "Tutte le librerie",
 				"default": "Libreria predefinita",
-				"empty": "Non ci sono librerie disponibili"
+				"empty": "Non ci sono librerie disponibili",
+				"pickOneOrMore": "Pick one or more",
+				"selectionSeparator": ", ",
+				"searchCoversAll": "Search still looks in every library.",
+				"selectionMore_one": "+{{count}}",
+				"selectionMore_other": "+{{count}}"
 			},
 			"servers": {
 				"oidcToggleHelp": "Accedi a questo server attraverso il provider di identità di fronte ad esso invece che con una password. Si applica dal prossimo accesso.",
