@@ -1528,6 +1528,8 @@
 					"scanMusicLibraryAction": "Scannen",
 					"scanOnWifiOnlyLabel": "Nur über WLAN scannen",
 					"scanOnWifiOnlyDescription": "Bei einem ersten Scan werden die Tags aller Dateien auf dem freigegebenen Ordner ausgelesen, was viel mobiles Datenvolumen verbrauchen kann.",
+					"searchAllLibrariesLabel": "Search every library",
+					"searchAllLibrariesDescription": "Search finds music in all your libraries, even when you browse just some of them.",
 					"coverArtLabel": "Cover-Abbildungen in Ordnern",
 					"coverArtDescription": "Wenn ein Titel kein eigenes Cover hat, verwendet Wavio eine daneben liegende Bilddatei, wie beispielsweise „cover.jpg“, „folder.png“ oder „artist.jpg“. Ein Ordnerbild hat zudem Vorrang vor einem in der Datei eingebetteten Cover, sodass Sie das Cover eines Albums ändern können, ohne es neu zu taggen. Ein Albumordner ohne Bild kann eines vom übergeordneten Ordner übernehmen, wenn alle darin enthaltenen Elemente zum selben Album gehören – genau dadurch funktionieren Layouts wie „CD1 / CD2“. Unterstützt werden die Formate JPEG, PNG, WebP und GIF.",
 					"albumArtNamesLabel": "Dateinamen von Albumcovern",
@@ -2206,7 +2208,12 @@
 				"title": "Bibliotheken",
 				"allLibraries": "Alle Bibliotheken",
 				"default": "Standardbibliothek",
-				"empty": "Es sind keine Bibliotheken verfügbar"
+				"empty": "Es sind keine Bibliotheken verfügbar",
+				"pickOneOrMore": "Pick one or more",
+				"selectionSeparator": ", ",
+				"searchCoversAll": "Search still looks in every library.",
+				"selectionMore_one": "+{{count}}",
+				"selectionMore_other": "+{{count}}"
 			},
 			"servers": {
 				"oidcToggleHelp": "Melden Sie sich über den Identitätsanbieter vor dem Server an anstatt mit einem Passwort. Wird bei der nächsten Anmeldung angewendet.",
