@@ -2,6 +2,7 @@ import { LegendList } from "@legendapp/list/react-native";
 import { useForm } from "@tanstack/react-form";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/icons/arrow-left";
+import Mic from "lucide-react-native/icons/mic";
 import X from "lucide-react-native/icons/x";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -19,6 +20,7 @@ import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { ScrollView } from "@/components/ui/scroll-view";
+import { useCanSearchByRecording } from "@/hooks/audioMuse/useCanSearchByRecording";
 import { useSearch3 } from "@/hooks/backend/useSearching";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import useSearchMusicFolderIds from "@/hooks/useSearchMusicFolderIds";
@@ -46,6 +48,7 @@ export default function SearchResultsScreen() {
   const audioMuseConnected = useAudioMuse((store) => store.isConnected);
   const clapEnabled = useAudioMuse((store) => store.clapEnabled);
   const lyricsEnabled = useAudioMuse((store) => store.lyricsEnabled);
+  const canSearchByRecording = useCanSearchByRecording();
 
   // AudioMuse-AI's semantic indexes are opt-in per deployment, so each extra tab
   // only appears when the connected instance actually answers to it. With none
@@ -180,6 +183,15 @@ export default function SearchResultsScreen() {
                   onSubmitEditing={handleSubmitQuery}
                   enterKeyHint="search"
                 />
+                {canSearchByRecording && (
+                  <InputSlot
+                    testID="recording-search-button"
+                    className="pr-4"
+                    onPress={() => router.navigate("/recording-search")}
+                  >
+                    <InputIcon as={Mic} size="xl" />
+                  </InputSlot>
+                )}
                 <InputSlot className="pr-3" onPress={handleSearchClearPress}>
                   <InputIcon as={X} size="xl" />
                 </InputSlot>
@@ -206,7 +218,7 @@ export default function SearchResultsScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            className="grow-0 px-6 mb-6"
+            className="grow-0 shrink-0 px-6 mb-6"
           >
             <FadeOutScaleDown onPress={() => handleFilterPress("albums")}>
               <Badge

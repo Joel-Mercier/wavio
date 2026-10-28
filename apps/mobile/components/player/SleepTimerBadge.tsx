@@ -44,7 +44,14 @@ export function useSleepTimerBadgeSpace(): number {
   return SLEEP_TIMER_BADGE_HEIGHT + SLEEP_TIMER_BADGE_GAP;
 }
 
-export default function SleepTimerBadge() {
+interface SleepTimerBadgeProps {
+  // Laid out by the caller, on a row it shares with other badges.
+  inline?: boolean;
+}
+
+export default function SleepTimerBadge({
+  inline = false,
+}: SleepTimerBadgeProps) {
   const label = useSleepTimerLabel();
   const [emerald500] = Uniwind.getCSSVariable([
     "--color-emerald-500",
@@ -57,8 +64,8 @@ export default function SleepTimerBadge() {
       entering={FadeIn.duration(180)}
       exiting={FadeOut.duration(180)}
       pointerEvents="box-none"
-      className="mx-2 items-end"
-      style={{ marginBottom: SLEEP_TIMER_BADGE_GAP }}
+      className={inline ? undefined : "mx-2 items-end"}
+      style={inline ? undefined : { marginBottom: SLEEP_TIMER_BADGE_GAP }}
     >
       <FadeOutScaleDown
         testID="sleep-timer-badge"

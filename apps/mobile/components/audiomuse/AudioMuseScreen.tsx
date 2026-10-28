@@ -43,6 +43,7 @@ import useAudioMuse, {
   needsFingerprintCredentials,
   selectAiProvider,
   selectLyricsPathAvailable,
+  selectRecordingSearchAvailable,
   selectSimilarArtistsAvailable,
   selectSimilarTracksAvailable,
 } from "@/stores/audioMuse";
@@ -137,6 +138,11 @@ export default function AudioMuseScreen() {
     (store) => store.artistSimilarityEnabled,
   );
   const semGroveEnabled = useAudioMuse((store) => store.semGroveEnabled);
+  const serverVersion = useAudioMuse((store) => store.serverVersion);
+  const recordingSearchEnabled = useAudioMuse(
+    (store) => store.recordingSearchEnabled,
+  );
+  const neuralIndexedCount = useAudioMuse((store) => store.neuralIndexedCount);
   const fingerprintServerType = useAudioMuse(
     (store) => store.fingerprintServerType,
   );
@@ -214,6 +220,30 @@ export default function AudioMuseScreen() {
     artistSimilarityEnabled,
     analyzedTrackCount,
   });
+
+  const recordingSearchAvailable = selectRecordingSearchAvailable({
+    isConnected,
+    recordingSearchEnabled,
+    neuralIndexedCount,
+  });
+
+  // Each reason it isn't available has a different fix, and only the operator
+  // can apply them — so the detail names which one is missing.
+  const recordingSearchDetail = !serverVersion
+    ? t(
+        "app.settings.integrations.audiomuse.features.recordingSearchNeedsVersion",
+      )
+    : !recordingSearchEnabled
+      ? t(
+          "app.settings.integrations.audiomuse.features.recordingSearchModelOff",
+        )
+      : neuralIndexedCount === 0
+        ? t(
+            "app.settings.integrations.audiomuse.features.recordingSearchNotAnalyzed",
+          )
+        : t(
+            "app.settings.integrations.audiomuse.features.recordingSearchDetail",
+          );
 
   // The path rides on the same core index as similar tracks, so it is available
   // whenever they are; only its lyrics *option* needs the extra index, which the
@@ -521,6 +551,15 @@ export default function AudioMuseScreen() {
             <Text className="text-primary-100 text-sm">
               {t("app.settings.integrations.audiomuse.features.description")}
             </Text>
+            <Text className="text-primary-100 text-sm">
+              {serverVersion
+                ? t("app.settings.integrations.audiomuse.features.version", {
+                    version: serverVersion,
+                  })
+                : t(
+                    "app.settings.integrations.audiomuse.features.versionUnknown",
+                  )}
+            </Text>
             <FeatureRow
               label={t(
                 "app.settings.integrations.audiomuse.features.aiPlaylists",
@@ -569,6 +608,16 @@ export default function AudioMuseScreen() {
                 "app.settings.integrations.audiomuse.features.fingerprintHint",
               )}
               available={fingerprintEnabled}
+            />
+            <FeatureRow
+              label={t(
+                "app.settings.integrations.audiomuse.features.recordingSearch",
+              )}
+              detail={recordingSearchDetail}
+              hint={t(
+                "app.settings.integrations.audiomuse.features.recordingSearchHint",
+              )}
+              available={recordingSearchAvailable}
             />
             {/* Served by the core IVF blueprint, so there is nothing to probe:
                 what decides it is whether the analysis has anything in it. */}

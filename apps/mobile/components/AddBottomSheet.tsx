@@ -3,6 +3,7 @@ import {
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
+import AudioLines from "lucide-react-native/icons/audio-lines";
 import CloudDownload from "lucide-react-native/icons/cloud-download";
 import Drama from "lucide-react-native/icons/drama";
 import Fingerprint from "lucide-react-native/icons/fingerprint-pattern";
@@ -28,6 +29,7 @@ import { useIsOnline } from "@/hooks/useIsOnline";
 import useAudioMuse, {
   selectAiProvider,
   selectFingerprintAvailable,
+  selectRecordingSearchAvailable,
   selectSimilarTracksAvailable,
   selectSongPathAvailable,
 } from "@/stores/audioMuse";
@@ -61,6 +63,9 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
   // server account on top of the AudioMuse connection — the entry stays hidden
   // until that is configured, since without it the call can only fail.
   const showFingerprint = useAudioMuse(selectFingerprintAvailable);
+  // The fingerprint model is opt-in on the deployment, and only one new enough
+  // to report its models can say whether it runs.
+  const showRecordingSearch = useAudioMuse(selectRecordingSearchAvailable);
   // Both ends are picked in the screen itself, so unlike the fingerprint this
   // needs nothing but a connection and a library AudioMuse has analysed.
   const showSongPath = useAudioMuse(selectSongPathAvailable);
@@ -101,6 +106,11 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
   const handleCreateFingerprintPlaylistPress = () => {
     dismiss();
     router.navigate("/playlists/new-fingerprint");
+  };
+
+  const handleRecordingSearchPress = () => {
+    dismiss();
+    router.navigate("/recording-search");
   };
 
   const handleCreateSongPathPress = () => {
@@ -224,6 +234,24 @@ const AddBottomSheet = forwardRef<BottomSheetModal>((_props, ref) => {
                     </Heading>
                     <Text className="text-md text-gray-200 flex-1">
                       {t("app.create.fingerprintDescription")}
+                    </Text>
+                  </VStack>
+                </HStack>
+              </FadeOutScaleDown>
+            )}
+            {showRecordingSearch && (
+              <FadeOutScaleDown
+                onPress={handleRecordingSearchPress}
+                disabled={!isOnline}
+              >
+                <HStack className="items-center">
+                  <AudioLines size={32} color={gray200} />
+                  <VStack className="ml-4 flex-1">
+                    <Heading numberOfLines={1} className="text-white">
+                      {t("app.create.recordingSearchTitle")}
+                    </Heading>
+                    <Text className="text-md text-gray-200 flex-1">
+                      {t("app.create.recordingSearchDescription")}
                     </Text>
                   </VStack>
                 </HStack>

@@ -391,6 +391,7 @@ export default function AppLayout() {
             <Stack.Screen name="playlists/new-fingerprint" />
             <Stack.Screen name="playlists/new-path" />
             <Stack.Screen name="playlists/new-mood" />
+            <Stack.Screen name="recording-search" />
             <Stack.Screen name="playlists/[id]/edit-rules" />
             <Stack.Screen name="internet-radio-stations/new" />
             <Stack.Screen name="podcast-channels/new" />

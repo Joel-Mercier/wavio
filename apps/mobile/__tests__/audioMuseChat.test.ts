@@ -39,6 +39,7 @@ jest.mock("@/stores/auth", () => ({ currentAuthScope: () => "scope" }));
 
 import {
   AudioMuseChatError,
+  CHAT_PLAYLIST_SIZE,
   generateChatPlaylist,
 } from "@/services/audioMuse/chat";
 import { useAudioMuseBase } from "@/stores/audioMuse";
@@ -121,7 +122,11 @@ describe("generateChatPlaylist", () => {
 
     const [, init] = mockStreamingFetch.mock.calls[0];
     expect(init.headers).toMatchObject({ Authorization: "Bearer T" });
-    expect(JSON.parse(init.body)).toEqual({ userInput: "x", server: "srv-2" });
+    expect(JSON.parse(init.body)).toEqual({
+      userInput: "x",
+      n: CHAT_PLAYLIST_SIZE,
+      server: "srv-2",
+    });
   });
 
   // AudioMuse only *defaults* ai_provider to its own AI_MODEL_PROVIDER, so a
@@ -136,8 +141,34 @@ describe("generateChatPlaylist", () => {
     const [, init] = mockStreamingFetch.mock.calls[0];
     expect(JSON.parse(init.body)).toEqual({
       userInput: "x",
+      n: CHAT_PLAYLIST_SIZE,
       ai_provider: "GEMINI",
     });
+  });
+
+  // From v3.5.2 an omitted `n` means the deployment's own default (50), half
+  // the 100 every earlier version aimed for, so both endpoints must name it.
+  it("asks both endpoints for the same playlist size", async () => {
+    mockStreamingFetch.mockResolvedValue({
+      ok: false,
+      status: 502,
+      body: null,
+    });
+    mockRequest.mockResolvedValue({
+      data: { response: { query_results: [] } },
+    });
+
+    await generateChatPlaylist("x");
+
+    expect(JSON.parse(mockStreamingFetch.mock.calls[0][1].body)).toMatchObject({
+      n: CHAT_PLAYLIST_SIZE,
+    });
+    expect(mockRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: "/chat/api/chatPlaylist",
+        data: expect.objectContaining({ n: CHAT_PLAYLIST_SIZE }),
+      }),
+    );
   });
 
   it("falls back to the deployment's default provider", async () => {

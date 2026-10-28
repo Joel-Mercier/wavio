@@ -4,6 +4,7 @@ import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/icons/arrow-down";
 import ArrowUp from "lucide-react-native/icons/arrow-up";
+import Mic from "lucide-react-native/icons/mic";
 import Search from "lucide-react-native/icons/search";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -33,6 +34,7 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
+import { useCanSearchByRecording } from "@/hooks/audioMuse/useCanSearchByRecording";
 import { useGenres } from "@/hooks/backend/useBrowsing";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
@@ -148,6 +150,12 @@ export default function SearchScreen() {
     router.navigate("/(app)/(tabs)/(search)/recent-searches");
   };
 
+  // Where people look for "what's this song?".
+  const showRecordingSearch = useCanSearchByRecording();
+  const handleRecordingSearchPress = () => {
+    router.navigate("/recording-search");
+  };
+
   const handlePresentSortModalPress = useCallback(() => {
     bottomSheetModalSortRef.current?.present();
   }, []);
@@ -191,14 +199,27 @@ export default function SearchScreen() {
             </Heading>
           </HStack>
         </AnimatedBox>
-        <FadeOutScaleDown className="mx-6" onPress={handleSearchPress}>
-          <HStack className="bg-white rounded-md py-3 px-3">
-            <Search size={22} color={gray500} />
-            <Text className="text-gray-500 text-xl ml-4">
-              {t("app.search.inputPlaceholder")}
-            </Text>
-          </HStack>
-        </FadeOutScaleDown>
+        {/* Two sibling pressables sharing one bar: nesting the mic inside the
+            search pressable would let the outer one swallow its tap. */}
+        <HStack className="mx-6 bg-white rounded-md items-center">
+          <FadeOutScaleDown className="flex-1" onPress={handleSearchPress}>
+            <HStack className="py-3 px-3">
+              <Search size={22} color={gray500} />
+              <Text className="text-gray-500 text-xl ml-4">
+                {t("app.search.inputPlaceholder")}
+              </Text>
+            </HStack>
+          </FadeOutScaleDown>
+          {showRecordingSearch && (
+            <FadeOutScaleDown
+              testID="recording-search-button"
+              onPress={handleRecordingSearchPress}
+              className="py-3 px-3"
+            >
+              <Mic size={22} color={gray500} />
+            </FadeOutScaleDown>
+          )}
+        </HStack>
         <HStack className="px-6 pt-6 pb-4 items-center justify-between">
           <Heading size="lg" className="text-white">
             {t("app.search.exploreGenres")}

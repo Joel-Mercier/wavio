@@ -99,6 +99,12 @@ export type ReportContext = {
    * state the UI degrades around, not a bug.
    */
   serviceUnavailableIsExpected?: boolean;
+  /**
+   * When true, a 400 is expected — the request carries something the user
+   * supplied that the server may judge unusable (e.g. a recorded clip that is
+   * silent). Relayed to the user as the server's reason, not a bug.
+   */
+  badRequestIsExpected?: boolean;
   /** Extra structured context attached to the Sentry event. */
   extra?: Record<string, unknown>;
 };
@@ -397,6 +403,14 @@ function isExpectedFailure(
     ctx.serviceUnavailableIsExpected &&
     axios.isAxiosError(error) &&
     error.response?.status === 503
+  ) {
+    return true;
+  }
+  // A rejection of user-supplied input the caller anticipates and relays.
+  if (
+    ctx.badRequestIsExpected &&
+    axios.isAxiosError(error) &&
+    error.response?.status === 400
   ) {
     return true;
   }

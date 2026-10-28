@@ -51,6 +51,8 @@ export type AudioMuseRequestOptions = Omit<
   notFoundIsExpected?: boolean;
   /** A 503 is a deployment state here (an index not built yet), not a bug. */
   serviceUnavailableIsExpected?: boolean;
+  /** A 400 rejects user-supplied input here (a silent clip), not a bug. */
+  badRequestIsExpected?: boolean;
 };
 
 // Shared request wrapper for the section files: resolves the connection config,
@@ -64,6 +66,7 @@ export async function audioMuseRequest<T>(
     unauthorizedIsExpected,
     notFoundIsExpected,
     serviceUnavailableIsExpected,
+    badRequestIsExpected,
     ...axiosConfig
   }: AudioMuseRequestOptions = {},
 ): Promise<T> {
@@ -106,6 +109,7 @@ export async function audioMuseRequest<T>(
       unauthorizedIsExpected,
       notFoundIsExpected,
       serviceUnavailableIsExpected,
+      badRequestIsExpected,
       extra: serverMessage ? { serverMessage } : undefined,
     });
     throw error;
@@ -122,8 +126,8 @@ export function audioMuseErrorMessage(error: unknown): string | null {
 // One AudioMuse deployment can analyse several media servers, and it translates
 // every item_id it returns into the selected server's own provider ids. Getting
 // this wrong doesn't error — it silently returns ids from another library — so
-// the selection rides on every scoped call. GETs carry it as a query param,
-// bodied requests as a field, matching app_server_context.resolve_request_server_id.
+// the selection rides on every scoped call. GETs and uploads carry it as a query
+// param, JSON bodies as a field, matching app_server_context.resolve_request_server_id.
 function withServerScope(
   axiosConfig: Omit<AxiosRequestConfig, "baseURL" | "headers">,
 ): Partial<AxiosRequestConfig> {
@@ -131,7 +135,9 @@ function withServerScope(
   if (!serverId) return {};
 
   const method = (axiosConfig.method ?? "get").toString().toLowerCase();
-  if (method === "get") {
+  // AudioMuse reads the selection from a JSON body or the query string, never
+  // from form fields, so a multipart upload carries it in the query.
+  if (method === "get" || axiosConfig.data instanceof FormData) {
     return { params: { ...axiosConfig.params, server: serverId } };
   }
   return {

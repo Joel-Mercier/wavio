@@ -2,6 +2,7 @@ import { LegendList } from "@legendapp/list/react-native";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/icons/arrow-left";
+import Mic from "lucide-react-native/icons/mic";
 import X from "lucide-react-native/icons/x";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -17,6 +18,7 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
+import { useCanSearchByRecording } from "@/hooks/audioMuse/useCanSearchByRecording";
 import { useSearch3 } from "@/hooks/backend/useSearching";
 import useDebounce from "@/hooks/useDebounce";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
@@ -42,6 +44,7 @@ export default function RecentSearchesScreen() {
     (store) => store.removeRecentSearch,
   );
   const addRecentSearch = useRecentSearches((store) => store.addRecentSearch);
+  const canSearchByRecording = useCanSearchByRecording();
   const form = useForm({
     defaultValues: {
       query: "",
@@ -142,6 +145,15 @@ export default function RecentSearchesScreen() {
                   enterKeyHint="search"
                   onSubmitEditing={handleOnSumbit}
                 />
+                {canSearchByRecording && (
+                  <InputSlot
+                    testID="recording-search-button"
+                    className="pr-4"
+                    onPress={() => router.navigate("/recording-search")}
+                  >
+                    <InputIcon as={Mic} size="xl" />
+                  </InputSlot>
+                )}
                 <InputSlot
                   testID="search-clear-button"
                   className="pr-3"

@@ -3,7 +3,7 @@ import AudioLines from "lucide-react-native/icons/audio-lines";
 import { useTranslation } from "react-i18next";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { Uniwind } from "uniwind";
-import {
+import SleepTimerBadge, {
   SLEEP_TIMER_BADGE_GAP,
   SLEEP_TIMER_BADGE_HEIGHT,
 } from "@/components/player/SleepTimerBadge";
@@ -15,8 +15,8 @@ import useFloatingPlayer from "@/stores/floatingPlayer";
 import { hidesFloatingPlayer } from "@/utils/floatingPlayerRoutes";
 
 // Height the badge takes above the tab bar while the portrait player is swiped
-// away. Kept to the sleep-timer badge's footprint so screens only give up that
-// much, not the player's.
+// away. The sleep-timer badge shares its row, so screens only give up one
+// badge's height, not the player's.
 export function useFloatingPlayerRestoreBadgeSpace(): number {
   const hidden = useFloatingPlayer((s) => s.hidden);
   const isWideLayout = useApp((s) => s.isWideLayout);
@@ -52,9 +52,10 @@ export default function FloatingPlayerRestoreBadge({
       entering={FadeIn.duration(180)}
       exiting={FadeOut.duration(180)}
       pointerEvents="box-none"
-      className="mx-2 items-end"
+      className="mx-2 flex-row items-center justify-end gap-x-2"
       style={{ marginBottom: SLEEP_TIMER_BADGE_GAP }}
     >
+      <SleepTimerBadge inline />
       <Pressable
         testID="floating-player-restore-badge"
         accessibilityRole="button"

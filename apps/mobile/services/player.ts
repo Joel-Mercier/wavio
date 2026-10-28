@@ -2034,19 +2034,54 @@ useAuthBase.subscribe((state) => {
 // instead of leaving background playback silently unconfigured for the process.
 let playbackConfigured: Promise<void> | null = null;
 
+const PLAYBACK_AUDIO_MODE = {
+  playsInSilentMode: true,
+  shouldPlayInBackground: true,
+  // Persistent focus on Android: a music player takes the output until the
+  // user moves elsewhere, rather than lending it to whatever played before.
+  interruptionMode:
+    Platform.OS === "android" ? "doNotMixPersistent" : "doNotMix",
+} as const;
+
 export async function configurePlayback() {
-  playbackConfigured ??= setAudioModeAsync({
-    playsInSilentMode: true,
-    shouldPlayInBackground: true,
-    // Persistent focus on Android: a music player takes the output until the
-    // user moves elsewhere, rather than lending it to whatever played before.
-    interruptionMode:
-      Platform.OS === "android" ? "doNotMixPersistent" : "doNotMix",
-  }).catch((e) => {
+  playbackConfigured ??= setAudioModeAsync(PLAYBACK_AUDIO_MODE).catch((e) => {
     playbackConfigured = null;
     throw e;
   });
   await playbackConfigured;
+}
+
+/**
+ * Hands the microphone a quiet room for a short clip (Search by recording), and
+ * returns the call that gives it back. Local playback is paused so the clip
+ * isn't Wavio's own output, and resumed afterwards only if this paused it; a
+ * remote target plays elsewhere, so it is left alone. iOS only records once the
+ * session allows it, and leaving it that way would keep the play-and-record
+ * category (earpiece routing, lower output), so the playback mode is restored.
+ */
+export async function beginRecordingSession(): Promise<() => Promise<void>> {
+  const pausedForRecording = !activeRemoteTarget() && player.playing;
+  if (pausedForRecording) pause();
+  if (Platform.OS === "ios") {
+    try {
+      await setAudioModeAsync({
+        ...PLAYBACK_AUDIO_MODE,
+        allowsRecording: true,
+      });
+    } catch (error) {
+      if (pausedForRecording) play();
+      throw error;
+    }
+  }
+  return async () => {
+    if (Platform.OS === "ios") {
+      await setAudioModeAsync({
+        ...PLAYBACK_AUDIO_MODE,
+        allowsRecording: false,
+      });
+    }
+    if (pausedForRecording) play();
+  };
 }
 
 // Returns whether the queue was actually replaced, so callers can tell the user
