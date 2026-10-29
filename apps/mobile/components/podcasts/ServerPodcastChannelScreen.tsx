@@ -26,6 +26,7 @@ import CollapsibleTabs, {
 } from "@/components/CollapsibleTabs";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
+import MarkAllPlayedMenuItems from "@/components/podcasts/MarkAllPlayedMenuItems";
 import PodcastEpisodeRow from "@/components/podcasts/PodcastEpisodeRow";
 import RichText from "@/components/RichText";
 import {
@@ -108,6 +109,10 @@ export default function ServerPodcastChannelScreen() {
       ? artworkUrl(channel?.coverArt || params.coverArt)
       : undefined);
   const episodes = useMemo(() => channel?.episode ?? [], [channel]);
+  const episodeIds = useMemo(
+    () => episodes.map((episode) => episode.id),
+    [episodes],
+  );
   // Episodes without their own artwork inherit the channel's. It may not have
   // loaded yet (or the query is paused offline), so the route params — which
   // carry it from the list the user tapped — stand in.
@@ -532,6 +537,11 @@ export default function ServerPodcastChannelScreen() {
               </VStack>
             </HStack>
             <VStack className="mt-6 gap-y-8">
+              <MarkAllPlayedMenuItems
+                ids={episodeIds}
+                source="server"
+                onDone={() => bottomSheetModalRef.current?.dismiss()}
+              />
               <FadeOutScaleDown
                 onPress={() => {
                   bottomSheetModalRef.current?.dismiss();

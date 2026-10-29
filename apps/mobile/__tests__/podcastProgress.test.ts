@@ -48,9 +48,15 @@ import {
   flushPodcastProgress,
   getPodcastResumePosition,
   isPodcastTrack,
+  markPodcastEpisodePlayed,
+  markPodcastEpisodesPlayed,
+  markPodcastEpisodesUnplayed,
+  markPodcastEpisodeUnplayed,
+  markPodcastTrackFinished,
   recordPodcastProgress,
   resetPodcastProgressRuntime,
 } from "@/services/podcastProgress";
+import { usePodcastPlayedBase } from "@/stores/podcastPlayed";
 import { usePodcastsBase } from "@/stores/podcasts";
 import type { QueueTrack } from "@/stores/queue";
 
@@ -75,8 +81,12 @@ beforeEach(() => {
   mockSetItem.mockClear();
   resetPodcastProgressRuntime();
   usePodcastsBase.setState({ podcastProgress: [] }, false);
+  usePodcastPlayedBase.setState({ played: {} }, false);
   mockSetItem.mockClear();
 });
+
+const isPlayed = (id: string, bucket = "taddy") =>
+  usePodcastPlayedBase.getState().isPlayed(bucket, id);
 
 afterEach(() => {
   jest.useRealTimers();
@@ -156,7 +166,10 @@ describe("recordPodcastProgress thresholds", () => {
     mockSetItem.mockClear();
     recordPodcastProgress(track(), 3580);
     expect(entryFor("ep-1")).toBeUndefined();
-    expect(mockSetItem).toHaveBeenCalledTimes(1);
+    const podcastsWrites = mockSetItem.mock.calls.filter(
+      ([key]) => key === "podcasts",
+    );
+    expect(podcastsWrites).toHaveLength(1);
   });
 
   test("the status duration wins over a lying track duration", () => {
@@ -259,5 +272,103 @@ describe("source discrimination", () => {
       900,
     );
     expect(entryFor("legacy-1")?.source).toBe("taddy");
+  });
+});
+
+describe("played state", () => {
+  test("reaching the end guard marks the episode played", () => {
+    recordPodcastProgress(track(), 900, { force: true });
+    recordPodcastProgress(track(), 3580);
+    expect(entryFor("ep-1")).toBeUndefined();
+    expect(isPlayed("ep-1")).toBe(true);
+  });
+
+  test("ticks in the tail after finishing don't write again", () => {
+    recordPodcastProgress(track(), 3580);
+    mockSetItem.mockClear();
+    recordPodcastProgress(track(), 3585);
+    recordPodcastProgress(track(), 3590);
+    expect(mockSetItem).not.toHaveBeenCalled();
+  });
+
+  test("a finished server episode is marked under the active scope", () => {
+    markPodcastTrackFinished(
+      track({ id: "srv-1", podcastSource: "server", streamId: "srv-1" }),
+    );
+    expect(isPlayed("srv-1", "scope-a")).toBe(true);
+    expect(isPlayed("srv-1")).toBe(false);
+  });
+
+  test("marking played drops the progress entry and the pending slot", () => {
+    recordPodcastProgress(track(), 900, { force: true });
+    markPodcastEpisodePlayed("ep-1", "taddy");
+    expect(entryFor("ep-1")).toBeUndefined();
+    expect(getPodcastResumePosition(track())).toBeNull();
+    expect(isPlayed("ep-1")).toBe(true);
+  });
+
+  test("the episode still playing when marked isn't put back in progress", () => {
+    recordPodcastProgress(track(), 900, { force: true });
+    markPodcastEpisodePlayed("ep-1", "taddy");
+    recordPodcastProgress(track(), 950, { force: true });
+    flushPodcastProgress();
+    expect(entryFor("ep-1")).toBeUndefined();
+    expect(isPlayed("ep-1")).toBe(true);
+  });
+
+  test("replaying a played episode past the floor unmarks it", () => {
+    markPodcastEpisodePlayed("ep-1", "taddy");
+    recordPodcastProgress(track(), 0);
+    recordPodcastProgress(track(), 12);
+    expect(isPlayed("ep-1")).toBe(true);
+    recordPodcastProgress(track(), 25);
+    expect(isPlayed("ep-1")).toBe(false);
+    expect(entryFor("ep-1")?.position).toBe(25);
+  });
+
+  test("unmarking lets the playing episode record again", () => {
+    markPodcastEpisodePlayed("ep-1", "taddy");
+    markPodcastEpisodeUnplayed("ep-1", "taddy");
+    expect(isPlayed("ep-1")).toBe(false);
+    recordPodcastProgress(track(), 900, { force: true });
+    expect(entryFor("ep-1")?.position).toBe(900);
+  });
+});
+
+describe("markPodcastEpisodesPlayed", () => {
+  test("marks the whole list and drops their resume entries", () => {
+    recordPodcastProgress(track({ id: "ep-2" }), 600, { force: true });
+    recordPodcastProgress(track({ id: "other" }), 600, { force: true });
+    markPodcastEpisodesPlayed(["ep-1", "ep-2", "ep-3"], "taddy");
+    expect(["ep-1", "ep-2", "ep-3"].every((id) => isPlayed(id))).toBe(true);
+    expect(entryFor("ep-2")).toBeUndefined();
+    expect(entryFor("other")?.position).toBe(600);
+    expect(isPlayed("other")).toBe(false);
+  });
+
+  test("the playing episode stays played while it keeps playing", () => {
+    recordPodcastProgress(track(), 900, { force: true });
+    markPodcastEpisodesPlayed(["ep-1", "ep-2"], "taddy");
+    recordPodcastProgress(track(), 960, { force: true });
+    flushPodcastProgress();
+    expect(entryFor("ep-1")).toBeUndefined();
+    expect(isPlayed("ep-1")).toBe(true);
+  });
+
+  test("server episodes are marked under the active scope", () => {
+    markPodcastEpisodesPlayed(["srv-1"], "server");
+    expect(isPlayed("srv-1", "scope-a")).toBe(true);
+  });
+});
+
+describe("markPodcastEpisodesUnplayed", () => {
+  test("lets the playing episode record progress again", () => {
+    recordPodcastProgress(track(), 900, { force: true });
+    markPodcastEpisodesPlayed(["ep-1", "ep-2"], "taddy");
+    markPodcastEpisodesUnplayed(["ep-1", "ep-2"], "taddy");
+    expect(isPlayed("ep-1")).toBe(false);
+    expect(isPlayed("ep-2")).toBe(false);
+    recordPodcastProgress(track(), 960, { force: true });
+    expect(entryFor("ep-1")?.position).toBe(960);
   });
 });

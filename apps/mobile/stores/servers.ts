@@ -1,13 +1,16 @@
 import * as z from "zod";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { authScopePrefix, LOCAL_AUTH_SCOPE } from "@/config/authScope";
 import { zustandStorage } from "@/config/storage";
 import {
   hasCaseInsensitiveUsernamesType,
   hasNetworkServerType,
+  isSingletonServerType,
   usesSubsonicAuthType,
 } from "@/services/backend/serverTraits";
 import { oidcSessionKey, useOidcBase } from "@/stores/oidc";
+import { usePodcastPlayedBase } from "@/stores/podcastPlayed";
 import createSelectors from "@/utils/createSelectors";
 
 export const serverTypeSchema = z.enum([
@@ -621,6 +624,19 @@ const useServersBase = create<ServersStore>()(
         // A forgotten server's refresh tokens would otherwise sit on the
         // device indefinitely, still valid at the IdP.
         useOidcBase.getState().removeServerSessions(id);
+        // Every user's scope, including ones missing from the users list (the
+        // same prefix rule as stores/localLibrary.ts scopesForServer).
+        const server = get().getServerById(id);
+        if (server) {
+          const prefix = authScopePrefix(id);
+          usePodcastPlayedBase
+            .getState()
+            .forgetBuckets((bucket) =>
+              isSingletonServerType(server.type)
+                ? bucket === LOCAL_AUTH_SCOPE
+                : bucket.startsWith(prefix),
+            );
+        }
         set((state) => ({
           servers: state.servers.filter((s) => s.id !== id),
           users: state.users.filter((u) => u.serverId !== id),

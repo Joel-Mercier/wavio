@@ -2,6 +2,10 @@ import { parseLocalPodcastEpisodeId } from "@/services/local/keys";
 import { isActiveServerUrl } from "@/services/routeSwap";
 import { currentAuthScope } from "@/stores/auth";
 import {
+  podcastPlayedBucket,
+  usePodcastPlayedBase,
+} from "@/stores/podcastPlayed";
+import {
   type PodcastProgressEntry,
   type PodcastSource,
   usePodcastsBase,
@@ -32,6 +36,10 @@ let pending: PodcastProgressEntry | null = null;
 let lastWriteAt = 0;
 let lastWrittenId: string | null = null;
 let lastWrittenPosition = 0;
+// An episode marked played while it is still playing. Recording it would put it
+// straight back in progress, so it is skipped until it restarts below the floor
+// (a replay) or is unmarked.
+let markedPlayedId: string | null = null;
 
 export function isPodcastTrack(track: QueueTrack | null): boolean {
   return !!track && !track.isRadio && track.source === "podcast";
@@ -116,6 +124,10 @@ export function recordPodcastProgress(
 ): void {
   if (!isPodcastTrack(track) || !track) return;
   if (!Number.isFinite(positionSeconds) || positionSeconds < 0) return;
+  if (markedPlayedId === track.id) {
+    if (positionSeconds >= MIN_POSITION_SECONDS) return;
+    markedPlayedId = null;
+  }
   // The player's status duration knows the real length even when a feed lied or
   // declared nothing, so it wins over the track's.
   const dur =
@@ -125,7 +137,7 @@ export function recordPodcastProgress(
   // Finished (or scrubbed into the tail): drop the entry immediately, never
   // throttled, so Resume listening can't reopen an episode at its credits.
   if (dur > 0 && positionSeconds >= dur - END_GUARD_SECONDS) {
-    clearPodcastProgress(track.id);
+    markPodcastTrackFinished(track);
     return;
   }
   // Below the floor, do nothing — and crucially do NOT clear. The first status
@@ -155,6 +167,8 @@ function write(entry: PodcastProgressEntry): void {
   lastWrittenId = entry.id;
   lastWrittenPosition = entry.position;
   usePodcastsBase.getState().setPodcastProgress(entry);
+  // Listening past the floor again puts a played episode back in progress.
+  markPodcastEpisodeUnplayed(entry.id, entry.source);
 }
 
 export function clearPodcastProgress(trackId: string | null): void {
@@ -165,6 +179,66 @@ export function clearPodcastProgress(trackId: string | null): void {
     lastWrittenPosition = 0;
   }
   usePodcastsBase.getState().clearPodcastProgress(trackId);
+}
+
+function playedBucket(source: PodcastSource): string | undefined {
+  return podcastPlayedBucket(
+    source,
+    source === "server" ? currentAuthScope() : undefined,
+  );
+}
+
+// Played and in-progress are exclusive: marking played drops the resume entry,
+// and replaying the episode past the floor unmarks it.
+export function markPodcastEpisodePlayed(
+  id: string,
+  source: PodcastSource,
+): void {
+  clearPodcastProgress(id);
+  markedPlayedId = id;
+  const bucket = playedBucket(source);
+  if (bucket) usePodcastPlayedBase.getState().markPlayed(bucket, id);
+}
+
+export function markPodcastEpisodesPlayed(
+  ids: string[],
+  source: PodcastSource,
+): void {
+  // Only the few episodes with a resume entry need clearing; a no-op clear per
+  // episode would still cost a persist cycle each.
+  const marked = new Set(ids);
+  const playing = pending?.id ?? lastWrittenId;
+  for (const entry of usePodcastsBase.getState().podcastProgress) {
+    if (marked.has(entry.id)) clearPodcastProgress(entry.id);
+  }
+  if (playing && marked.has(playing)) {
+    clearPodcastProgress(playing);
+    markedPlayedId = playing;
+  }
+  const bucket = playedBucket(source);
+  if (bucket) usePodcastPlayedBase.getState().markAllPlayed(bucket, ids);
+}
+
+export function markPodcastEpisodeUnplayed(
+  id: string,
+  source: PodcastSource,
+): void {
+  if (markedPlayedId === id) markedPlayedId = null;
+  const bucket = playedBucket(source);
+  if (bucket) usePodcastPlayedBase.getState().markUnplayed(bucket, id);
+}
+
+export function markPodcastEpisodesUnplayed(
+  ids: string[],
+  source: PodcastSource,
+): void {
+  if (markedPlayedId && ids.includes(markedPlayedId)) markedPlayedId = null;
+  const bucket = playedBucket(source);
+  if (bucket) usePodcastPlayedBase.getState().markAllUnplayed(bucket, ids);
+}
+
+export function markPodcastTrackFinished(track: QueueTrack): void {
+  markPodcastEpisodePlayed(track.id, resolvePodcastSource(track));
 }
 
 // Persist whatever is in memory. Called on pause, on track change and when the
@@ -179,6 +253,7 @@ export function flushPodcastProgress(): void {
 // server-independent, exactly like Taddy favorites.
 export function resetPodcastProgressRuntime(): void {
   pending = null;
+  markedPlayedId = null;
   lastWriteAt = 0;
   lastWrittenId = null;
   lastWrittenPosition = 0;

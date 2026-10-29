@@ -296,7 +296,7 @@ export default function ServerPodcastEpisodeScreen() {
           </VStack>
           <HStack className="mt-4 items-center justify-between">
             <HStack className="items-center gap-x-4">
-              <MarkAsPlayedButton id={id} />
+              <MarkAsPlayedButton id={id} source="server" />
               {!!episode && (
                 <EpisodeDownloadButton
                   episode={episode}

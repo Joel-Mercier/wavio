@@ -32,6 +32,10 @@ import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import SleepTimerActionRow from "@/components/player/SleepTimerActionRow";
+import {
+  EpisodeProgressBar,
+  MarkAsPlayedButton,
+} from "@/components/podcasts/EpisodeProgress";
 import RichText from "@/components/RichText";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -385,6 +389,7 @@ export default function PodcastScreen() {
 
             <HStack className="mt-4 items-center justify-between">
               <HStack className="items-center gap-x-4">
+                <MarkAsPlayedButton id={podcast.uuid} source="taddy" />
                 <FadeOutScaleDown onPress={handleSharePress}>
                   <Share2 color={white} />
                 </FadeOutScaleDown>
@@ -393,6 +398,7 @@ export default function PodcastScreen() {
                 </FadeOutScaleDown>
               </HStack>
               <HStack className="items-center gap-x-4">
+                <EpisodeProgressBar id={podcast.uuid} />
                 <PlayPauseButton
                   isPlaying={isCurrent && isPlaying}
                   onPress={handlePlayPress}

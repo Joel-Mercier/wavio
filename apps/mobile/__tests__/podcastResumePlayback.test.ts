@@ -114,8 +114,13 @@ jest.mock("@/config/i18n", () => ({
   applyZodLocale: jest.fn(),
 }));
 
+import { localPodcastEpisodeId } from "@/services/local/keys";
 import { playTracks } from "@/services/player";
-import { resetPodcastProgressRuntime } from "@/services/podcastProgress";
+import {
+  markPodcastEpisodePlayed,
+  resetPodcastProgressRuntime,
+} from "@/services/podcastProgress";
+import { usePodcastPlayedBase } from "@/stores/podcastPlayed";
 import { usePodcastsBase } from "@/stores/podcasts";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 
@@ -238,6 +243,45 @@ describe("podcast progress recording", () => {
     player.currentTime = 3590;
     player.duration = 3600;
     useQueue.getState().setCurrentIndex(1);
+    expect(progressFor("ep-1")).toBeUndefined();
+  });
+
+  test("an on-device RSS episode stays played too", () => {
+    usePodcastPlayedBase.setState({ played: {} }, false);
+    const id = localPodcastEpisodeId("https://feeds.example/ep.mp3");
+    const rss = episode(id, {
+      podcastSource: "server",
+      streamId: id,
+      audioUrl: undefined,
+    });
+    playTracks([rss]);
+    for (let t = 100; t < 105; t += 0.25) {
+      emitStatus({ playing: true, currentTime: t, duration: 3600 });
+    }
+    markPodcastEpisodePlayed(id, "server");
+    for (let t = 105; t < 130; t += 0.25) {
+      emitStatus({ playing: true, currentTime: t, duration: 3600 });
+    }
+    expect(usePodcastPlayedBase.getState().isPlayed("scope", id)).toBe(true);
+    expect(progressFor(id)).toBeUndefined();
+  });
+});
+
+describe("marking the playing episode played", () => {
+  test("it stays played while playback carries on", () => {
+    usePodcastPlayedBase.setState({ played: {} }, false);
+    playTracks([episode("ep-1")]);
+    for (let t = 100; t < 105; t += 0.25) {
+      emitStatus({ playing: true, currentTime: t, duration: 3600 });
+    }
+    expect(progressFor("ep-1")).toBeDefined();
+    markPodcastEpisodePlayed("ep-1", "taddy");
+    for (let t = 105; t < 130; t += 0.25) {
+      emitStatus({ playing: true, currentTime: t, duration: 3600 });
+    }
+    expect(usePodcastPlayedBase.getState().isPlayed("taddy", "ep-1")).toBe(
+      true,
+    );
     expect(progressFor("ep-1")).toBeUndefined();
   });
 });

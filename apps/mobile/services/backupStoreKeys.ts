@@ -11,6 +11,7 @@ export const GLOBAL_KEYS = [
   "servers",
   "app",
   "podcasts",
+  "podcastPlayed",
   "musicFolders",
   "radioStations",
 ] as const;

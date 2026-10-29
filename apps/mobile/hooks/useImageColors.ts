@@ -2,6 +2,35 @@ import { useEffect, useState } from "react";
 import { getColors, type ImageColorsResult } from "react-native-image-colors";
 import { requestHeadersForUrl } from "@/services/serverHeaders";
 
+const extract = (url: string, key: string) =>
+  getColors(url, {
+    fallback: "#000",
+    cache: true,
+    key,
+    // Without these the extraction 403s behind an authenticating proxy and
+    // every screen silently falls back to the default tint.
+    headers: requestHeadersForUrl(url),
+  });
+
+// The native side fetches with Android's HttpURLConnection, which won't follow a
+// redirect across schemes, so an `http://` feed image that 301s to https hands
+// it an HTML body. RN's fetch (OkHttp) does follow it, so resolve the final
+// address and retry there. Only after a failure: working images pay nothing.
+export async function loadImageColors(url: string): Promise<ImageColorsResult> {
+  try {
+    return await extract(url, url);
+  } catch (error) {
+    if (!/^http:\/\//i.test(url)) throw error;
+    const response = await fetch(url, {
+      method: "HEAD",
+      headers: requestHeadersForUrl(url),
+    }).catch(() => null);
+    const resolved = response?.url;
+    if (!resolved || resolved === url) throw error;
+    return extract(resolved, url);
+  }
+}
+
 const useImageColors = (url?: string) => {
   const [colors, setColors] = useState<ImageColorsResult | null>(null);
 
@@ -11,14 +40,7 @@ const useImageColors = (url?: string) => {
       return;
     }
     let cancelled = false;
-    getColors(url, {
-      fallback: "#000",
-      cache: true,
-      key: url,
-      // Without these the extraction 403s behind an authenticating proxy and
-      // every screen silently falls back to the default tint.
-      headers: requestHeadersForUrl(url),
-    })
+    loadImageColors(url)
       .then((result) => {
         if (!cancelled) setColors(result);
       })

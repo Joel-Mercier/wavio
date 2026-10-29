@@ -119,6 +119,8 @@ import {
   registerRemoteTarget,
 } from "@/services/playback/remoteTarget";
 import { playTracks, takeOverFromRemote } from "@/services/player";
+import { usePodcastPlayedBase } from "@/stores/podcastPlayed";
+import { usePodcastsBase } from "@/stores/podcasts";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import { useServerExtensionsBase } from "@/stores/serverExtensions";
 
@@ -352,5 +354,30 @@ describe("playbackReport on a remote target", () => {
     expect(reports("stopped")).toEqual([
       expect.objectContaining({ mediaId: `a-${run}`, ignoreScrobble: true }),
     ]);
+  });
+});
+
+describe("podcast episodes on a remote target", () => {
+  const episode = (name: string): QueueTrack =>
+    ({
+      ...song(name, 0),
+      source: "podcast",
+      podcastSource: "server",
+      streamId: `${name}-${run}`,
+    }) as QueueTrack;
+
+  test("an episode with no declared length is marked played when it ends", () => {
+    playTracks([episode("ep"), episode("next")], 0);
+    remoteUpdate({ playing: true, currentTime: 1800 });
+    remoteUpdate({ playing: false });
+    advanceAfterTrackEnd({ reload: jest.fn(), stop: jest.fn() });
+    expect(usePodcastPlayedBase.getState().isPlayed("scope", `ep-${run}`)).toBe(
+      true,
+    );
+    expect(
+      usePodcastsBase
+        .getState()
+        .podcastProgress.some((entry) => entry.id === `ep-${run}`),
+    ).toBe(false);
   });
 });

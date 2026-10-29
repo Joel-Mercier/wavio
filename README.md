@@ -70,7 +70,7 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 
 - Supports Navidrome, OpenSubsonic and Jellyfin servers or a local library (local files, SMB share or WebDAV share)
 - Home screen with shortcuts and recently played, recently added, most played, more from artist, highest rated, random, most played tracks, playlists, decades, genres, artist spotlights and internet radio stations sections
-- Customize your home feed experience by toggling sections
+- Customize your home feed experience by toggling or reordering sections
 - Artist screen with albums, songs, liked songs, and similar artists
 - Album screen with songs and similar albums
 - Playlist screen with songs list and editing
@@ -83,16 +83,16 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 - Floating player for easy access to the currently playing song
 - Queue screen with clearing, editing and reordering support
 - Similar songs screen with songs similar to the selected song
-- [AudioMuse-AI](https://github.com/NeptuneHub/AudioMuse-AI) support for AI powered sonic similarity : prompt to playlist, sonic fingerprint playlist, playlist from similar songs, search sounds and lyrics and artist similarity. (Navidrome and Jellyfin only)
+- [AudioMuse-AI](https://github.com/NeptuneHub/AudioMuse-AI) support for AI powered sonic similarity : prompt to playlist, sonic fingerprint playlist, playlist from similar songs, search sounds and lyrics, search by audio recording and artist similarity. (Navidrome and Jellyfin only)
 - [Octo-Fiesta](https://github.com/V1ck3s/octo-fiesta) proxy server support. Automatically fetch songs not in your library. (Navidrome and OpenSubsonic only)
 - Podcasts screen with search, podcast series and episodes (provided by Taddy API, 500 monthly free requests)
-- Podcast playback controls: adjustable playback speed (0.5× to 2×), skip back 15s / forward 30s and resume playback from last known position
+- Podcast playback controls: adjustable playback speed (0.5× to 2×), skip back 15s / forward 30s, resume playback from last known position and mark as finished
 - Add your own favorite podcasts through RSS feeds
 - Internet radio stations, listen to radio streams, browse and search (provided by the Radio Browser API, free for non-commercial use)
 - Offline downloads of albums and playlists and tracks, offline actions, automatic dowload of favorite songs or full library caching, downloads management screen, queued changes screen
 - Music folders (libraries) discovery and filtering across home, search, and library
-- Activity screen, recently played tracks grouped by source
-- Share screen with shareable links (Navidrome only)
+- Activity screen, recently played tracks grouped by source. Also shows Last.fm or Musicbrainz data if enabled.
+- Share screen with shareable links. Format and downloadable options. (Navidrome only)
 - Servers screen with multiple servers support, advanced server settings like fallback URL and mTLS support
 - Single sign-on (OpenID Connect) for Navidrome and OpenSubsonic servers behind an authenticating reverse proxy: enter the server URL and sign in at your identity provider. See [docs/single-sign-on.md](docs/single-sign-on.md) for the server-side setup
 - Settings screen with server scanning, offline downloads, playback, content, display, backup and security settings
@@ -104,6 +104,7 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 - [MusicBrainz](https://musicbrainz.org/) integration for local libraries, tag directly from the app using the MusicBrainz api, write to file or write to app data only option, review workflow, tags to replace selection, auto apply toggle, customizable confidence threshold for auto apply
 - [ListenBrainz](https://listenbrainz.org/) integration for scrobbling, listening stats and daily jams, weekly jams and weekly exploration playlists.
 - [Last.fm](https://www.last.fm/) integration for scrobbling, stats, loved tracks sync and artist recommandations.
+- Playlist folders with opt-in name-prefix grouping.
 - Bookmarks support. Easy access to a song or podcast favorite parts
 - Customizable swipe gestures for tracks
 - Landscape mode support
@@ -112,7 +113,7 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 - Android launcher shortcuts
 - Navidrome smart playlists support
 - Remote playback options like Navidrome/Opensubsonic jukebox mode, Chromecast and uPnP/DLNA
-- Backup and restore
+- Backup and restore, custom automatic backups
 - Automatic metadata extraction from local files, uses embedded metadata if available or falls back to file system and file name heuristics
 - English, French, German, Italian, Spanish, Brazilian Portuguese, Chinese, Russian and Polish translations
 

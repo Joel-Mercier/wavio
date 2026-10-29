@@ -17,10 +17,13 @@
 // filename fragment and an MMKV key prefix — services/backup.ts relies on a
 // scope never containing ":".
 export const getAuthScope = (serverId: string, username: string) => {
-  const safeServerId = serverId.replace(/[^a-zA-Z0-9]/g, "_");
   const safeUsername = username.replace(/[^a-zA-Z0-9]/g, "_");
-  return `${safeServerId}_${safeUsername}`;
+  return `${authScopePrefix(serverId)}${safeUsername}`;
 };
+
+// What every scope of one server starts with, whichever user it belongs to.
+export const authScopePrefix = (serverId: string) =>
+  `${serverId.replace(/[^a-zA-Z0-9]/g, "_")}_`;
 
 // The on-device library is a singleton (one server row, one user, no URL), so an
 // id buys it nothing and its scope can never collide. Keeping the historical

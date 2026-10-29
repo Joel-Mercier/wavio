@@ -80,6 +80,7 @@ import {
   flushPodcastProgress,
   getPodcastResumePosition,
   isPodcastTrack,
+  markPodcastTrackFinished,
   recordPodcastProgress,
   resetPodcastProgressRuntime,
 } from "@/services/podcastProgress";
@@ -563,6 +564,9 @@ subscribeRemoteChange(() => {
 });
 
 onRemoteTrackEnd((track) => {
+  // The receiver's end is the only finish signal for an episode whose feed
+  // declared no duration: the outgoing-progress flush can't hit the end guard.
+  if (isPodcastTrack(track)) markPodcastTrackFinished(track);
   if (activeRemoteTarget()?.playsOnServer) return;
   countFinishedPlay(
     track,
@@ -1634,7 +1638,11 @@ function handlePlaybackStatus(status: AudioStatus) {
     const previous = useQueue.getState().getCurrent();
     // Fully played — drop any resume bookmark so it doesn't reopen at the end.
     clearResumePosition(previousId);
-    clearPodcastProgress(previousId);
+    if (previous && isPodcastTrack(previous)) {
+      markPodcastTrackFinished(previous);
+    } else {
+      clearPodcastProgress(previousId);
+    }
     // The queue advance below re-fires the queue subscription, whose skip-flush
     // would otherwise re-create the entry we just cleared. Only matters when the
     // episode has no known duration (with one, the flush hits the end guard and
