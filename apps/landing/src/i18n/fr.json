@@ -150,8 +150,8 @@
 				"desc": "Lancez un titre que votre serveur ne contient pas. Octo-Fiesta le récupère instantanément depuis votre bibliothèque Navidrome ou OpenSubsonic, comblant ainsi automatiquement le vide."
 			},
 			"audiobookshelf": {
-				"role": "Audiobooks",
-				"desc": "Browse and play the books on your Audiobookshelf server, jump straight to a chapter, and download them for offline listening. Your progress syncs back to the server, including what you heard offline."
+				"role": "Livres audio",
+				"desc": "Parcourez et écoutez les livres disponibles sur votre serveur Audiobookshelf, accédez directement à un chapitre et téléchargez-les pour les écouter hors ligne. Votre progression est synchronisée avec le serveur, y compris ce que vous avez écouté hors ligne."
 			}
 		}
 	},
