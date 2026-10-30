@@ -148,6 +148,10 @@
 			"octo-fiesta": {
 				"role": "Streaming",
 				"desc": "Reproduce una canción que tu servidor no tenga. Octo-Fiesta la recupera al instante de tu biblioteca de Navidrome u OpenSubsonic, por lo que el vacío se llena por sí solo."
+			},
+			"audiobookshelf": {
+				"role": "Audiobooks",
+				"desc": "Browse and play the books on your Audiobookshelf server, jump straight to a chapter, and download them for offline listening. Your progress syncs back to the server, including what you heard offline."
 			}
 		}
 	},
