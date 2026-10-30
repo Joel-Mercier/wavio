@@ -148,6 +148,10 @@
 			"octo-fiesta": {
 				"role": "Стриминг",
 				"desc": "Воспроизведите песню, которой нет на вашем сервере. Octo-Fiesta мгновенно загрузит её из вашей библиотеки Navidrome или OpenSubsonic, и пауза заполнится сама собой."
+			},
+			"audiobookshelf": {
+				"role": "Audiobooks",
+				"desc": "Browse and play the books on your Audiobookshelf server, jump straight to a chapter, and download them for offline listening. Your progress syncs back to the server, including what you heard offline."
 			}
 		}
 	},
