@@ -42,6 +42,7 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { useStar, useUnstar } from "@/hooks/backend/useMediaAnnotation";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
+import { useCanCast } from "@/hooks/player/useCanCast";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
@@ -58,6 +59,7 @@ import useUpnp from "@/stores/upnp";
 import { hidesFloatingPlayer } from "@/utils/floatingPlayerRoutes";
 import { invalidateKeys } from "@/utils/invalidateKeys";
 import { TOAST_DURATION } from "@/utils/toastDuration";
+import { isSpokenWordTrack } from "@/utils/trackSource";
 
 export const FLOATING_PLAYER_HEIGHT = 64;
 // Width of the landscape left tab bar column; the player docks to its bottom.
@@ -100,7 +102,8 @@ export default function FloatingPlayer() {
   const playingRemotely = jukeboxActive || upnpConnected || casting;
   // The sheet is worth opening when there is any output to pick between, not
   // only when the server happens to have a jukebox.
-  const hasOutputs = capabilities.jukebox || capabilities.remoteStreamableUrl;
+  const canCast = useCanCast();
+  const hasOutputs = capabilities.jukebox || canCast;
   const queueLength = useQueue((s) => s.queue.length);
   const currentIndex = useQueue((s) => s.currentIndex);
   const repeatMode = useQueue((s) => s.repeatMode);
@@ -108,6 +111,7 @@ export default function FloatingPlayer() {
 
   const isRadio = !!playingTrack?.isRadio;
   const isPodcast = playingTrack?.source === "podcast";
+  const isSpokenWord = isSpokenWordTrack(playingTrack);
   const podcastSeries = (
     isPodcast ? playingTrack?.podcastSeries : null
   ) as PodcastSeries | null;
@@ -435,7 +439,7 @@ export default function FloatingPlayer() {
                 <MovingText animate={isPlaying}>
                   <Text className="text-gray-300 text-xs">
                     {playingTrack.artist ||
-                      (!isRadio && !isPodcast
+                      (!isRadio && !isSpokenWord
                         ? t("app.shared.unknownArtist")
                         : "")}
                   </Text>
@@ -452,7 +456,7 @@ export default function FloatingPlayer() {
                   }
                 />
               )}
-              {!isRadio && !isPodcast && (
+              {!isRadio && !isSpokenWord && (
                 <AnimatedHeart
                   hitSlop={8}
                   filled={!!playingTrack.starred}
@@ -574,7 +578,7 @@ export default function FloatingPlayer() {
                   <MovingText animate={isPlaying}>
                     <Text className="text-gray-300">
                       {playingTrack.artist ||
-                        (!isRadio && !isPodcast
+                        (!isRadio && !isSpokenWord
                           ? t("app.shared.unknownArtist")
                           : "")}
                     </Text>
@@ -609,7 +613,7 @@ export default function FloatingPlayer() {
                     }
                   />
                 )}
-                {!playingTrack.isRadio && !isPodcast && (
+                {!playingTrack.isRadio && !isSpokenWord && (
                   <AnimatedHeart
                     hitSlop={12}
                     filled={!!playingTrack.starred}

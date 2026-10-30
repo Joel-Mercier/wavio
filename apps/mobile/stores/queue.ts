@@ -25,7 +25,9 @@ export type QueueSource = {
     // Not navigable either: the playlist exists on ListenBrainz, not the server.
     | "listenbrainz"
     // An artist or genre mix the app generated. Not navigable either.
-    | "mix";
+    | "mix"
+    // An Audiobookshelf book; `id` is its library item id.
+    | "audiobook";
   name: string;
   // Present for navigable sources (album/playlist/artist/folder), and on
   // artist-scoped lists (allSongs/likedSongs: the artist's id) so the artist's

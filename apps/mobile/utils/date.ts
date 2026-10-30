@@ -73,3 +73,14 @@ export const formatClockTime = (
     uses24hourClock == null ? "p" : uses24hourClock ? "HH:mm" : "h:mm a";
   return format(new Date(ms), pattern);
 };
+
+// h:mm:ss once past the hour, for positions in a book.
+export const formatLongSeconds = (seconds: number) => {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  const total = Math.floor(seconds);
+  const hours = Math.floor(total / 3600);
+  if (hours === 0) return formatSeconds(total);
+  const minutes = Math.floor((total % 3600) / 60);
+  const remaining = total % 60;
+  return `${hours}:${minutes.toString().padStart(2, "0")}:${remaining.toString().padStart(2, "0")}`;
+};

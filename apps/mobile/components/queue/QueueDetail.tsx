@@ -53,6 +53,7 @@ import { childToTrack, trackToChild } from "@/utils/childToTrack";
 import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
 import { TOAST_DURATION } from "@/utils/toastDuration";
+import { isSpokenWordTrack } from "@/utils/trackSource";
 import { ScrollView } from "../ui/scroll-view";
 
 const QUEUE_EDIT_ITEM_HEIGHT = 70;
@@ -588,7 +589,7 @@ export default function QueueDetail() {
                     </Heading>
                   );
                 }
-                return item.track.source === "podcast" ? (
+                return isSpokenWordTrack(item.track) ? (
                   <Box className="px-6">
                     <QueuePodcastListItem
                       track={item.track}

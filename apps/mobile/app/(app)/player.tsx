@@ -7,6 +7,7 @@ import Cast from "lucide-react-native/icons/cast";
 import ChevronDown from "lucide-react-native/icons/chevron-down";
 import EllipsisVertical from "lucide-react-native/icons/ellipsis-vertical";
 import ListMusic from "lucide-react-native/icons/list-music";
+import ListTree from "lucide-react-native/icons/list-tree";
 import Mic2 from "lucide-react-native/icons/mic-vocal";
 import RadioIcon from "lucide-react-native/icons/radio";
 import SkipBack from "lucide-react-native/icons/skip-back";
@@ -24,6 +25,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 import { Uniwind } from "uniwind";
 import AnimatedHeart from "@/components/AnimatedHeart";
+import AudiobookChaptersSheet from "@/components/audiobooks/AudiobookChaptersSheet";
+import AudiobookFavoriteToggle from "@/components/audiobooks/AudiobookFavoriteToggle";
 import FadeOut from "@/components/FadeOut";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
@@ -50,6 +53,7 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { useAudiobookChapterPlaying } from "@/hooks/audiobookshelf/useAudiobookNowPlaying";
 import {
   useSetRating,
   useStar,
@@ -66,6 +70,7 @@ import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useKeepScreenAwake } from "@/hooks/useKeepScreenAwake";
 import { useTrackArtwork } from "@/hooks/useTrackArtwork";
+import { indexPastAudiobook } from "@/services/audiobookPlayback";
 import {
   PODCAST_SEEK_BACKWARD_SECONDS,
   PODCAST_SEEK_FORWARD_SECONDS,
@@ -75,6 +80,7 @@ import {
   togglePlayPause,
 } from "@/services/player";
 import useApp from "@/stores/app";
+import useAudiobookProgressBase from "@/stores/audiobookProgress";
 import useCast from "@/stores/cast";
 import useJukebox from "@/stores/jukebox";
 import usePodcasts from "@/stores/podcasts";
@@ -85,6 +91,7 @@ import { HEADER_TINT_COLOR } from "@/utils/headerGradient";
 import { hasLyricContent, isSyncedLyrics } from "@/utils/lyrics";
 import { cn } from "@/utils/tailwind";
 import { TOAST_DURATION } from "@/utils/toastDuration";
+import { isSpokenWordTrack } from "@/utils/trackSource";
 
 const COVER_SWIPE_THRESHOLD = 80;
 const COVER_SWIPE_BUFFER = 60;
@@ -140,6 +147,7 @@ export default function PlayerScreen() {
   const actionsSheetRef = useRef<BottomSheetModal>(null);
   const speedSheetRef = useRef<BottomSheetModal>(null);
   const lyricsPickerSheetRef = useRef<BottomSheetModal>(null);
+  const chaptersSheetRef = useRef<BottomSheetModal>(null);
   const jukeboxActive = useJukebox((s) => s.active);
   const upnpConnected = useUpnp((s) => s.connected);
   const casting = useCast((s) => s.active);
@@ -172,8 +180,20 @@ export default function PlayerScreen() {
   );
   const isRadio = !!playingTrack?.isRadio;
   const isPodcast = playingTrack?.source === "podcast";
+  const isAudiobook = playingTrack?.source === "audiobook";
+  const isSpokenWord = isSpokenWordTrack(playingTrack);
   const podcastSeries = isPodcast ? playingTrack?.podcastSeries : null;
-  const showSource = !!source && !isPodcast && !isRadio;
+  const showSource = !!source && !isSpokenWord && !isRadio;
+  const audiobookChapter = useAudiobookChapterPlaying();
+  const audiobookChapters = useAudiobookProgressBase((store) =>
+    audiobookChapter.itemId
+      ? store.books[audiobookChapter.itemId]?.chapters
+      : undefined,
+  );
+  const chapterTitle =
+    audiobookChapter.chapterIndex >= 0
+      ? audiobookChapters?.[audiobookChapter.chapterIndex]?.title
+      : undefined;
   const sourceHref = useMemo<Href | null>(() => {
     if (!source?.id) return null;
     switch (source.type) {
@@ -212,13 +232,24 @@ export default function PlayerScreen() {
       ? store.favoritePodcasts.some((fav) => fav.uuid === podcastSeries.uuid)
       : false,
   );
+  const chapterCount = audiobookChapters?.length ?? 0;
+  const queuedPastBook = useQueue(
+    (s) =>
+      s.currentIndex != null &&
+      s.queue[s.currentIndex]?.source === "audiobook" &&
+      indexPastAudiobook(s.queue, s.currentIndex, s.repeatMode) >= 0,
+  );
   const canSkipNext =
     !isRadio &&
-    (repeatMode !== "off" ||
-      (currentIndex != null && currentIndex < queueLength - 1));
+    (isAudiobook && chapterCount > 1
+      ? audiobookChapter.chapterIndex < chapterCount - 1 || queuedPastBook
+      : repeatMode !== "off" ||
+        (currentIndex != null && currentIndex < queueLength - 1));
   const canSkipPrevious =
     !isRadio &&
-    (repeatMode !== "off" || (currentIndex != null && currentIndex > 0));
+    ((isAudiobook && chapterCount > 1) ||
+      repeatMode !== "off" ||
+      (currentIndex != null && currentIndex > 0));
   const [coverArea, setCoverArea] = useState({ width: 0, height: 0 });
   const coverSize = Math.max(
     0,
@@ -232,7 +263,7 @@ export default function PlayerScreen() {
   const showPlayerRating = useApp((s) => s.showPlayerRating);
   const showPlayerAudioQuality = useApp((s) => s.showPlayerAudioQuality);
   const showRating =
-    showPlayerRating && capabilities.setRating && !isRadio && !isPodcast;
+    showPlayerRating && capabilities.setRating && !isRadio && !isSpokenWord;
   // Mirrors AudioQualityLine's own null check so the row (and its bottom
   // margin) collapses when there is neither a quality line nor a rating.
   const hasQualityLine =
@@ -251,7 +282,7 @@ export default function PlayerScreen() {
   const canShowInlineLyrics =
     lyricsSource !== "off" &&
     !isRadio &&
-    !isPodcast &&
+    !isSpokenWord &&
     (hasLyricContent(lyrics) || lyricsLoading);
   const showInlineLyrics = inlineLyricsEnabled && canShowInlineLyrics;
   const coverTranslateX = useSharedValue(0);
@@ -685,7 +716,7 @@ export default function PlayerScreen() {
                 land, when a track has none, or mid-fade while the next track's
                 are still loading. */}
             {!isRadio &&
-              !isPodcast &&
+              !isSpokenWord &&
               lyricsSource !== "off" &&
               (showInlineLyrics || !hasSyncedLyrics ? (
                 <Box className="h-12" />
@@ -702,6 +733,14 @@ export default function PlayerScreen() {
                 <VStack className="mb-2 flex-1">
                   <FadeOut
                     onPress={() => {
+                      if (isAudiobook) {
+                        if (!playingTrack?.audiobookItemId) return;
+                        router.replace({
+                          pathname: "/audiobooks/[id]",
+                          params: { id: playingTrack.audiobookItemId },
+                        });
+                        return;
+                      }
                       if (isPodcast) {
                         if (!playingTrack?.id) return;
                         router.replace({
@@ -729,12 +768,18 @@ export default function PlayerScreen() {
                   >
                     <MovingText animate={isPlaying}>
                       <Text className="text-white text-2xl font-bold font-heading">
-                        {playingTrack?.title}
+                        {isAudiobook
+                          ? playingTrack?.album || playingTrack?.title
+                          : playingTrack?.title}
                       </Text>
                     </MovingText>
                   </FadeOut>
                   <FadeOut
                     onPress={() => {
+                      if (isAudiobook) {
+                        chaptersSheetRef.current?.present();
+                        return;
+                      }
                       if (isPodcast) {
                         if (!podcastSeries?.uuid) return;
                         router.replace({
@@ -757,8 +802,9 @@ export default function PlayerScreen() {
                   >
                     <MovingText animate={isPlaying}>
                       <Text className="text-white/80 text-lg">
-                        {playingTrack?.artist ||
-                          (!isPodcast && !isRadio
+                        {(isAudiobook && chapterTitle) ||
+                          playingTrack?.artist ||
+                          (!isSpokenWord && !isRadio
                             ? t("app.shared.unknownArtist")
                             : "")}
                       </Text>
@@ -776,7 +822,17 @@ export default function PlayerScreen() {
                     }
                   />
                 )}
-                {!isRadio && !isPodcast && (
+                {isAudiobook && playingTrack?.audiobookItemId && (
+                  <AudiobookFavoriteToggle
+                    favorite={{
+                      kind: "book",
+                      id: playingTrack.audiobookItemId,
+                      name: playingTrack.album ?? playingTrack.title ?? "",
+                      subtitle: playingTrack.artist,
+                    }}
+                  />
+                )}
+                {!isRadio && !isSpokenWord && (
                   <AnimatedHeart
                     testID="player-favorite-button"
                     filled={!!playingTrack?.starred}
@@ -820,7 +876,7 @@ export default function PlayerScreen() {
                 {/* Podcasts swap shuffle/repeat — meaningless for an episode —
                     for the relative seeks, and demote prev/next episode to the
                     outer slots so the seeks sit under the thumb. */}
-                {!isRadio && !isPodcast && (
+                {!isRadio && !isSpokenWord && (
                   <ShuffleToggle
                     active={shuffle}
                     hitSlop={ICON_HIT_SLOP}
@@ -833,13 +889,13 @@ export default function PlayerScreen() {
                     onPress={handlePreviousPress}
                   >
                     <SkipBack
-                      size={isPodcast ? 28 : 36}
+                      size={isSpokenWord ? 28 : 36}
                       color="white"
                       fill="white"
                     />
                   </FadeOut>
                 )}
-                {isPodcast && (
+                {isSpokenWord && (
                   <PodcastSeekButton
                     testID="player-seek-backward-button"
                     direction="backward"
@@ -856,7 +912,7 @@ export default function PlayerScreen() {
                   color={gray800}
                   className="bg-white"
                 />
-                {isPodcast && (
+                {isSpokenWord && (
                   <PodcastSeekButton
                     testID="player-seek-forward-button"
                     direction="forward"
@@ -870,13 +926,13 @@ export default function PlayerScreen() {
                     onPress={handleNextPress}
                   >
                     <SkipForward
-                      size={isPodcast ? 28 : 36}
+                      size={isSpokenWord ? 28 : 36}
                       color="white"
                       fill="white"
                     />
                   </FadeOut>
                 )}
-                {!isRadio && !isPodcast && (
+                {!isRadio && !isSpokenWord && (
                   <RepeatToggle
                     mode={repeatMode}
                     hitSlop={ICON_HIT_SLOP}
@@ -895,7 +951,18 @@ export default function PlayerScreen() {
               >
                 {/* Rendered on lyrics-capable tracks even when this one has
                     none, so the row doesn't reshuffle between tracks. */}
-                {!isRadio && !isPodcast && lyricsSource !== "off" && (
+                {isAudiobook && (
+                  <FadeOut
+                    testID="player-chapters-button"
+                    hitSlop={ICON_HIT_SLOP}
+                    onPress={() => chaptersSheetRef.current?.present()}
+                    disabled={!audiobookChapters?.length}
+                    accessibilityLabel={t("app.audiobooks.chapters")}
+                  >
+                    <ListTree size={24} color="white" />
+                  </FadeOut>
+                )}
+                {!isRadio && !isSpokenWord && lyricsSource !== "off" && (
                   <FadeOut
                     testID="player-inline-lyrics-button"
                     hitSlop={ICON_HIT_SLOP}
@@ -932,7 +999,7 @@ export default function PlayerScreen() {
                     </Box>
                   )}
                 </FadeOut>
-                {isPodcast && (
+                {isSpokenWord && (
                   <FadeOut
                     testID="player-speed-button"
                     hitSlop={ICON_HIT_SLOP}
@@ -948,7 +1015,7 @@ export default function PlayerScreen() {
                 )}
                 {/* Same slot as the podcast speed button — the two never show
                     together. */}
-                {!isRadio && !isPodcast && lyricsSource === "all" && (
+                {!isRadio && !isSpokenWord && lyricsSource === "all" && (
                   <FadeOut
                     testID="player-lyrics-picker-button"
                     hitSlop={ICON_HIT_SLOP}
@@ -971,6 +1038,7 @@ export default function PlayerScreen() {
           </VStack>
         </VStack>
       </VStack>
+      <AudiobookChaptersSheet sheetRef={chaptersSheetRef} />
       <PlayerSheets
         actionsSheetRef={actionsSheetRef}
         speedSheetRef={speedSheetRef}

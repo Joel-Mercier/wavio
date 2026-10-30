@@ -7,6 +7,7 @@ import { File, Paths } from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import AudioLines from "lucide-react-native/icons/audio-lines";
+import BookHeadphones from "lucide-react-native/icons/book-headphones";
 import BookmarkPlus from "lucide-react-native/icons/bookmark-plus";
 import CircleMinus from "lucide-react-native/icons/circle-minus";
 import PlusCircle from "lucide-react-native/icons/circle-plus";
@@ -77,6 +78,7 @@ import { formatSeconds } from "@/utils/date";
 import { formatRichTextPlain } from "@/utils/formatRichText";
 import { logError } from "@/utils/log";
 import { TOAST_DURATION } from "@/utils/toastDuration";
+import { isLibraryTrack } from "@/utils/trackSource";
 
 // Live label for the "set bookmark at" action. Isolated in its own component so
 // only this row re-renders on the ~4 Hz progress tick (it's only mounted while
@@ -148,8 +150,9 @@ export default function PlayerSheets({
 
   const isRadio = !!playingTrack?.isRadio;
   const isPodcast = playingTrack?.source === "podcast";
+  const isAudiobook = playingTrack?.source === "audiobook";
   const { data: songData } = useSong(playingTrack?.id ?? "", {
-    enabled: showInfoModal && !isRadio && !isPodcast,
+    enabled: showInfoModal && isLibraryTrack(playingTrack),
   });
   const podcastSeries = isPodcast ? playingTrack?.podcastSeries : null;
   const isPodcastFavorite = usePodcasts((store) =>
@@ -565,13 +568,13 @@ export default function PlayerSheets({
                 >
                   {playingTrack?.title}
                 </Heading>
-                {!isRadio && !isPodcast && (
+                {!isRadio && !isPodcast && !isAudiobook && (
                   <Text numberOfLines={1} className="text-md text-primary-100">
                     {playingTrack?.artist || t("app.shared.unknownArtist")} ⦁{" "}
                     {playingTrack?.album || t("app.shared.unknownAlbum")}
                   </Text>
                 )}
-                {isPodcast && (
+                {(isPodcast || isAudiobook) && (
                   <Text numberOfLines={1} className="text-md text-primary-100">
                     {playingTrack?.artist}
                   </Text>
@@ -602,6 +605,27 @@ export default function PlayerSheets({
               >
                 {sleepTimerRow}
               </InternetRadioStationActions>
+            ) : isAudiobook ? (
+              <VStack className="mt-6 gap-y-8">
+                <FadeOutScaleDown
+                  onPress={() => {
+                    actionsSheetRef.current?.dismiss();
+                    if (!playingTrack?.audiobookItemId) return;
+                    router.replace({
+                      pathname: "/audiobooks/[id]",
+                      params: { id: playingTrack.audiobookItemId },
+                    });
+                  }}
+                >
+                  <HStack className="items-center">
+                    <BookHeadphones size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.audiobooks.goToBook")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+                {sleepTimerRow}
+              </VStack>
             ) : isPodcast ? (
               <VStack className="mt-6 gap-y-8">
                 {podcastSeries && (

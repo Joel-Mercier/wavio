@@ -87,6 +87,17 @@ function buildAuthCache(): Map<string, AuthEntry> {
   const map = new Map<string, AuthEntry>();
   const { servers, users } = useServersBase.getState();
 
+  // Integration servers first, so a music server sharing their origin wins.
+  for (const { baseUrl, accessToken } of integrationBearers.values()) {
+    const origin = originKeyFromUrl(baseUrl);
+    const host = hostnameFromUrl(baseUrl);
+    if (origin && host)
+      map.set(origin, {
+        host,
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+  }
+
   const register = (server: Server, value: string) => {
     for (const url of [server.url, server.fallbackUrl]) {
       if (!url) continue;
@@ -177,6 +188,34 @@ export function setSessionBearer(next: SessionBearer): void {
   )
     return;
   bearer = next;
+  invalidate();
+}
+
+/** A non-music server the app signs in to itself (Audiobookshelf). */
+export type IntegrationBearer = { baseUrl: string; accessToken: string } | null;
+
+const integrationBearers = new Map<
+  string,
+  { baseUrl: string; accessToken: string }
+>();
+
+/**
+ * Publish an integration server's access token so native fetchers (playback,
+ * downloads, artwork) authenticate against its origin the way they do for a
+ * signed-in music server. Pushed by the integration on every token change.
+ */
+export function setIntegrationBearer(
+  name: string,
+  next: IntegrationBearer,
+): void {
+  const current = integrationBearers.get(name);
+  if (
+    current?.baseUrl === next?.baseUrl &&
+    current?.accessToken === next?.accessToken
+  )
+    return;
+  if (next?.baseUrl && next.accessToken) integrationBearers.set(name, next);
+  else integrationBearers.delete(name);
   invalidate();
 }
 
@@ -427,6 +466,7 @@ export function __resetCustomHeadersCache(): void {
   auth = null;
   session = null;
   bearer = null;
+  integrationBearers.clear();
   outbound = null;
   wrapped = new Map();
   names = null;

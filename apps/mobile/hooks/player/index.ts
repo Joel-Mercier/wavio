@@ -1,3 +1,4 @@
+export { useCanCast } from "@/hooks/player/useCanCast";
 export { useIsBuffering } from "@/hooks/player/useIsBuffering";
 export { useIsCurrentTrack } from "@/hooks/player/useIsCurrentTrack";
 export { useIsFloatingPlayerVisible } from "@/hooks/player/useIsFloatingPlayerVisible";

@@ -67,6 +67,7 @@ export type ReportApi =
   | "tidarr"
   | "musicbrainz"
   | "audiomuse"
+  | "audiobookshelf"
   | "listenbrainz"
   | "lastfm"
   | "github";

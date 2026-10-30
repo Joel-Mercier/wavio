@@ -22,6 +22,7 @@ import useRecentPlays, { type RecentPlay } from "@/stores/recentPlays";
 import useRecentSearches from "@/stores/recentSearches";
 import { artworkUrl } from "@/utils/artwork";
 import { canonicalIdMap } from "@/utils/navidromeCanonicalId";
+import { isLibraryTrack } from "@/utils/trackSource";
 
 // The client half of Navidrome's canonical-id migration: rewrite every persisted
 // id through the same transform the server applied to its database.
@@ -64,8 +65,7 @@ const remapArtworkId = <T extends string | undefined>(
 // and their ids are Radio Browser / Taddy uuids — 36 chars, so the transform
 // would happily rewrite them. Only a *server* radio station carries a real
 // Navidrome id, and even then its stream URL must survive untouched.
-const isExternalMedia = (entry: QueueTrack): boolean =>
-  !!entry.isRadio || entry.source === "podcast";
+const isExternalMedia = (entry: QueueTrack): boolean => !isLibraryTrack(entry);
 const isServerRadio = (entry: QueueTrack): boolean =>
   !!entry.isRadio && entry.source === "server";
 

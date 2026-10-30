@@ -17,6 +17,7 @@ import { Avatar, AvatarFallbackText } from "@/components/ui/avatar";
 import { Badge, BadgeText } from "@/components/ui/badge";
 import { HStack } from "@/components/ui/hstack";
 import { ScrollView } from "@/components/ui/scroll-view";
+import { useCanCast } from "@/hooks/player/useCanCast";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import useApp from "@/stores/app";
@@ -31,7 +32,9 @@ type ActiveTab =
   | "podcasts"
   | "favoritePodcasts"
   | "internetRadioStations"
-  | "internetRadioStationsFavorites";
+  | "internetRadioStationsFavorites"
+  | "audiobooks"
+  | "audiobookFavorites";
 
 interface HomeTabsNavProps {
   active: ActiveTab;
@@ -65,7 +68,8 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
   // Not gated on a playing track, unlike the player's own button: from here
   // the output is picked before anything plays, and the sheet copes with an
   // empty queue.
-  const hasOutputs = capabilities.jukebox || capabilities.remoteStreamableUrl;
+  const canCast = useCanCast();
+  const hasOutputs = capabilities.jukebox || canCast;
 
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     persistedScrollX = e.nativeEvent.contentOffset.x;
@@ -81,6 +85,8 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
   const showRadioSplit =
     active === "internetRadioStations" ||
     active === "internetRadioStationsFavorites";
+  const showAudiobooksSplit =
+    active === "audiobooks" || active === "audiobookFavorites";
 
   return (
     <HStack
@@ -212,6 +218,47 @@ export default function HomeTabsNav({ active }: HomeTabsNavProps) {
                 <Badge className="rounded-full bg-primary-500 px-4 py-1 mr-2">
                   <BadgeText className="normal-case text-md text-white">
                     {t("app.home.tabs.internetRadioStations")}
+                  </BadgeText>
+                </Badge>
+              </FadeOutScaleDown>
+            )}
+            {showAudiobooksSplit ? (
+              <Badge className="p-0 bg-transparent">
+                <FadeOutScaleDown
+                  onPress={() =>
+                    router.navigate("/(app)/(tabs)/(home)/audiobooks")
+                  }
+                >
+                  <Badge className="rounded-full rounded-r-none bg-emerald-500 px-4 py-1 pr-4">
+                    <BadgeText className="normal-case text-md text-white">
+                      {t("app.home.tabs.audiobooks")}
+                    </BadgeText>
+                  </Badge>
+                </FadeOutScaleDown>
+                <FadeOutScaleDown
+                  onPress={() =>
+                    router.navigate("/(app)/(tabs)/(home)/audiobooks/favorites")
+                  }
+                >
+                  <Badge
+                    className={`rounded-full rounded-l-none ${active === "audiobookFavorites" ? "bg-emerald-600" : "bg-primary-500"} text-primary-800 px-4 py-1 mr-2`}
+                  >
+                    <BadgeText className="normal-case text-md text-white">
+                      {t("app.home.tabs.audiobookFavorites")}
+                    </BadgeText>
+                  </Badge>
+                </FadeOutScaleDown>
+              </Badge>
+            ) : (
+              <FadeOutScaleDown
+                testID="home-audiobooks-tab"
+                onPress={() =>
+                  router.navigate("/(app)/(tabs)/(home)/audiobooks")
+                }
+              >
+                <Badge className="rounded-full bg-primary-500 px-4 py-1 mr-2">
+                  <BadgeText className="normal-case text-md text-white">
+                    {t("app.home.tabs.audiobooks")}
                   </BadgeText>
                 </Badge>
               </FadeOutScaleDown>

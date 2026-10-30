@@ -17,7 +17,7 @@ export const SLEEP_TIMER_BADGE_GAP = 6;
 
 export function useSleepTimerLabel(): string | null {
   const { t } = useTranslation();
-  const { active, endsAt, finishing, end } = useSleepTimerEnd();
+  const { active, endsAt, finishing, chapterEnd, end } = useSleepTimerEnd();
   const formatClockTime = useFormatClockTime();
   if (!active) return null;
   const at = end?.at ?? endsAt;
@@ -31,7 +31,9 @@ export function useSleepTimerLabel(): string | null {
   }
   return finishing
     ? t("app.player.sleepTimerFinishing")
-    : t("app.player.sleepTimerEndOfTrack");
+    : chapterEnd
+      ? t("app.player.sleepTimerEndOfChapter")
+      : t("app.player.sleepTimerEndOfTrack");
 }
 
 // Height the badge adds above the portrait floating player, which carries it. In

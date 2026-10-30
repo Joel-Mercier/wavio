@@ -39,6 +39,7 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
+import { useCanCast } from "@/hooks/player/useCanCast";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { isUpnpAvailable, type UpnpDevice } from "@/modules/upnp-cast";
 import { castDisconnect, castSetVolume } from "@/services/cast";
@@ -48,6 +49,7 @@ import {
   jukeboxReconcileFromServer,
   jukeboxRefreshStatus,
   jukeboxSetGain,
+  playsOnJukebox,
   takeOverLocally,
 } from "@/services/jukebox";
 import {
@@ -121,10 +123,11 @@ export default function OutputSheet() {
   const jukeboxGain = useJukebox((s) => s.gain);
   const jukeboxStatus = useJukebox((s) => s.status);
   const queueLength = useQueue((s) => s.queue.length);
-  // The jukebox plays server track ids, which radio and podcast episodes are not.
+  // The jukebox plays server track ids, which radio, podcast episodes and
+  // audiobooks are not.
   const jukeboxCanPlayCurrent = useQueue((s) => {
     const track = s.currentIndex == null ? null : s.queue[s.currentIndex];
-    return !track?.isRadio && track?.source !== "podcast";
+    return !track || playsOnJukebox(track);
   });
   const upnpConnected = useUpnp((s) => s.connected);
   const upnpDeviceId = useUpnp((s) => s.deviceId);
@@ -134,9 +137,7 @@ export default function OutputSheet() {
   const upnpGroup = useUpnp((s) => s.group);
   const [pendingRooms, setPendingRooms] = useState<string[]>([]);
 
-  // Casting of any kind needs a URL the receiver can fetch for itself, which the
-  // on-device library has no way to produce.
-  const canCast = capabilities.remoteStreamableUrl;
+  const canCast = useCanCast();
   const showUpnp = canCast && isUpnpAvailable();
   const playingLocally = !jukeboxActive && !upnpConnected && !casting;
 

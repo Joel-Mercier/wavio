@@ -3,6 +3,7 @@ import { getEffectiveStreamingFormat } from "@/services/network";
 import { isPodcastTrack } from "@/services/podcastProgress";
 import { useAppBase } from "@/stores/app";
 import type { QueueTrack } from "@/stores/queue";
+import { isSpokenWordTrack } from "@/utils/trackSource";
 
 const MIME_BY_SUFFIX: Record<string, string> = {
   mp3: "audio/mpeg",
@@ -33,7 +34,7 @@ const MIME_ALIASES: Record<string, string> = {
 // Internet radio, Taddy enclosures and self-hosted feed episodes are fetched
 // from wherever they are hosted, so the server's transcoding never touches them.
 function hostedElsewhere(track: QueueTrack): boolean {
-  if (track.isRadio) return true;
+  if (track.isRadio || track.source === "audiobook") return true;
   if (!isPodcastTrack(track)) return false;
   if (track.podcastSource === "taddy" || typeof track.audioUrl === "string") {
     return true;
@@ -72,7 +73,7 @@ function episodeMime(track: QueueTrack, url: string | undefined) {
  */
 export function castMime(track: QueueTrack, url?: string): string {
   if (hostedElsewhere(track)) {
-    const mime = isPodcastTrack(track) ? episodeMime(track, url) : undefined;
+    const mime = isSpokenWordTrack(track) ? episodeMime(track, url) : undefined;
     return mime ?? "audio/mpeg";
   }
   const { streamingFormat, cellularStreamingFormat } = useAppBase.getState();

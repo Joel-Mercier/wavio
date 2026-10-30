@@ -4,7 +4,9 @@
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/mobile/assets/images/logo.svg" alt="Wavio logo" width="200" height="200">
 </p>
 
-Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubsonic servers or a local library.
+<h3 align="center">Your music, your player, your way</h3>
+
+<p align="center">Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubsonic servers or a local library.</p>
 
 [![CI](https://github.com/Joel-Mercier/wavio/actions/workflows/ci.yml/badge.svg)](https://github.com/Joel-Mercier/wavio/actions/workflows/ci.yml)
 [![Crowdin](https://badges.crowdin.net/wavio/localized.svg)](https://crowdin.com/project/wavio)
@@ -88,6 +90,7 @@ Android Auto doesn't detect Wavio automatically if you installed the app via APK
 - Podcasts screen with search, podcast series and episodes (provided by Taddy API, 500 monthly free requests)
 - Podcast playback controls: adjustable playback speed (0.5× to 2×), skip back 15s / forward 30s, resume playback from last known position and mark as finished
 - Add your own favorite podcasts through RSS feeds
+- [Audiobookshelf](https://www.audiobookshelf.org/) integration for audiobooks : browse and search books, series, authors and collections, chapter navigation, listening progress synced with the server (listening done offline is uploaded later), whole-book downloads, mark as finished, end-of-chapter sleep timer and Chromecast/uPnP playback. Shares the podcast playback controls. (Audiobook libraries only, Audiobookshelf v2.26+)
 - Internet radio stations, listen to radio streams, browse and search (provided by the Radio Browser API, free for non-commercial use)
 - Offline downloads of albums and playlists and tracks, offline actions, automatic dowload of favorite songs or full library caching, downloads management screen, queued changes screen
 - Music folders (libraries) discovery and filtering across home, search, and library

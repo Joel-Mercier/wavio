@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { getPlaybackSnapshot } from "@/hooks/player/playbackSnapshot";
 import { useIsPlaying } from "@/hooks/player/useIsPlaying";
+import {
+  audiobookChapterEndAt,
+  bookTimeOf,
+  isAudiobookTrack,
+} from "@/services/audiobookPlayback";
 import { getPlaybackRateFor } from "@/services/player";
 import { isSleepTimerActive, useSleepTimer } from "@/services/sleepTimer";
 import useApp from "@/stores/app";
@@ -9,6 +14,7 @@ import useQueue, { type QueueTrack } from "@/stores/queue";
 import {
   canFinishTrack,
   type PlaybackEnd,
+  projectChapterStop,
   projectPlaybackEnd,
 } from "@/utils/playbackEnd";
 
@@ -58,7 +64,22 @@ export type PlaybackEndProjector = {
   project: (until: number | null, finishTrack: boolean) => PlaybackEnd | null;
   // When the current track ends; null when it has no known end.
   projectTrackEnd: () => PlaybackEnd | null;
+  // When the audiobook reaches `bookTime` (the playing chapter's end when
+  // omitted); null when no chaptered audiobook is playing.
+  projectChapterEnd: (bookTime?: number) => PlaybackEnd | null;
 };
+
+/** End of the chapter playing now, in book time, or null. */
+export function currentChapterEnd(
+  track: QueueTrack | null | undefined,
+): { itemId: string; bookTime: number } | null {
+  if (!isAudiobookTrack(track)) return null;
+  const bookTime = audiobookChapterEndAt(
+    track.audiobookItemId,
+    bookTimeOf(track, getPlaybackSnapshot().currentTime ?? 0),
+  );
+  return bookTime == null ? null : { itemId: track.audiobookItemId, bookTime };
+}
 
 export function usePlaybackEndProjector(
   enabled: boolean,
@@ -97,6 +118,18 @@ export function usePlaybackEndProjector(
 
   const project = (until: number | null, finishTrack: boolean) => {
     if (currentIndex == null || !current) return null;
+    if (finishTrack && playing && until != null && isAudiobookTrack(current)) {
+      const { audiobookItemId } = current;
+      const chapterStop = projectChapterStop({
+        now,
+        until,
+        bookTime: bookTimeOf(current, getPlaybackSnapshot().currentTime ?? 0),
+        rate: getPlaybackRateFor(current),
+        chapterEndAt: (bookTime) =>
+          audiobookChapterEndAt(audiobookItemId, bookTime),
+      });
+      if (chapterStop) return chapterStop;
+    }
     // next() checks repeat-one before removePlayed, so it loops either way.
     const loops =
       repeatMode === "one" || (repeatMode === "all" && !removePlayed);
@@ -120,7 +153,20 @@ export function usePlaybackEndProjector(
       : { at: now + remaining * 1000, approximate: false };
   };
 
-  return { now, project, projectTrackEnd };
+  const projectChapterEnd = (bookTime?: number) => {
+    if (!isAudiobookTrack(current)) return null;
+    const target = bookTime ?? currentChapterEnd(current)?.bookTime;
+    if (target == null) return null;
+    const position = bookTimeOf(
+      current,
+      getPlaybackSnapshot().currentTime ?? 0,
+    );
+    const remaining =
+      Math.max(0, target - position) / getPlaybackRateFor(current);
+    return { at: now + remaining * 1000, approximate: false };
+  };
+
+  return { now, project, projectTrackEnd, projectChapterEnd };
 }
 
 function useSleepTimerState() {
@@ -128,14 +174,21 @@ function useSleepTimerState() {
   const endsAt = useSleepTimer((s) => s.endsAt);
   const endOfTrack = useSleepTimer((s) => s.endOfTrack);
   const finishing = useSleepTimer((s) => s.finishing);
+  const chapterEnd = useSleepTimer((s) => s.chapterEnd);
   const finishTrack = useApp((s) => s.sleepTimerFinishTrack);
-  return { active, endsAt, endOfTrack, finishing, finishTrack };
+  return { active, endsAt, endOfTrack, finishing, chapterEnd, finishTrack };
 }
 
 function projectSleepEnd(
-  { project, projectTrackEnd }: PlaybackEndProjector,
-  { endsAt, endOfTrack, finishTrack }: ReturnType<typeof useSleepTimerState>,
+  { project, projectTrackEnd, projectChapterEnd }: PlaybackEndProjector,
+  {
+    endsAt,
+    endOfTrack,
+    chapterEnd,
+    finishTrack,
+  }: ReturnType<typeof useSleepTimerState>,
 ): PlaybackEnd | null {
+  if (chapterEnd) return projectChapterEnd(chapterEnd.bookTime);
   if (endOfTrack) return projectTrackEnd();
   return endsAt != null ? project(endsAt, finishTrack) : null;
 }

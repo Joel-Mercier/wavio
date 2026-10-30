@@ -24,6 +24,7 @@ import {
 import { useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import useQueue, { type QueueTrack } from "@/stores/queue";
+import { isSpokenWordTrack } from "@/utils/trackSource";
 
 // Long-form audio is both expensive to fetch and pointless to draw: at this
 // length one bar already spans several seconds. Podcasts and radio are excluded
@@ -98,7 +99,7 @@ export function subscribeWaveforms(cb: () => void): () => void {
 export function isAnalyzable(track: QueueTrack | null | undefined): boolean {
   if (!track?.id) return false;
   if (track.isRadio) return false;
-  if (track.source === "podcast") return false;
+  if (isSpokenWordTrack(track)) return false;
   const duration = typeof track.duration === "number" ? track.duration : 0;
   if (duration > MAX_ANALYZABLE_SECONDS) return false;
   return true;

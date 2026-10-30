@@ -9,6 +9,23 @@ import { File } from "expo-file-system";
 import { Platform } from "react-native";
 import { queryClient } from "@/config/queryClient";
 import { setStarred } from "@/hooks/backend/useMediaAnnotation";
+import {
+  audiobookChapterEndAt,
+  audiobookPlaybackUrl,
+  bookTimeOf,
+  endAudiobookPlayback,
+  getAudiobookPosition,
+  getAudiobookResumePosition,
+  getAudiobookSnapshot,
+  indexPastAudiobook,
+  isAudiobookTrack,
+  markAudiobookTrackFinished,
+  recordAudiobookProgress,
+  requestAudiobookStart,
+  resetAudiobookPlaybackRuntime,
+} from "@/services/audiobookPlayback";
+import { refreshAccessToken as refreshAudiobookshelfToken } from "@/services/audiobookshelf/index";
+import { audiobookTrackId } from "@/services/audiobookshelf/keys";
 import { isIndexBacked } from "@/services/backend/dispatch";
 import { scrobble } from "@/services/backend/mediaAnnotation";
 import { isNetworkShareType } from "@/services/backend/serverTraits";
@@ -101,6 +118,7 @@ import {
 } from "@/services/serverHeaders";
 import {
   checkSleepTimerExpiry,
+  consumeSleepEndOfChapter,
   consumeSleepEndOfTrack,
   registerSleepTimerExpiryHandler,
   useSleepTimer,
@@ -116,6 +134,7 @@ import {
   type MediaControlButton,
   useAppBase,
 } from "@/stores/app";
+import { isAudiobookshelfConnected } from "@/stores/audiobookshelf";
 import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
 import useOffline from "@/stores/offline";
 import usePlaybackNotice from "@/stores/playbackNotice";
@@ -126,8 +145,14 @@ import useQueue, {
   type QueueTrack,
 } from "@/stores/queue";
 import { resolveOfflineTrackArtwork } from "@/utils/artwork";
+import {
+  locateInBook,
+  nextChapterStart,
+  previousChapterStart,
+} from "@/utils/audiobookTimeline";
 import { canFinishTrack } from "@/utils/playbackEnd";
 import { computeReplayGainFactor } from "@/utils/replayGain";
+import { isLibraryTrack, isSpokenWordTrack } from "@/utils/trackSource";
 
 // Native engine calls (pause/seek/lock-screen/…) can throw while the
 // underlying player is mid-teardown or the media isn't loaded yet; those
@@ -213,7 +238,7 @@ const tokenRetriedAt = new Map<string, number>();
 const TOKEN_RETRY_WINDOW_MS = 60_000;
 
 function isScrobblable(track: QueueTrack): boolean {
-  return track.source !== "podcast";
+  return !isSpokenWordTrack(track);
 }
 
 function reportNowPlaying(track: QueueTrack) {
@@ -550,6 +575,20 @@ subscribeRemoteChange(() => {
   const current = useQueue.getState().getCurrent();
   if (!current) return;
   const { playing, buffering, currentTime, duration } = remote.readSnapshot();
+  if (isAudiobookTrack(current) && !buffering) {
+    recordAudiobookProgress(current, currentTime, { playing });
+    if (
+      playing &&
+      consumeSleepEndOfChapter(
+        current.audiobookItemId,
+        bookTimeOf(current, currentTime),
+        audiobookChapterEndAt,
+      )
+    ) {
+      pause();
+      return;
+    }
+  }
   if (!playing) {
     if (wasPlaying && !buffering) reportPaused(currentTime * 1000);
     wasPlaying = false;
@@ -567,6 +606,7 @@ onRemoteTrackEnd((track) => {
   // The receiver's end is the only finish signal for an episode whose feed
   // declared no duration: the outgoing-progress flush can't hit the end guard.
   if (isPodcastTrack(track)) markPodcastTrackFinished(track);
+  markAudiobookTrackFinished(track);
   if (activeRemoteTarget()?.playsOnServer) return;
   countFinishedPlay(
     track,
@@ -604,7 +644,7 @@ export const PODCAST_SEEK_FORWARD_SECONDS = 30;
 // Speed only applies to spoken word — a music track always plays at 1×, so a
 // rate left over from a podcast never bleeds into the next album.
 export function getPlaybackRateFor(track: QueueTrack | null): number {
-  if (track?.source !== "podcast") return 1;
+  if (!isSpokenWordTrack(track)) return 1;
   return clampPodcastPlaybackRate(useAppBase.getState().podcastPlaybackRate);
 }
 
@@ -685,7 +725,7 @@ function isServerTranscodeBackend(): boolean {
 // A prediction, so it only answers for a track that isn't loaded yet — once one
 // is loaded, `isTranscodedStream` reports what its URL actually asked for.
 function predictTranscodedStream(track: QueueTrack): boolean {
-  if (track.isRadio || track.source === "podcast") return false;
+  if (track.isRadio || isSpokenWordTrack(track)) return false;
   if (!isServerTranscodeBackend()) return false;
   if (
     useOffline.getState().getDownloadedTrack(track.id) &&
@@ -780,6 +820,14 @@ function resolveTrackUrl(
   // /stream?id endpoint for it, and it's never an offline download.
   if (track.isRadio && track.url)
     return { url: track.url, isOffline: false, transcoded: false };
+  if (isAudiobookTrack(track)) {
+    const resolved = audiobookPlaybackUrl(track);
+    return {
+      url: resolved?.url ?? "",
+      isOffline: resolved?.isOffline ?? false,
+      transcoded: false,
+    };
+  }
   const downloaded = useOffline.getState().getDownloadedTrack(track.id);
   if (
     downloaded &&
@@ -810,6 +858,10 @@ function resolveTrackUrl(
 }
 
 function isPlayableNow(track: QueueTrack): boolean {
+  if (isAudiobookTrack(track)) {
+    if (audiobookPlaybackUrl(track)?.isOffline) return true;
+    return getIsOnline() && isAudiobookshelfConnected();
+  }
   // Both on-disk answers are conditional on the same thing resolveTrackUrl
   // checks: a copy this device already failed to decode is not a copy that can
   // play, and claiming otherwise strands the skip-to-playable scan on a track
@@ -1010,12 +1062,6 @@ const REPEAT_MEDIA_BUTTONS = {
 let pendingFavorite: { id: string; starred: boolean } | null = null;
 let pushedMediaButtons: string | null = null;
 
-// Favorite, shuffle and repeat are about a music queue; the player screen
-// doesn't offer them for radio or podcasts either.
-function isMusicTrack(track: QueueTrack | null): track is QueueTrack {
-  return !!track && !track.isRadio && !isPodcastTrack(track);
-}
-
 function isTrackFavorite(track: QueueTrack): boolean {
   return pendingFavorite?.id === track.id
     ? pendingFavorite.starred
@@ -1027,7 +1073,7 @@ function nativeMediaButton(
   track: QueueTrack | null,
 ): MediaButton | null {
   if (button === "seekBackward" || button === "seekForward") return button;
-  if (!button || !isMusicTrack(track)) return null;
+  if (!button || !isLibraryTrack(track)) return null;
   const queue = useQueue.getState();
   switch (button) {
     case "favorite":
@@ -1056,7 +1102,7 @@ function syncMediaButtons() {
 
 async function toggleCurrentTrackFavorite() {
   const track = useQueue.getState().getCurrent();
-  if (!isMusicTrack(track) || pendingFavorite?.id === track.id) return;
+  if (!isLibraryTrack(track) || pendingFavorite?.id === track.id) return;
   const starred = !track.starred;
   pendingFavorite = { id: track.id, starred };
   syncMediaButtons();
@@ -1102,9 +1148,11 @@ function loadTrack(track: QueueTrack | null, autoplay: boolean) {
   // resume path.
   // Podcasts resume from their own store on every play, not just for the launch
   // track — see services/podcastProgress.ts for why they can't use bookmarks.
-  const resumeAt = isPodcastTrack(track)
-    ? getPodcastResumePosition(track)
-    : getResumePosition(track);
+  const resumeAt = isAudiobookTrack(track)
+    ? getAudiobookResumePosition(track)
+    : isPodcastTrack(track)
+      ? getPodcastResumePosition(track)
+      : getResumePosition(track);
   const transcodeResume =
     resumeAt != null && resumeAt > 0 && isTranscodedStream(track);
   streamStartOffset = transcodeResume ? resumeAt : 0;
@@ -1365,6 +1413,30 @@ async function retryAfterTokenRefresh(
   handlePlaybackStatus(status);
 }
 
+// An Audiobookshelf access token expires (12 h by default) while the engine
+// keeps the header it loaded the file with for every later range request.
+async function retryAudiobookAfterTokenRefresh(
+  track: QueueTrack,
+  position: number,
+  status: AudioStatus,
+) {
+  let refreshed = false;
+  try {
+    await refreshAudiobookshelfToken();
+    refreshed = true;
+  } catch {}
+  if (useQueue.getState().getCurrent()?.id !== track.id) return;
+  lastReportedPlaybackError = null;
+  if (refreshed) {
+    reportBreadcrumb("player", "abs-token-refresh-reload", {
+      trackId: track.id,
+    });
+    reloadInPlace(track, position);
+    return;
+  }
+  handlePlaybackStatus(status);
+}
+
 function canRetryAfterTokenRefresh(trackId: string): boolean {
   const last = tokenRetriedAt.get(trackId);
   if (last && Date.now() - last < TOKEN_RETRY_WINDOW_MS) return false;
@@ -1385,7 +1457,22 @@ function handlePlaybackStatus(status: AudioStatus) {
       current &&
       resolved &&
       !resolved.isOffline &&
+      isAudiobookTrack(current) &&
+      canRetryAfterTokenRefresh(current.id)
+    ) {
+      void retryAudiobookAfterTokenRefresh(
+        current,
+        player.currentTime ?? 0,
+        status,
+      );
+      return;
+    }
+    if (
+      current &&
+      resolved &&
+      !resolved.isOffline &&
       !current.isRadio &&
+      !isAudiobookTrack(current) &&
       activeOidcKey() &&
       canRetryAfterTokenRefresh(current.id)
     ) {
@@ -1425,7 +1512,7 @@ function handlePlaybackStatus(status: AudioStatus) {
       resolved &&
       (!resolved.isOffline || canRecoverOfflineViaStream) &&
       !current.isRadio &&
-      current.source !== "podcast" &&
+      !isSpokenWordTrack(current) &&
       canRetryAsTranscode(status.error) &&
       canTranscodeFallback() &&
       !hasTranscodeRetried(current.id)
@@ -1580,7 +1667,21 @@ function handlePlaybackStatus(status: AudioStatus) {
     const cur = useQueue.getState().getCurrent();
     if (cur) {
       reportNowPlaying(cur);
-      if (isPodcastTrack(cur)) {
+      if (isAudiobookTrack(cur)) {
+        recordAudiobookProgress(cur, status.currentTime ?? 0, {
+          playing: true,
+        });
+        if (
+          consumeSleepEndOfChapter(
+            cur.audiobookItemId,
+            bookTimeOf(cur, status.currentTime ?? 0),
+            audiobookChapterEndAt,
+          )
+        ) {
+          pause();
+          return;
+        }
+      } else if (isPodcastTrack(cur)) {
         // status.duration is what makes a feed that declares no duration work.
         recordPodcastProgress(cur, effectivePosition(status.currentTime ?? 0), {
           duration: status.duration,
@@ -1598,6 +1699,13 @@ function handlePlaybackStatus(status: AudioStatus) {
     // Playback paused (UI, lock-screen or OS control). Report it for the
     // playbackReport path; no-op when the extension is off.
     reportPaused(effectivePosition(status.currentTime ?? 0) * 1000);
+    const paused = useQueue.getState().getCurrent();
+    if (isAudiobookTrack(paused)) {
+      recordAudiobookProgress(paused, status.currentTime ?? 0, {
+        playing: false,
+        force: true,
+      });
+    }
   }
   // The engine parked for a handover says nothing about the play, which the
   // remote target reports from here on.
@@ -1623,6 +1731,7 @@ function handlePlaybackStatus(status: AudioStatus) {
     const remaining = status.duration - (status.currentTime ?? 0);
     if (
       seed &&
+      !isSpokenWordTrack(seed) &&
       endlessPrefetchedSeedId !== seed.id &&
       remaining <= ENDLESS_PREFETCH_LEAD_SECONDS &&
       atEndlessQueueTail()
@@ -1638,7 +1747,12 @@ function handlePlaybackStatus(status: AudioStatus) {
     const previous = useQueue.getState().getCurrent();
     // Fully played — drop any resume bookmark so it doesn't reopen at the end.
     clearResumePosition(previousId);
-    if (previous && isPodcastTrack(previous)) {
+    if (previous && isAudiobookTrack(previous)) {
+      recordAudiobookProgress(previous, previous.duration ?? 0, {
+        playing: false,
+      });
+      markAudiobookTrackFinished(previous);
+    } else if (previous && isPodcastTrack(previous)) {
       markPodcastTrackFinished(previous);
     } else {
       clearPodcastProgress(previousId);
@@ -1651,7 +1765,14 @@ function handlePlaybackStatus(status: AudioStatus) {
     const played =
       effectivePosition(status.currentTime ?? 0) || previous?.duration || 0;
     if (previous) countFinishedPlay(previous, played);
-    if (consumeSleepEndOfTrack()) {
+    const chapterEndedWithFile =
+      isAudiobookTrack(previous) &&
+      consumeSleepEndOfChapter(
+        previous.audiobookItemId,
+        bookTimeOf(previous, previous.duration ?? 0),
+        audiobookChapterEndAt,
+      );
+    if (consumeSleepEndOfTrack() || chapterEndedWithFile) {
       parkAfterSleepTrackEnd(previousId);
       return;
     }
@@ -1661,8 +1782,10 @@ function handlePlaybackStatus(status: AudioStatus) {
     // queue, fall back to fetching now (arming resume so playback restarts once
     // the tracks land) rather than stopping.
     if (atEndlessQueueTail()) {
-      const endless = useAppBase.getState().endlessPlaybackEnabled;
       const seed = useQueue.getState().getCurrent();
+      const endless =
+        useAppBase.getState().endlessPlaybackEnabled &&
+        !isSpokenWordTrack(seed);
       const triedThisTail =
         !!seed && endlessPrefetchedSeedId === seed.id && !endlessFetchInFlight;
       if (!endless || !seed || triedThisTail) {
@@ -1826,6 +1949,20 @@ const queueUnsub = useQueue.subscribe((state) => {
   const id = current?.id ?? null;
   if (id !== lastTrackId) {
     const outgoing = lastTrack;
+    if (outgoing && isAudiobookTrack(outgoing)) {
+      const remote = activeRemoteTarget();
+      if (outgoing.id !== finishedPodcastId) {
+        recordAudiobookProgress(
+          outgoing,
+          remote ? remote.getCurrentTime() : (player.currentTime ?? 0),
+          { playing: false },
+        );
+      }
+      if (current?.audiobookItemId !== outgoing.audiobookItemId) {
+        endAudiobookPlayback();
+        carrySleepEndOfChapter(outgoing.audiobookItemId, current);
+      }
+    }
     if (
       outgoing &&
       outgoing.id !== finishedPodcastId &&
@@ -1968,6 +2105,7 @@ export function resetPlayerForScopeChange() {
   // the store is global, so a scope switch must not lose it.
   flushPodcastProgress();
   resetPodcastProgressRuntime();
+  resetAudiobookPlaybackRuntime();
   lastTrackId = null;
   lastTrack = null;
   pendingResumeId = null;
@@ -1995,6 +2133,9 @@ export function stopPlayback() {
   playbackInitialized = false;
   hasHydrated = false;
   flushPodcastProgress();
+  // Runs before the sign-out clears the session, so the book's state still
+  // lands in this account's stores.
+  resetAudiobookPlaybackRuntime();
   lastTrackId = null;
   lastTrack = null;
   pendingResumeId = null;
@@ -2028,7 +2169,7 @@ useAuthBase.subscribe((state) => {
   if (!current) return;
   // Downloaded tracks play from disk and radio/podcast sources are absolute
   // URLs on other hosts — none of them care which route the server is on.
-  if (current.isRadio || current.source === "podcast") return;
+  if (current.isRadio || isSpokenWordTrack(current)) return;
   if (resolveTrackUrl(current).isOffline) return;
   // reloadAtOffset preserves paused-ness, so this is safe either way.
   reloadAtOffset(current, getCurrentTime());
@@ -2276,7 +2417,12 @@ export function pause() {
   // the next throttled tick that may never come once playback stops.
   const current = useQueue.getState().getCurrent();
   if (current) {
-    if (isPodcastTrack(current)) {
+    if (isAudiobookTrack(current)) {
+      recordAudiobookProgress(current, player.currentTime ?? 0, {
+        playing: false,
+        force: true,
+      });
+    } else if (isPodcastTrack(current)) {
       recordPodcastProgress(
         current,
         effectivePosition(player.currentTime ?? 0),
@@ -2309,6 +2455,17 @@ function canFinishCurrentTrack(): boolean {
 // playing locally (a remote target owns playback, or we're already paused)
 // there's no tick to drive the ramp, so just pause outright.
 function handleSleepTimerExpiry() {
+  // A book has no "song" to finish; the chapter is the unit a listener means.
+  if (useAppBase.getState().sleepTimerFinishTrack) {
+    const current = useQueue.getState().getCurrent();
+    const chapterEnd = audiobookChapterEnd(current);
+    if (chapterEnd && isPlaying()) {
+      useSleepTimer
+        .getState()
+        .setEndOfChapter(chapterEnd.itemId, chapterEnd.bookTime);
+      return;
+    }
+  }
   if (useAppBase.getState().sleepTimerFinishTrack && canFinishCurrentTrack()) {
     useSleepTimer.getState().finishCurrentTrack();
     return;
@@ -2353,7 +2510,89 @@ export function isPlaying() {
   return player.playing;
 }
 
+function audiobookChapterEnd(
+  track: QueueTrack | null,
+): { itemId: string; bookTime: number } | null {
+  if (!isAudiobookTrack(track)) return null;
+  const bookTime = audiobookChapterEndAt(
+    track.audiobookItemId,
+    bookTimeOf(track, getCurrentTime()),
+  );
+  return bookTime == null ? null : { itemId: track.audiobookItemId, bookTime };
+}
+
+// The queue left the book an "end of chapter" timer was armed on. Like
+// end-of-track after a skip, it carries over to whatever plays instead.
+function carrySleepEndOfChapter(itemId: string, next: QueueTrack | null) {
+  const sleep = useSleepTimer.getState();
+  if (sleep.chapterEnd?.itemId !== itemId) return;
+  if (isAudiobookTrack(next)) {
+    const end = audiobookChapterEndAt(
+      next.audiobookItemId,
+      getAudiobookPosition(next.audiobookItemId) ?? bookTimeOf(next, 0),
+    );
+    if (end != null) {
+      sleep.setEndOfChapter(next.audiobookItemId, end);
+      return;
+    }
+  }
+  if (canFinishTrack(next, true, !!activeRemoteTarget()?.playsOnServer)) {
+    sleep.setEndOfTrack();
+  } else {
+    sleep.cancel();
+  }
+}
+
+// Book time of the chapter boundary a skip should land on, or undefined when
+// the current track isn't a chaptered audiobook (a plain file-to-file skip).
+function audiobookChapterTarget(
+  direction: "next" | "previous",
+): number | null | undefined {
+  const current = useQueue.getState().getCurrent();
+  if (!isAudiobookTrack(current)) return undefined;
+  const book = getAudiobookSnapshot(current.audiobookItemId as string);
+  if (!book || book.chapters.length < 2) return undefined;
+  const now = bookTimeOf(current, getCurrentTime());
+  return direction === "next"
+    ? nextChapterStart(book.chapters, now)
+    : previousChapterStart(book.chapters, now);
+}
+
+/**
+ * Seek to a point on a book's whole timeline, crossing into whichever file
+ * holds it. False when the current track isn't that book or the file isn't
+ * queued.
+ */
+export function seekAudiobookTo(bookTime: number): boolean {
+  const queue = useQueue.getState();
+  const current = queue.getCurrent();
+  if (!isAudiobookTrack(current)) return false;
+  const book = getAudiobookSnapshot(current.audiobookItemId as string);
+  if (!book) return false;
+  const { fileIndex, offset } = locateInBook(book.files, bookTime);
+  const file = book.files[fileIndex];
+  const targetId = audiobookTrackId(book.itemId, file.ino);
+  if (targetId === current.id) {
+    seekTo(offset);
+    return true;
+  }
+  const index = queue.queue.findIndex((track) => track.id === targetId);
+  if (index < 0) return false;
+  requestAudiobookStart(targetId, offset);
+  queue.setCurrentIndex(index);
+  return true;
+}
+
 export function skipNext() {
+  const chapter = audiobookChapterTarget("next");
+  if (chapter != null) {
+    if (seekAudiobookTo(chapter)) return;
+  } else if (chapter === null) {
+    // The last chapter: the book's remaining files are part of it, so next
+    // means whatever is queued after the book.
+    skipPastAudiobook();
+    return;
+  }
   const state = useQueue.getState();
   if (state.queue.length === 0 || state.currentIndex == null) return;
   if (state.repeatMode === "off") {
@@ -2367,7 +2606,20 @@ export function skipNext() {
   state.next();
 }
 
+function skipPastAudiobook() {
+  const queue = useQueue.getState();
+  if (queue.currentIndex == null) return;
+  const index = indexPastAudiobook(
+    queue.queue,
+    queue.currentIndex,
+    queue.repeatMode,
+  );
+  if (index >= 0) queue.setCurrentIndex(index);
+}
+
 export function skipPrevious(options?: { force?: boolean }) {
+  const chapter = audiobookChapterTarget("previous");
+  if (chapter != null && seekAudiobookTo(chapter)) return;
   const remote = activeRemoteTarget();
   if (remote) {
     remote.skipPrevious();
@@ -2429,6 +2681,18 @@ export function seekTo(seconds: number) {
 // the loaded media only spans from the current offset onwards.
 export function seekBy(deltaSeconds: number) {
   const current = useQueue.getState().getCurrent();
+  // A book's ±15/30 s skips carry over into the neighbouring file.
+  if (isAudiobookTrack(current)) {
+    const position = getCurrentTime() + deltaSeconds;
+    const fileDuration = current.duration ?? 0;
+    if (
+      (position < 0 && Number(current.bookStartOffset) > 0) ||
+      (fileDuration > 0 && position > fileDuration)
+    ) {
+      const target = Math.max(0, bookTimeOf(current, 0) + position);
+      if (seekAudiobookTo(target)) return;
+    }
+  }
   const duration =
     current?.duration && current.duration > 0
       ? current.duration

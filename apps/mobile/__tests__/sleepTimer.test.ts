@@ -20,6 +20,7 @@ jest.mock("@/stores/playbackNotice", () => ({
 import { advanceAfterTrackEnd } from "@/services/playback/remoteAdvance";
 import {
   checkSleepTimerExpiry,
+  consumeSleepEndOfChapter,
   consumeSleepEndOfTrack,
   registerSleepTimerExpiryHandler,
   useSleepTimer,
@@ -27,6 +28,7 @@ import {
 import {
   canFinishTrack,
   type PlaybackEndInput,
+  projectChapterStop,
   projectPlaybackEnd,
 } from "@/utils/playbackEnd";
 
@@ -156,6 +158,40 @@ describe("projectPlaybackEnd", () => {
   });
 });
 
+describe("projectChapterStop", () => {
+  // Metamorphosis on the test server: three chapters, 9200 s.
+  const ends = [2981.015828, 6176.016735, 9200.303311];
+  const chapterEndAt = (bookTime: number) =>
+    ends.find((end) => end > bookTime) ?? 9200.303311;
+  const stop = (minutes: number, rate = 1) =>
+    projectChapterStop({
+      now: NOW,
+      until: NOW + minutes * MIN,
+      bookTime: 75,
+      rate,
+      chapterEndAt,
+    });
+
+  it("lets the chapter playing at the deadline finish", () => {
+    expect(stop(5)).toEqual({
+      at: NOW + (2981.015828 - 75) * 1000,
+      approximate: false,
+    });
+    expect(stop(60)).toEqual({
+      at: NOW + (6176.016735 - 75) * 1000,
+      approximate: false,
+    });
+  });
+
+  it("reads the book at its playback speed", () => {
+    expect(stop(30, 2)?.at).toBe(NOW + ((6176.016735 - 75) / 2) * 1000);
+  });
+
+  it("gives up once the deadline falls past the book", () => {
+    expect(stop(200)).toBeNull();
+  });
+});
+
 describe("canFinishTrack", () => {
   const track = { duration: 200 };
 
@@ -228,6 +264,54 @@ describe("sleep timer store", () => {
     expect(consumeSleepEndOfTrack()).toBe(true);
     expect(useSleepTimer.getState().finishing).toBe(false);
     expect(consumeSleepEndOfTrack()).toBe(false);
+  });
+});
+
+describe("end of chapter", () => {
+  const chapterEnds = [100, 200, 300];
+  const chapterEndAt = (_itemId: string, bookTime: number) =>
+    chapterEnds.find((end) => end > bookTime) ?? null;
+  const reached = (bookTime: number) =>
+    consumeSleepEndOfChapter("book", bookTime, chapterEndAt);
+
+  beforeEach(() => useSleepTimer.getState().setEndOfChapter("book", 100));
+
+  it("stops when playback reaches the armed chapter's end", () => {
+    expect(reached(98)).toBe(false);
+    expect(reached(99)).toBe(false);
+    expect(reached(99.7)).toBe(true);
+    expect(useSleepTimer.getState().chapterEnd).toBeNull();
+  });
+
+  it("follows a skip to the end of the chapter it lands in", () => {
+    expect(reached(40)).toBe(false);
+    expect(reached(100)).toBe(false);
+    expect(useSleepTimer.getState().chapterEnd).toEqual({
+      itemId: "book",
+      bookTime: 200,
+    });
+    expect(reached(198)).toBe(false);
+    expect(reached(199.8)).toBe(true);
+  });
+
+  it("doesn't stop when a skip lands a hair short of the next chapter", () => {
+    const realEnds = [2981.015828, 6176.016735];
+    const realEndAt = (_itemId: string, bookTime: number) =>
+      realEnds.find((end) => end > bookTime + 0.25) ?? null;
+    useSleepTimer.getState().setEndOfChapter("book", 2981.015828);
+    expect(consumeSleepEndOfChapter("book", 75, realEndAt)).toBe(false);
+    expect(consumeSleepEndOfChapter("book", 2981.015, realEndAt)).toBe(false);
+    expect(useSleepTimer.getState().chapterEnd?.bookTime).toBe(6176.016735);
+  });
+
+  it("follows a seek made before the first check", () => {
+    expect(reached(250)).toBe(false);
+    expect(useSleepTimer.getState().chapterEnd?.bookTime).toBe(300);
+  });
+
+  it("ignores another book", () => {
+    expect(consumeSleepEndOfChapter("other", 99.9, chapterEndAt)).toBe(false);
+    expect(useSleepTimer.getState().chapterEnd?.bookTime).toBe(100);
   });
 });
 

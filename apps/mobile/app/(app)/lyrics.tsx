@@ -41,6 +41,7 @@ import {
   usePlayingTrack,
   useSyncedLyrics,
 } from "@/hooks/player";
+import { useCanCast } from "@/hooks/player/useCanCast";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
@@ -84,7 +85,8 @@ export default function LyricsScreen() {
   const upnpConnected = useUpnp((s) => s.connected);
   const casting = useCast((s) => s.active);
   const playingRemotely = jukeboxActive || upnpConnected || casting;
-  const hasOutputs = capabilities.jukebox || capabilities.remoteStreamableUrl;
+  const canCast = useCanCast();
+  const hasOutputs = capabilities.jukebox || canCast;
   const isPlaying = useIsPlaying();
   const lyricsKeepScreenOn = useApp((s) => s.lyricsKeepScreenOn);
   const playingTrack = usePlayingTrack();

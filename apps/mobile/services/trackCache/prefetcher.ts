@@ -29,6 +29,7 @@ import { useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import useOffline from "@/stores/offline";
 import useQueue, { peekNextTracks, type QueueTrack } from "@/stores/queue";
+import { isSpokenWordTrack } from "@/utils/trackSource";
 
 /**
  * Keeps the next N queue tracks on disk (issue #163), so playback survives a
@@ -111,7 +112,7 @@ function canPrefetch(): boolean {
  */
 function isCacheable(track: QueueTrack): boolean {
   if (track.isRadio) return false;
-  if (track.source === "podcast") return false;
+  if (isSpokenWordTrack(track)) return false;
   if (useOffline.getState().isTrackDownloaded(track.id)) return false;
   // This device already failed to decode these bytes, so resolveTrackUrl streams
   // the track from the server whatever is on disk — a cached copy would be paid

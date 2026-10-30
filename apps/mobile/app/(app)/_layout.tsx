@@ -31,6 +31,8 @@ import { queryClient, setCacheRestoring } from "@/config/queryClient";
 import { restorePersistedQueries } from "@/config/queryPersister";
 import { withScopedWritesSuspended } from "@/config/storage";
 import useMusicFolderSelection from "@/hooks/useMusicFolderSelection";
+import { initAudiobookSync } from "@/services/audiobookPlayback";
+import { initAudiobookDownloads } from "@/services/audiobookshelf/downloads";
 import { isIndexBackedType } from "@/services/backend/serverTraits";
 import { initJukeboxOnLaunch } from "@/services/jukebox";
 import {
@@ -71,6 +73,9 @@ import { resumeTrackCachePrefetch } from "@/services/trackCache/prefetcher";
 import { initUpnpOnLaunch, upnpRelease } from "@/services/upnp";
 import useActivity from "@/stores/activity";
 import useApp from "@/stores/app";
+import { useAudiobookDownloadsBase } from "@/stores/audiobookDownloads";
+import { useAudiobookProgressBase } from "@/stores/audiobookProgress";
+import useAudiobookshelf from "@/stores/audiobookshelf";
 import useAudioMuse from "@/stores/audioMuse";
 import useAuth, { currentAuthScope, useAuthBase } from "@/stores/auth";
 import useBookmarks from "@/stores/bookmarks";
@@ -210,6 +215,9 @@ export default function AppLayout() {
         useTidarr.getState().__reset();
         useMusicBrainz.getState().__reset();
         useAudioMuse.getState().__reset();
+        useAudiobookshelf.getState().__reset();
+        useAudiobookProgressBase.getState().__reset();
+        useAudiobookDownloadsBase.getState().__reset();
         // Stop the drain loop before wiping the queue, so an in-flight batch
         // can't remove listens from the incoming scope's freshly hydrated queue.
         resetListenBrainzScrobbler();
@@ -258,6 +266,10 @@ export default function AppLayout() {
     usePlaylists.persist.rehydrate();
     useActivity.persist.rehydrate();
     usePlayHistory.persist.rehydrate();
+    // Ahead of the queue: the restored book's file resumes from these.
+    useAudiobookshelf.persist.rehydrate();
+    useAudiobookProgressBase.persist.rehydrate();
+    useAudiobookDownloadsBase.persist.rehydrate();
     useQueue.persist.rehydrate();
     // The queue bakes absolute URLs, and the session may have cold-started on a
     // different route than the one it was saved under (the active route is
@@ -290,6 +302,8 @@ export default function AppLayout() {
     useTidarr.persist.rehydrate();
     useMusicBrainz.persist.rehydrate();
     useAudioMuse.persist.rehydrate();
+    initAudiobookSync();
+    initAudiobookDownloads();
     useListenBrainz.persist.onFinishHydration(() => {
       initListenBrainzScrobbler();
     });

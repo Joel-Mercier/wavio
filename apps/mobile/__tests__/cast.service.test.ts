@@ -81,6 +81,13 @@ jest.mock("@/services/backend/streaming", () => ({
 }));
 
 jest.mock("@/services/errorReporting", () => ({ reportError: jest.fn() }));
+jest.mock("@/services/audiobookPlayback", () => ({
+  isAudiobookTrack: (track: { source?: string } | null) =>
+    track?.source === "audiobook",
+  ensureAudiobookSession: async () => {},
+  audiobookRemoteUrl: () => undefined,
+  getAudiobookResumePosition: () => null,
+}));
 
 const mockRaiseNotice = jest.fn();
 jest.mock("@/stores/playbackNotice", () => ({

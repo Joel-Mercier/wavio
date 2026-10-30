@@ -55,6 +55,14 @@ export default function HomeLayout() {
       <Stack.Screen name="podcasts/[id]" />
       <Stack.Screen name="podcasts/search" />
       <Stack.Screen name="podcast-channels/[id]" />
+      <Stack.Screen name="audiobooks/index" />
+      <Stack.Screen name="audiobooks/[id]" />
+      <Stack.Screen name="audiobooks/search" />
+      <Stack.Screen name="audiobooks/favorites" />
+      <Stack.Screen name="audiobooks/library" />
+      <Stack.Screen name="audiobooks/series/[id]" />
+      <Stack.Screen name="audiobooks/authors/[id]" />
+      <Stack.Screen name="audiobooks/collections/[id]" />
     </Stack>
   );
 }

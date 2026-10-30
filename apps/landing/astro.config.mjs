@@ -32,6 +32,10 @@ export default defineConfig({
     },
   },
 
+  image: {
+    domains: ["badges.crowdin.net"],
+  },
+
   vite: {
     plugins: [tailwindcss()],
   },

@@ -9,6 +9,10 @@ import {
   RemoteMediaClient,
 } from "react-native-google-cast";
 import type { PlaybackSnapshot } from "@/hooks/player/playbackSnapshot";
+import {
+  ensureAudiobookSession,
+  isAudiobookTrack,
+} from "@/services/audiobookPlayback";
 import { reportError } from "@/services/errorReporting";
 import { castContentUrl } from "@/services/playback/castContentUrl";
 import { castMime } from "@/services/playback/castMime";
@@ -19,6 +23,7 @@ import {
   noteRemoteLoadSucceeded,
   resetRemoteAdvance,
 } from "@/services/playback/remoteAdvance";
+import { remoteStartPosition } from "@/services/playback/remoteStartPosition";
 import {
   activeRemoteTarget,
   registerRemoteTarget,
@@ -473,6 +478,12 @@ async function loadOnReceiver(
   const receiver = client;
   if (!receiver || !isCastActive()) return false;
   const deviceName = useCastBase.getState().deviceName ?? "";
+  // The receiver can't send our token, so a book needs its session's public
+  // track URL, which only exists once the session is open.
+  if (isAudiobookTrack(track)) {
+    await ensureAudiobookSession(track);
+    if (client !== receiver || !isCastActive()) return false;
+  }
   const contentUrl = castContentUrl(track);
   if (!contentUrl || contentUrl.startsWith("file://")) {
     handleRemoteLoadFailure({
@@ -551,7 +562,9 @@ function subscribeQueue() {
       void client?.pause().catch(() => {});
       return;
     }
-    void loadOnReceiver(current, true, 0, { automatic });
+    void loadOnReceiver(current, true, remoteStartPosition(current), {
+      automatic,
+    });
   });
 }
 
