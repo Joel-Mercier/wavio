@@ -2,6 +2,7 @@ import {
   dispersedShuffle,
   mulberry32,
   sampleWithSeed,
+  seededRank,
   shuffleWithSeed,
 } from "@/utils/shuffle";
 
@@ -36,6 +37,24 @@ describe("shuffleWithSeed", () => {
         .map((i) => i.id)
         .sort(),
     ).toEqual(input.map((i) => i.id).sort());
+  });
+});
+
+describe("seededRank", () => {
+  test("is stable for a seed and id and lands in [0, 1)", () => {
+    expect(seededRank(7, "album-1")).toBe(seededRank(7, "album-1"));
+    for (const id of ["a", "b", "album-1", ""]) {
+      const rank = seededRank(7, id);
+      expect(rank).toBeGreaterThanOrEqual(0);
+      expect(rank).toBeLessThan(1);
+    }
+  });
+
+  test("changes with the seed", () => {
+    const ids = makeItems({ a: 20 }).map((i) => i.id);
+    const order = (seed: number) =>
+      [...ids].sort((x, y) => seededRank(seed, x) - seededRank(seed, y));
+    expect(order(1)).not.toEqual(order(2));
   });
 });
 

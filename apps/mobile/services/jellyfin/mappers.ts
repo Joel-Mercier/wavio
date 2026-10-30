@@ -28,7 +28,7 @@ function parseDate(value?: string): Date | undefined {
   return Number.isNaN(d.getTime()) ? undefined : d;
 }
 
-function favoriteAsStarred(item: BaseItemDto): Date | undefined {
+export function favoriteAsStarred(item: BaseItemDto): Date | undefined {
   if (item.UserData?.IsFavorite) {
     // Jellyfin doesn't expose when an item was favorited; LastPlayedDate is the
     // closest proxy. Fall back to now (not epoch) so "recently starred" sorts

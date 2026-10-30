@@ -19,6 +19,20 @@ export function shuffle<T>(arr: T[], rand: () => number = Math.random): T[] {
   return out;
 }
 
+export const randomSeed = () => Math.floor(Math.random() * 2 ** 31) + 1;
+
+// A random sort key for one item, derived from the seed and the item's id
+// alone. Sorting by it shuffles a list in a way a refetch can't disturb: an
+// added or removed item leaves everyone else's relative order untouched, which
+// a whole-array shuffle would not.
+export function seededRank(seed: number, id: string): number {
+  let hash = 0x811c9dc5 ^ seed;
+  for (let i = 0; i < id.length; i++) {
+    hash = Math.imul(hash ^ id.charCodeAt(i), 0x01000193);
+  }
+  return mulberry32(hash)();
+}
+
 // Seeded shuffle convenience — stable picks for a given (array, seed).
 export function shuffleWithSeed<T>(arr: T[], seed: number): T[] {
   return shuffle(arr, mulberry32(seed || 1));

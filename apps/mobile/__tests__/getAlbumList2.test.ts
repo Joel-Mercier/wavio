@@ -79,6 +79,12 @@ jest.mock("@/services/jellyfin/mappers", () => ({
   }),
   mapBaseItemToChild: jest.fn(),
   mapBaseItemToArtist: jest.fn(),
+  favoriteAsStarred: (item: {
+    UserData?: { IsFavorite?: boolean; LastPlayedDate?: string };
+  }) =>
+    item.UserData?.IsFavorite
+      ? (item.UserData.LastPlayedDate ?? "now")
+      : undefined,
   COMMON_FIELDS: "",
 }));
 
@@ -89,6 +95,7 @@ import {
   __resetLatestUnsupported,
   getRandomAlbumsWithPlayCounts,
   getAlbumList2 as jellyfinGetAlbumList2,
+  getStarred2 as jellyfinGetStarred2,
 } from "@/services/jellyfin/lists";
 import { getAlbumList2 as localGetAlbumList2 } from "@/services/local/lists";
 import { getAlbumList2 as navidromeGetAlbumList2 } from "@/services/navidrome/albums";
@@ -598,6 +605,69 @@ describe("jellyfin frequent albums", () => {
     ]);
     expect(past.albumList2.album).toEqual([]);
     expect(mockJellyfinGet).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe("jellyfin getStarred2", () => {
+  const favoriteAlbums = {
+    data: {
+      Items: [
+        { Id: "played", UserData: { IsFavorite: true } },
+        { Id: "unplayed", UserData: { IsFavorite: true } },
+      ],
+    },
+  };
+  const playedTracks = {
+    data: {
+      Items: [
+        {
+          Id: "t1",
+          AlbumId: "played",
+          UserData: { PlayCount: 2, LastPlayedDate: "2026-10-10" },
+        },
+        {
+          Id: "t2",
+          AlbumId: "played",
+          UserData: { PlayCount: 1, LastPlayedDate: "2026-10-20" },
+        },
+      ],
+    },
+  };
+  const respond =
+    (tracks: () => Promise<unknown>) =>
+    (path: string, { params }: { params: Record<string, string> }) => {
+      if (path === "/Artists") return Promise.resolve({ data: { Items: [] } });
+      if (params.Filters === "IsPlayed") return tracks();
+      if (params.IncludeItemTypes === "MusicAlbum") {
+        return Promise.resolve(favoriteAlbums);
+      }
+      return Promise.resolve({ data: { Items: [] } });
+    };
+
+  it("sums each favorited album's track plays", async () => {
+    mockJellyfinGet.mockImplementation(
+      respond(() => Promise.resolve(playedTracks)),
+    );
+
+    const rsp = await jellyfinGetStarred2({});
+
+    expect(rsp.starred2.album).toEqual([
+      { id: "played", playCount: 3, played: "2026-10-20", starred: "now" },
+      { id: "unplayed", playCount: 0, played: undefined, starred: "now" },
+    ]);
+  });
+
+  it("keeps the favorites when the play history can't be read", async () => {
+    mockJellyfinGet.mockImplementation(
+      respond(() => Promise.reject(new Error("boom"))),
+    );
+
+    const rsp = await jellyfinGetStarred2({});
+
+    expect(rsp.starred2.album).toEqual([
+      expect.objectContaining({ id: "played", playCount: 0 }),
+      expect.objectContaining({ id: "unplayed", playCount: 0 }),
+    ]);
   });
 });
 

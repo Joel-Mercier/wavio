@@ -11,6 +11,7 @@ import { zustandStorage } from "@/config/storage";
 import { type AlbumSortType, DEFAULT_ALBUM_SORT } from "@/utils/albumSort";
 import { type ArtistSortType, DEFAULT_ARTIST_SORT } from "@/utils/artistSort";
 import createSelectors from "@/utils/createSelectors";
+import { DEFAULT_LIBRARY_SORT, type LibrarySort } from "@/utils/librarySort";
 import { DEFAULT_PLAYLIST_FOLDER_SEPARATOR } from "@/utils/playlistFolders";
 import { DEFAULT_SONG_SORT, type SongSortType } from "@/utils/songSort";
 import type { SortType } from "@/utils/sort";
@@ -77,16 +78,12 @@ export const DEFAULT_INTERNET_RADIO_FEED_TAGS = ["jazz", "rock", "news"];
 
 // Sort values are `<field>Asc` / `<field>Desc` everywhere; the field specs that
 // give them meaning live next to the list they sort (utils/trackSort.ts for
-// tracks, the screen itself for genres and the library index). See utils/sort.ts.
+// tracks, utils/librarySort.ts for the library index, the screen itself for
+// genres). See utils/sort.ts.
 export type GenreSortField = "alphabetical" | "songCount" | "albumCount";
 export type GenresSort = SortType<GenreSortField>;
 
 export type DownloadsSort = OfflineTrackSortType;
-
-// The library index mixes artists, albums, playlists, podcasts, radio stations
-// and folders, so only order-independent fields apply.
-export type LibrarySortField = "addedAt" | "alphabetical";
-export type LibrarySort = SortType<LibrarySortField>;
 
 // Buckets select which kinds of rows the library lists; "downloaded" is not one
 // of them — it narrows the selected buckets to offline content.
@@ -427,7 +424,7 @@ export const useAppBase = create<AppStore>()(
       setWaveformSeekbarEnabled: (waveformSeekbarEnabled: boolean) => {
         set({ waveformSeekbarEnabled });
       },
-      librarySort: "addedAtAsc",
+      librarySort: DEFAULT_LIBRARY_SORT,
       setLibrarySort: (librarySort: LibrarySort) => {
         set({ librarySort });
       },

@@ -3,6 +3,7 @@ import jellyfinApiInstance, {
   MUSIC_ARTIST_ITEM_TYPES,
 } from "@/services/jellyfin/index";
 import {
+  favoriteAsStarred,
   mapBaseItemToAlbum,
   mapBaseItemToArtist,
   mapBaseItemToChild,
@@ -741,14 +742,34 @@ export const getStarred = async (_params: { musicFolderIds?: string[] }) => {
   return fakeEnvelope({ starred });
 };
 
+// Favorites span every library, so the stats do too. They only feed the
+// library's play-based sorts: a failed read must not take the favorites down
+// with it, it just leaves those sorts without data (the axios interceptor has
+// already reported it).
+async function favoriteAlbumPlayStats(): Promise<Map<string, AlbumPlayStats>> {
+  try {
+    const ledger = await readPlayLedger(undefined);
+    return sumByAlbum(ledger.tracks.values());
+  } catch {
+    return new Map();
+  }
+}
+
 export const getStarred2 = async (_params: { musicFolderIds?: string[] }) => {
-  const [albums, songs, artists] = await Promise.all([
+  const [albums, songs, artists, albumStats] = await Promise.all([
     getFavorites("MusicAlbum"),
     getFavorites("Audio"),
     getFavorites("MusicArtist"),
+    favoriteAlbumPlayStats(),
   ]);
   const starred2: Starred2 = {
-    album: albums.map(mapBaseItemToAlbum),
+    // `starred` stays derived from the album itself: favoriteAsStarred falls
+    // back on LastPlayedDate, and the summed track plays would otherwise turn
+    // "recently favorited" into "recently played".
+    album: albums.map((item) => ({
+      ...mapBaseItemToAlbum(withPlayStats(item, albumStats.get(item.Id))),
+      starred: favoriteAsStarred(item),
+    })),
     song: songs.map(mapBaseItemToChild),
     artist: artists.map(mapBaseItemToArtist),
   };
