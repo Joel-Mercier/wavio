@@ -150,8 +150,8 @@
 				"desc": "播放服务器中没有的歌曲。Octo-Fiesta 会通过您的 Navidrome 或 OpenSubsonic 音乐库实时获取该歌曲，从而自动填补空白。"
 			},
 			"audiobookshelf": {
-				"role": "Audiobooks",
-				"desc": "Browse and play the books on your Audiobookshelf server, jump straight to a chapter, and download them for offline listening. Your progress syncs back to the server, including what you heard offline."
+				"role": "音频书",
+				"desc": "浏览并在您的音频书架服务器上播放书籍，跳转到一章并下载它们以进行离线监听。 您的进度同步到服务器，包括离线听到的内容。"
 			}
 		}
 	},
