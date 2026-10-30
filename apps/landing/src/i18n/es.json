@@ -151,7 +151,7 @@
 			},
 			"audiobookshelf": {
 				"role": "Audiobooks",
-				"desc": "Browse and play the books on your Audiobookshelf server, jump straight to a chapter, and download them for offline listening. Your progress syncs back to the server, including what you heard offline."
+				"desc": "Navega y reproduce los libros en tu servidor Audiobookshelf, salta directamente a un capítulo y descárgalos para escucharlos sin conexión. Su progreso se sincroniza de vuelta al servidor, incluyendo lo que escuchó sin conexión."
 			}
 		}
 	},
