@@ -51,7 +51,9 @@
 					"favoritePodcasts": "Suscrito",
 					"internetRadioStations": "Emisoras de radio por Internet",
 					"radio": "Radio",
-					"radioFavorites": "Favoritos"
+					"radioFavorites": "Favoritos",
+					"audiobooks": "Audiobooks",
+					"audiobookFavorites": "Favoritos"
 				},
 				"sections": {
 					"recent": "Reproducido recientemente",
@@ -1239,6 +1241,27 @@
 							"pendingDescription_one": "{{count}} La canción aún no está disponible en Last.fm.",
 							"pendingDescription_other": "{{count}} Las reproducciones aún no han llegado a Last.fm."
 						}
+					},
+					"audiobookshelf": {
+						"title": "Audiobookshelf",
+						"description": "Listen to the audiobooks on your Audiobookshelf server",
+						"longDescription": "Sign in to your Audiobookshelf server to browse and play its books from the Audiobooks section.",
+						"serverUrlLabel": "URL del servidor",
+						"usernameLabel": "Nombre de usuario",
+						"passwordLabel": "Contraseña",
+						"signInAction": "Iniciar sesión",
+						"connectionSuccess": "Connected to Audiobookshelf",
+						"connectionFailed": "Couldn't connect to Audiobookshelf",
+						"invalidCredentials": "Wrong username or password",
+						"unsupportedVersion": "Audiobookshelf {{version}} is too old. Version 2.26 or later is required.",
+						"unreachable": "No Audiobookshelf server answered at this address",
+						"noLibraries": "This account has no audiobook library",
+						"removedMessage": "Audiobookshelf account removed",
+						"sessionExpired": "Your Audiobookshelf session expired. Sign in again to keep listening.",
+						"libraryLabel": "Biblioteca",
+						"serverVersion": "Server version {{version}}",
+						"removeTitle": "Remove Audiobookshelf",
+						"removeDescription": "You will be signed out of this Audiobookshelf account. Downloaded books stay on this device."
 					}
 				},
 				"downloaders": {
@@ -2154,6 +2177,7 @@
 				"sleepTimer": "Temporizador de apagado automático",
 				"sleepTimerOff": "Apagado",
 				"sleepTimerEndOfTrack": "Fin de la pista",
+				"sleepTimerEndOfChapter": "End of chapter",
 				"sleepTimerActive": "Temporizador de apagado · {{label}}",
 				"sleepTimerCustom": "Personalizado",
 				"sleepTimerHours": "Horario",
@@ -2488,6 +2512,93 @@
 				"errorDescription": "No hemos podido iniciar sesión con tus datos de acceso guardados. Es posible que hayan cambiado en el servidor.",
 				"retry": "Volver a intentarlo",
 				"enterManually": "Introduce la contraseña manualmente"
+			},
+			"audiobooks": {
+				"tabAbout": "Acerca de",
+				"tabChapters": "Chapters",
+				"tabMoreLikeThis": "Más artículos como este",
+				"aboutEmpty": "No hay descripción disponible",
+				"noChapters": "This book has no chapters",
+				"noMoreLikeThis": "Nothing similar in this library yet",
+				"addToFavorites": "Añadir a favoritos",
+				"removeFromFavorites": "Eliminar de los favoritos",
+				"markFinished": "Mark as finished",
+				"markUnfinished": "Mark as not finished",
+				"goToSeries": "Go to series: {{series}}",
+				"goToAuthor": "Go to author: {{author}}",
+				"details": {
+					"narrator": "Narrator",
+					"series": "Series",
+					"genres": "Géneros",
+					"duration": "Duración",
+					"published": "Published",
+					"publisher": "Publisher",
+					"language": "Idioma"
+				},
+				"notConfigured": "Audiobooks come from an Audiobookshelf server. Connect yours in the integration settings to see your library here.",
+				"configure": "Connect Audiobookshelf",
+				"searchPlaceholder": "Search audiobooks",
+				"searchPrompt": "Search books, authors and series",
+				"library": "Biblioteca",
+				"browse": {
+					"books": "Books",
+					"series": "Series",
+					"authors": "Authors",
+					"collections": "Collections"
+				},
+				"shelves": {
+					"continue-listening": "Continue listening",
+					"continue-series": "Continue series",
+					"recently-added": "Añadidos recientemente",
+					"recent-series": "Recent series",
+					"discover": "Discover",
+					"listen-again": "Listen again",
+					"newest-authors": "Newest authors",
+					"recommended": "Recommended"
+				},
+				"downloaded": "Descargado",
+				"emptyLibrary": "This library has no books yet.",
+				"chapters": "Chapters",
+				"narratedBy": "Narrated by {{narrator}}",
+				"seriesSequence": "{{series}} #{{sequence}}",
+				"bookSequence": "#{{sequence}} {{title}}",
+				"timeLeft": "{{time}} left",
+				"goToBook": "Go to book",
+				"playErrorMessage": "This book couldn't be played.",
+				"updateErrorMessage": "The listening progress couldn't be updated.",
+				"removeDownloadTitle": "Eliminar la descarga",
+				"removeDownloadDescription": "The downloaded files of this book will be deleted from this device.",
+				"deleteTitle": "Delete book",
+				"deleteDescription": "\"{{title}}\" will be removed from the Audiobookshelf library.",
+				"deleteFilesLabel": "Also delete the files",
+				"deleteFilesDescription": "Deletes the book's files from the server's disk. This can't be undone.",
+				"deleteErrorMessage": "The book couldn't be deleted.",
+				"noFavorites": "Books, series and authors you mark as favorites show up here.",
+				"favoritesOnDevice": "Audiobookshelf has no favorites of its own, so these are kept on this device.",
+				"sortTitle": "Ordenar por",
+				"sortAscending": "Ascending",
+				"sortDescending": "Descending",
+				"sorts": {
+					"title": "Título",
+					"author": "Author",
+					"addedAt": "Fecha de incorporación",
+					"publishedYear": "Published",
+					"duration": "Duración",
+					"progress": "Progress"
+				},
+				"filters": {
+					"title": "Filter",
+					"all": "All books",
+					"not-started": "Not started",
+					"in-progress": "En curso",
+					"finished": "Terminado",
+					"genre": "Genre: {{genre}}",
+					"narrator": "Narrator: {{narrator}}"
+				},
+				"bookCount_one": "{{count}} book",
+				"bookCount_other": "{{count}} books",
+				"chapterCount_one": "{{count}} chapter",
+				"chapterCount_other": "{{count}} chapters"
 			}
 		},
 		"auth": {
