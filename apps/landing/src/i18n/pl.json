@@ -150,8 +150,8 @@
 				"desc": "Odtwarzaj piosenkę na twoim serwerze. Octo-Fiesta pobiera ją na lot przez twoją bibliotekę Navidrome lub OpenSubsonic, więc luka się wypełnia."
 			},
 			"audiobookshelf": {
-				"role": "Audiobooks",
-				"desc": "Browse and play the books on your Audiobookshelf server, jump straight to a chapter, and download them for offline listening. Your progress syncs back to the server, including what you heard offline."
+				"role": "Audiobooki",
+				"desc": "Przeglądaj i odtwarzaj książki na serwerze Audiobookshelf, przejdź bezpośrednio do rozdziału i pobierz je dla słuchania offline. Twoje postępy synchronizują się z serwerem, w tym to, co usłyszałeś offline."
 			}
 		}
 	},
