@@ -1616,6 +1616,8 @@
 					},
 					"lyricsKeepScreenOnLabel": "为显示歌词，请保持屏幕亮起",
 					"lyricsKeepScreenOnDescription": "在歌词界面打开且歌曲正在播放时，阻止屏幕变暗。这样会消耗更多电量。",
+					"karaokeWordFillLabel": "Fill words as they're sung",
+					"karaokeWordFillDescription": "With word-timed (karaoke) lyrics, fill each word from left to right while it's sung instead of only highlighting it. The fill follows the timing in the lyrics file, so it can be slightly ahead of or behind the singer.",
 					"swipeActionLabel": "滑动操作",
 					"swipeActionDescription": "在列表中向右滑动某条目时触发的操作",
 					"swipeActionOptions": {
