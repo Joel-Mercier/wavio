@@ -66,6 +66,13 @@
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease -PreactNativeArchitectures=armeabi-v7a"
       }
+    },
+    "production-apk-x86_64": {
+      "extends": "production-apk",
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease -PreactNativeArchitectures=x86_64"
+      }
     }
   },
   "submit": {

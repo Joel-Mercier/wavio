@@ -42,7 +42,7 @@ If you enjoy the app please leave a review on the Google Play Store to help us g
 </a>
 </p>
 
-Two versions are available for 64bit (arm64-v8a) and 32bit (armeabi-v7a) architectures. If in doubt try arm64-v8a first. Simulator architectures (x86, x86_64) are not provided.
+APKs are available for 64bit (arm64-v8a) and 32bit (armeabi-v7a) ARM devices, and for x86_64 devices (Chromebooks, FydeOS, Android-x86 tablets). If in doubt try arm64-v8a first. A 32bit x86 build is not provided.
 
 APK installs need an extra step to show up in Android Auto (see below), so the Play Store install is the recommended one.
 

@@ -2,13 +2,14 @@ import * as Device from "expo-device";
 import type { GithubReleaseAsset } from "@/services/appUpdate/types";
 
 // Release APKs are named `wavio-<version>-<abi>.apk`, one per ABI. Preference
-// order: a 64-bit device also lists armeabi-v7a in supportedCpuArchitectures, so
-// arm64-v8a must be tried first to avoid handing it the 32-bit build.
-const ABI_PREFERENCE = ["arm64-v8a", "armeabi-v7a"] as const;
+// order: an x86_64 device with ARM translation (ChromeOS, FydeOS) also lists the
+// ARM ABIs, and a 64-bit ARM device also lists armeabi-v7a, so the native build
+// must be tried before the ones it can merely emulate.
+const ABI_PREFERENCE = ["x86_64", "arm64-v8a", "armeabi-v7a"] as const;
 
 // Picks the APK asset matching the device's CPU architecture, most-capable
-// first. Returns null when no supported ABI has a matching asset (e.g. an x86
-// emulator, or a release that only shipped one arch) — the caller then falls
+// first. Returns null when no supported ABI has a matching asset (e.g. a 32-bit
+// x86 device, or a release that only shipped one arch) — the caller then falls
 // back to opening the releases page in the browser.
 export function pickApkAsset(
   assets: GithubReleaseAsset[],
