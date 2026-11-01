@@ -1660,8 +1660,8 @@
 					},
 					"lyricsKeepScreenOnLabel": "Bildschirm für Liedtexte eingeschaltet lassen",
 					"lyricsKeepScreenOnDescription": "Verhindert, dass sich der Bildschirm abdunkelt, während der Liedtext-Bildschirm geöffnet ist und ein Titel abgespielt wird. Dies führt zu einem höheren Akkuverbrauch.",
-					"karaokeWordFillLabel": "Fill words as they're sung",
-					"karaokeWordFillDescription": "With word-timed (karaoke) lyrics, fill each word from left to right while it's sung instead of only highlighting it. The fill follows the timing in the lyrics file, so it can be slightly ahead of or behind the singer.",
+					"karaokeWordFillLabel": "Füllen Sie Wörter, da sie gesungen wurden",
+					"karaokeWordFillDescription": "Mit worttimen (karaoke) Texten füllen Sie jedes Wort von links nach rechts, während es gesungen wird, anstatt es nur hervorzuheben. Die Füllung folgt dem Timing in der Songtext-Datei, so dass sie leicht vor oder hinter dem Sänger sein kann.",
 					"swipeActionLabel": "Wischgeste",
 					"swipeActionDescription": "Aktion, die ausgelöst wird, wenn ein Titel in einer Liste nach rechts gewischt wird",
 					"swipeActionOptions": {
