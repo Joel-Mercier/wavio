@@ -1748,8 +1748,8 @@
 					},
 					"lyricsKeepScreenOnLabel": "Pozostaw ekran dla tekstów piosenek",
 					"lyricsKeepScreenOnDescription": "Zatrzymaj ekran przed przyciemnianiem, gdy ekran tekstowy jest otwarty i odtwarzany jest utwór. Używa więcej baterii.",
-					"karaokeWordFillLabel": "Fill words as they're sung",
-					"karaokeWordFillDescription": "With word-timed (karaoke) lyrics, fill each word from left to right while it's sung instead of only highlighting it. The fill follows the timing in the lyrics file, so it can be slightly ahead of or behind the singer.",
+					"karaokeWordFillLabel": "Wypełnij słowa jako słońce",
+					"karaokeWordFillDescription": "Z tekstami piosenek o czasie słowa (karaoke), wypełnij każde słowo od lewej do prawej, podczas gdy jest śpiewane zamiast tylko wyróżniać je. Wypełnij jest zgodny z czasem w pliku tekstowym, więc może być nieco przed piosenkarzem lub za nią.",
 					"swipeActionLabel": "Akcja przeciągania",
 					"swipeActionDescription": "Akcja wywołana podczas przesuwania utworu w prawo na liście",
 					"swipeActionOptions": {
