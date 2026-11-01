@@ -917,13 +917,21 @@ describe("transport commands", () => {
 
   it("seeks back on resume when the renderer had to stop instead of pausing", async () => {
     await connect();
-    push("PLAYING", 40, 100);
-    mockNative.pause.mockResolvedValueOnce({ ok: true, stoppedInstead: true });
-    activeRemoteTarget()?.pause();
-    await settle();
-    activeRemoteTarget()?.play();
-    await settle();
-    expect(mockNative.play).toHaveBeenCalledWith(40000);
+    const now = jest.spyOn(Date, "now").mockReturnValue(Date.now());
+    try {
+      push("PLAYING", 40, 100);
+      mockNative.pause.mockResolvedValueOnce({
+        ok: true,
+        stoppedInstead: true,
+      });
+      activeRemoteTarget()?.pause();
+      await settle();
+      activeRemoteTarget()?.play();
+      await settle();
+      expect(mockNative.play).toHaveBeenCalledWith(40000);
+    } finally {
+      now.mockRestore();
+    }
   });
 
   it("toggles from the state it just asked for, not the last poll", async () => {
