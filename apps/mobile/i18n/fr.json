@@ -1660,8 +1660,8 @@
 					},
 					"lyricsKeepScreenOnLabel": "Laisser l'écran allumé pour les paroles",
 					"lyricsKeepScreenOnDescription": "Empêche l'écran de s'assombrir lorsque l'écran des paroles est ouvert et qu'un morceau est en cours de lecture. Cela consomme davantage de batterie.",
-					"karaokeWordFillLabel": "Fill words as they're sung",
-					"karaokeWordFillDescription": "With word-timed (karaoke) lyrics, fill each word from left to right while it's sung instead of only highlighting it. The fill follows the timing in the lyrics file, so it can be slightly ahead of or behind the singer.",
+					"karaokeWordFillLabel": "Remplir les paroles au fur et à mesure qu'elles sont chantées",
+					"karaokeWordFillDescription": "Avec les paroles synchronisées (karaoké), remplissez chaque mot de gauche à droite au fur et à mesure qu'il est chanté, au lieu de simplement le mettre en surbrillance. Le remplissage suit le rythme indiqué dans le fichier de paroles ; il peut donc être légèrement en avance ou en retard par rapport au chanteur.",
 					"swipeActionLabel": "Action de balayage",
 					"swipeActionDescription": "Action déclenchée lors du glissement d'une piste vers la droite dans une liste",
 					"swipeActionOptions": {
