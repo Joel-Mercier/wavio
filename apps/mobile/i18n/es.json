@@ -1660,6 +1660,8 @@
 					},
 					"lyricsKeepScreenOnLabel": "Mantén la pantalla encendida para ver la letra",
 					"lyricsKeepScreenOnDescription": "Evita que la pantalla se atenúe mientras está abierta la pantalla de letras y se está reproduciendo una canción. Consume más batería.",
+					"karaokeWordFillLabel": "Fill words as they're sung",
+					"karaokeWordFillDescription": "With word-timed (karaoke) lyrics, fill each word from left to right while it's sung instead of only highlighting it. The fill follows the timing in the lyrics file, so it can be slightly ahead of or behind the singer.",
 					"swipeActionLabel": "Acción de deslizamiento",
 					"swipeActionDescription": "Acción que se activa al deslizar una pista hacia la derecha en una lista",
 					"swipeActionOptions": {
