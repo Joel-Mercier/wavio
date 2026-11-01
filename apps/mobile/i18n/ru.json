@@ -1748,8 +1748,8 @@
 					},
 					"lyricsKeepScreenOnLabel": "Не гасить экран при просмотре текста песни",
 					"lyricsKeepScreenOnDescription": "Экран не будет гаснуть, пока открыт текст песни и играет трек. Это быстрее разряжает батарею.",
-					"karaokeWordFillLabel": "Fill words as they're sung",
-					"karaokeWordFillDescription": "With word-timed (karaoke) lyrics, fill each word from left to right while it's sung instead of only highlighting it. The fill follows the timing in the lyrics file, so it can be slightly ahead of or behind the singer.",
+					"karaokeWordFillLabel": "Заполните слова, как они поют",
+					"karaokeWordFillDescription": "Заполните каждое слово слева направо, а не только подсвечивайте его. Заполнение следует времени в текстовом файле, так что он может быть немного впереди или за певицей.",
 					"swipeActionLabel": "Действие при свайпе",
 					"swipeActionDescription": "Действие при свайпе трека в списке вправо",
 					"swipeActionOptions": {
