@@ -88,5 +88,58 @@ describe("Jellyfin mappers", () => {
       expect(out?.synced).toBe(true);
       expect(out?.line[0]?.start).toBe(1000);
     });
+
+    it("leaves cueLine out when no line has cues", () => {
+      const out = mapJellyfinLyrics({
+        Lyrics: [{ Start: 10_000_000, Text: "a", Cues: null }],
+      });
+      expect(out?.cueLine).toBeUndefined();
+    });
+
+    it("maps word cues by character position into a cue line", () => {
+      const out = mapJellyfinLyrics({
+        Lyrics: [
+          { Start: 357_600_000, Text: "plain" },
+          {
+            Start: 357_600_000,
+            Text: "I am the one",
+            Cues: [
+              {
+                Position: 0,
+                EndPosition: 2,
+                Start: 357_600_000,
+                End: 362_400_000,
+              },
+              { Position: 2, EndPosition: 5, Start: 362_400_000 },
+            ],
+          },
+          { Start: 385_600_000, Text: "next" },
+        ],
+      });
+      expect(out?.cueLine).toEqual([
+        {
+          index: 1,
+          start: 35_760,
+          end: 38_560,
+          value: "I am the one",
+          cue: [
+            {
+              start: 35_760,
+              end: 36_240,
+              byteStart: 0,
+              byteEnd: 2,
+              value: "I ",
+            },
+            {
+              start: 36_240,
+              end: undefined,
+              byteStart: 2,
+              byteEnd: 5,
+              value: "am ",
+            },
+          ],
+        },
+      ]);
+    });
   });
 });

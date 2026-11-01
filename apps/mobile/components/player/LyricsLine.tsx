@@ -1,23 +1,19 @@
 import { useEffect } from "react";
 import Animated, {
+  type SharedValue,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import KaraokeFillLine from "@/components/player/KaraokeFillLine";
 import KaraokeLine from "@/components/player/KaraokeLine";
 import { Text } from "@/components/ui/text";
 import type { CueLine } from "@/services/openSubsonic/types";
-import type { LyricAlign } from "@/utils/lyrics";
+import { LYRIC_FLEX_ALIGN, type LyricAlign } from "@/utils/lyrics";
 import { cn } from "@/utils/tailwind";
 
 export const LYRICS_LINE_HEIGHT = 64;
-
-const ALIGN_ITEMS: Record<LyricAlign, "flex-start" | "flex-end" | "center"> = {
-  left: "flex-start",
-  right: "flex-end",
-  center: "center",
-};
 
 const ALIGN_TEXT: Record<LyricAlign, string> = {
   left: "text-left",
@@ -31,6 +27,7 @@ export default function LyricsLine({
   isPast,
   onPress,
   cueLine,
+  fillPosition,
   offsetMs = 0,
   align = "left",
   muted = false,
@@ -41,6 +38,7 @@ export default function LyricsLine({
   isPast: boolean;
   onPress?: () => void;
   cueLine?: CueLine;
+  fillPosition?: SharedValue<number>;
   offsetMs?: number;
   align?: LyricAlign;
   muted?: boolean;
@@ -87,11 +85,18 @@ export default function LyricsLine({
         plain
           ? { paddingVertical: 6 }
           : { minHeight: LYRICS_LINE_HEIGHT, justifyContent: "center" },
-        { alignItems: ALIGN_ITEMS[align] },
+        { alignItems: LYRIC_FLEX_ALIGN[align] },
         animatedStyle,
       ]}
     >
-      {isActive && cueLine?.cue?.length ? (
+      {isActive && cueLine?.cue?.length && fillPosition ? (
+        <KaraokeFillLine
+          cueLine={cueLine}
+          position={fillPosition}
+          align={align}
+          textClassName={textClass}
+        />
+      ) : isActive && cueLine?.cue?.length ? (
         <KaraokeLine
           cueLine={cueLine}
           offsetMs={offsetMs}

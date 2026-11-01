@@ -56,7 +56,6 @@ const bareRow: TrackRow = {
   suffix: null,
   artwork_path: null,
   artwork_mime: null,
-  lyrics: null,
   music_brainz_id: null,
   artists_json: null,
   replay_gain_json: null,

@@ -6,9 +6,7 @@ import {
   subscribePlaybackProgress,
 } from "@/hooks/player/playbackSnapshot";
 import type { CueLine } from "@/services/openSubsonic/types";
-import { findCurrentCueIndex } from "@/utils/lyrics";
-
-const UPCOMING_COLOR = "rgba(255,255,255,0.4)";
+import { findCurrentCueIndex, KARAOKE_UPCOMING_COLOR } from "@/utils/lyrics";
 
 // A space is only inserted between two cues when neither already carries edge
 // whitespace, since word-timed lyric formats vary in whether spacing lives
@@ -54,7 +52,7 @@ export default function KaraokeLine({
             ? white
             : index === activeIndex
               ? emerald500
-              : UPCOMING_COLOR;
+              : KARAOKE_UPCOMING_COLOR;
         const prefix =
           index > 0 && needsSpace(cues[index - 1].value, cue.value) ? " " : "";
         return (

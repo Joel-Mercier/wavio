@@ -11,6 +11,7 @@ import {
   getPlaybackSnapshot,
   subscribePlaybackProgress,
 } from "@/hooks/player/playbackSnapshot";
+import { useLyricsClock } from "@/hooks/player/useLyricsClock";
 import type { StructuredLyrics } from "@/services/openSubsonic/types";
 import { seekTo } from "@/services/player";
 import useApp from "@/stores/app";
@@ -43,12 +44,16 @@ export default function LyricsBody({
   lyrics,
   layers,
   isLoading = false,
+  visible = true,
 }: {
   lyrics: StructuredLyrics | null;
   layers: LyricLayers;
   // Holds back the "no lyrics" message while a fetch is still in flight, so a
   // track change doesn't flash it before the new sheet arrives.
   isLoading?: boolean;
+  // The player keeps its inline lyrics mounted while the cover is shown; the
+  // word-fill frame loop must not run behind it.
+  visible?: boolean;
 }) {
   const { t } = useTranslation();
   const scrollRef = useRef<ScrollViewInstance>(null);
@@ -59,6 +64,7 @@ export default function LyricsBody({
   const offsetMs = lyrics?.offset ?? 0;
   const synced = isSyncedLyrics(lyrics);
   const karaokeEnabled = useApp((s) => s.karaokeEnabled);
+  const karaokeWordFill = useApp((s) => s.karaokeWordFill);
   const translationLang = useApp((s) => s.lyricsTranslationLang);
   const showPronunciation = useApp((s) => s.lyricsShowPronunciation);
 
@@ -78,6 +84,13 @@ export default function LyricsBody({
     () => alignLayerToMain(lyrics?.line ?? [], selectedPronunciation?.line),
     [lyrics, selectedPronunciation],
   );
+
+  const activeCueLine = karaokeEnabled
+    ? getCueLineForLine(lyrics, currentIndex)
+    : undefined;
+  const fillEnabled =
+    karaokeWordFill && visible && !!activeCueLine?.cue?.length;
+  const fillPosition = useLyricsClock(offsetMs, fillEnabled);
 
   useEffect(() => {
     lineLayoutsRef.current = [];
@@ -176,9 +189,10 @@ export default function LyricsBody({
                   align={align}
                   muted={muted}
                   plain={!synced}
-                  cueLine={
-                    karaokeEnabled && index === currentIndex
-                      ? getCueLineForLine(lyrics, currentIndex)
+                  cueLine={index === currentIndex ? activeCueLine : undefined}
+                  fillPosition={
+                    fillEnabled && index === currentIndex
+                      ? fillPosition
                       : undefined
                   }
                   offsetMs={offsetMs}

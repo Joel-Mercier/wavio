@@ -161,6 +161,8 @@ interface AppStore {
   setLyricsSource: (lyricsSource: "off" | "server" | "all") => void;
   karaokeEnabled: boolean;
   setKaraokeEnabled: (karaokeEnabled: boolean) => void;
+  karaokeWordFill: boolean;
+  setKaraokeWordFill: (karaokeWordFill: boolean) => void;
   lyricsTranslationLang: string | null;
   setLyricsTranslationLang: (lyricsTranslationLang: string | null) => void;
   lyricsShowPronunciation: boolean;
@@ -401,6 +403,10 @@ export const useAppBase = create<AppStore>()(
       karaokeEnabled: true,
       setKaraokeEnabled: (karaokeEnabled: boolean) => {
         set({ karaokeEnabled });
+      },
+      karaokeWordFill: false,
+      setKaraokeWordFill: (karaokeWordFill: boolean) => {
+        set({ karaokeWordFill });
       },
       lyricsTranslationLang: null,
       setLyricsTranslationLang: (lyricsTranslationLang: string | null) => {

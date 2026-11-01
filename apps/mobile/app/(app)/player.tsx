@@ -706,6 +706,7 @@ export default function PlayerScreen() {
                     lyrics={lyrics}
                     layers={layers}
                     isLoading={lyricsLoading}
+                    visible={showInlineLyrics}
                   />
                 </Animated.View>
               )}
@@ -723,6 +724,7 @@ export default function PlayerScreen() {
               ) : (
                 <CurrentLyricLine
                   lyrics={lyrics}
+                  visible={isFocused}
                   onPress={() => setPlayerInlineLyrics(true)}
                 />
               ))}

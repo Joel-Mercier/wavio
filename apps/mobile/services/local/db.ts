@@ -605,7 +605,7 @@ SELECT
   t.is_compilation, t.suffix,
   COALESCE(o.artwork_path, fa.artwork_path, t.artwork_path) AS artwork_path,
   COALESCE(fa.artwork_mime, t.artwork_mime) AS artwork_mime,
-  t.lyrics,
+  t.lyrics, t.lyrics_sidecar,
   COALESCE(o.music_brainz_id, t.music_brainz_id) AS music_brainz_id,
   COALESCE(o.artists_json, t.artists_json) AS artists_json,
   t.replay_gain_json, t.release_types_json,
@@ -671,6 +671,9 @@ async function migrate(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(
     "CREATE INDEX IF NOT EXISTS idx_tracks_dir ON tracks(dir)",
   );
+  // The lyrics file beside the track (services/local/lyricsSidecar.ts), matched
+  // from the scan's listing and backfilled for skipped tracks like `dir`.
+  await ensureColumn(db, "tracks", "lyrics_sidecar", "TEXT");
   // v6: the grouping keys the view reads. Added before the view is created,
   // since CREATE VIEW resolves its column references immediately and would
   // fail on a database that doesn't have them yet.
@@ -851,7 +854,6 @@ export type TrackRow = {
   suffix: string | null;
   artwork_path: string | null;
   artwork_mime: string | null;
-  lyrics: string | null;
   music_brainz_id: string | null;
   artists_json: string | null;
   replay_gain_json: string | null;
