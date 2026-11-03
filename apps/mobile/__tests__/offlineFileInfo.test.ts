@@ -21,6 +21,7 @@ jest.mock("@/services/local/keys", () => ({
 
 jest.mock("@/services/network", () => ({
   getEffectiveMaxBitRate: () => null,
+  getEffectiveStreamingFormat: (format: string) => format,
 }));
 
 jest.mock("@/services/openSubsonic/auth", () => ({
@@ -52,7 +53,11 @@ jest.mock("@/stores/app", () => ({
 }));
 
 import { Platform } from "react-native";
-import { offlineFileInfo } from "@/services/backend/streaming";
+import {
+  cacheEstimatedBytes,
+  cacheFetchUrl,
+  offlineFileInfo,
+} from "@/services/backend/streaming";
 import type { Child } from "@/services/openSubsonic/types";
 
 function track(overrides: Partial<Child>): Child {
@@ -63,21 +68,20 @@ function setPlatform(os: "ios" | "android"): void {
   Object.defineProperty(Platform, "OS", { value: os, configurable: true });
 }
 
-describe("offlineFileInfo raw-mode ALAC fallback", () => {
+describe("offlineFileInfo preserves raw audio with bundled ALAC decoding", () => {
   beforeEach(() => {
     authState.serverType = "navidrome";
     appState.downloadFormat = "raw";
     appState.downloadMaxBitRate = null;
-    // The ALAC transcode is Android-only; iOS decodes ALAC natively.
     setPlatform("android");
   });
 
-  it("transcodes a high-bitrate m4a (ALAC) to seekable opus on Subsonic", () => {
+  it("downloads a high-bitrate m4a (ALAC) losslessly on Subsonic", () => {
     const info = offlineFileInfo(
       track({ suffix: "m4a", contentType: "audio/mp4", bitRate: 900 }),
     );
-    expect(info.suffix).toBe("opus");
-    expect(info.url).toContain("format=opus");
+    expect(info.suffix).toBe("m4a");
+    expect(info.url).toContain("/rest/download");
   });
 
   it("downloads a low-bitrate m4a (AAC) untouched", () => {
@@ -88,14 +92,35 @@ describe("offlineFileInfo raw-mode ALAC fallback", () => {
     expect(info.url).toContain("/rest/download");
   });
 
-  it("transcodes when Jellyfin names the codec as alac regardless of bitrate", () => {
+  it.each([undefined, 300, 900])(
+    "preserves explicit ALAC with bitrate %s",
+    (bitRate) => {
+      const info = offlineFileInfo(
+        track({ suffix: "alac", contentType: "audio/alac", bitRate }),
+      );
+      expect(info.suffix).toBe("alac");
+      expect(info.url).toContain("/rest/download");
+    },
+  );
+
+  it("caches raw ALAC without a lossy transcode and uses its exact size", () => {
+    const source = track({
+      suffix: "m4a",
+      contentType: "audio/alac",
+      bitRate: 900,
+      size: 12345678,
+    });
+    expect(cacheFetchUrl(source)).toContain("/rest/download");
+    expect(cacheEstimatedBytes(source)).toBe(source.size);
+  });
+
+  it("preserves raw Jellyfin ALAC regardless of bitrate", () => {
     authState.serverType = "jellyfin";
     const info = offlineFileInfo(
       track({ suffix: "m4a", contentType: "audio/alac", bitRate: 300 }),
     );
-    // opus lands in an ogg container (offlineTranscodeSuffix).
-    expect(info.suffix).toBe("ogg");
-    expect(info.url).toBe("jellyfin-offline-opus");
+    expect(info.suffix).toBe("m4a");
+    expect(info.url).toBe("jellyfin-download");
   });
 
   it("keeps ALAC as a raw download on iOS (AVPlayer decodes it natively)", () => {

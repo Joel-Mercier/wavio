@@ -1,3 +1,12 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 88e464d2030f4b3a929a5b4c80521bdaecebd966..dc9ae33840d37955cd2fe6f2e0d3e1abe5185a28 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -35,3 +35,4 @@ dependencies {
+   implementation "androidx.media3:media3-datasource-okhttp:$androidxMedia3Version"
+   implementation "androidx.media3:media3-exoplayer-hls:$androidxMedia3Version"
+   implementation "androidx.media3:media3-exoplayer-smoothstreaming:$androidxMedia3Version"
++  implementation 'org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1'
 diff --git a/android/src/main/java/expo/modules/audio/AudioModule.kt b/android/src/main/java/expo/modules/audio/AudioModule.kt
 index 6c81fce3dd518d3b82e3280940a001c7be84dd0a..c929ddf288b9bd729accea06d48812480dcf9106 100644
 --- a/android/src/main/java/expo/modules/audio/AudioModule.kt
@@ -77,18 +86,21 @@ index 6c81fce3dd518d3b82e3280940a001c7be84dd0a..c929ddf288b9bd729accea06d4881248
          runOnMain {
            player.setSamplingEnabled(enabled)
 diff --git a/android/src/main/java/expo/modules/audio/AudioPlayer.kt b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
-index fb2d0b57fb8718df04e5c073b70837b2658f2c16..6237d94ffc849031c879ddf41eb7a05219b2e6a3 100644
+index fb2d0b57fb8718df04e5c073b70837b2658f2c16..a2f4469716491e146d934cc46d76503f61a93de7 100644
 --- a/android/src/main/java/expo/modules/audio/AudioPlayer.kt
 +++ b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
-@@ -11,6 +11,7 @@ import androidx.media3.common.C
+@@ -11,8 +11,10 @@ import androidx.media3.common.C
  import androidx.media3.common.PlaybackException
  import androidx.media3.common.PlaybackParameters
  import androidx.media3.common.Player
 +import androidx.media3.common.Tracks
  import androidx.media3.common.util.UnstableApi
  import androidx.media3.exoplayer.DefaultLoadControl
++import androidx.media3.exoplayer.DefaultRenderersFactory
  import androidx.media3.exoplayer.ExoPlayer
-@@ -23,6 +24,16 @@ import java.lang.ref.WeakReference
+ import androidx.media3.exoplayer.source.MediaSource
+ import androidx.media3.session.MediaSession
+@@ -23,6 +25,16 @@ import java.lang.ref.WeakReference
  
  private const val PLAYBACK_STATUS_UPDATE = "playbackStatusUpdate"
  private const val AUDIO_SAMPLE_UPDATE = "audioSampleUpdate"
@@ -105,7 +117,12 @@ index fb2d0b57fb8718df04e5c073b70837b2658f2c16..6237d94ffc849031c879ddf41eb7a052
  private const val SEEK_JUMP_INTERVAL_MS: Long = 10_000
  
  @UnstableApi
-@@ -37,6 +48,7 @@ class AudioPlayer(
+@@ -34,9 +46,12 @@ class AudioPlayer(
+   bufferDurationMs: Long = 0
+ ) : BaseAudioPlayer(
+   player = ExoPlayer.Builder(context)
++    // Prefer software decoding even when a vendor advertises a broken ALAC codec.
++    .setRenderersFactory(DefaultRenderersFactory(context).setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER))
      .setLooper(context.mainLooper)
      .setAudioAttributes(AudioAttributes.DEFAULT, false)
      .setHandleAudioBecomingNoisy(true)
@@ -113,7 +130,7 @@ index fb2d0b57fb8718df04e5c073b70837b2658f2c16..6237d94ffc849031c879ddf41eb7a052
      .setSeekForwardIncrementMs(SEEK_JUMP_INTERVAL_MS)
      .setSeekBackIncrementMs(SEEK_JUMP_INTERVAL_MS)
      .apply {
-@@ -65,6 +77,14 @@ class AudioPlayer(
+@@ -65,6 +80,14 @@ class AudioPlayer(
    // Lock screen controls
    override var isActiveForLockScreen = false
    override var metadata: Metadata? = null
@@ -128,7 +145,7 @@ index fb2d0b57fb8718df04e5c073b70837b2658f2c16..6237d94ffc849031c879ddf41eb7a052
    override var lockScreenOptions: AudioLockScreenOptions? = null
    override var mediaSession: MediaSession = buildBasicMediaSession(context, ref) { requestPlay() }
    override val serviceConnection = AudioPlaybackServiceConnection(WeakReference(this), appContext)
-@@ -89,8 +109,27 @@ class AudioPlayer(
+@@ -89,8 +112,27 @@ class AudioPlayer(
        ?: throw Exceptions.ReactContextLost()
    }
  
@@ -156,7 +173,7 @@ index fb2d0b57fb8718df04e5c073b70837b2658f2c16..6237d94ffc849031c879ddf41eb7a052
      source?.let {
        setMediaSource(source)
      }
-@@ -98,11 +137,72 @@ class AudioPlayer(
+@@ -98,11 +140,72 @@ class AudioPlayer(
  
    fun setMediaSource(source: MediaSource) {
      previousPlaybackState = Player.STATE_IDLE
@@ -230,10 +247,10 @@ index fb2d0b57fb8718df04e5c073b70837b2658f2c16..6237d94ffc849031c879ddf41eb7a052
      previousPlaybackState = Player.STATE_IDLE
      ref.pause()
 diff --git a/android/src/main/java/expo/modules/audio/AudioPlaylist.kt b/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
-index bf3f9c5e5535ddf5e98484310642aa73bd6ae86c..7385de41ae36873ce5c3b1f01bea1c1a74602126 100644
+index bf3f9c5e5535ddf5e98484310642aa73bd6ae86c..fa0f6c00d5a29868ea85131facf027ac36334c9a 100644
 --- a/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
 +++ b/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
-@@ -2,6 +2,7 @@ package expo.modules.audio
+@@ -2,11 +2,13 @@ package expo.modules.audio
  
  import android.content.Context
  import androidx.media3.common.AudioAttributes
@@ -241,7 +258,17 @@ index bf3f9c5e5535ddf5e98484310642aa73bd6ae86c..7385de41ae36873ce5c3b1f01bea1c1a
  import androidx.media3.common.MediaItem
  import androidx.media3.common.PlaybackException
  import androidx.media3.common.Player
-@@ -29,6 +30,7 @@ class AudioPlaylist(
+ import androidx.media3.common.util.UnstableApi
+ import androidx.media3.exoplayer.ExoPlayer
++import androidx.media3.exoplayer.DefaultRenderersFactory
+ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+ import androidx.media3.datasource.DataSource
+ import androidx.media3.session.MediaSession
+@@ -26,9 +28,11 @@ class AudioPlaylist(
+   dataSourceFactory: DataSource.Factory
+ ) : BaseAudioPlayer(
+   player = ExoPlayer.Builder(context)
++    .setRenderersFactory(DefaultRenderersFactory(context).setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER))
      .setLooper(context.mainLooper)
      .setAudioAttributes(AudioAttributes.DEFAULT, false)
      .setHandleAudioBecomingNoisy(true)

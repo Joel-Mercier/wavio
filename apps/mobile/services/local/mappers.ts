@@ -72,7 +72,6 @@ export function mapRowToChild(row: TrackRow): Child {
     genre: row.genre ?? undefined,
     coverArt: row.artwork_path ?? undefined,
     size: row.size ?? undefined,
-    contentType: row.artwork_mime ?? undefined,
     suffix: row.suffix ?? undefined,
     duration:
       row.duration_ms != null ? Math.round(row.duration_ms / 1000) : undefined,
