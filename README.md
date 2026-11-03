@@ -308,6 +308,7 @@ If you like the app and absolutely want to support its development, you can dona
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/artist-en.jpg" alt="Artist screen" width="200">
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/album-en.jpg" alt="Album screen" width="200">
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/player-en.jpg" alt="Player screen" width="200">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/lyrics-en.jpg" alt="Lyrics screen" width="200">
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/queue-en.jpg" alt="Queue screen" width="200">
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/library-en.jpg" alt="Library screen" width="200">
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/search-en.jpg" alt="Search screen" width="200">
