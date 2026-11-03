@@ -10,6 +10,7 @@ import { forgetDeletedPlaylist } from "@/services/forgetPlaylist";
 import { getIsEffectivelyOnline } from "@/services/network";
 import { isNotFoundError } from "@/services/notFound";
 import { librarySyncService } from "@/services/offline";
+import { requestAutoDownloadSync } from "@/services/offline/autoDownloadTrigger";
 import { adoptDownloadedPlaylists } from "@/services/offline/collectionAdoption";
 import { enqueueOfflineMutation } from "@/services/offlineMutations/enqueue";
 import type { PlaylistWithSongs } from "@/services/openSubsonic/types";
@@ -44,6 +45,7 @@ export const useCreatePlaylist = () => {
       }
       return createPlaylist(name, params.songId);
     },
+    onSuccess: requestAutoDownloadSync,
   });
 
   return query;
@@ -124,6 +126,7 @@ export const useUpdatePlaylist = () => {
       // Keep the extended-offline auto copy in step with the edit instead of
       // waiting for the next library pass.
       void librarySyncService.refreshPlaylist(id);
+      requestAutoDownloadSync();
       return result;
     },
   });
@@ -152,6 +155,7 @@ export const useDeletePlaylist = () => {
         return undefined;
       });
       librarySyncService.handlePlaylistDeleted(id);
+      requestAutoDownloadSync();
       return result;
     },
     // Store-side cleanup only. Dropping the cached queries has to wait until

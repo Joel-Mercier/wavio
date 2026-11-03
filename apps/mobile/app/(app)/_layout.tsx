@@ -8,6 +8,7 @@ import {
 import { Drawer } from "react-native-drawer-layout";
 import { useCSSVariable } from "uniwind";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
+import AutoDownloadsController from "@/components/AutoDownloadsController";
 import DrawerMenu from "@/components/DrawerMenu";
 import DownloaderPickerSheet from "@/components/downloaders/DownloaderPickerSheet";
 import LidarrDownloadsWatcher from "@/components/downloaders/lidarr/LidarrDownloadsWatcher";
@@ -18,7 +19,6 @@ import IncompleteScanNotice from "@/components/local/IncompleteScanNotice";
 import LibraryAutoScanController from "@/components/local/LibraryAutoScanController";
 import LocalLibraryIndexing from "@/components/local/LocalLibraryIndexing";
 import OfflineMutationsSync from "@/components/OfflineMutationsSync";
-import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
 import CastController from "@/components/player/CastController";
 import OutputSheet from "@/components/player/OutputSheet";
 import PlaybackNoticeToast from "@/components/player/PlaybackNoticeToast";
@@ -51,6 +51,7 @@ import {
   librarySyncService,
   offlineDownloadService,
 } from "@/services/offline";
+import { autoDownloadService } from "@/services/offline/autoDownloadService";
 import {
   initOfflineMutationReplay,
   resetOfflineMutationReplay,
@@ -202,6 +203,7 @@ export default function AppLayout() {
         resetPlayerForScopeChange();
         useOffline.getState().__reset();
         librarySyncService.reset();
+        autoDownloadService.reset();
         artworkCacheService.reset();
         useLibrarySync.getState().__reset();
         resetOfflineMutationReplay();
@@ -282,6 +284,9 @@ export default function AppLayout() {
     // scope's sign-out) instead of waiting for a connectivity change to
     // incidentally kick the queue.
     offlineDownloadService.resume();
+    // Two scopes that both have a rule on leave the rule flags unchanged across
+    // the switch, so the controller's effect wouldn't see it.
+    void autoDownloadService.kick();
     // Same reasoning, and it has to be here rather than in a component effect:
     // the artwork queue is in-memory only, so what an app kill lost is re-derived
     // from the collections, tracks and queue this rehydrate just restored — a
@@ -450,7 +455,7 @@ export default function AppLayout() {
       <LidarrDownloadsWatcher />
       <TidarrDownloadsWatcher />
       <DownloaderPickerSheet />
-      <OfflineStarredAutoSync />
+      <AutoDownloadsController />
       <LibrarySyncController />
       <LibraryAutoScanController />
       <ServerExtensionsSync />

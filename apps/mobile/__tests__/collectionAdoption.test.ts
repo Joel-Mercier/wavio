@@ -20,11 +20,13 @@ jest.mock("@/stores/auth", () => ({
   useAuthBase: { getState: () => ({ url: "u", username: "n" }) },
 }));
 
-const mockGetQueriesData = jest.fn();
+const mockFindQueries = jest.fn();
 const mockGetQueryData = jest.fn();
 jest.mock("@/config/queryClient", () => ({
   queryClient: {
-    getQueriesData: (...args: unknown[]) => mockGetQueriesData(...args),
+    getQueryCache: () => ({
+      findAll: (...args: unknown[]) => mockFindQueries(...args),
+    }),
     getQueryData: (...args: unknown[]) => mockGetQueryData(...args),
   },
 }));
@@ -120,6 +122,10 @@ const serve = (members: Record<string, string[]>) => {
   }));
 };
 
+const listing = (dataUpdatedAt: number, playlist: Playlist[]) => ({
+  state: { dataUpdatedAt, data: { playlists: { playlist } } },
+});
+
 const download = (...ids: string[]) =>
   useOffline.getState().addDownloadedTracks(ids.map((id) => makeTrack(id)));
 
@@ -132,7 +138,7 @@ describe("collection adoption", () => {
     __resetCollectionAdoption();
     mockGetPlaylist.mockReset();
     mockGetAlbum.mockReset();
-    mockGetQueriesData.mockReset();
+    mockFindQueries.mockReset();
     mockGetQueryData.mockReset();
     mockEnqueueArtwork.mockReset();
     mockCacheTrackArtwork.mockReset();
@@ -207,6 +213,38 @@ describe("collection adoption", () => {
     await adoptDownloadedPlaylists([makePlaylist("p1", 1)]);
 
     expect(mockGetPlaylist).not.toHaveBeenCalled();
+    expect(collections().p1).toBeUndefined();
+  });
+
+  it("leaves playlists and albums to the automatic downloads while their rule is on", async () => {
+    download("t1");
+    serve({ p1: ["t1"] });
+    useOffline.getState().setAutoDownloadPlaylists(true);
+    useOffline.getState().setAutoDownloadLikedAlbums(true);
+
+    await adoptDownloadedPlaylists([makePlaylist("p1", 1)]);
+
+    expect(mockGetPlaylist).not.toHaveBeenCalled();
+    expect(collections().p1).toBeUndefined();
+
+    useOffline.getState().setAutoDownloadPlaylists(false);
+    await adoptDownloadedPlaylists([makePlaylist("p1", 1)]);
+
+    expect(collections().p1?.source).toBeUndefined();
+    expect(collections().p1?.trackIds).toEqual(["t1"]);
+  });
+
+  it("never adopts a playlist on the strength of automatic downloads", async () => {
+    useOffline
+      .getState()
+      .addDownloadedTracks([
+        makeTrack("t1"),
+        { ...makeTrack("t2"), source: "rule" },
+      ]);
+    serve({ p1: ["t1", "t2"] });
+
+    await adoptDownloadedPlaylists([makePlaylist("p1", 2)]);
+
     expect(collections().p1).toBeUndefined();
   });
 
@@ -347,9 +385,7 @@ describe("collection adoption", () => {
   });
 
   it("re-checks the cached listings once the download queue drains", async () => {
-    mockGetQueriesData.mockReturnValue([
-      [["playlists", {}], { playlists: { playlist: [makePlaylist("p1", 1)] } }],
-    ]);
+    mockFindQueries.mockReturnValue([listing(1, [makePlaylist("p1", 1)])]);
     serve({ p1: ["t1"] });
     const unsubscribe = subscribeCollectionAdoption();
 
@@ -360,6 +396,25 @@ describe("collection adoption", () => {
     await new Promise((resolve) => setImmediate(resolve));
 
     expect(collections().p1?.trackIds).toEqual(["t1"]);
+  });
+
+  it("checks a drained queue against the freshest cached copy of a playlist", async () => {
+    download("t1", "t9");
+    serve({ p1: ["t1", "t2"] });
+    await adoptDownloadedPlaylists([makePlaylist("p1", 2)]);
+    expect(mockGetPlaylist).toHaveBeenCalledTimes(1);
+
+    mockFindQueries.mockReturnValue([
+      listing(2, [makePlaylist("p1", 2)]),
+      listing(1, [makePlaylist("p1", 1, "2026-10-01T00:00:00.000Z")]),
+    ]);
+    const unsubscribe = subscribeCollectionAdoption();
+    useOffline.getState().addToDownloadQueue(makeChild("t3"));
+    useOffline.getState().completeDownloads([makeTrack("t3")]);
+    unsubscribe();
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(mockGetPlaylist).toHaveBeenCalledTimes(1);
   });
 
   describe("starred albums", () => {
@@ -438,7 +493,7 @@ describe("collection adoption", () => {
     });
 
     it("re-checks cached starred albums once the download queue drains", async () => {
-      mockGetQueriesData.mockReturnValue([]);
+      mockFindQueries.mockReturnValue([]);
       mockGetQueryData.mockReturnValue({
         starred2: { album: [makeAlbum("a1", 1)] },
       });

@@ -28,6 +28,7 @@ import {
   subscribeEffectiveOnline,
 } from "@/services/network";
 import { isNotFoundError } from "@/services/notFound";
+import { requestAutoDownloadSync } from "@/services/offline/autoDownloadTrigger";
 import { revertQueueMirror } from "@/services/offlineMutations/optimistic";
 import { invalidatePlayCountQueries } from "@/services/playCountQueries";
 import { useAuthBase } from "@/stores/auth";
@@ -312,6 +313,7 @@ export async function drainOfflineMutations(): Promise<void> {
   if (keys.length > 0) {
     invalidateKeys(queryClient, keys);
   }
+  if (processed.star || processed.playlist) requestAutoDownloadSync();
   if (processed.scrobble) void invalidatePlayCountQueries(queryClient);
   if (dropped > 0) notifyDrainResult({ dropped });
   if (useOfflineMutations.getState().queue.length > 0) scheduleBackoff();

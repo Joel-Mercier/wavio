@@ -554,6 +554,23 @@ describe("applyCanonicalIdRemap", () => {
     expect(collections[NEW_SONG_2].artists?.[0].id).toBe(STABLE_ARTIST);
   });
 
+  it("remaps the automatic downloads' liked songs and exclusions", async () => {
+    useOffline.setState({
+      likedSongIds: [OLD_SONG, STABLE_ARTIST],
+      autoDownloadOverrides: {
+        [`song:${OLD_SONG}`]: { mode: "exclude", kind: "song", name: "S" },
+        [`album:${OLD_SONG_2}`]: { mode: "exclude", kind: "album", name: "A" },
+      },
+    });
+    await applyCanonicalIdRemap();
+
+    const state = useOffline.getState();
+    expect(state.likedSongIds).toEqual([NEW_SONG, STABLE_ARTIST]);
+    expect(Object.keys(state.autoDownloadOverrides).sort()).toEqual(
+      [`album:${NEW_SONG_2}`, `song:${NEW_SONG}`].sort(),
+    );
+  });
+
   it("rebuilds queue stream URLs, not just ids", async () => {
     useQueue.setState({
       queue: [

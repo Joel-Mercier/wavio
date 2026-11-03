@@ -19,6 +19,11 @@ import {
   artworkCacheService,
   cacheArtworkForTracks,
 } from "@/services/offline/artworkCacheService";
+import {
+  autoDownloadKey,
+  outranks,
+  wantedLikedSongIds,
+} from "@/services/offline/autoDownloadPlan";
 import { trackIdsReferencedByCollections } from "@/services/offline/collections";
 import {
   externalRootUri,
@@ -36,6 +41,7 @@ import { useAppBase } from "@/stores/app";
 import { currentAuthScope, useAuthBase } from "@/stores/auth";
 import { useLibrarySyncBase } from "@/stores/librarySync";
 import useOffline, {
+  type AutoDownloadOverride,
   type DownloadProgress,
   type OfflineSource,
   type OfflineTrack,
@@ -308,6 +314,7 @@ export class OfflineDownloadService {
     opts?: { source?: OfflineSource },
   ): Promise<void> {
     const source = opts?.source ?? "user";
+    if (source === "user") this.clearSongExclusions(tracks);
     // Ahead of the already-downloaded short-circuit: a track already on disk
     // from an earlier save may still be missing its cover, and a saved track
     // without one is a fallback icon in the player and on the lock screen
@@ -319,12 +326,9 @@ export class OfflineDownloadService {
     await Promise.all(promises);
   }
 
-  async downloadAllStarredTracks(starredTracks: Child[]): Promise<void> {
-    await this.downloadTracks(starredTracks);
-  }
-
-  // Bulk enqueue for the library sync. Fire-and-forget (no per-track
-  // resolvers); failures land in downloadProgress like any other download.
+  // Bulk enqueue for the library sync and the automatic downloads.
+  // Fire-and-forget (no per-track resolvers); failures land in
+  // downloadProgress like any other download.
   enqueueTracks(tracks: Child[], source: OfflineSource): void {
     this.stageTracks(tracks, source);
     this.processQueue();
@@ -332,9 +336,9 @@ export class OfflineDownloadService {
 
   // Queues whatever isn't on disk yet and returns the tracks now waiting in the
   // queue, in one write each for the queue, the progress map and any source
-  // promotion. An explicit save of something the library sync fetched or
-  // queued promotes it to user-owned so it survives disabling extended offline
-  // mode.
+  // promotion. A higher-ranked owner takes over what a lower one fetched or
+  // queued (an explicit save of an automatic download, an automatic download of
+  // something the library sync holds), so it survives the lower one letting go.
   private stageTracks(tracks: Child[], source: OfflineSource): Child[] {
     const offlineStore = useOffline.getState();
     const queuedById = new Map(
@@ -352,15 +356,15 @@ export class OfflineDownloadService {
       seen.add(track.id);
       const downloaded = offlineStore.downloadedTracks[track.id];
       if (downloaded) {
-        if (source === "user" && downloaded.source === "auto") {
-          promotedDownloads.push({ ...downloaded, source: "user" });
+        if (outranks(source, downloaded.source)) {
+          promotedDownloads.push({ ...downloaded, source });
         }
         continue;
       }
       queued.push(track);
       const inQueue = queuedById.get(track.id);
       if (inQueue) {
-        if (source === "user" && inQueue.offlineSource === "auto") {
+        if (outranks(source, inQueue.offlineSource)) {
           promotedQueued.push(track.id);
         }
         if (this.isInFlight(track.id) || this.resolvers.has(track.id)) {
@@ -373,7 +377,7 @@ export class OfflineDownloadService {
     }
 
     offlineStore.addDownloadedTracks(promotedDownloads);
-    offlineStore.setQueuedTracksSource(promotedQueued, "user");
+    offlineStore.setQueuedTracksSource(promotedQueued, source);
     offlineStore.addManyToDownloadQueue(additions);
     offlineStore.setManyDownloadProgress(pending);
     return queued;
@@ -889,10 +893,38 @@ export class OfflineDownloadService {
     };
   }
 
+  // An explicit hand download of a song the user had removed from the
+  // automatic downloads is them wanting it back.
+  private clearSongExclusions(tracks: Child[]): void {
+    const { autoDownloadOverrides, updateAutoDownloadOverrides } =
+      useOffline.getState();
+    const updates: Record<string, null> = {};
+    for (const track of tracks) {
+      const key = autoDownloadKey("song", track.id);
+      if (key in autoDownloadOverrides) updates[key] = null;
+    }
+    if (Object.keys(updates).length > 0) updateAutoDownloadOverrides(updates);
+  }
+
+  // Single-track removal, from the UI. A song an automatic download still wants
+  // is excluded too, or the next sync would download it straight back.
   removeDownloadedTrack(trackId: string): void {
     const offlineStore = useOffline.getState();
     const track = offlineStore.getDownloadedTrack(trackId);
     if (!track) return;
+    if (
+      track.source === "rule" ||
+      wantedLikedSongIds(offlineStore).has(trackId)
+    ) {
+      const override: AutoDownloadOverride = {
+        mode: "exclude",
+        kind: "song",
+        name: track.title,
+      };
+      offlineStore.updateAutoDownloadOverrides({
+        [autoDownloadKey("song", trackId)]: override,
+      });
+    }
 
     offlineStore.removeManyDownloadedTracks([trackId]);
     flushPendingScopedWrites();
@@ -940,12 +972,16 @@ export class OfflineDownloadService {
     collectionId: string,
     trackIds: string[],
   ): OfflineTrack[] {
+    const state = useOffline.getState();
     const referencedElsewhere = trackIdsReferencedByCollections(
-      Object.values(useOffline.getState().downloadedCollections).filter(
+      Object.values(state.downloadedCollections).filter(
         (collection) => collection.id !== collectionId,
       ),
     );
-    const orphaned = trackIds.filter((id) => !referencedElsewhere.has(id));
+    const likedSongs = wantedLikedSongIds(state);
+    const orphaned = trackIds.filter(
+      (id) => !referencedElsewhere.has(id) && !likedSongs.has(id),
+    );
     // Before the deletes, so the queue stops fetching what is being removed.
     this.cancelQueuedDownloads(orphaned);
     return this.forgetDownloadedTracks(orphaned);
@@ -1025,6 +1061,12 @@ export class OfflineDownloadService {
         await yieldToEventLoop();
       }
     }
+  }
+
+  // Drops queued downloads that nothing wants any more (an automatic download
+  // released mid-queue); in-flight ones finish and are released afterwards.
+  cancelQueuedTracks(trackIds: string[]): void {
+    this.cancelQueuedDownloads(trackIds);
   }
 
   // Deleting the files isn't enough when the collection shrinks mid-download:

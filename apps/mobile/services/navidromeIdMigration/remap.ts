@@ -137,6 +137,12 @@ function collectIds(): Set<string> {
     addArtwork(from);
     addArtwork(to);
   }
+  // The automatic downloads release a liked song that isn't in this list, so a
+  // stale one would delete every liked download the remap just renumbered.
+  for (const id of offline.likedSongIds ?? []) add(id);
+  for (const key of Object.keys(offline.autoDownloadOverrides)) {
+    add(overrideId(key));
+  }
 
   const queue = useQueue.getState();
   for (const track of queue.queue) {
@@ -234,6 +240,10 @@ function collectIds(): Set<string> {
   return ids;
 }
 
+function overrideId(key: string): string {
+  return key.slice(key.indexOf(":") + 1);
+}
+
 function applyRemap(remap: Remap): void {
   // The offline store goes first: the queue rebuilds its playback URLs from the
   // already-remapped downloaded-track paths.
@@ -317,9 +327,18 @@ function applyRemap(remap: Remap): void {
     coverArt: remapArtworkId(queued.coverArt, remap),
     // NOT queued.musicBrainzId — see the header note.
   }));
+  const likedSongIds = offline.likedSongIds?.map(remap) ?? null;
+  const autoDownloadOverrides = Object.fromEntries(
+    Object.entries(offline.autoDownloadOverrides).map(([key, override]) => [
+      `${override.kind}:${remap(overrideId(key))}`,
+      override,
+    ]),
+  );
   useOffline.setState({
     downloadedTracks,
     downloadedCollections,
+    likedSongIds,
+    autoDownloadOverrides,
     artworkCache,
     artworkCachedAt,
     artworkAliases,

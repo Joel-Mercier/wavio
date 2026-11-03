@@ -101,7 +101,7 @@ const makeChild = (id: string): Child => ({
 
 const makeOfflineTrack = (
   id: string,
-  source: "user" | "auto",
+  source: "user" | "rule" | "auto",
 ): OfflineTrack => ({
   id,
   title: `Track ${id}`,
@@ -414,5 +414,70 @@ describe("resume", () => {
     offlineDownloadService.resume();
 
     expect(state().downloadProgress.a).toBeDefined();
+  });
+});
+
+describe("automatic download ownership", () => {
+  it("lets an automatic download take over what the library sync holds, never what the user saved", () => {
+    const { offlineDownloadService, state } = importService();
+    holdDownloads();
+    state().addDownloadedTracks([
+      makeOfflineTrack("a", "auto"),
+      makeOfflineTrack("b", "user"),
+    ]);
+    offlineDownloadService.enqueueTracks([makeChild("c")], "auto");
+
+    offlineDownloadService.enqueueTracks(
+      ["a", "b", "c"].map(makeChild),
+      "rule",
+    );
+
+    expect(state().getDownloadedTrack("a")?.source).toBe("rule");
+    expect(state().getDownloadedTrack("b")?.source).toBe("user");
+    expect(state().downloadQueue.find((t) => t.id === "c")?.offlineSource).toBe(
+      "rule",
+    );
+  });
+
+  it("never hands an automatic download back to the library sync", () => {
+    const { offlineDownloadService, state } = importService();
+    state().addDownloadedTracks([makeOfflineTrack("a", "rule")]);
+
+    offlineDownloadService.enqueueTracks([makeChild("a")], "auto");
+
+    expect(state().getDownloadedTrack("a")?.source).toBe("rule");
+  });
+
+  it("excludes an automatic download removed by hand, and a hand download lifts it", async () => {
+    const { offlineDownloadService, state } = importService();
+    state().addDownloadedTracks([
+      makeOfflineTrack("a", "rule"),
+      makeOfflineTrack("b", "user"),
+    ]);
+
+    offlineDownloadService.removeDownloadedTrack("a");
+    offlineDownloadService.removeDownloadedTrack("b");
+
+    expect(state().autoDownloadOverrides).toEqual({
+      "song:a": { mode: "exclude", kind: "song", name: "Track a" },
+    });
+
+    holdDownloads();
+    void offlineDownloadService
+      .downloadTracks([makeChild("a")])
+      .catch(() => {});
+
+    expect(state().autoDownloadOverrides).toEqual({});
+  });
+
+  it("excludes a liked song removed by hand even when it was saved before the rule", () => {
+    const { offlineDownloadService, state } = importService();
+    state().setOfflineModeEnabled(true);
+    state().setLikedSongIds(["b"]);
+    state().addDownloadedTracks([makeOfflineTrack("b", "user")]);
+
+    offlineDownloadService.removeDownloadedTrack("b");
+
+    expect(state().autoDownloadOverrides["song:b"]?.mode).toBe("exclude");
   });
 });
