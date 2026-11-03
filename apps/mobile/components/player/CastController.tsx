@@ -1,6 +1,6 @@
 import { CastButton } from "react-native-google-cast";
 import { Box } from "@/components/ui/box";
-import { useCapabilities } from "@/hooks/useCapabilities";
+import { useCanCast } from "@/hooks/player/useCanCast";
 
 // The native Cast dialog can only be opened by proxying a click to a
 // MediaRouteButton that is currently attached to the window
@@ -14,11 +14,11 @@ import { useCapabilities } from "@/hooks/useCapabilities";
 // Nothing else lives here: the session itself is driven by services/cast.ts,
 // outside the React tree, so it survives every screen unmounting.
 export default function CastController() {
-  const capabilities = useCapabilities();
+  const canCast = useCanCast();
 
-  // Same gate as the sheet's Chromecast row: a backend whose tracks no receiver
-  // can fetch has nothing to cast, so it gets no button and no discovery.
-  if (!capabilities.remoteStreamableUrl) return null;
+  // Same gate as the sheet's Chromecast row: with nothing a receiver could
+  // fetch there is nothing to cast, so no button and no discovery.
+  if (!canCast) return null;
 
   return (
     <Box

@@ -28,7 +28,7 @@ type SearchOpts = {
   albumOffset?: number;
   songCount?: number;
   songOffset?: number;
-  musicFolderId?: string;
+  musicFolderIds?: string[];
 };
 
 // FTS5 matches at the track level; roll the matching tracks up into deduped

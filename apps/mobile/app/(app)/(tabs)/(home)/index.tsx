@@ -14,6 +14,7 @@ import ArtistCarouselSection from "@/components/home/sections/ArtistCarouselSect
 import BecauseYouListenedSection from "@/components/home/sections/BecauseYouListenedSection";
 import CreatedForYouSection from "@/components/home/sections/CreatedForYouSection";
 import InternetRadioSection from "@/components/home/sections/InternetRadioSection";
+import LeastPlayedAlbumsSection from "@/components/home/sections/LeastPlayedAlbumsSection";
 import NowPlayingSection from "@/components/home/sections/NowPlayingSection";
 import PlaylistCarouselSection from "@/components/home/sections/PlaylistCarouselSection";
 import PodcastCarouselSection from "@/components/home/sections/PodcastCarouselSection";
@@ -33,7 +34,7 @@ import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { getIsEffectivelyOnline } from "@/services/network";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import { buildHomeFeed, type HomeSectionDescriptor } from "@/utils/homeFeed";
 import { invalidateKeys } from "@/utils/invalidateKeys";
 
@@ -56,6 +57,7 @@ const BACKFILL_START_DELAY_MS = 800;
 // content. Dynamic genre/decade/artist rows change via a fresh sessionSeed.
 const HOME_REFRESH_KEYS = [
   ["albumList2"],
+  ["leastPlayedAlbums"],
   ["randomSongs"],
   ["mostPlayedSongs"],
   ["songsByGenre"],
@@ -79,7 +81,7 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const screenBottomPadding = useScreenBottomPadding();
   const availability = useHomeSectionAvailability();
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const hiddenHomeSections = useApp((store) => store.hiddenHomeSections);
   const homeSectionOrder = useApp((store) => store.homeSectionOrder);
   const queryClient = useQueryClient();
@@ -104,19 +106,19 @@ export default function HomeScreen() {
   const { data: recentlyPlayedData } = useAlbumList2({
     type: "recent",
     size: 12,
-    musicFolderId,
+    musicFolderIds,
   });
   const { data: newestData } = useAlbumList2({
     type: "newest",
     size: 12,
-    musicFolderId,
+    musicFolderIds,
   });
   const { data: frequentData } = useAlbumList2({
     type: "frequent",
     size: 12,
-    musicFolderId,
+    musicFolderIds,
   });
-  const { data: genresData } = useGenres({ musicFolderId });
+  const { data: genresData } = useGenres({ musicFolderIds });
 
   const seedAlbums = useMemo<AlbumID3[]>(() => {
     const out: AlbumID3[] = [];
@@ -266,6 +268,8 @@ export default function HomeScreen() {
               sectionIndex={index}
             />
           );
+        case "leastPlayedAlbums":
+          return <LeastPlayedAlbumsSection sectionIndex={index} />;
         case "randomArtists":
           return (
             <ArtistCarouselSection

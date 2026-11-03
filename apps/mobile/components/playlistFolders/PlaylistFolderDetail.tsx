@@ -37,6 +37,13 @@ import usePlaylistsStore, {
   type PlaylistFolderAssignmentUpdates,
 } from "@/stores/playlists";
 import { gridColumnCount } from "@/utils/grid";
+import {
+  availableLibrarySortFields,
+  DEFAULT_LIBRARY_SORT,
+  type LibrarySortEntry,
+  type LibrarySortField,
+  librarySortSpecs,
+} from "@/utils/librarySort";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
 import {
@@ -44,7 +51,8 @@ import {
   groupPlaylistsIntoFolders,
   type PlaylistFolderMember,
 } from "@/utils/playlistFolders";
-import { sortItems, sortTime } from "@/utils/sort";
+import { randomSeed } from "@/utils/shuffle";
+import { effectiveSort, sortItems } from "@/utils/sort";
 
 type LibraryItem = ComponentProps<typeof LibraryListItem>["item"];
 
@@ -63,6 +71,7 @@ export default function PlaylistFolderDetail() {
   const isOnline = useIsOnline();
   const downloadedCollections = useDownloadedCollections();
   const sort = useApp((store) => store.librarySort);
+  const [shuffleSeed] = useState(randomSeed);
   // Same layout as the library the folder was opened from.
   const { layout } = useAlbumScreenLayout("library-index");
   const options = usePlaylistFolderOptions();
@@ -114,21 +123,31 @@ export default function PlaylistFolderDetail() {
       ? folders.find((candidate) => candidate.key === renamedTo)
       : undefined);
 
-  const members = useMemo(
-    () =>
-      sortItems<PlaylistFolderMember<Playlist>, "addedAt" | "alphabetical">(
-        folder?.members ?? [],
-        sort,
-        {
-          addedAt: {
-            value: ({ playlist }) => sortTime(playlist.created) ?? 0,
-            always: true,
-          },
-          alphabetical: { value: ({ title }) => title, always: true },
-        },
-      ),
-    [folder, sort],
-  );
+  // Follows the library's sort, as far as playlists can: a field only the
+  // library's albums or artists carry falls back to the default here.
+  const members = useMemo(() => {
+    const entries = (folder?.members ?? []).map((member) => ({
+      bucket: "playlists" as const,
+      row: {
+        id: member.playlist.id,
+        name: member.title,
+        created: member.playlist.created,
+        songCount: member.playlist.songCount,
+        duration: member.playlist.duration,
+      },
+      member,
+    }));
+    const specs = librarySortSpecs(shuffleSeed);
+    const activeSort = effectiveSort(
+      sort,
+      availableLibrarySortFields(entries, specs),
+      DEFAULT_LIBRARY_SORT,
+    );
+    return sortItems<
+      LibrarySortEntry & { member: PlaylistFolderMember<Playlist> },
+      LibrarySortField
+    >(entries, activeSort, specs).map((entry) => entry.member);
+  }, [folder, sort, shuffleSeed]);
 
   const handleEditPress = () => {
     bottomSheetModalRef.current?.dismiss();

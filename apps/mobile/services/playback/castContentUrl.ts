@@ -1,3 +1,7 @@
+import {
+  audiobookRemoteUrl,
+  isAudiobookTrack,
+} from "@/services/audiobookPlayback";
 import { streamUrl } from "@/services/backend/streaming";
 import { isPodcastTrack } from "@/services/podcastProgress";
 import type { QueueTrack } from "@/stores/queue";
@@ -11,6 +15,7 @@ import { podcastStreamUrl } from "@/utils/podcastEpisodeToTrack";
 // Downloads are ignored on purpose: a receiver fetches the media itself.
 export function castContentUrl(track: QueueTrack): string | undefined {
   if (track.isRadio) return track.streamUrl ?? track.url;
+  if (isAudiobookTrack(track)) return audiobookRemoteUrl(track);
   if (isPodcastTrack(track)) return podcastStreamUrl(track);
   return streamUrl(track.id);
 }

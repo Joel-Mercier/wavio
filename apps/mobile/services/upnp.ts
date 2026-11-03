@@ -5,6 +5,10 @@ import Native, {
   type UpnpGroup,
   type UpnpState,
 } from "@/modules/upnp-cast";
+import {
+  ensureAudiobookSession,
+  isAudiobookTrack,
+} from "@/services/audiobookPlayback";
 import { sessionCapabilities } from "@/services/backend/capabilities";
 import { reportError } from "@/services/errorReporting";
 import { getConnectionType, subscribeConnectionType } from "@/services/network";
@@ -18,6 +22,7 @@ import {
   noticeRemoteLost,
   resetRemoteAdvance,
 } from "@/services/playback/remoteAdvance";
+import { remoteStartPosition } from "@/services/playback/remoteStartPosition";
 import { registerRemoteTarget } from "@/services/playback/remoteTarget";
 import { sameStreamUri } from "@/services/playback/streamUri";
 import {
@@ -261,6 +266,12 @@ async function loadOnRenderer(
 ): Promise<boolean> {
   if (!Native || !isUpnpConnected()) return false;
   const deviceName = useUpnpBase.getState().deviceName ?? "";
+  // The renderer can't send our token, so a book needs its session's public
+  // track URL, which only exists once the session is open.
+  if (isAudiobookTrack(track)) {
+    await ensureAudiobookSession(track);
+    if (!isUpnpConnected()) return false;
+  }
   const url = castContentUrl(track);
   if (!url || url.startsWith("file://")) {
     handleRemoteLoadFailure({
@@ -363,7 +374,9 @@ function subscribeQueue() {
       void Native?.pause();
       return;
     }
-    void loadOnRenderer(current, true, 0, { automatic });
+    void loadOnRenderer(current, true, remoteStartPosition(current), {
+      automatic,
+    });
   });
 }
 

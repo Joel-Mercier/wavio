@@ -232,6 +232,34 @@ describe("playlistFolderRow", () => {
     });
   });
 
+  it("adds up the members' track counts and durations", () => {
+    const row = playlistFolderRow({
+      key: "rock",
+      name: "rock",
+      color: null,
+      members: [
+        {
+          playlist: { ...playlist("1", "a"), songCount: 3, duration: 600 },
+          title: "a",
+        },
+        { playlist: { ...playlist("2", "b"), songCount: 2 }, title: "b" },
+      ],
+    });
+    expect(row.songCount).toBe(5);
+    expect(row.duration).toBe(600);
+  });
+
+  it("leaves the totals unset when no member reports them", () => {
+    const row = playlistFolderRow({
+      key: "rock",
+      name: "rock",
+      color: null,
+      members: [{ playlist: playlist("1", "a"), title: "a" }],
+    });
+    expect(row.songCount).toBeUndefined();
+    expect(row.duration).toBeUndefined();
+  });
+
   it("dates a local folder by its creation", () => {
     const row = playlistFolderRow({
       key: "jazz",

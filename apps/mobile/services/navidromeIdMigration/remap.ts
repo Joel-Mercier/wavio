@@ -22,6 +22,7 @@ import useRecentPlays, { type RecentPlay } from "@/stores/recentPlays";
 import useRecentSearches from "@/stores/recentSearches";
 import { artworkUrl } from "@/utils/artwork";
 import { canonicalIdMap } from "@/utils/navidromeCanonicalId";
+import { isLibraryTrack } from "@/utils/trackSource";
 
 // The client half of Navidrome's canonical-id migration: rewrite every persisted
 // id through the same transform the server applied to its database.
@@ -64,8 +65,7 @@ const remapArtworkId = <T extends string | undefined>(
 // and their ids are Radio Browser / Taddy uuids — 36 chars, so the transform
 // would happily rewrite them. Only a *server* radio station carries a real
 // Navidrome id, and even then its stream URL must survive untouched.
-const isExternalMedia = (entry: QueueTrack): boolean =>
-  !!entry.isRadio || entry.source === "podcast";
+const isExternalMedia = (entry: QueueTrack): boolean => !isLibraryTrack(entry);
 const isServerRadio = (entry: QueueTrack): boolean =>
   !!entry.isRadio && entry.source === "server";
 
@@ -136,6 +136,12 @@ function collectIds(): Set<string> {
   for (const [from, to] of Object.entries(offline.artworkAliases)) {
     addArtwork(from);
     addArtwork(to);
+  }
+  // The automatic downloads release a liked song that isn't in this list, so a
+  // stale one would delete every liked download the remap just renumbered.
+  for (const id of offline.likedSongIds ?? []) add(id);
+  for (const key of Object.keys(offline.autoDownloadOverrides)) {
+    add(overrideId(key));
   }
 
   const queue = useQueue.getState();
@@ -234,6 +240,10 @@ function collectIds(): Set<string> {
   return ids;
 }
 
+function overrideId(key: string): string {
+  return key.slice(key.indexOf(":") + 1);
+}
+
 function applyRemap(remap: Remap): void {
   // The offline store goes first: the queue rebuilds its playback URLs from the
   // already-remapped downloaded-track paths.
@@ -317,9 +327,18 @@ function applyRemap(remap: Remap): void {
     coverArt: remapArtworkId(queued.coverArt, remap),
     // NOT queued.musicBrainzId — see the header note.
   }));
+  const likedSongIds = offline.likedSongIds?.map(remap) ?? null;
+  const autoDownloadOverrides = Object.fromEntries(
+    Object.entries(offline.autoDownloadOverrides).map(([key, override]) => [
+      `${override.kind}:${remap(overrideId(key))}`,
+      override,
+    ]),
+  );
   useOffline.setState({
     downloadedTracks,
     downloadedCollections,
+    likedSongIds,
+    autoDownloadOverrides,
     artworkCache,
     artworkCachedAt,
     artworkAliases,

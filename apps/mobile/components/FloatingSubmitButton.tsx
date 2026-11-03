@@ -36,7 +36,7 @@ export default function FloatingSubmitButton({
   const [primary800] = Uniwind.getCSSVariable([
     "--color-primary-800",
   ]) as string[];
-  const screenBottomPadding = useScreenBottomPadding();
+  const screenBottomPadding = useScreenBottomPadding({ floating: true });
 
   return (
     <Box

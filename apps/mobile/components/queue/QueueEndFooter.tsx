@@ -19,7 +19,7 @@ export default function QueueEndFooter() {
   return (
     <Text
       testID="queue-end-footer"
-      className="text-primary-100 text-sm text-center mt-6"
+      className="text-primary-100 text-sm text-center mt-6 px-6"
     >
       {t(key, {
         time: formatClockTime(end.at),

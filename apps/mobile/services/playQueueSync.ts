@@ -12,6 +12,7 @@ import { useAuthBase } from "@/stores/auth";
 import useJukebox from "@/stores/jukebox";
 import useQueue from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
+import { isLibraryTrack } from "@/utils/trackSource";
 
 const PUSH_DEBOUNCE_MS = 5_000;
 
@@ -39,12 +40,13 @@ async function doPush(): Promise<void> {
   if (!canPush()) return;
   const { queue, currentIndex } = useQueue.getState();
   if (queue.length === 0) return;
-  // Internet radio entries aren't real library tracks; skip queues built from
-  // them rather than uploading ids the server can't resolve.
-  const ids = queue.filter((t) => !t.isRadio).map((t) => t.id);
+  // Radio stations, podcast episodes and audiobooks aren't library tracks;
+  // skip them rather than uploading ids the server can't resolve.
+  const ids = queue.filter(isLibraryTrack).map((t) => t.id);
   if (ids.length === 0) return;
   const current =
     currentIndex != null ? (queue[currentIndex]?.id ?? undefined) : undefined;
+  if (current && !ids.includes(current)) return;
   // Lazy import avoids a static import cycle (player -> playQueueSync -> player).
   const { getCurrentTime } = await import("@/services/player");
   const position = getCurrentTime();

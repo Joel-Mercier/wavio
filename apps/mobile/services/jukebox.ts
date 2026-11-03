@@ -24,9 +24,10 @@ import { registerRemoteTarget } from "@/services/playback/remoteTarget";
 import { restoreServerQueue, takeOverFromRemote } from "@/services/player";
 import { useSleepTimer } from "@/services/sleepTimer";
 import useJukebox from "@/stores/jukebox";
-import useQueue from "@/stores/queue";
+import useQueue, { type QueueTrack } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 import { logError } from "@/utils/log";
+import { isLibraryTrack } from "@/utils/trackSource";
 
 type ActivateOptions = {
   position: number;
@@ -57,6 +58,10 @@ let pollHandle: BackgroundTimer | null = null;
 const SEEK_SETTLE_ATTEMPTS = 20;
 const SEEK_SETTLE_DELAY_MS = 200;
 const SEEK_LANDED_TOLERANCE_S = 1;
+
+export function playsOnJukebox(track: QueueTrack): boolean {
+  return isLibraryTrack(track);
+}
 
 function readQueueIds(): string[] {
   return useQueue.getState().queue.map((t) => t.id);
@@ -233,6 +238,17 @@ function subscribeQueue() {
   captureQueueSnapshot();
   queueUnsub = useQueue.subscribe((state) => {
     if (!useJukebox.getState().active || suppressQueuePush) return;
+    // Radio, podcasts and audiobooks aren't server tracks the jukebox could
+    // play: starting one hands playback back to this device.
+    const playing =
+      state.currentIndex != null ? state.queue[state.currentIndex] : null;
+    if (playing && !playsOnJukebox(playing)) {
+      // Unsubscribed now, not once the server has stopped: every queue write
+      // until then would start another handover and load the track again.
+      unsubscribeQueue();
+      void deactivate().then(() => takeOverFromRemote(0, true));
+      return;
+    }
     const ids = state.queue.map((t) => t.id);
     const index = state.currentIndex ?? 0;
     const prev = lastKnownQueueIds ?? [];

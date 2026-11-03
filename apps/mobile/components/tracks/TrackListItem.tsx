@@ -7,9 +7,18 @@ import Heart from "lucide-react-native/icons/heart";
 import Info from "lucide-react-native/icons/info";
 import ListPlus from "lucide-react-native/icons/list-plus";
 import ListStart from "lucide-react-native/icons/list-start";
+import ListX from "lucide-react-native/icons/list-x";
 import Star from "lucide-react-native/icons/star";
-import { type ComponentType, memo, useCallback, useRef } from "react";
+import {
+  type ComponentType,
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+} from "react";
 import { useTranslation } from "react-i18next";
+import { useWindowDimensions } from "react-native";
 import { GestureDetector, usePanGesture } from "react-native-gesture-handler";
 import Animated, {
   useAnimatedStyle,
@@ -45,6 +54,9 @@ import { type TrackActionsApi, useTrackActions } from "./TrackActionsProvider";
 const SWIPE_THRESHOLD = 96;
 // Cap the drag so the row can't be flung off-screen.
 const MAX_TRANSLATE = 140;
+// Right-hand strip where a drag never starts, so the ⋮ button (and the heart
+// beside it) keep taking taps however sloppy.
+const TRAILING_CONTROLS_WIDTH = 72;
 
 // The lucide icon shown in the emerald reveal panel, per action (matching the
 // icons used in the track actions bottom sheet).
@@ -93,6 +105,8 @@ interface TrackListItemProps {
   onPress?: (index: number, track: Child) => void;
   showIndex?: boolean;
   handleRemoveFromPlaylist?: (index: string) => void;
+  // Set by the Queue screen, where the row's position is its queue index.
+  queueIndex?: number;
   className?: string;
   onPlayCallback?: () => void;
   showCoverArt?: boolean;
@@ -100,6 +114,9 @@ interface TrackListItemProps {
   // Opt out of the swipe gesture (e.g. inside a draggable list where a
   // horizontal pan would fight the reorder drag).
   disableSwipe?: boolean;
+  // Enables the leftward drag that removes the row, on a red panel. Returns
+  // whether the removal happened, so the row knows to slide back if not.
+  onSwipeRemove?: (index: number, track: Child) => boolean;
 }
 
 // Rendered in every track list — memoized so a parent re-render (favorite
@@ -111,18 +128,22 @@ function TrackListItem({
   onPress,
   showIndex = false,
   handleRemoveFromPlaylist,
+  queueIndex,
   className,
   onPlayCallback,
   showCoverArt = true,
   disableFirstItemMargin = false,
   disableSwipe = false,
+  onSwipeRemove,
 }: TrackListItemProps) {
-  const [white, gray300, black, emerald500] = Uniwind.getCSSVariable([
+  const [white, gray300, black, emerald500, red500] = Uniwind.getCSSVariable([
     "--color-white",
     "--color-gray-300",
     "--color-black",
     "--color-emerald-500",
+    "--color-red-500",
   ]) as string[];
+  const { width: windowWidth } = useWindowDimensions();
   const { t } = useTranslation();
   const isCurrentTrack = useIsCurrentTrack(track.id);
   const isTrackDownloaded = useIsTrackAvailableOffline(track.id);
@@ -137,19 +158,53 @@ function TrackListItem({
     (state) => !!state.selectedIds[track.id],
   );
   const swipeLeftAction = useApp((state) => state.swipeLeftAction);
+  const canSwipeAction = swipeLeftAction !== "off" && !isUnavailableOffline;
+  const canSwipeRemove = !!onSwipeRemove;
   const swipeEnabled =
-    swipeLeftAction !== "off" &&
-    !disableSwipe &&
-    !isUnavailableOffline &&
-    !selectionActive;
+    (canSwipeAction || canSwipeRemove) && !disableSwipe && !selectionActive;
 
   const translateX = useSharedValue(0);
   const crossedThreshold = useSharedValue(false);
+  const minTranslate = useSharedValue(0);
+  const maxTranslate = useSharedValue(0);
+  const slideOutTo = useSharedValue(0);
+
+  useEffect(() => {
+    minTranslate.value = canSwipeRemove ? -MAX_TRANSLATE : 0;
+    maxTranslate.value = canSwipeAction ? MAX_TRANSLATE : 0;
+    slideOutTo.value = -windowWidth;
+  }, [
+    canSwipeRemove,
+    canSwipeAction,
+    windowWidth,
+    minTranslate,
+    maxTranslate,
+    slideOutTo,
+  ]);
+
+  // A removed row is left off-screen, and the list recycles this view for the
+  // track that takes its slot: bring it back on the render that delivers it.
+  const slidOutRef = useRef(false);
+  useLayoutEffect(() => {
+    if (!slidOutRef.current) return;
+    slidOutRef.current = false;
+    translateX.value = 0;
+  });
 
   // Keep the worklet-facing gesture stable: read the latest action/track from a
   // ref instead of re-creating the pan gesture when they change.
-  const swipeStateRef = useRef({ action: swipeLeftAction, track });
-  swipeStateRef.current = { action: swipeLeftAction, track };
+  const swipeStateRef = useRef({
+    action: swipeLeftAction,
+    track,
+    index,
+    onSwipeRemove,
+  });
+  swipeStateRef.current = {
+    action: swipeLeftAction,
+    track,
+    index,
+    onSwipeRemove,
+  };
 
   const triggerSwipeAction = useCallback(() => {
     const { action, track: current } = swipeStateRef.current;
@@ -157,26 +212,51 @@ function TrackListItem({
     runSwipeAction(api, action, current);
   }, [api]);
 
+  const triggerSwipeRemove = useCallback(() => {
+    const {
+      onSwipeRemove: remove,
+      index: at,
+      track: current,
+    } = swipeStateRef.current;
+    slidOutRef.current = true;
+    if (remove?.(at, current)) return;
+    slidOutRef.current = false;
+    translateX.value = withTiming(0, { duration: 180 });
+  }, [translateX]);
+
   const panGesture = usePanGesture({
     activeOffsetX: [-15, 15],
     failOffsetY: [-12, 12],
+    hitSlop: { right: -TRAILING_CONTROLS_WIDTH },
     onUpdate: (e) => {
-      let tx = e.translationX;
-      if (tx < 0) tx = 0;
-      if (tx > MAX_TRANSLATE) tx = MAX_TRANSLATE;
+      const tx = Math.min(
+        Math.max(e.translationX, minTranslate.value),
+        maxTranslate.value,
+      );
       translateX.value = tx;
-      if (tx >= SWIPE_THRESHOLD && !crossedThreshold.value) {
+      const crossed = Math.abs(tx) >= SWIPE_THRESHOLD;
+      if (crossed && !crossedThreshold.value) {
         crossedThreshold.value = true;
         scheduleOnRN(selectionHaptic);
-      } else if (tx < SWIPE_THRESHOLD && crossedThreshold.value) {
+      } else if (!crossed && crossedThreshold.value) {
         crossedThreshold.value = false;
       }
     },
-    onDeactivate: (e) => {
-      if (e.translationX >= SWIPE_THRESHOLD) {
+    onDeactivate: () => {
+      crossedThreshold.value = false;
+      if (translateX.value <= -SWIPE_THRESHOLD) {
+        translateX.value = withTiming(
+          slideOutTo.value,
+          { duration: 160 },
+          (finished) => {
+            if (finished) scheduleOnRN(triggerSwipeRemove);
+          },
+        );
+        return;
+      }
+      if (translateX.value >= SWIPE_THRESHOLD) {
         scheduleOnRN(triggerSwipeAction);
       }
-      crossedThreshold.value = false;
       translateX.value = withTiming(0, { duration: 180 });
     },
   });
@@ -184,7 +264,12 @@ function TrackListItem({
   const foregroundStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
   }));
-  const revealStyle = useAnimatedStyle(() => ({ width: translateX.value }));
+  const revealStyle = useAnimatedStyle(() => ({
+    width: Math.max(translateX.value, 0),
+  }));
+  const removeRevealStyle = useAnimatedStyle(() => ({
+    width: Math.max(-translateX.value, 0),
+  }));
 
   const SwipeIcon =
     swipeLeftAction === "off" ? null : SWIPE_ACTION_ICONS[swipeLeftAction];
@@ -194,7 +279,7 @@ function TrackListItem({
     swipeLeftAction === "favorite" && track.starred ? black : "none";
 
   const handlePresentModalPress = () => {
-    api.open(track, { index, handleRemoveFromPlaylist });
+    api.open(track, { index, handleRemoveFromPlaylist, queueIndex });
   };
 
   const handleFavoriteTogglePress = useCallback(() => {
@@ -377,6 +462,25 @@ function TrackListItem({
             <SwipeIcon size={24} color={black} fill={swipeIconFill} />
           )}
         </Animated.View>
+        {canSwipeRemove && (
+          <Animated.View
+            style={[
+              {
+                position: "absolute",
+                right: 0,
+                top: 0,
+                bottom: 0,
+                backgroundColor: red500,
+                alignItems: "center",
+                justifyContent: "center",
+                overflow: "hidden",
+              },
+              removeRevealStyle,
+            ]}
+          >
+            <ListX size={24} color={white} />
+          </Animated.View>
+        )}
         <Animated.View style={foregroundStyle}>{pressable}</Animated.View>
       </Box>
     </GestureDetector>

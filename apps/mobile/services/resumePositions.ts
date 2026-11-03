@@ -6,6 +6,7 @@ import {
 import { getCapabilities } from "@/services/backend/capabilities";
 import { useAuthBase } from "@/stores/auth";
 import type { QueueTrack } from "@/stores/queue";
+import { isSpokenWordTrack } from "@/utils/trackSource";
 
 // Resume positions are backed by Subsonic bookmarks, so they only make sense
 // for content that actually lives on the Subsonic server and podcasts come
@@ -50,7 +51,7 @@ export function isResumeEligible(track: QueueTrack | null): boolean {
   if (track.isRadio) return false;
   // Podcasts come from Taddy, not the Subsonic server — bookmarking them is
   // useless, so they're never eligible.
-  if (track.source === "podcast") return false;
+  if (isSpokenWordTrack(track)) return false;
   return (track.duration ?? 0) >= RESUME_MIN_DURATION_SECONDS;
 }
 

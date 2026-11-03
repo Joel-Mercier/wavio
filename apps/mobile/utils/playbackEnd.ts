@@ -90,3 +90,25 @@ export function projectPlaybackEnd(
   }
   return { at: t, approximate };
 }
+
+// With "finish current track" on, an expiring timer lets a book play to the end
+// of the chapter it is in at the deadline (handleSleepTimerExpiry), not to the
+// end of its file. Null once the deadline falls past the book.
+export function projectChapterStop({
+  now,
+  until,
+  bookTime,
+  rate,
+  chapterEndAt,
+}: {
+  now: number;
+  until: number;
+  bookTime: number;
+  rate: number;
+  chapterEndAt: (bookTime: number) => number | null;
+}): PlaybackEnd | null {
+  const atDeadline = bookTime + (Math.max(0, until - now) / 1000) * rate;
+  const end = chapterEndAt(atDeadline);
+  if (end == null || end < atDeadline) return null;
+  return { at: now + ((end - bookTime) / rate) * 1000, approximate: false };
+}

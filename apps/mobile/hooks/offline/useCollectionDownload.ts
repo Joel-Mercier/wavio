@@ -1,16 +1,20 @@
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { offlineDownloadService } from "@/services/offline";
-import {
-  artworkCacheService,
-  cacheArtworkForTracks,
-} from "@/services/offline/artworkCacheService";
+import { artworkCacheService } from "@/services/offline/artworkCacheService";
+import { isUserOwned } from "@/services/offline/autoDownloadPlan";
 import {
   type CollectionDownloadDrift,
   collectionDownloadStatus,
   collectionDrift,
-  collectionRemovalIds,
 } from "@/services/offline/collectionDownloadPlan";
+import {
+  type DownloadCollectionMeta,
+  registerCollection,
+  removeCollectionDownload,
+  saveCollection,
+  updateCollectionToServer,
+} from "@/services/offline/collectionSave";
 import type { Child } from "@/services/openSubsonic/types";
 import useOffline, { type OfflineStore } from "@/stores/offline";
 
@@ -18,36 +22,7 @@ export type {
   CollectionDownloadDrift,
   CollectionDownloadStatus,
 } from "@/services/offline/collectionDownloadPlan";
-
-// Metadata persisted alongside the downloaded tracks so the collection can be
-// listed (and reopened) in the Library while offline, even when the server list
-// query isn't cached. Omit it for ad-hoc multi-track downloads that aren't a
-// browsable collection.
-export type DownloadCollectionMeta = {
-  id: string;
-  kind: "playlist" | "album";
-  name: string;
-  coverArt?: string;
-  owner?: string;
-  artist?: string;
-  artistId?: string;
-  artists?: { id: string; name: string }[];
-  year?: number;
-};
-
-// Runs at both registration points, and only once the collection is in the
-// store: the collection's own cover is what the offline Library row renders,
-// and the tracks resolve through it (an album's) or through their own album's
-// (a playlist spanning several).
-function cacheCollectionArtwork(meta: DownloadCollectionMeta, songs: Child[]) {
-  artworkCacheService.enqueue(meta.coverArt);
-  cacheArtworkForTracks(songs);
-}
-
-function notYetDownloaded(songs: Child[]) {
-  const { downloadedTracks } = useOffline.getState();
-  return songs.filter((song) => !(song.id in downloadedTracks));
-}
+export type { DownloadCollectionMeta } from "@/services/offline/collectionSave";
 
 // Re-runs `compute` only when the tracked list or one of the two maps it reads
 // is replaced: every other offline write (artwork, queue) reuses the last value.
@@ -151,45 +126,17 @@ export function useCollectionDownload(
   // the action has already flipped to "remove downloads", leaving no way to
   // save them again. Registering here also covers a collection whose tracks all
   // arrived through other saves, which the offline badge already counts as
-  // available.
+  // available — but only hand saves: see isUserOwned.
   useEffect(() => {
     if (!meta || isRegistered || status !== "all" || !songs?.length) return;
-    useOffline.getState().addDownloadedCollection({
-      ...meta,
-      trackIds: songs.map((song) => song.id),
-      songCount: songs.length,
-      savedAt: new Date().toISOString(),
-    });
-    cacheCollectionArtwork(meta, songs);
+    const { downloadedTracks } = useOffline.getState();
+    if (!songs.every((song) => isUserOwned(downloadedTracks[song.id]))) return;
+    registerCollection(meta, songs);
   }, [meta, isRegistered, status, songs]);
 
-  // Adopts the server's current membership: downloads what was added, deletes
-  // what was dropped, and repoints the saved list at it. The only path that
-  // replaces a registered collection's track list, so a track can never be
-  // orphaned by an overwrite.
   const updateToServer = useCallback(async () => {
     if (!meta || !collection || !songs || !liveIds || isRemoving) return;
-    const live = new Set(liveIds);
-    const removed = collection.trackIds.filter((id) => !live.has(id));
-    // Spread the existing collection first so `source` survives: an auto copy
-    // written by the library sync must stay auto, or disabling extended offline
-    // mode would no longer clean it up.
-    useOffline.getState().addDownloadedCollection({
-      ...collection,
-      ...meta,
-      trackIds: liveIds,
-      songCount: liveIds.length,
-      savedAt: new Date().toISOString(),
-    });
-    cacheCollectionArtwork(meta, songs);
-    if (removed.length) {
-      await offlineDownloadService.removeTracksNotReferencedElsewhere(
-        meta.id,
-        removed,
-      );
-      artworkCacheService.pruneOrphaned();
-    }
-    await offlineDownloadService.downloadTracks(notYetDownloaded(songs));
+    await updateCollectionToServer(collection, meta, songs);
   }, [meta, collection, songs, liveIds, isRemoving]);
 
   const saveAll = useCallback(async () => {
@@ -201,35 +148,12 @@ export function useCollectionDownload(
     // either. Reachable from both the header badge and the sheet row, which
     // still offer "save" while the status is `partial`.
     if (collection) return updateToServer();
-    // Register the collection before the tracks download, not after:
-    // `downloadTracks` resolves only once every track has landed and rejects if
-    // one of them fails, so registering afterwards left the collection out of
-    // the offline Library — and out of the "downloaded" filter — for the whole
-    // download, or permanently when a single track failed. The library sync
-    // registers its collections the same way, ahead of the queued tracks.
-    if (meta) {
-      useOffline.getState().addDownloadedCollection({
-        ...meta,
-        trackIds: songs.map((song) => song.id),
-        songCount: songs.length,
-        savedAt: new Date().toISOString(),
-      });
-      cacheCollectionArtwork(meta, songs);
-    }
-    await offlineDownloadService.downloadTracks(notYetDownloaded(songs));
+    await saveCollection(meta, songs);
   }, [songs, meta, collection, updateToServer, isRemoving]);
 
   const removeAll = useCallback(async () => {
     if (meta) {
-      // Union of both lists, not just the live one: a collection whose
-      // membership drifted (or drifted before this hook tracked it) still owns
-      // the tracks it downloaded under its previous membership, and passing
-      // only the current list would strand them on disk with nothing left
-      // referencing them.
-      await offlineDownloadService.removeCollection(
-        meta.id,
-        collectionRemovalIds(collection?.trackIds, liveIds),
-      );
+      await removeCollectionDownload(meta, collection, liveIds);
       return;
     }
     if (!songs?.length) return;

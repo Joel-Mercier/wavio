@@ -50,6 +50,7 @@ export default function SettingsScreenScaffold({
         <ScrollView
           ref={scrollRef}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={{
             paddingBottom: screenBottomPadding,
           }}

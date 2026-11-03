@@ -87,7 +87,7 @@ export const useArtist = (id: string, options?: { enabled?: boolean }) => {
 
 export const useArtistAppearances = (
   id: string,
-  params: { name?: string; musicFolderId?: string },
+  params: { name?: string; musicFolderIds?: string[] },
 ) => {
   return useQuery({
     queryKey: ["artistAppearances", id, params],
@@ -143,7 +143,7 @@ export const useArtistInfo2 = (
 };
 
 export const useArtists = (
-  params: { musicFolderId?: string },
+  params: { musicFolderIds?: string[] },
   options?: { enabled?: boolean },
 ) => {
   const query = useQuery({
@@ -158,7 +158,7 @@ export const useArtists = (
 };
 
 export const useIndexes = (params: {
-  musicFolderId?: string;
+  musicFolderIds?: string[];
   ifModifiedSince?: number;
 }) => {
   const query = useQuery({
@@ -172,7 +172,7 @@ export const useIndexes = (params: {
 };
 
 export const useGenres = (
-  params: { musicFolderId?: string } = {},
+  params: { musicFolderIds?: string[] } = {},
   options?: { enabled?: boolean },
 ) => {
   const query = useQuery({

@@ -93,6 +93,20 @@ export type BackendCapabilities = {
   // False on Jellyfin, whose `SearchTerm` matches the item name alone — there
   // such a query returns nothing at all. See services/libraryMatch.ts.
   multiFieldSearch: boolean;
+  // A share link can be created transcoded to a chosen format and bitrate.
+  // Subsonic createShare has no such parameter; Navidrome's native POST
+  // /api/share does, and it needs the native session (see isNavidromeNative).
+  shareTranscoding: boolean;
+  // Browsing can be narrowed to one of the server's music folders. The local
+  // library and network shares list their roots as folders but never filter
+  // by them, so there is nothing to pick.
+  musicFolderScoping: boolean;
+  // Several music folders can be selected at once. Navidrome (0.58+, the
+  // release that brought multiple libraries) reads a repeated `musicFolderId`
+  // on every folder-scoped endpoint, and `library_id` on its native API. The
+  // Subsonic spec takes a single id, and Jellyfin's Items API a single
+  // ParentId, so everything else picks one folder or all of them.
+  multiMusicFolderSelection: boolean;
 };
 
 const SUBSONIC: BackendCapabilities = {
@@ -135,10 +149,14 @@ const SUBSONIC: BackendCapabilities = {
   serverScrobbleLinkStatus: false,
   serverLastFmLinkStatus: false,
   multiFieldSearch: true,
+  shareTranscoding: false,
+  musicFolderScoping: true,
+  multiMusicFolderSelection: false,
 };
 
 const NAVIDROME: BackendCapabilities = {
   ...SUBSONIC,
+  multiMusicFolderSelection: true,
   smartPlaylists: true,
   // GET /api/listenbrainz/link on the native API reports whether the user has
   // linked a ListenBrainz token server-side.
@@ -153,6 +171,7 @@ const NAVIDROME: BackendCapabilities = {
   // podcasts are self-hosted on-device instead (same flow as the local library;
   // see services/backend/podcasts.ts).
   podcasts: true,
+  shareTranscoding: true,
 };
 
 const JELLYFIN: BackendCapabilities = {
@@ -202,6 +221,9 @@ const JELLYFIN: BackendCapabilities = {
   // `SearchTerm` matches the item name only, so anything but the bare title
   // comes back empty.
   multiFieldSearch: false,
+  shareTranscoding: false,
+  musicFolderScoping: true,
+  multiMusicFolderSelection: false,
 };
 
 // On-device library: no remote server, everything is derived from files the
@@ -249,6 +271,9 @@ const LOCAL: BackendCapabilities = {
   serverScrobbleLinkStatus: false,
   serverLastFmLinkStatus: false,
   multiFieldSearch: true,
+  shareTranscoding: false,
+  musicFolderScoping: false,
+  multiMusicFolderSelection: false,
 };
 
 // Network file share (WebDAV): the same on-device index as LOCAL — the indexer

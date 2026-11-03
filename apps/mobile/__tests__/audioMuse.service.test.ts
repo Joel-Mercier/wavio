@@ -245,7 +245,119 @@ describe("probeFeatures", () => {
       fingerprintDefaultUser: "u-1",
       artistSimilarityEnabled: true,
       semGroveEnabled: true,
+      serverVersion: null,
+      recordingSearchEnabled: false,
+      neuralIndexedCount: null,
     });
+  });
+
+  // From 3.6.2 the deployment names its version and its models, so the
+  // per-blueprint probes have nothing left to discover.
+  describe("on a deployment that reports its version", () => {
+    const versioned = (overrides: Record<string, unknown> = {}) =>
+      mockRequest.mockImplementation(async ({ url }: { url: string }) => {
+        if (url in overrides) return { data: overrides[url] };
+        if (url === "/api/version") return { data: { app_version: "v3.6.4" } };
+        if (url === "/api/models")
+          return {
+            data: {
+              models: {
+                clap: { enabled: true },
+                lyrics: { enabled: false },
+                "neural-fingerprint": {
+                  enabled: true,
+                  global: { count: 900 },
+                  local: { count: 640 },
+                },
+              },
+            },
+          };
+        return { data: {} };
+      });
+    const requestedUrls = () =>
+      mockRequest.mock.calls.map(([options]) => options.url);
+
+    it("reads model state from /api/models instead of probing", async () => {
+      versioned();
+
+      await expect(probeFeatures(config)).resolves.toMatchObject({
+        serverVersion: "v3.6.4",
+        clapEnabled: true,
+        lyricsEnabled: false,
+        fingerprintEnabled: true,
+        artistSimilarityEnabled: true,
+        recordingSearchEnabled: true,
+        neuralIndexedCount: 640,
+      });
+      expect(requestedUrls()).not.toEqual(
+        expect.arrayContaining(["/api/clap/stats"]),
+      );
+      expect(requestedUrls()).not.toEqual(
+        expect.arrayContaining(["/api/lyrics/stats"]),
+      );
+      expect(requestedUrls()).not.toEqual(
+        expect.arrayContaining(["/api/search_artists"]),
+      );
+    });
+
+    // Coverage is per media server, and the selected one is the library the app
+    // will resolve matches against.
+    it("scopes the model coverage to the selected server", async () => {
+      useAudioMuseBase.getState().setServerId("s2");
+      versioned();
+
+      await probeFeatures(config);
+
+      const models = mockRequest.mock.calls.find(
+        ([options]) => options.url === "/api/models",
+      )?.[0];
+      expect(models.params).toEqual({ server: "s2" });
+    });
+
+    it("leaves recording search off when the model is disabled", async () => {
+      versioned({
+        "/api/models": {
+          models: { "neural-fingerprint": { enabled: false } },
+        },
+      });
+
+      await expect(probeFeatures(config)).resolves.toMatchObject({
+        recordingSearchEnabled: false,
+        neuralIndexedCount: null,
+      });
+    });
+
+    it("rejects a bad token on the version endpoint", async () => {
+      mockRequest.mockImplementation(async ({ url }: { url: string }) => {
+        if (url === "/api/version") throw unauthorized();
+        return { data: {} };
+      });
+
+      await expect(probeFeatures(config)).rejects.toBeInstanceOf(
+        AudioMuseUnauthorizedError,
+      );
+    });
+  });
+
+  // Deployments older than 3.6.2 have no version endpoint, and on 3.6.0/3.6.1 the
+  // only way to learn whether the fingerprint model runs is a call that loads it.
+  it("never offers recording search without a version", async () => {
+    mockRequest.mockImplementation(async ({ url }: { url: string }) => {
+      if (url === "/api/version")
+        throw Object.assign(new Error("HTTP 404"), {
+          isAxiosError: true,
+          response: { status: 404 },
+        });
+      return { data: {} };
+    });
+
+    await expect(probeFeatures(config)).resolves.toMatchObject({
+      serverVersion: null,
+      recordingSearchEnabled: false,
+    });
+    expect(mockRequest).not.toHaveBeenCalledWith(
+      expect.objectContaining({ url: "/api/models" }),
+    );
   });
 
   // The lyrics path space walks the *merged* lyrics+audio index, which is a

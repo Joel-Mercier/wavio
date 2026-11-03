@@ -8,6 +8,7 @@ import {
 import { Drawer } from "react-native-drawer-layout";
 import { useCSSVariable } from "uniwind";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
+import AutoDownloadsController from "@/components/AutoDownloadsController";
 import DrawerMenu from "@/components/DrawerMenu";
 import DownloaderPickerSheet from "@/components/downloaders/DownloaderPickerSheet";
 import LidarrDownloadsWatcher from "@/components/downloaders/lidarr/LidarrDownloadsWatcher";
@@ -18,7 +19,6 @@ import IncompleteScanNotice from "@/components/local/IncompleteScanNotice";
 import LibraryAutoScanController from "@/components/local/LibraryAutoScanController";
 import LocalLibraryIndexing from "@/components/local/LocalLibraryIndexing";
 import OfflineMutationsSync from "@/components/OfflineMutationsSync";
-import OfflineStarredAutoSync from "@/components/OfflineStarredAutoSync";
 import CastController from "@/components/player/CastController";
 import OutputSheet from "@/components/player/OutputSheet";
 import PlaybackNoticeToast from "@/components/player/PlaybackNoticeToast";
@@ -31,6 +31,8 @@ import { queryClient, setCacheRestoring } from "@/config/queryClient";
 import { restorePersistedQueries } from "@/config/queryPersister";
 import { withScopedWritesSuspended } from "@/config/storage";
 import useMusicFolderSelection from "@/hooks/useMusicFolderSelection";
+import { initAudiobookSync } from "@/services/audiobookPlayback";
+import { initAudiobookDownloads } from "@/services/audiobookshelf/downloads";
 import { isIndexBackedType } from "@/services/backend/serverTraits";
 import { initJukeboxOnLaunch } from "@/services/jukebox";
 import {
@@ -49,6 +51,7 @@ import {
   librarySyncService,
   offlineDownloadService,
 } from "@/services/offline";
+import { autoDownloadService } from "@/services/offline/autoDownloadService";
 import {
   initOfflineMutationReplay,
   resetOfflineMutationReplay,
@@ -71,6 +74,9 @@ import { resumeTrackCachePrefetch } from "@/services/trackCache/prefetcher";
 import { initUpnpOnLaunch, upnpRelease } from "@/services/upnp";
 import useActivity from "@/stores/activity";
 import useApp from "@/stores/app";
+import { useAudiobookDownloadsBase } from "@/stores/audiobookDownloads";
+import { useAudiobookProgressBase } from "@/stores/audiobookProgress";
+import useAudiobookshelf from "@/stores/audiobookshelf";
 import useAudioMuse from "@/stores/audioMuse";
 import useAuth, { currentAuthScope, useAuthBase } from "@/stores/auth";
 import useBookmarks from "@/stores/bookmarks";
@@ -197,6 +203,7 @@ export default function AppLayout() {
         resetPlayerForScopeChange();
         useOffline.getState().__reset();
         librarySyncService.reset();
+        autoDownloadService.reset();
         artworkCacheService.reset();
         useLibrarySync.getState().__reset();
         resetOfflineMutationReplay();
@@ -210,6 +217,9 @@ export default function AppLayout() {
         useTidarr.getState().__reset();
         useMusicBrainz.getState().__reset();
         useAudioMuse.getState().__reset();
+        useAudiobookshelf.getState().__reset();
+        useAudiobookProgressBase.getState().__reset();
+        useAudiobookDownloadsBase.getState().__reset();
         // Stop the drain loop before wiping the queue, so an in-flight batch
         // can't remove listens from the incoming scope's freshly hydrated queue.
         resetListenBrainzScrobbler();
@@ -258,6 +268,10 @@ export default function AppLayout() {
     usePlaylists.persist.rehydrate();
     useActivity.persist.rehydrate();
     usePlayHistory.persist.rehydrate();
+    // Ahead of the queue: the restored book's file resumes from these.
+    useAudiobookshelf.persist.rehydrate();
+    useAudiobookProgressBase.persist.rehydrate();
+    useAudiobookDownloadsBase.persist.rehydrate();
     useQueue.persist.rehydrate();
     // The queue bakes absolute URLs, and the session may have cold-started on a
     // different route than the one it was saved under (the active route is
@@ -270,6 +284,9 @@ export default function AppLayout() {
     // scope's sign-out) instead of waiting for a connectivity change to
     // incidentally kick the queue.
     offlineDownloadService.resume();
+    // Two scopes that both have a rule on leave the rule flags unchanged across
+    // the switch, so the controller's effect wouldn't see it.
+    void autoDownloadService.kick();
     // Same reasoning, and it has to be here rather than in a component effect:
     // the artwork queue is in-memory only, so what an app kill lost is re-derived
     // from the collections, tracks and queue this rehydrate just restored — a
@@ -290,6 +307,8 @@ export default function AppLayout() {
     useTidarr.persist.rehydrate();
     useMusicBrainz.persist.rehydrate();
     useAudioMuse.persist.rehydrate();
+    initAudiobookSync();
+    initAudiobookDownloads();
     useListenBrainz.persist.onFinishHydration(() => {
       initListenBrainzScrobbler();
     });
@@ -391,6 +410,7 @@ export default function AppLayout() {
             <Stack.Screen name="playlists/new-fingerprint" />
             <Stack.Screen name="playlists/new-path" />
             <Stack.Screen name="playlists/new-mood" />
+            <Stack.Screen name="recording-search" />
             <Stack.Screen name="playlists/[id]/edit-rules" />
             <Stack.Screen name="internet-radio-stations/new" />
             <Stack.Screen name="podcast-channels/new" />
@@ -435,7 +455,7 @@ export default function AppLayout() {
       <LidarrDownloadsWatcher />
       <TidarrDownloadsWatcher />
       <DownloaderPickerSheet />
-      <OfflineStarredAutoSync />
+      <AutoDownloadsController />
       <LibrarySyncController />
       <LibraryAutoScanController />
       <ServerExtensionsSync />

@@ -15,6 +15,7 @@ import {
   TAB_BAR_CONTENT_HEIGHT,
 } from "@/components/FloatingPlayer";
 import { OFFLINE_BANNER_HEIGHT } from "@/components/OfflineBanner";
+import { useFloatingPlayerRestoreBadgeSpace } from "@/components/player/FloatingPlayerRestoreBadge";
 import { useSleepTimerBadgeSpace } from "@/components/player/SleepTimerBadge";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
@@ -27,13 +28,12 @@ import {
   ToastTitle,
   useToast,
 } from "@/components/ui/toast";
-import { usePlayingTrack } from "@/hooks/player";
+import { useIsFloatingPlayerVisible } from "@/hooks/player";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import useApp from "@/stores/app";
 import useQueue from "@/stores/queue";
 import useTrackSelection from "@/stores/trackSelection";
 import { childToTrack } from "@/utils/childToTrack";
-import { hidesFloatingPlayer } from "@/utils/floatingPlayerRoutes";
 import { TOAST_DURATION } from "@/utils/toastDuration";
 
 // Gap between the bar and whatever chrome sits below it.
@@ -87,15 +87,15 @@ export default function TrackSelectionBar() {
   const insets = useSafeAreaInsets();
   const isOnline = useIsOnline();
   const isWideLayout = useApp((state) => state.isWideLayout);
-  const playingTrack = usePlayingTrack();
+  const playerVisible = useIsFloatingPlayerVisible();
   const sleepTimerBadgeSpace = useSleepTimerBadgeSpace();
+  const restoreBadgeSpace = useFloatingPlayerRestoreBadgeSpace();
 
   // The bar is mounted at the (app) layout, alongside the floating player and
   // outside the tab navigator — so, like the player, it can't measure the tab
   // bar through BottomTabBarHeightContext and has to stack the same constants
   // by hand. It stops above the player rather than replacing it, so playback
   // stays reachable while a selection is open.
-  const playerVisible = !!playingTrack && !hidesFloatingPlayer(pathname);
   const bottom = isWideLayout
     ? insets.bottom + 12
     : insets.bottom +
@@ -103,7 +103,7 @@ export default function TrackSelectionBar() {
       (isOnline ? 0 : OFFLINE_BANNER_HEIGHT) +
       (playerVisible
         ? FLOATING_PLAYER_HEIGHT + sleepTimerBadgeSpace + CHROME_GAP
-        : CHROME_GAP);
+        : restoreBadgeSpace + CHROME_GAP);
 
   // The action labels are translated, and some locales need far more room than
   // the panel has (German's "Als Nächstes abspielen" alone is wider than a

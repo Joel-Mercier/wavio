@@ -74,7 +74,7 @@ type ArtistInfo2Response = { artistInfo2?: ArtistInfo2 };
 
 type SimilarArtistSource = (
   seed: { id: string; name: string; musicBrainzId?: string },
-  context: { musicFolderId?: string; signal?: AbortSignal },
+  context: { musicFolderIds?: string[]; signal?: AbortSignal },
 ) => Promise<MixArtist[]>;
 
 // A mix can only play what the library holds.
@@ -108,9 +108,9 @@ const fromServer: SimilarArtistSource = async ({ id }) => {
 
 // The same key useArtists caches the index under, so the artists tab has
 // usually paid for it already.
-const artistsIndexKey = (musicFolderId?: string) => [
+const artistsIndexKey = (musicFolderIds?: string[]) => [
   "artists",
-  { musicFolderId },
+  { musicFolderIds },
 ];
 
 function flattenIndex(index: { artists?: ArtistsID3 }): ArtistID3[] {
@@ -119,7 +119,7 @@ function flattenIndex(index: { artists?: ArtistsID3 }): ArtistID3[] {
 
 const fromAudioMuse: SimilarArtistSource = async (
   { name },
-  { musicFolderId, signal },
+  { musicFolderIds, signal },
 ) => {
   if (!selectSimilarArtistsAvailable(useAudioMuseBase.getState())) return [];
   const rows = await findSimilarArtists({
@@ -132,7 +132,7 @@ const fromAudioMuse: SimilarArtistSource = async (
   // Without a cached index, checking just the ids is far cheaper than pulling
   // the whole index, at the cost of not recovering null-id rows by name.
   const cached = queryClient.getQueryData<{ artists?: ArtistsID3 }>(
-    artistsIndexKey(musicFolderId),
+    artistsIndexKey(musicFolderIds),
   );
   const pool = cached
     ? flattenIndex(cached)
@@ -144,7 +144,7 @@ const fromAudioMuse: SimilarArtistSource = async (
 
 const fromLastFm: SimilarArtistSource = async (
   { name, musicBrainzId },
-  { musicFolderId, signal },
+  { musicFolderIds, signal },
 ) => {
   if (!canUseLastFmRecommendations()) return [];
   const lookup = (mbid?: string) =>
@@ -163,8 +163,8 @@ const fromLastFm: SimilarArtistSource = async (
   if (similar.length === 0) return [];
   throwIfAborted(signal);
   const index = await queryClient.ensureQueryData({
-    queryKey: artistsIndexKey(musicFolderId),
-    queryFn: () => getArtists({ musicFolderId }),
+    queryKey: artistsIndexKey(musicFolderIds),
+    queryFn: () => getArtists({ musicFolderIds }),
   });
   return resolveSimilarArtists(
     similar,
@@ -177,7 +177,7 @@ const SOURCES: SimilarArtistSource[] = [fromServer, fromAudioMuse, fromLastFm];
 
 export async function resolveMixArtists(
   seed: { id: string; name: string; musicBrainzId?: string },
-  context: { musicFolderId?: string; signal?: AbortSignal },
+  context: { musicFolderIds?: string[]; signal?: AbortSignal },
 ): Promise<MixArtist[]> {
   const picked: MixArtist[] = [];
   const taken = new Set<string>([seed.id]);
@@ -256,7 +256,7 @@ function dominantGenres(tracks: readonly Child[], limit: number): string[] {
 // account — still has genres, and every backend can draw random songs from one.
 async function genreFallbackPool(
   seedPool: readonly Child[],
-  musicFolderId: string | undefined,
+  musicFolderIds: string[] | undefined,
   signal?: AbortSignal,
 ): Promise<Child[]> {
   if (!currentLibraryCapabilities().songLists) return [];
@@ -264,7 +264,7 @@ async function genreFallbackPool(
   const genres = dominantGenres(seedPool, FALLBACK_GENRES);
   const pools = await Promise.all(
     genres.map((genre) =>
-      getRandomSongs({ genre, size: FALLBACK_GENRE_SIZE, musicFolderId })
+      getRandomSongs({ genre, size: FALLBACK_GENRE_SIZE, musicFolderIds })
         .then((rsp) => rsp.songs?.song ?? [])
         .catch(() => []),
     ),
@@ -299,13 +299,13 @@ function capForRank(rank: number): number {
 export async function generateArtistMix(
   seed: { id: string; name: string; musicBrainzId?: string },
   {
-    musicFolderId,
+    musicFolderIds,
     rand,
     signal,
-  }: { musicFolderId?: string; rand: () => number; signal?: AbortSignal },
+  }: { musicFolderIds?: string[]; rand: () => number; signal?: AbortSignal },
 ): Promise<GeneratedMix> {
   const [similar, seedPool] = await Promise.all([
-    resolveMixArtists(seed, { musicFolderId, signal }),
+    resolveMixArtists(seed, { musicFolderIds, signal }),
     artistPool(seed, 2, rand, signal),
   ]);
 
@@ -326,7 +326,7 @@ export async function generateArtistMix(
   );
   const fallback =
     similarCapacity < MIX_TARGET / 2
-      ? await genreFallbackPool(seedPool, musicFolderId, signal)
+      ? await genreFallbackPool(seedPool, musicFolderIds, signal)
       : [];
   candidates.push(...fallback);
 

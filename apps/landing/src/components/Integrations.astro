@@ -1,4 +1,5 @@
 ---
+import Audiobookshelf from "../assets/audiobookshelf.svg";
 import AudioMuseAi from "../assets/audiomuse-ai.webp";
 import LastFm from "../assets/lastfm.svg";
 import Lidarr from "../assets/lidarr.svg";
@@ -89,6 +90,14 @@ const integrations = [
 		tint: "#10b981",
 		initials: "OF",
 	},
+	{
+		id: "audiobookshelf",
+		name: "Audiobookshelf",
+		url: "https://www.audiobookshelf.org/",
+		host: "audiobookshelf.org",
+		tint: "#cd9d49",
+		Svg: Audiobookshelf,
+	},
 ];
 ---
 
@@ -107,11 +116,12 @@ const integrations = [
 		</div>
 
 		<div class="grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,360px)_1fr]">
+			<div class="relative min-w-0 overflow-hidden rounded-[20px] border border-border bg-bg-2">
 			<div
 				role="tablist"
 				aria-label={ti.tag}
 				aria-orientation="horizontal"
-				class="int-rail flex overflow-x-auto overscroll-x-contain rounded-[20px] border border-border bg-bg-2 lg:block lg:self-start lg:overflow-hidden"
+				class="int-rail flex overflow-x-auto overscroll-x-contain lg:absolute lg:inset-0 lg:block lg:overflow-x-hidden lg:overflow-y-auto lg:overscroll-y-contain"
 			>
 				{
 					integrations.map((item, i) => (
@@ -130,7 +140,7 @@ const integrations = [
 						>
 							<span class="int-marker absolute inset-x-0 bottom-0 h-[3px] bg-accent transition-opacity duration-200 lg:inset-x-auto lg:inset-y-0 lg:left-0 lg:h-auto lg:w-[3px]" />
 							<span class="int-logo flex size-7 shrink-0 items-center justify-center transition duration-300 lg:size-9">
-								<IntegrationLogo Svg={item.Svg} image={item.image} initials={item.initials} tint={item.tint} />
+								<IntegrationLogo Svg={item.Svg} image={item.image} initials={item.initials} tint={item.tint} loading="lazy" />
 							</span>
 							<span class="min-w-0">
 								<span class="int-name block truncate whitespace-nowrap text-sm font-bold tracking-[-0.01em] transition-colors duration-200 lg:text-base">
@@ -143,6 +153,18 @@ const integrations = [
 						</button>
 					))
 				}
+			</div>
+			<button
+				type="button"
+				tabindex="-1"
+				aria-hidden="true"
+				data-int-more
+				class="int-more absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-border-strong bg-surface text-text-2 shadow-[0_6px_20px_rgba(0,0,0,0.55)] hover:border-accent hover:text-text lg:right-3 lg:top-auto lg:bottom-3 lg:translate-y-0"
+			>
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lg:rotate-90">
+					<path d="m9 6 6 6-6 6" />
+				</svg>
+			</button>
 			</div>
 
 			<div class="flex flex-col gap-3.5">
@@ -192,6 +214,7 @@ const integrations = [
 										image={item.image}
 										initials={item.initials}
 										tint={item.tint}
+										loading="eager"
 										initialsClass="text-[26px] lg:rounded-[18px] lg:text-[52px]"
 									/>
 								</span>
@@ -211,11 +234,32 @@ const integrations = [
 
 	if (tabs.length) {
 		const rail = root!.querySelector<HTMLElement>('[role="tablist"]')!;
+		const more = root!.querySelector<HTMLButtonElement>('[data-int-more]')!;
 		const wide = window.matchMedia('(min-width: 1024px)');
-		const syncOrientation = () =>
+		// Matches the fade length in the styles, so a revealed tab clears the faded edge.
+		const EDGE = 56;
+
+		const syncEdges = () => {
+			const vertical = wide.matches;
+			const offset = vertical ? rail.scrollTop : rail.scrollLeft;
+			const max = vertical ? rail.scrollHeight - rail.clientHeight : rail.scrollWidth - rail.clientWidth;
+			rail.toggleAttribute('data-fade-start', offset > 1);
+			rail.toggleAttribute('data-fade-end', offset < max - 1);
+		};
+		const syncOrientation = () => {
 			rail.setAttribute('aria-orientation', wide.matches ? 'vertical' : 'horizontal');
+			syncEdges();
+		};
 		syncOrientation();
 		wide.addEventListener('change', syncOrientation);
+		rail.addEventListener('scroll', syncEdges, { passive: true });
+		const resize = new ResizeObserver(syncEdges);
+		for (const el of [rail, ...tabs]) resize.observe(el);
+
+		more.addEventListener('click', () => {
+			const page = (wide.matches ? rail.clientHeight : rail.clientWidth) * 0.75;
+			rail.scrollBy(wide.matches ? { top: page, behavior: 'smooth' } : { left: page, behavior: 'smooth' });
+		});
 
 		// Nudges the rail's own scroll only, so this can never move the page. Scrolls
 		// instantly on purpose: `behavior: 'smooth'` is dropped outright in throttled
@@ -223,8 +267,10 @@ const integrations = [
 		const revealInRail = (tab: HTMLElement) => {
 			const railBox = rail.getBoundingClientRect();
 			const tabBox = tab.getBoundingClientRect();
-			if (tabBox.left < railBox.left) rail.scrollBy({ left: tabBox.left - railBox.left - 16 });
-			else if (tabBox.right > railBox.right) rail.scrollBy({ left: tabBox.right - railBox.right + 16 });
+			if (tabBox.left < railBox.left + EDGE) rail.scrollBy({ left: tabBox.left - railBox.left - EDGE });
+			else if (tabBox.right > railBox.right - EDGE) rail.scrollBy({ left: tabBox.right - railBox.right + EDGE });
+			if (tabBox.top < railBox.top + EDGE) rail.scrollBy({ top: tabBox.top - railBox.top - EDGE });
+			else if (tabBox.bottom > railBox.bottom - EDGE) rail.scrollBy({ top: tabBox.bottom - railBox.bottom + EDGE });
 		};
 
 		const select = (id: string, moveFocus = false) => {
@@ -258,8 +304,35 @@ const integrations = [
 </script>
 
 <style>
-	.int-rail { scrollbar-width: none; }
+	@property --int-fade-start { syntax: '<length>'; inherits: false; initial-value: 0px; }
+	@property --int-fade-end { syntax: '<length>'; inherits: false; initial-value: 0px; }
+
+	.int-rail {
+		--int-fade-dir: to right;
+		scrollbar-width: none;
+		mask-image: linear-gradient(
+			var(--int-fade-dir),
+			transparent,
+			#000 var(--int-fade-start),
+			#000 calc(100% - var(--int-fade-end)),
+			transparent
+		);
+		transition: --int-fade-start 0.25s, --int-fade-end 0.25s;
+	}
 	.int-rail::-webkit-scrollbar { display: none; }
+	.int-rail[data-fade-start] { --int-fade-start: 56px; }
+	.int-rail[data-fade-end] { --int-fade-end: 56px; }
+	@media (min-width: 1024px) {
+		.int-rail { --int-fade-dir: to bottom; }
+	}
+
+	/* Only shown while there is more of the list past the end edge. */
+	.int-more {
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 0.2s, color 0.2s, border-color 0.2s;
+	}
+	.int-rail[data-fade-end] ~ .int-more { opacity: 1; pointer-events: auto; }
 	.int-row { background: transparent; }
 	.int-name { color: var(--color-text-2); }
 	.int-role { color: var(--color-text-3); }
@@ -283,6 +356,6 @@ const integrations = [
 	.int-panel[hidden] { display: none; }
 
 	@media (prefers-reduced-motion: reduce) {
-		.int-row, .int-row * { transition-duration: 0.01ms !important; }
+		.int-row, .int-row *, .int-rail, .int-more { transition-duration: 0.01ms !important; }
 	}
 </style>

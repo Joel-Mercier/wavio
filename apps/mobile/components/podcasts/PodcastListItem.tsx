@@ -15,6 +15,7 @@ import {
   MarkAsPlayedButton,
 } from "@/components/podcasts/EpisodeProgress";
 import { usePodcastEpisodeActions } from "@/components/podcasts/PodcastEpisodeActionsProvider";
+import SwipeToMarkPlayed from "@/components/podcasts/SwipeToMarkPlayed";
 import RichText from "@/components/RichText";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -29,7 +30,9 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useIsDeviceOnline } from "@/hooks/useIsOnline";
+import usePodcastPlayed from "@/hooks/usePodcastPlayed";
 import { playTracks, togglePlayPause } from "@/services/player";
+import { markPodcastEpisodePlayed } from "@/services/podcastProgress";
 import type { PodcastEpisode } from "@/services/taddyPodcasts/types";
 import { formatDistanceToNow } from "@/utils/date";
 import { formatRichTextPlain } from "@/utils/formatRichText";
@@ -58,6 +61,7 @@ export default function PodcastListItem({
   // Taddy episodes stream a third-party enclosure URL, so only the device being
   // offline stops them — an unreachable music server is irrelevant here.
   const isDeviceOnline = useIsDeviceOnline();
+  const isPlayed = usePodcastPlayed(podcast.uuid, "taddy");
   const [white, black] = Uniwind.getCSSVariable([
     "--color-white",
     "--color-black",
@@ -166,86 +170,88 @@ export default function PodcastListItem({
   // one of them becomes the responder and the row neither animates nor
   // navigates.
   return (
-    <FadeOutScaleDown
-      href={{
-        pathname: "/podcasts/[id]",
-        params: {
-          id: podcast.uuid,
-          uuid: podcast.uuid,
-          name: podcast.name,
-          description: podcast.description,
-          imageUrl: podcast.imageUrl,
-          datePublished: podcast.datePublished,
-          duration: podcast.duration,
-          audioUrl: podcast.audioUrl,
-          websiteUrl: podcast.websiteUrl,
-          podcastSeries: JSON.stringify(podcast.podcastSeries),
-        },
-      }}
-      className="px-6"
+    <SwipeToMarkPlayed
+      enabled={!isPlayed}
+      onMarkPlayed={() => markPodcastEpisodePlayed(podcast.uuid, "taddy")}
+      className={cn("my-3", { "mt-6": index === 0 })}
     >
-      <VStack
-        className={cn("my-3 gap-y-2 border-b border-b-primary-400", {
-          "mt-6": index === 0,
-        })}
+      <FadeOutScaleDown
+        href={{
+          pathname: "/podcasts/[id]",
+          params: {
+            id: podcast.uuid,
+            uuid: podcast.uuid,
+            name: podcast.name,
+            description: podcast.description,
+            imageUrl: podcast.imageUrl,
+            datePublished: podcast.datePublished,
+            duration: podcast.duration,
+            audioUrl: podcast.audioUrl,
+            websiteUrl: podcast.websiteUrl,
+            podcastSeries: JSON.stringify(podcast.podcastSeries),
+          },
+        }}
+        className="px-6"
       >
-        <HStack className="gap-x-4">
-          <ImageWithFallback
-            source={{ uri: podcast.imageUrl }}
-            className="w-16 h-16 rounded-md aspect-square"
-            alt={podcast.name}
-            fallback={
-              <Box className="w-16 h-16 aspect-square rounded-md bg-primary-600 items-center justify-center">
-                <Podcast size={24} color={white} />
-              </Box>
-            }
-          />
-          <VStack className="flex-1">
-            <Heading className="text-white text-lg" numberOfLines={2}>
-              {podcast.name}
-            </Heading>
-            <Text className="text-primary-100" numberOfLines={1}>
-              {seriesName || podcast?.podcastSeries?.name}
-            </Text>
-          </VStack>
-        </HStack>
-        <RichText className="flex-1 text-primary-100" numberOfLines={2}>
-          {podcast.description}
-        </RichText>
-        <Text className="flex-1 text-white">
-          {podcast.datePublished &&
-            t("app.podcasts.publishedAt", {
-              distance: formatDistanceToNow(
-                fromUnixTime(podcast.datePublished),
-              ),
-            })}
-          {" ⦁ "}
-          {`${secondsToMinutes(podcast.duration)} min`}
-        </Text>
-        <HStack className="items-center justify-between mb-4">
-          <HStack className="items-center gap-x-4">
-            <MarkAsPlayedButton id={podcast.uuid} />
-            <FadeOutScaleDown onPress={handleSharePress}>
-              <Share2 size={24} color={white} />
-            </FadeOutScaleDown>
-            <FadeOutScaleDown onPress={handlePresentModalPress}>
-              <EllipsisVertical size={24} color={white} />
-            </FadeOutScaleDown>
-          </HStack>
-          <HStack className="items-center gap-x-3">
-            <EpisodeProgressBar id={podcast.uuid} />
-            <PlayPauseButton
-              isPlaying={isCurrent && isPlaying}
-              onPress={handlePlayPress}
-              disabled={!isCurrent && !isDeviceOnline}
-              size={40}
-              iconSize={20}
-              color={black}
-              className="bg-white"
+        <VStack className="gap-y-2 border-b border-b-primary-400">
+          <HStack className="gap-x-4">
+            <ImageWithFallback
+              source={{ uri: podcast.imageUrl }}
+              className="w-16 h-16 rounded-md aspect-square"
+              alt={podcast.name}
+              fallback={
+                <Box className="w-16 h-16 aspect-square rounded-md bg-primary-600 items-center justify-center">
+                  <Podcast size={24} color={white} />
+                </Box>
+              }
             />
+            <VStack className="flex-1">
+              <Heading className="text-white text-lg" numberOfLines={2}>
+                {podcast.name}
+              </Heading>
+              <Text className="text-primary-100" numberOfLines={1}>
+                {seriesName || podcast?.podcastSeries?.name}
+              </Text>
+            </VStack>
           </HStack>
-        </HStack>
-      </VStack>
-    </FadeOutScaleDown>
+          <RichText className="flex-1 text-primary-100" numberOfLines={2}>
+            {podcast.description}
+          </RichText>
+          <Text className="flex-1 text-white">
+            {podcast.datePublished &&
+              t("app.podcasts.publishedAt", {
+                distance: formatDistanceToNow(
+                  fromUnixTime(podcast.datePublished),
+                ),
+              })}
+            {" ⦁ "}
+            {`${secondsToMinutes(podcast.duration)} min`}
+          </Text>
+          <HStack className="items-center justify-between mb-4">
+            <HStack className="items-center gap-x-4">
+              <MarkAsPlayedButton id={podcast.uuid} source="taddy" />
+              <FadeOutScaleDown onPress={handleSharePress}>
+                <Share2 size={24} color={white} />
+              </FadeOutScaleDown>
+              <FadeOutScaleDown onPress={handlePresentModalPress}>
+                <EllipsisVertical size={24} color={white} />
+              </FadeOutScaleDown>
+            </HStack>
+            <HStack className="items-center gap-x-3">
+              <EpisodeProgressBar id={podcast.uuid} />
+              <PlayPauseButton
+                isPlaying={isCurrent && isPlaying}
+                onPress={handlePlayPress}
+                disabled={!isCurrent && !isDeviceOnline}
+                size={40}
+                iconSize={20}
+                color={black}
+                className="bg-white"
+              />
+            </HStack>
+          </HStack>
+        </VStack>
+      </FadeOutScaleDown>
+    </SwipeToMarkPlayed>
   );
 }

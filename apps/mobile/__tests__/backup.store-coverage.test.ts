@@ -2,6 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   BACKUP_EXCLUDED_GLOBAL_KEYS,
+  BACKUP_EXCLUDED_SCOPED_STORE_NAMES,
+  BACKUP_SECRET_FIELDS,
   GLOBAL_KEYS,
   SCOPED_STORE_NAMES,
 } from "@/services/backupStoreKeys";
@@ -22,7 +24,26 @@ import {
 
 const storesDir = path.join(__dirname, "..", "stores");
 
-type PersistedStore = { file: string; name: string; scoped: boolean };
+type PersistedStore = {
+  file: string;
+  name: string;
+  scoped: boolean;
+  fields: string[];
+};
+
+// The fields a store persists: what its `partialize` reads off `state`, or,
+// for a store that persists everything, the state interface's top-level
+// properties (two-space indent).
+function persistedFields(src: string): string[] {
+  const start = src.indexOf("partialize:");
+  if (start !== -1) {
+    const end = src.indexOf("\n  )", start);
+    const body = src.slice(start, end === -1 ? undefined : end);
+    const fields = [...body.matchAll(/state\.(\w+)/g)].map((m) => m[1]);
+    if (fields.length > 0) return [...new Set(fields)];
+  }
+  return [...new Set([...src.matchAll(/^ {2}(\w+)\??:/gm)].map((m) => m[1]))];
+}
 
 function persistName(src: string): string | null {
   // The persist config's `name:` is the last `name: "..."` before the
@@ -50,7 +71,12 @@ function discoverPersistedStores(): PersistedStore[] {
     const name = persistName(src) ?? handRolled?.[1] ?? null;
     if (!name) continue;
 
-    stores.push({ file, name, scoped: usesScoped });
+    stores.push({
+      file,
+      name,
+      scoped: usesScoped,
+      fields: persistedFields(src),
+    });
   }
   return stores;
 }
@@ -84,5 +110,39 @@ describe("backup store coverage", () => {
       )
       .map((s) => `${s.name} (${s.file})`);
     expect(missing).toEqual([]);
+  });
+
+  // No password, token or API key may reach a backup file. A persisted field
+  // whose name looks like a credential has to be stripped through
+  // BACKUP_SECRET_FIELDS (or the store left out of backups entirely).
+  it("strips every credential-looking field from a backup", () => {
+    const SECRET_LIKE = /password|token|secret|api_?key|session_?key/i;
+    // Names that match the pattern but hold no credential.
+    const NOT_SECRET = new Set(["useTokenAuth", "plainPasswordAuth"]);
+    // Sanitized field by field in services/backup.ts itself.
+    const HANDLED_IN_BACKUP = new Set(["auth", "servers"]);
+    const excluded = new Set<string>([
+      ...BACKUP_EXCLUDED_GLOBAL_KEYS,
+      ...BACKUP_EXCLUDED_SCOPED_STORE_NAMES,
+    ]);
+    const unstripped = stores
+      .filter((s) => !excluded.has(s.name) && !HANDLED_IN_BACKUP.has(s.name))
+      .flatMap((s) =>
+        s.fields
+          .filter((field) => SECRET_LIKE.test(field) && !NOT_SECRET.has(field))
+          .filter((field) => !BACKUP_SECRET_FIELDS[s.name]?.includes(field))
+          .map((field) => `${s.name}.${field} (${s.file})`),
+      );
+    expect(unstripped).toEqual([]);
+  });
+
+  it("checks the stores that do hold credentials", () => {
+    // Guards the scanner above against passing vacuously.
+    const withSecrets = stores.filter((s) =>
+      s.fields.some((f) => BACKUP_SECRET_FIELDS[s.name]?.includes(f)),
+    );
+    expect(withSecrets.map((s) => s.name).sort()).toEqual(
+      Object.keys(BACKUP_SECRET_FIELDS).sort(),
+    );
   });
 });

@@ -8,7 +8,7 @@ import {
   useRandomSongs,
   useSongsByGenre,
 } from "@/hooks/backend/useLists";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 
 interface BaseProps {
   title: string;
@@ -17,9 +17,9 @@ interface BaseProps {
 
 function RandomSongs({ title, sectionIndex }: BaseProps) {
   const enabled = useSectionEnabled(sectionIndex);
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const { data, isLoading, error } = useRandomSongs(
-    { size: 12, musicFolderId },
+    { size: 12, musicFolderIds },
     { enabled },
   );
   const songs = data?.songs?.song;
@@ -40,9 +40,9 @@ function RandomSongs({ title, sectionIndex }: BaseProps) {
 
 function MostPlayedTracks({ title, sectionIndex }: BaseProps) {
   const enabled = useSectionEnabled(sectionIndex);
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const { data, isLoading, error } = useMostPlayedSongs(
-    { size: 12, musicFolderId },
+    { size: 12, musicFolderIds },
     { enabled },
   );
   const songs = data?.songs?.song;
@@ -68,9 +68,9 @@ interface SongsByGenreProps extends BaseProps {
 
 function SongsByGenre({ title, sectionIndex, genre }: SongsByGenreProps) {
   const enabled = useSectionEnabled(sectionIndex);
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const { data, isLoading, error } = useSongsByGenre(
-    { genre, count: 12, musicFolderId },
+    { genre, count: 12, musicFolderIds },
     { enabled },
   );
   const songs = data?.songs?.song;

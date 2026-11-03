@@ -6,6 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/icons/arrow-down";
 import ArrowUp from "lucide-react-native/icons/arrow-up";
+import ChevronDown from "lucide-react-native/icons/chevron-down";
 import LayoutGrid from "lucide-react-native/icons/layout-grid";
 import List from "lucide-react-native/icons/list";
 import Plus from "lucide-react-native/icons/plus";
@@ -30,6 +31,7 @@ import AddBottomSheet from "@/components/AddBottomSheet";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import LibraryPickerSheet from "@/components/libraries/LibraryPickerSheet";
 import LibraryListItem, {
   type Favorites,
   type LibraryAllAlbums,
@@ -66,6 +68,7 @@ import {
 import { useAlbumScreenLayout } from "@/hooks/useAlbumScreenLayout";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import useLibraryPicker from "@/hooks/useLibraryPicker";
 import { usePlaylistFolderOptions } from "@/hooks/usePlaylistFolderOptions";
 import {
   useScopedPodcastFavorites,
@@ -85,18 +88,26 @@ import type {
 import useApp, {
   type LibraryBucketFilter,
   type LibraryFilter,
-  type LibrarySortField,
 } from "@/stores/app";
 import useAuth from "@/stores/auth";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import usePodcasts from "@/stores/podcasts";
 import { gridColumnCount } from "@/utils/grid";
+import {
+  availableLibrarySortFields,
+  DEFAULT_LIBRARY_SORT,
+  LIBRARY_LOCKED_DIRECTIONS,
+  type LibrarySort,
+  type LibrarySortEntry,
+  librarySortSpecs,
+} from "@/utils/librarySort";
 import { loadingData } from "@/utils/loadingData";
 import {
   groupPlaylistsIntoFolders,
   playlistFolderRow,
 } from "@/utils/playlistFolders";
-import { parseSortType, sortItems } from "@/utils/sort";
+import { randomSeed } from "@/utils/shuffle";
+import { effectiveSort, parseSortType, sortItems } from "@/utils/sort";
 import { cn } from "@/utils/tailwind";
 
 export type LibraryLayout = "list" | "grid";
@@ -115,10 +126,6 @@ const PINNED_TOP_GAP = 16;
 // colors, is not worth it for a 24px sliver.
 const FILTER_ROW_DEPTH = 67;
 
-// The list mixes artists, albums, playlists, podcasts, radio stations and
-// folders, so only these two fields mean anything across every row.
-const LIBRARY_SORT_FIELDS: LibrarySortField[] = ["addedAt", "alphabetical"];
-
 // "downloaded" is not a bucket of its own: only albums and playlists exist as
 // offline collections (`OfflineCollection.kind`), so it narrows those two and
 // hides every other bucket instead of listing it unfiltered.
@@ -136,7 +143,11 @@ const LIBRARY_FILTERS: LibraryBucketFilter[] = [
 ];
 
 export default function LibraryScreen() {
-  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
+  const [white, emerald500, primary100] = Uniwind.getCSSVariable([
+    "--color-white",
+    "--color-emerald-500",
+    "--color-primary-100",
+  ]) as string[];
   const { t } = useTranslation();
   const setShowDrawer = useApp((store) => store.setShowDrawer);
   const username = useAuth((store) => store.username);
@@ -146,6 +157,8 @@ export default function LibraryScreen() {
   const sort = useApp((store) => store.librarySort);
   const setSort = useApp((store) => store.setLibrarySort);
   const sortFieldLabel = useSortFieldLabel();
+  const [shuffleSeed, setShuffleSeed] = useState(randomSeed);
+  const sortSpecs = useMemo(() => librarySortSpecs(shuffleSeed), [shuffleSeed]);
   const { layout, toggle: handleLayoutPress } =
     useAlbumScreenLayout("library-index");
   const filter = useApp((store) => store.libraryFilter);
@@ -173,9 +186,11 @@ export default function LibraryScreen() {
       : 1;
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetModalSortRef = useRef<BottomSheetModal>(null);
+  const libraryPickerRef = useRef<BottomSheetModal>(null);
+  const libraryPicker = useLibraryPicker();
   const filterScrollRef = useRef<ScrollViewInstance>(null);
   const listRef = useRef<LegendListRef>(null);
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const isOnline = useIsOnline();
   const queryClient = useQueryClient();
   const downloadedCollections = useDownloadedCollections();
@@ -187,7 +202,7 @@ export default function LibraryScreen() {
     isFetching: isFetchingStarred,
     error: starredError,
     refetch: refetchStarred,
-  } = useStarred2({ musicFolderId });
+  } = useStarred2({ musicFolderIds });
   const {
     data: playlistsData,
     isLoading: isLoadingPlaylists,
@@ -238,7 +253,7 @@ export default function LibraryScreen() {
     router.navigate("/(app)/(tabs)/(library)/search");
   };
 
-  const data = useMemo(() => {
+  const { data, sortFields, activeSort } = useMemo(() => {
     const hasServerData = Boolean(
       starredData?.starred2 || playlistsData?.playlists,
     );
@@ -246,7 +261,11 @@ export default function LibraryScreen() {
     // Offline we keep going so saved collections (and podcasts/radio from local
     // stores) still render even without a cached server list.
     if (!hasServerData && isOnline) {
-      return null;
+      return {
+        data: null,
+        sortFields: availableLibrarySortFields([], sortSpecs),
+        activeSort: sort,
+      };
     }
 
     const downloadedFilter = filter.includes("downloaded");
@@ -327,12 +346,18 @@ export default function LibraryScreen() {
       (noBucketFilter || bucketFilters.includes(bucket)) &&
       (!downloadedFilter || DOWNLOADABLE_FILTERS.includes(bucket));
 
-    let data = [];
+    const entries: LibrarySortEntry[] = [];
+    const add = (
+      bucket: LibraryBucketFilter,
+      rows: LibrarySortEntry["row"][],
+    ) => {
+      for (const row of rows) entries.push({ bucket, row });
+    };
     if (showBucket("artists") && starredData?.starred2?.artist) {
-      data.push(starredData.starred2.artist);
+      add("artists", starredData.starred2.artist);
     }
     if (showBucket("albums")) {
-      data.push(mergeOffline(starredData?.starred2?.album ?? [], "album"));
+      add("albums", mergeOffline(starredData?.starred2?.album ?? [], "album"));
     }
     if (showBucket("playlists")) {
       // Favorites is a browse entry, not a downloadable collection.
@@ -341,21 +366,23 @@ export default function LibraryScreen() {
         hasServerData &&
         !downloadedFilter
       ) {
-        data.push(favoritesItem);
+        add("playlists", [favoritesItem]);
       }
       const { rootPlaylists, folders } = groupPlaylistsIntoFolders(
         mergeOffline(playlistsData?.playlists?.playlist ?? [], "playlist"),
         playlistFolderOptions,
       );
-      data.push(rootPlaylists);
-      data.push(
+      add("playlists", rootPlaylists);
+      add(
+        "playlists",
         folders
           .filter((folder) => !downloadedFilter || folder.members.length > 0)
           .map(playlistFolderRow),
       );
     }
     if (showPodcasts && showBucket("podcasts")) {
-      data.push(
+      add(
+        "podcasts",
         favoritePodcasts.map((p) => ({
           id: p.uuid,
           name: p.name,
@@ -370,7 +397,8 @@ export default function LibraryScreen() {
       );
     }
     if (showBucket("radioStations")) {
-      data.push(
+      add(
+        "radioStations",
         favoriteRadioStations.map((r) => ({
           id: r.id,
           name: r.name,
@@ -385,7 +413,8 @@ export default function LibraryScreen() {
       );
     }
     if (showBucket("folders") && musicFoldersData?.musicFolders?.musicFolder) {
-      data.push(
+      add(
+        "folders",
         musicFoldersData.musicFolders.musicFolder.map((f) => ({
           id: String(f.id),
           name: f.name ?? `Library ${f.id}`,
@@ -393,24 +422,17 @@ export default function LibraryScreen() {
         })),
       );
     }
-    data = data.flat();
-    // Each row shape carries at most one of these dates; 0 (rather than
-    // undefined) keeps undated rows sorting as "oldest" instead of being pinned
-    // last, which is how this list has always behaved.
-    const sortTime = (item: (typeof data)[number]) => {
-      const value =
-        ("starred" in item ? item.starred : undefined) ??
-        ("created" in item ? item.created : undefined);
-      if (value) return new Date(value).getTime();
-      if ("dateAdded" in item && typeof item.dateAdded === "number") {
-        return item.dateAdded;
-      }
-      return 0;
-    };
-    const sorted = sortItems(data, sort, {
-      addedAt: { value: sortTime, always: true },
-      alphabetical: { value: (item) => item.name, always: true },
-    });
+    // Fields the rows on screen can't carry are dropped from the sheet, and a
+    // saved sort among them renders as the default without being overwritten,
+    // so it comes back with the filter that supports it.
+    const sortFields = availableLibrarySortFields(entries, sortSpecs);
+    const activeSort =
+      entries.length > 0
+        ? effectiveSort(sort, sortFields, DEFAULT_LIBRARY_SORT)
+        : sort;
+    const sorted = sortItems(entries, activeSort, sortSpecs).map(
+      (entry) => entry.row,
+    );
     // Pin Favorites + the "all albums/artists/tracks" browse entries at the top of the
     // unfiltered library so the sort never scatters them into the list. Offline
     // they stay pinned as long as downloads can back the browse screens
@@ -423,20 +445,25 @@ export default function LibraryScreen() {
       !downloadedFilter &&
       (hasServerData || hasOfflineCollections)
     ) {
-      return [
-        favoritesItem,
-        allArtistsItem,
-        allAlbumsItem,
-        allTracksItem,
-        ...sorted,
-      ];
+      return {
+        data: [
+          favoritesItem,
+          allArtistsItem,
+          allAlbumsItem,
+          allTracksItem,
+          ...sorted,
+        ],
+        sortFields,
+        activeSort,
+      };
     }
-    return sorted;
+    return { data: sorted, sortFields, activeSort };
   }, [
     starredData,
     playlistsData,
     filter,
     sort,
+    sortSpecs,
     showPodcasts,
     favoritePodcasts,
     favoriteRadioStations,
@@ -447,6 +474,19 @@ export default function LibraryScreen() {
     queryClient,
     playlistFolderOptions,
   ]);
+
+  const { field: activeSortField, direction: activeSortDirection } =
+    parseSortType(activeSort);
+  // Random has no direction, so the trigger shows no arrow for it, the same as
+  // the sheet.
+  const showSortDirection = activeSortField !== "random";
+
+  // Picking Random again is how a new shuffle is asked for: the sort string is
+  // unchanged, so only the new seed reorders the list (and scrolls it back up).
+  const handleSortSelect = (next: LibrarySort) => {
+    if (parseSortType(next).field === "random") setShuffleSeed(randomSeed());
+    setSort(next);
+  };
 
   const isLoading = isLoadingPlaylists || isLoadingStarred;
   // A connectivity-class failure (server unreachable / gateway 5xx) is not a
@@ -504,7 +544,7 @@ export default function LibraryScreen() {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
     collapsed.value = 0;
     lastOffset.value = 0;
-  }, [sort, filter, layout, gridColumns, collapsed, lastOffset]);
+  }, [sort, shuffleSeed, filter, layout, gridColumns, collapsed, lastOffset]);
 
   const [fadeTint, fadeTintTransparent] = tabHeaderTintAt(
     FILTER_ROW_DEPTH,
@@ -538,7 +578,7 @@ export default function LibraryScreen() {
             className={cn("px-6 pb-6", { "pt-6": !isWideLayout })}
           >
             <HStack className="items-center justify-between">
-              <HStack className="items-center gap-x-4">
+              <HStack className="items-center gap-x-4 flex-1 mr-4">
                 <FadeOutScaleDown
                   testID="open-drawer-button"
                   onPress={() => setShowDrawer(true)}
@@ -549,9 +589,43 @@ export default function LibraryScreen() {
                     </AvatarFallbackText>
                   </Avatar>
                 </FadeOutScaleDown>
-                <Heading className="text-white" size="2xl">
-                  {t("app.library.title")}
-                </Heading>
+                {libraryPicker.canPick ? (
+                  <FadeOutScaleDown
+                    testID="library-picker-button"
+                    className="shrink"
+                    onPress={() => libraryPickerRef.current?.present()}
+                  >
+                    <Heading className="text-white" size="2xl">
+                      {t("app.library.title")}
+                    </Heading>
+                    <HStack className="items-center gap-x-1">
+                      <Text
+                        numberOfLines={1}
+                        className={cn("text-sm font-medium shrink", {
+                          "text-emerald-500": libraryPicker.isNarrowed,
+                          "text-primary-100": !libraryPicker.isNarrowed,
+                        })}
+                      >
+                        {libraryPicker.summary}
+                      </Text>
+                      {libraryPicker.summaryExtra && (
+                        <Text className="text-sm font-medium text-emerald-500">
+                          {libraryPicker.summaryExtra}
+                        </Text>
+                      )}
+                      <ChevronDown
+                        size={16}
+                        color={
+                          libraryPicker.isNarrowed ? emerald500 : primary100
+                        }
+                      />
+                    </HStack>
+                  </FadeOutScaleDown>
+                ) : (
+                  <Heading className="text-white" size="2xl">
+                    {t("app.library.title")}
+                  </Heading>
+                )}
               </HStack>
               <HStack className="items-center gap-x-4">
                 <FadeOutScaleDown
@@ -626,13 +700,14 @@ export default function LibraryScreen() {
           <HStack className="px-6 pb-4 items-center justify-between">
             <FadeOutScaleDown onPress={handlePresentSortModalPress}>
               <HStack className="items-center gap-x-2">
-                {sort.endsWith("Desc") ? (
-                  <ArrowDown size={16} color={white} />
-                ) : (
-                  <ArrowUp size={16} color={white} />
-                )}
+                {showSortDirection &&
+                  (activeSortDirection === "desc" ? (
+                    <ArrowDown size={16} color={white} />
+                  ) : (
+                    <ArrowUp size={16} color={white} />
+                  ))}
                 <Text className="text-white font-bold">
-                  {sortFieldLabel(parseSortType(sort).field)}
+                  {sortFieldLabel(activeSortField)}
                 </Text>
               </HStack>
             </FadeOutScaleDown>
@@ -676,6 +751,7 @@ export default function LibraryScreen() {
           keyExtractor={(item) => item.id}
           numColumns={gridColumns}
           onRefresh={() => {
+            if (activeSortField === "random") setShuffleSeed(randomSeed());
             refetchPlaylists();
             refetchStarred();
             refetchMusicFolders();
@@ -714,11 +790,15 @@ export default function LibraryScreen() {
         />
       )}
       <AddBottomSheet ref={bottomSheetModalRef} />
+      {libraryPicker.canPick && (
+        <LibraryPickerSheet sheetRef={libraryPickerRef} />
+      )}
       <SortOptionsSheet
         ref={bottomSheetModalSortRef}
-        fields={LIBRARY_SORT_FIELDS}
-        sort={sort}
-        onSelect={setSort}
+        fields={sortFields}
+        sort={activeSort}
+        onSelect={handleSortSelect}
+        lockedDirections={LIBRARY_LOCKED_DIRECTIONS}
       />
     </Box>
   );

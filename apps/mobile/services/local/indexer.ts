@@ -26,6 +26,7 @@ import {
   readDirectoryIgnore,
 } from "./ignoreRules";
 import { albumKey, localTrackId, normalizeKey } from "./keys";
+import { indexLyricSidecars, pickLyricsSidecar } from "./lyricsSidecar";
 import { reapplyOverridesAfterIndexing } from "./tagOverrides";
 
 // The scanner. Walks the user-selected source folders, calls the native
@@ -180,6 +181,7 @@ type ScannedFile = {
   // The configured root (as it appears in Server.paths) this file was found
   // under. First folder to reach a URI wins, matching the URI de-dup below.
   sourceFolder: string;
+  lyricsSidecar: string | null;
 };
 
 type ExistingRow = {
@@ -188,6 +190,7 @@ type ExistingRow = {
   mtime: number | null;
   size: number | null;
   dir: string | null;
+  lyricsSidecar: string | null;
 };
 
 /** Running state of the directory walk, threaded through the recursion. */
@@ -425,12 +428,14 @@ export async function scanLibrary(
   // 2. Diff against the current index to find work (new/changed files only).
   const existing = await loadExistingRows(db);
   const work: ScannedFile[] = [];
-  // Rows the walk saw but won't re-extract, whose stored directory is missing or
-  // stale. `dir` was added for sidecar artwork and is the only field of a
-  // skipped row that can be brought up to date without re-reading the file — and
-  // it has to be, or an existing library would never resolve a cover until
-  // something forced a full re-extraction.
-  const rekey: { id: string; dir: string }[] = [];
+  // Rows the walk saw but won't re-extract, whose stored directory or lyrics
+  // sidecar is missing or stale. Both come from the listing rather than the
+  // file, so they are the fields of a skipped row that can be brought up to date
+  // without re-reading it — and they have to be, or an existing library would
+  // never resolve a cover or a lyrics file until something forced a full
+  // re-extraction. A sidecar added or removed beside an unchanged track lands
+  // the same way.
+  const rekey: { id: string; dir: string; lyricsSidecar: string | null }[] = [];
   for (const file of seen.values()) {
     const prior = existing.get(file.uri);
     if (
@@ -440,7 +445,16 @@ export async function scanLibrary(
       prior.size === file.size
     ) {
       result.skipped++;
-      if (prior.dir !== file.dir) rekey.push({ id: prior.id, dir: file.dir });
+      if (
+        prior.dir !== file.dir ||
+        prior.lyricsSidecar !== file.lyricsSidecar
+      ) {
+        rekey.push({
+          id: prior.id,
+          dir: file.dir,
+          lyricsSidecar: file.lyricsSidecar,
+        });
+      }
     } else {
       work.push(file);
     }
@@ -454,14 +468,18 @@ export async function scanLibrary(
       await db.withTransactionAsync(async () => {
         for (const row of rekey) {
           await db.runAsync(
-            "UPDATE tracks SET dir = ? WHERE id = ?",
+            "UPDATE tracks SET dir = ?, lyrics_sidecar = ? WHERE id = ?",
             row.dir,
+            row.lyricsSidecar,
             row.id,
           );
         }
       });
     } catch (error) {
-      logError("[localLibrary] Failed to record track directories", error);
+      logError(
+        "[localLibrary] Failed to record track directories and lyrics",
+        error,
+      );
     }
   }
 
@@ -838,6 +856,7 @@ async function visitDirectory(
   if (!seenBefore) listed.art.set(path, art);
   else if (!art.parent && parent) art.parent = parent;
 
+  const audio: ScannedFile[] = [];
   for (const entry of entries) {
     const entryRelative = relative ? `${relative}/${entry.name}` : entry.name;
     if (isIgnored(active, entryRelative, entry.isDirectory)) {
@@ -867,14 +886,25 @@ async function visitDirectory(
       ) {
         continue;
       }
-      out.set(entry.path, {
+      const file: ScannedFile = {
         uri: entry.path,
         name: entry.name,
         size: entry.size,
         mtime: entry.mtime,
         dir: path,
         sourceFolder: ctx.sourceFolder,
-      });
+        lyricsSidecar: null,
+      };
+      out.set(entry.path, file);
+      audio.push(file);
+    }
+  }
+
+  // After the loop: a listing can name the lyrics file before its track.
+  if (audio.length > 0) {
+    const sidecars = indexLyricSidecars(visible);
+    for (const file of audio) {
+      file.lyricsSidecar = pickLyricsSidecar(file.name, sidecars)?.path ?? null;
     }
   }
 
@@ -894,7 +924,8 @@ async function loadExistingRows(
     mtime: number | null;
     size: number | null;
     dir: string | null;
-  }>("SELECT id, uri, fts_rowid, mtime, size, dir FROM tracks");
+    lyrics_sidecar: string | null;
+  }>("SELECT id, uri, fts_rowid, mtime, size, dir, lyrics_sidecar FROM tracks");
   const map = new Map<string, ExistingRow>();
   for (const row of rows) {
     map.set(row.uri, {
@@ -903,6 +934,7 @@ async function loadExistingRows(
       mtime: row.mtime,
       size: row.size,
       dir: row.dir,
+      lyricsSidecar: row.lyrics_sidecar,
     });
   }
   return map;
@@ -936,6 +968,7 @@ type TrackInsert = {
   artwork_path: string | null;
   artwork_mime: string | null;
   lyrics: string | null;
+  lyrics_sidecar: string | null;
   music_brainz_id: string | null;
   artists_json: string | null;
   replay_gain_json: string | null;
@@ -985,6 +1018,7 @@ function toTrackInsert(file: ScannedFile, m: AudioMetadata): TrackInsert {
     artwork_path: m.artworkPath ?? null,
     artwork_mime: m.artworkMimeType ?? null,
     lyrics: m.lyrics ?? null,
+    lyrics_sidecar: file.lyricsSidecar,
     music_brainz_id: m.musicBrainzId ?? null,
     artists_json: m.artists?.length ? JSON.stringify(m.artists) : null,
     replay_gain_json: m.replayGain ? JSON.stringify(m.replayGain) : null,
@@ -1003,9 +1037,9 @@ INSERT OR REPLACE INTO tracks (
   id, uri, path, folder, dir, size, mtime, title, artist, album, album_artist,
   composer, genre, year, track_number, track_total, disc_number, disc_total,
   duration_ms, bitrate, sample_rate, is_compilation, suffix, artwork_path,
-  artwork_mime, lyrics, music_brainz_id, artists_json, replay_gain_json,
-  release_types_json, album_key, artist_key, source_folder, indexed_at,
-  fts_rowid,
+  artwork_mime, lyrics, lyrics_sidecar, music_brainz_id, artists_json,
+  replay_gain_json, release_types_json, album_key, artist_key, source_folder,
+  indexed_at, fts_rowid,
   -- Seeded from the scanned keys. A track carrying a correction has these put
   -- back by reapplyOverridesAfterIndexing once the scan finishes.
   resolved_album_key, resolved_artist_key
@@ -1014,7 +1048,7 @@ INSERT OR REPLACE INTO tracks (
   $album_artist, $composer, $genre, $year, $track_number, $track_total,
   $disc_number, $disc_total, $duration_ms, $bitrate, $sample_rate,
   $is_compilation, $suffix, $artwork_path, $artwork_mime, $lyrics,
-  $music_brainz_id, $artists_json, $replay_gain_json, $release_types_json,
+  $lyrics_sidecar, $music_brainz_id, $artists_json, $replay_gain_json, $release_types_json,
   $album_key, $artist_key, $source_folder, $indexed_at, $fts_rowid,
   $album_key, $artist_key
 )`;
@@ -1053,6 +1087,7 @@ async function writeTrack(
     $artwork_path: row.artwork_path,
     $artwork_mime: row.artwork_mime,
     $lyrics: row.lyrics,
+    $lyrics_sidecar: row.lyrics_sidecar,
     $music_brainz_id: row.music_brainz_id,
     $artists_json: row.artists_json,
     $replay_gain_json: row.replay_gain_json,

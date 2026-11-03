@@ -3,6 +3,7 @@ import jellyfinApiInstance, {
   MUSIC_ARTIST_ITEM_TYPES,
 } from "@/services/jellyfin/index";
 import {
+  favoriteAsStarred,
   mapBaseItemToAlbum,
   mapBaseItemToArtist,
   mapBaseItemToChild,
@@ -56,14 +57,14 @@ function paramsFor(
     fromYear,
     toYear,
     genre,
-    musicFolderId,
+    musicFolderIds,
   }: {
     size?: number;
     offset?: number;
     fromYear?: number;
     toYear?: number;
     genre?: string;
-    musicFolderId?: string;
+    musicFolderIds?: string[];
     // Applied by albumParams below rather than here, so each `case` keeps
     // stating the direction it serves by default.
     order?: SortDirection;
@@ -76,7 +77,7 @@ function paramsFor(
     Fields: FIELDS,
     Limit: size,
     StartIndex: offset,
-    ParentId: musicFolderId,
+    ParentId: musicFolderIds?.[0],
   };
   switch (type) {
     case "random":
@@ -87,18 +88,6 @@ function paramsFor(
       return {
         ...base,
         SortBy: "CommunityRating,SortName",
-        SortOrder: "Descending",
-      };
-    case "frequent":
-      return {
-        ...base,
-        SortBy: "PlayCount",
-        SortOrder: "Descending",
-      };
-    case "recent":
-      return {
-        ...base,
-        SortBy: "DatePlayed",
         SortOrder: "Descending",
       };
     case "alphabeticalByName":
@@ -169,6 +158,9 @@ async function fetchAlbums(
   type: AlbumListType,
   opts: Parameters<typeof paramsFor>[1],
 ): Promise<BaseItemDto[]> {
+  if (type === "frequent" || type === "recent") {
+    return fetchAlbumsByPlays(type, opts);
+  }
   // Jellyfin's home UI uses /Users/{UserId}/Items/Latest for "Latest Music".
   // The Latest endpoint groups Audio items by album, but Limit counts tracks
   // (pre-grouping) and StartIndex is unsupported — so we use it only for the
@@ -195,7 +187,7 @@ async function fetchAlbums(
             // approximately `size` albums back.
             Limit: size * 4,
             Fields: FIELDS,
-            ParentId: opts.musicFolderId,
+            ParentId: opts.musicFolderIds?.[0],
             ImageTypeLimit: 1,
             EnableImageTypes: "Primary,Backdrop,Banner,Thumb",
           },
@@ -238,14 +230,227 @@ export const getAlbumList2 = async (
   return fakeEnvelope({ albumList2: list });
 };
 
+type AlbumPlayStats = { plays: number; lastPlayed?: string };
+type TrackPlays = { albumId: string; plays: number; lastPlayed?: string };
+
+const PLAYED_TRACKS_PARAMS = {
+  Recursive: true,
+  IncludeItemTypes: "Audio",
+  Filters: "IsPlayed",
+  EnableImages: false,
+  EnableTotalRecordCount: false,
+};
+
+function trackPlays(track: BaseItemDto): TrackPlays | null {
+  if (!track.AlbumId) return null;
+  return {
+    albumId: track.AlbumId,
+    plays: track.UserData?.PlayCount ?? 0,
+    lastPlayed: track.UserData?.LastPlayedDate,
+  };
+}
+
+// Jellyfin keeps play data on tracks only: an album's UserData.PlayCount and
+// LastPlayedDate are never written, and its IsPlayed/IsUnplayed filters mean
+// "every track played" or not. Album play stats are summed from played tracks.
+function sumByAlbum(tracks: Iterable<TrackPlays>): Map<string, AlbumPlayStats> {
+  const stats = new Map<string, AlbumPlayStats>();
+  for (const track of tracks) {
+    const current = stats.get(track.albumId) ?? { plays: 0 };
+    stats.set(track.albumId, {
+      plays: current.plays + track.plays,
+      lastPlayed:
+        track.lastPlayed &&
+        (!current.lastPlayed || track.lastPlayed > current.lastPlayed)
+          ? track.lastPlayed
+          : current.lastPlayed,
+    });
+  }
+  return stats;
+}
+
+async function albumPlayStats(
+  params: Record<string, string | undefined>,
+): Promise<Map<string, AlbumPlayStats>> {
+  const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
+    params: { ...params, UserId: userId(), ...PLAYED_TRACKS_PARAMS },
+  });
+  return sumByAlbum(
+    (rsp.data?.Items ?? []).flatMap((track) => trackPlays(track) ?? []),
+  );
+}
+
+function withPlayStats(
+  album: BaseItemDto,
+  stats: AlbumPlayStats | undefined,
+): BaseItemDto {
+  return {
+    ...album,
+    UserData: {
+      ...album.UserData,
+      PlayCount: stats?.plays ?? 0,
+      LastPlayedDate: stats?.lastPlayed,
+    },
+  };
+}
+
+// Every played track, read in full once per session (~1 KB a track), then
+// topped up newest-first until the last play already seen. A counted play
+// invalidates the "frequent" and "recent" lists, so re-reading the whole
+// history would cost that full read on every song.
+type PlayLedger = { tracks: Map<string, TrackPlays>; watermark?: string };
+const FULL_READ_PAGE = 1000;
+const TOP_UP_PAGE = 10;
+const playLedgers = new Map<string, PlayLedger>();
+const ledgerReads = new Map<string, Promise<PlayLedger>>();
+
+async function topUpPlayLedger(
+  key: string,
+  musicFolderIds: string[] | undefined,
+): Promise<PlayLedger> {
+  const ledger: PlayLedger = playLedgers.get(key) ?? { tracks: new Map() };
+  const since = ledger.watermark;
+  const pageSize = playLedgers.has(key) ? TOP_UP_PAGE : FULL_READ_PAGE;
+  let watermark = since;
+  for (let start = 0; ; start += pageSize) {
+    const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
+      params: {
+        UserId: userId(),
+        ...PLAYED_TRACKS_PARAMS,
+        ParentId: musicFolderIds?.[0],
+        SortBy: "DatePlayed",
+        SortOrder: "Descending",
+        StartIndex: start,
+        Limit: pageSize,
+      },
+    });
+    const tracks = rsp.data?.Items ?? [];
+    let caughtUp = false;
+    for (const track of tracks) {
+      const lastPlayed = track.UserData?.LastPlayedDate;
+      if (since && (!lastPlayed || lastPlayed <= since)) {
+        caughtUp = true;
+        break;
+      }
+      const plays = trackPlays(track);
+      if (plays) ledger.tracks.set(track.Id, plays);
+      if (lastPlayed && (!watermark || lastPlayed > watermark)) {
+        watermark = lastPlayed;
+      }
+    }
+    if (caughtUp || tracks.length < pageSize) break;
+  }
+  ledger.watermark = watermark;
+  playLedgers.set(key, ledger);
+  return ledger;
+}
+
+function readPlayLedger(musicFolderIds: string[] | undefined) {
+  const key = [serverKey(), userId(), musicFolderIds?.[0] ?? ""].join("|");
+  const pending = ledgerReads.get(key);
+  if (pending) return pending;
+  const read = topUpPlayLedger(key, musicFolderIds).finally(() =>
+    ledgerReads.delete(key),
+  );
+  ledgerReads.set(key, read);
+  return read;
+}
+
+// A browse's first page re-ranks from a topped-up ledger; later pages reuse that
+// ranking, so paging never shifts under the list.
+type AlbumRanking = { id: string; stats: AlbumPlayStats }[];
+const albumRankings = new Map<string, AlbumRanking>();
+
+export function __resetAlbumPlayStats(): void {
+  playLedgers.clear();
+  ledgerReads.clear();
+  albumRankings.clear();
+}
+
+const byLastPlayed = (a: AlbumPlayStats, b: AlbumPlayStats) =>
+  (a.lastPlayed ?? "").localeCompare(b.lastPlayed ?? "");
+
+// Played albums only, like Subsonic's lists: `frequent` is most plays first,
+// then the most recently played; `recent` is the latest track play first.
+function rankAlbums(
+  stats: Map<string, AlbumPlayStats>,
+  type: "frequent" | "recent",
+  order: SortDirection,
+): AlbumRanking {
+  const sign = order === "desc" ? -1 : 1;
+  return [...stats]
+    .map(([id, albumStats]) => ({ id, stats: albumStats }))
+    .filter((entry) => type === "frequent" || entry.stats.lastPlayed)
+    .sort((a, b) =>
+      type === "frequent"
+        ? sign * (a.stats.plays - b.stats.plays) ||
+          byLastPlayed(b.stats, a.stats)
+        : sign * byLastPlayed(a.stats, b.stats),
+    );
+}
+
+async function fetchAlbumsByPlays(
+  type: "frequent" | "recent",
+  opts: Parameters<typeof paramsFor>[1],
+): Promise<BaseItemDto[]> {
+  const { size = 20, offset = 0, musicFolderIds, order = "desc" } = opts;
+  const key = [
+    serverKey(),
+    userId(),
+    musicFolderIds?.[0] ?? "",
+    type,
+    order,
+  ].join("|");
+  let ranking = offset > 0 ? albumRankings.get(key) : undefined;
+  if (!ranking) {
+    const ledger = await readPlayLedger(musicFolderIds);
+    ranking = rankAlbums(sumByAlbum(ledger.tracks.values()), type, order);
+    albumRankings.set(key, ranking);
+  }
+  const page = ranking.slice(offset, offset + size);
+  if (page.length === 0) return [];
+  const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
+    params: {
+      UserId: userId(),
+      Ids: page.map((entry) => entry.id).join(","),
+      Fields: FIELDS,
+    },
+  });
+  const albums = new Map(
+    (rsp.data?.Items ?? []).map((item) => [item.Id, item]),
+  );
+  return page.flatMap((entry) => {
+    const album = albums.get(entry.id);
+    return album ? [withPlayStats(album, entry.stats)] : [];
+  });
+}
+
+export const getRandomAlbumsWithPlayCounts = async (
+  opts: Parameters<typeof paramsFor>[1],
+) => {
+  const items = await fetchAlbums("random", opts);
+  const stats =
+    items.length > 0
+      ? await albumPlayStats({
+          AlbumIds: items.map((item) => item.Id).join(","),
+        })
+      : new Map<string, AlbumPlayStats>();
+  const list: AlbumList2 = {
+    album: items.map((item) =>
+      mapBaseItemToAlbum(withPlayStats(item, stats.get(item.Id))),
+    ),
+  };
+  return fakeEnvelope({ albumList2: list });
+};
+
 export const getMostPlayedSongs = async ({
   size = 20,
   offset = 0,
-  musicFolderId,
+  musicFolderIds,
 }: {
   size?: number;
   offset?: number;
-  musicFolderId?: string;
+  musicFolderIds?: string[];
 } = {}) => {
   const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
     params: {
@@ -258,7 +463,7 @@ export const getMostPlayedSongs = async ({
       Limit: size,
       StartIndex: offset,
       Fields: FIELDS,
-      ParentId: musicFolderId,
+      ParentId: musicFolderIds?.[0],
     },
   });
   const songs: Songs = {
@@ -279,13 +484,13 @@ export const getRandomSongs = async ({
   fromYear,
   toYear,
   genre,
-  musicFolderId,
+  musicFolderIds,
 }: {
   size?: number;
   fromYear?: number;
   toYear?: number;
   genre?: string;
-  musicFolderId?: string;
+  musicFolderIds?: string[];
 }) => {
   const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
     params: {
@@ -296,7 +501,7 @@ export const getRandomSongs = async ({
       Limit: size,
       Fields: FIELDS,
       Genres: genre,
-      ParentId: musicFolderId,
+      ParentId: musicFolderIds?.[0],
       Years:
         fromYear != null && toYear != null
           ? Array.from(
@@ -323,7 +528,7 @@ const SEARCH_WINDOW = 200;
 
 const fetchAudio = async (
   params: Record<string, unknown>,
-  musicFolderId?: string,
+  musicFolderIds?: string[],
 ) => {
   const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
     params: {
@@ -333,7 +538,7 @@ const fetchAudio = async (
       SortBy: "SortName",
       SortOrder: "Ascending",
       Fields: FIELDS,
-      ParentId: musicFolderId,
+      ParentId: musicFolderIds?.[0],
       ...params,
     },
   });
@@ -350,13 +555,13 @@ const fetchAudio = async (
 // getMusicDirectory can't browse an artist by ParentId), so a Recursive /Items
 // query scoped to a music folder never returns them. /Artists is the endpoint
 // that does, and its ids are what the ArtistIds filter expects.
-const searchArtistIds = async (query: string, musicFolderId?: string) => {
+const searchArtistIds = async (query: string, musicFolderIds?: string[]) => {
   const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Artists", {
     params: {
       UserId: userId(),
       SearchTerm: query,
       Limit: SEARCH_HINTS,
-      ParentId: musicFolderId,
+      ParentId: musicFolderIds?.[0],
       IncludeItemTypes: MUSIC_ARTIST_ITEM_TYPES,
     },
   });
@@ -364,7 +569,7 @@ const searchArtistIds = async (query: string, musicFolderId?: string) => {
 };
 
 // Albums are ordinary descendants, so they do come back from /Items.
-const searchAlbumIds = async (query: string, musicFolderId?: string) => {
+const searchAlbumIds = async (query: string, musicFolderIds?: string[]) => {
   const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
     params: {
       UserId: userId(),
@@ -372,7 +577,7 @@ const searchAlbumIds = async (query: string, musicFolderId?: string) => {
       IncludeItemTypes: "MusicAlbum",
       SearchTerm: query,
       Limit: SEARCH_HINTS,
-      ParentId: musicFolderId,
+      ParentId: musicFolderIds?.[0],
     },
   });
   return (rsp.data?.Items ?? []).map((item) => item.Id).filter(Boolean);
@@ -382,24 +587,24 @@ const searchSongs = async (
   query: string,
   size: number,
   offset: number,
-  musicFolderId?: string,
+  musicFolderIds?: string[],
 ) => {
   const [byName, artistIds, albumIds] = await Promise.all([
-    fetchAudio({ SearchTerm: query, Limit: SEARCH_WINDOW }, musicFolderId),
-    searchArtistIds(query, musicFolderId),
-    searchAlbumIds(query, musicFolderId),
+    fetchAudio({ SearchTerm: query, Limit: SEARCH_WINDOW }, musicFolderIds),
+    searchArtistIds(query, musicFolderIds),
+    searchAlbumIds(query, musicFolderIds),
   ]);
   const [byArtist, byAlbum] = await Promise.all([
     artistIds.length
       ? fetchAudio(
           { ArtistIds: artistIds.join(","), Limit: SEARCH_WINDOW },
-          musicFolderId,
+          musicFolderIds,
         )
       : [],
     albumIds.length
       ? fetchAudio(
           { AlbumIds: albumIds.join(","), Limit: SEARCH_WINDOW },
-          musicFolderId,
+          musicFolderIds,
         )
       : [],
   ]);
@@ -435,18 +640,18 @@ export const getSongs = async ({
   size = 50,
   offset = 0,
   sort,
-  musicFolderId,
+  musicFolderIds,
 }: {
   query?: string;
   size?: number;
   offset?: number;
   sort?: SongSortType;
-  musicFolderId?: string;
+  musicFolderIds?: string[];
 } = {}) => {
   const { field, direction } = parseSortType(sort ?? "defaultAsc");
   const sortBy = SONG_SORT_BY[field];
   const items = query
-    ? await searchSongs(query, size, offset, musicFolderId)
+    ? await searchSongs(query, size, offset, musicFolderIds)
     : await fetchAudio(
         {
           Limit: size,
@@ -456,7 +661,7 @@ export const getSongs = async ({
             SortOrder: direction === "desc" ? "Descending" : "Ascending",
           }),
         },
-        musicFolderId,
+        musicFolderIds,
       );
   const songs: Songs = { song: items.map(mapBaseItemToChild) };
   return fakeEnvelope({ songs });
@@ -467,8 +672,8 @@ export const getSongsByGenre = async (
   {
     count = 20,
     offset = 0,
-    musicFolderId,
-  }: { count?: number; offset?: number; musicFolderId?: string },
+    musicFolderIds,
+  }: { count?: number; offset?: number; musicFolderIds?: string[] },
 ) => {
   const rsp = await jellyfinApiInstance.get<JellyfinItemsResult>("/Items", {
     params: {
@@ -480,7 +685,7 @@ export const getSongsByGenre = async (
       Limit: count,
       StartIndex: offset,
       Fields: FIELDS,
-      ParentId: musicFolderId,
+      ParentId: musicFolderIds?.[0],
     },
   });
   const songs: Songs = {
@@ -523,7 +728,7 @@ async function getFavorites(type: "MusicAlbum" | "Audio" | "MusicArtist") {
   return rsp.data?.Items ?? [];
 }
 
-export const getStarred = async (_params: { musicFolderId?: string }) => {
+export const getStarred = async (_params: { musicFolderIds?: string[] }) => {
   const [albums, songs, artists] = await Promise.all([
     getFavorites("MusicAlbum"),
     getFavorites("Audio"),
@@ -537,14 +742,34 @@ export const getStarred = async (_params: { musicFolderId?: string }) => {
   return fakeEnvelope({ starred });
 };
 
-export const getStarred2 = async (_params: { musicFolderId?: string }) => {
-  const [albums, songs, artists] = await Promise.all([
+// Favorites span every library, so the stats do too. They only feed the
+// library's play-based sorts: a failed read must not take the favorites down
+// with it, it just leaves those sorts without data (the axios interceptor has
+// already reported it).
+async function favoriteAlbumPlayStats(): Promise<Map<string, AlbumPlayStats>> {
+  try {
+    const ledger = await readPlayLedger(undefined);
+    return sumByAlbum(ledger.tracks.values());
+  } catch {
+    return new Map();
+  }
+}
+
+export const getStarred2 = async (_params: { musicFolderIds?: string[] }) => {
+  const [albums, songs, artists, albumStats] = await Promise.all([
     getFavorites("MusicAlbum"),
     getFavorites("Audio"),
     getFavorites("MusicArtist"),
+    favoriteAlbumPlayStats(),
   ]);
   const starred2: Starred2 = {
-    album: albums.map(mapBaseItemToAlbum),
+    // `starred` stays derived from the album itself: favoriteAsStarred falls
+    // back on LastPlayedDate, and the summed track plays would otherwise turn
+    // "recently favorited" into "recently played".
+    album: albums.map((item) => ({
+      ...mapBaseItemToAlbum(withPlayStats(item, albumStats.get(item.Id))),
+      starred: favoriteAsStarred(item),
+    })),
     song: songs.map(mapBaseItemToChild),
     artist: artists.map(mapBaseItemToArtist),
   };

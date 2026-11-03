@@ -41,7 +41,7 @@ import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import { gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
@@ -80,7 +80,7 @@ export default function GenreScreen() {
           maxColumns: 5,
         })
       : 1;
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const {
     data,
     isLoading,
@@ -92,7 +92,7 @@ export default function GenreScreen() {
     type: "byGenre",
     genre: id,
     size: 12,
-    musicFolderId,
+    musicFolderIds,
   });
   const albums = useMemo(
     () => data?.pages.flatMap((page) => page.albumList2?.album ?? []) ?? [],

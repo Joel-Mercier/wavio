@@ -94,6 +94,23 @@ describe("reportError classifier", () => {
     expect(mockCapture).not.toHaveBeenCalled();
   });
 
+  it("suppresses a 400 only when badRequestIsExpected", () => {
+    const badRequest = () => {
+      const error = new axios.AxiosError("Bad Request");
+      error.response = { status: 400 } as never;
+      return error;
+    };
+    reportError(badRequest(), {
+      area: "api",
+      api: "audiomuse",
+      badRequestIsExpected: true,
+    });
+    expect(mockCapture).not.toHaveBeenCalled();
+
+    reportError(badRequest(), { area: "api", api: "audiomuse" });
+    expect(mockCapture).toHaveBeenCalledTimes(1);
+  });
+
   it("suppresses a 501 (server doesn't implement the endpoint)", () => {
     const error = new axios.AxiosError("Not Implemented");
     error.response = { status: 501 } as never;

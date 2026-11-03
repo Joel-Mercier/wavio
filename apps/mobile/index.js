@@ -1,4 +1,7 @@
 import "expo-router/entry";
+// Answers the OS's daily auto-backup slot. Wired here because the slot can boot
+// the JS runtime with no UI, the same way a car does.
+import { startAutoBackupScheduler } from "./services/autoBackup";
 // Wires Android Auto / CarPlay outside of React, so a headless boot (Android
 // Auto binding the media service with the app closed) still answers taps.
 // Guarded: this runs during entry-module evaluation, where an uncaught throw
@@ -46,4 +49,10 @@ try {
   startOidcRefreshScheduler();
 } catch (e) {
   console.warn("[oidc] failed to start token refresh scheduler", e);
+}
+
+try {
+  startAutoBackupScheduler();
+} catch (e) {
+  console.warn("[autoBackup] failed to start scheduler", e);
 }

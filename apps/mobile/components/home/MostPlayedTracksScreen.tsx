@@ -32,7 +32,7 @@ import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
@@ -49,7 +49,7 @@ export default function MostPlayedTracksScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => ({
     opacity: interpolate(offsetY.value, [0, 50], [0, 1], Extrapolation.CLAMP),
@@ -64,7 +64,7 @@ export default function MostPlayedTracksScreen() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteMostPlayedSongs({ size: 20, musicFolderId });
+  } = useInfiniteMostPlayedSongs({ size: 20, musicFolderIds });
   const songs = useMemo(
     () => data?.pages.flatMap((page) => page.songs?.song ?? []) ?? [],
     [data],

@@ -149,3 +149,40 @@ describe("useHasPlayableTracks", () => {
     expect(seen).toEqual([false, true]);
   });
 });
+
+describe("registering a fully downloaded collection", () => {
+  const meta = { id: "al1", kind: "album" as const, name: "Album" };
+
+  it("registers one whose tracks the user saved", () => {
+    act(() => {
+      useOffline.setState({
+        downloadProgress: {},
+        downloadedTracks: Object.fromEntries(
+          ids.map((id) => [id, offlineTrack(id)]),
+        ),
+      });
+    });
+    mount(() => useCollectionDownload(songs, meta).isRegistered);
+
+    expect(useOffline.getState().downloadedCollections.al1?.trackIds).toEqual(
+      ids,
+    );
+  });
+
+  it("leaves one alone when the automatic downloads put a track there", () => {
+    act(() => {
+      useOffline.setState({
+        downloadProgress: {},
+        downloadedTracks: Object.fromEntries(
+          ids.map((id) => [
+            id,
+            { ...offlineTrack(id), source: id === "b" ? "rule" : undefined },
+          ]),
+        ),
+      });
+    });
+    mount(() => useCollectionDownload(songs, meta).isRegistered);
+
+    expect(useOffline.getState().downloadedCollections.al1).toBeUndefined();
+  });
+});

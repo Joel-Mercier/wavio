@@ -3,12 +3,17 @@ import type { Shares } from "@/services/openSubsonic/types";
 
 export const createShare = async (
   id: string,
-  { description, expires }: { description?: string; expires?: number },
+  {
+    description,
+    expires,
+    downloadable,
+  }: { description?: string; expires?: number; downloadable?: boolean },
 ) =>
   subsonicRequest<{ shares: Shares }>("/rest/createShare", {
     id,
     description,
     expires,
+    downloadable,
   });
 
 export const deleteShare = async (id: string) =>
@@ -19,10 +24,15 @@ export const getShares = async () =>
 
 export const updateShare = async (
   id: string,
-  { description, expires }: { description?: string; expires?: number },
+  {
+    description,
+    expires,
+    downloadable,
+  }: { description?: string; expires?: number; downloadable?: boolean },
 ) =>
   subsonicRequest<Record<string, never>>("/rest/updateShare", {
     id,
     description,
     expires,
+    downloadable,
   });

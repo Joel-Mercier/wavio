@@ -10,13 +10,13 @@ import type { Genres } from "@/services/openSubsonic/types";
 // response carries no song/album counts (Navidrome ≥ 0.58 serializes only
 // id/name), so the mapped genres leave them undefined and the UI hides them.
 export const getGenres = async ({
-  musicFolderId,
+  musicFolderIds,
 }: {
-  musicFolderId?: string;
+  musicFolderIds?: string[];
 }) => {
   const rsp = await navidromeApiInstance.get<NavidromeGenre[]>("/genre", {
     params: {
-      library_id: musicFolderId,
+      library_id: musicFolderIds,
       _sort: "name",
     },
   });

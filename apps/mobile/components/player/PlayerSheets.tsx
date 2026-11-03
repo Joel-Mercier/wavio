@@ -7,6 +7,7 @@ import { File, Paths } from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import AudioLines from "lucide-react-native/icons/audio-lines";
+import BookHeadphones from "lucide-react-native/icons/book-headphones";
 import BookmarkPlus from "lucide-react-native/icons/bookmark-plus";
 import CircleMinus from "lucide-react-native/icons/circle-minus";
 import PlusCircle from "lucide-react-native/icons/circle-plus";
@@ -38,6 +39,7 @@ import InternetRadioStationActions from "@/components/internetRadioStations/Inte
 import LrclibPickerSheet from "@/components/player/LrclibPickerSheet";
 import ShareLinkSheet from "@/components/player/ShareLinkSheet";
 import SleepTimerActionRow from "@/components/player/SleepTimerActionRow";
+import ShareOptionsSheet from "@/components/shares/ShareOptionsSheet";
 import TrackInfoModal from "@/components/tracks/TrackInfoModal";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -52,6 +54,7 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { useSong } from "@/hooks/backend/useBrowsing";
 import { useCreateShare } from "@/hooks/backend/useSharing";
+import { useCanTranscodeShares } from "@/hooks/navidrome/useShares";
 import {
   useIsCollectionAvailableOffline,
   useIsDetailCached,
@@ -59,6 +62,7 @@ import {
 import { usePlaybackProgress } from "@/hooks/player";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import type { ShareLinkOptions } from "@/services/backend/sharing";
 import { isTlsTrustFailure } from "@/services/errorReporting";
 import { getCurrentTime } from "@/services/player";
 import { saveTrackToDevice } from "@/services/saveTrackToDevice";
@@ -74,6 +78,7 @@ import { formatSeconds } from "@/utils/date";
 import { formatRichTextPlain } from "@/utils/formatRichText";
 import { logError } from "@/utils/log";
 import { TOAST_DURATION } from "@/utils/toastDuration";
+import { isLibraryTrack } from "@/utils/trackSource";
 
 // Live label for the "set bookmark at" action. Isolated in its own component so
 // only this row re-renders on the ~4 Hz progress tick (it's only mounted while
@@ -138,13 +143,16 @@ export default function PlayerSheets({
   const lyricsPickerRef = lyricsPickerSheetRef ?? ownLyricsPickerSheetRef;
   const bottomSheetArtistsModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetShareOptionsModalRef = useRef<BottomSheetModal>(null);
   const doShare = useCreateShare();
+  const canTranscodeShares = useCanTranscodeShares();
   const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
 
   const isRadio = !!playingTrack?.isRadio;
   const isPodcast = playingTrack?.source === "podcast";
+  const isAudiobook = playingTrack?.source === "audiobook";
   const { data: songData } = useSong(playingTrack?.id ?? "", {
-    enabled: showInfoModal && !isRadio && !isPodcast,
+    enabled: showInfoModal && isLibraryTrack(playingTrack),
   });
   const podcastSeries = isPodcast ? playingTrack?.podcastSeries : null;
   const isPodcastFavorite = usePodcasts((store) =>
@@ -424,10 +432,10 @@ export default function PlayerSheets({
     });
   };
 
-  const handleSharePress = () => {
+  const createShareLink = (options?: ShareLinkOptions) => {
     if (!playingTrack) return;
     doShare.mutate(
-      { id: playingTrack.id },
+      { id: playingTrack.id, ...options },
       {
         onSuccess: (data) => {
           actionsSheetRef.current?.dismiss();
@@ -463,6 +471,16 @@ export default function PlayerSheets({
         },
       },
     );
+  };
+
+  const handleSharePress = () => {
+    if (!playingTrack) return;
+    if (canTranscodeShares) {
+      actionsSheetRef.current?.dismiss();
+      bottomSheetShareOptionsModalRef.current?.present();
+      return;
+    }
+    createShareLink();
   };
 
   const handleDownloadPress = async () => {
@@ -550,13 +568,13 @@ export default function PlayerSheets({
                 >
                   {playingTrack?.title}
                 </Heading>
-                {!isRadio && !isPodcast && (
+                {!isRadio && !isPodcast && !isAudiobook && (
                   <Text numberOfLines={1} className="text-md text-primary-100">
                     {playingTrack?.artist || t("app.shared.unknownArtist")} ⦁{" "}
                     {playingTrack?.album || t("app.shared.unknownAlbum")}
                   </Text>
                 )}
-                {isPodcast && (
+                {(isPodcast || isAudiobook) && (
                   <Text numberOfLines={1} className="text-md text-primary-100">
                     {playingTrack?.artist}
                   </Text>
@@ -587,6 +605,27 @@ export default function PlayerSheets({
               >
                 {sleepTimerRow}
               </InternetRadioStationActions>
+            ) : isAudiobook ? (
+              <VStack className="mt-6 gap-y-8">
+                <FadeOutScaleDown
+                  onPress={() => {
+                    actionsSheetRef.current?.dismiss();
+                    if (!playingTrack?.audiobookItemId) return;
+                    router.replace({
+                      pathname: "/audiobooks/[id]",
+                      params: { id: playingTrack.audiobookItemId },
+                    });
+                  }}
+                >
+                  <HStack className="items-center">
+                    <BookHeadphones size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.audiobooks.goToBook")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+                {sleepTimerRow}
+              </VStack>
             ) : isPodcast ? (
               <VStack className="mt-6 gap-y-8">
                 {podcastSeries && (
@@ -901,6 +940,10 @@ export default function PlayerSheets({
         </BottomSheetScrollView>
       </BottomSheetModalComponent>
       <LrclibPickerSheet sheetRef={lyricsPickerRef} track={playingTrack} />
+      <ShareOptionsSheet
+        sheetRef={bottomSheetShareOptionsModalRef}
+        onConfirm={createShareLink}
+      />
       <ShareLinkSheet sheetRef={bottomSheetShareModalRef} url={shareUrl} />
       <TrackInfoModal
         isOpen={showInfoModal}

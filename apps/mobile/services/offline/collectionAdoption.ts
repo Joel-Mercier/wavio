@@ -6,6 +6,10 @@ import {
   artworkCacheService,
   cacheArtworkForTracks,
 } from "@/services/offline/artworkCacheService";
+import {
+  isUserOwned,
+  userOwnedTracks,
+} from "@/services/offline/autoDownloadPlan";
 import { offlineDownloadService } from "@/services/offline/downloadService";
 import type {
   AlbumID3,
@@ -34,9 +38,9 @@ import { logError } from "@/utils/log";
 type Kind = OfflineCollection["kind"];
 type CollectionMeta = Omit<
   OfflineCollection,
-  "trackIds" | "songCount" | "savedAt" | "source"
+  "trackIds" | "songCount" | "savedAt" | "source" | "ruleVersion"
 >;
-type Membership<T> = { item: T; meta: CollectionMeta; entries: Child[] };
+export type Membership<T> = { item: T; meta: CollectionMeta; entries: Child[] };
 
 type Source<T extends { id: string; songCount: number }> = {
   // `mayBeComplete` is a cheap pre-check against the downloads, so only
@@ -116,12 +120,21 @@ const albums: Source<AlbumID3> = {
 };
 
 // The library sync registers every album and playlist itself, as "auto"
-// content; a "user" entry written here first would block its write and survive
-// disabling extended offline mode. Re-checked after each fetch, since the mode
-// can be turned on while one is in flight.
-function canRegister(id: string, scope: string): boolean {
+// content, and the liked-albums and playlists automatic downloads theirs as
+// "rule" content; a "user" entry written here first would outrank theirs and
+// survive the user switching them off (or unliking the album). Re-checked
+// after each fetch, since either can be turned on while one is in flight.
+function ruleOwns(kind: Kind): boolean {
+  const state = useOffline.getState();
+  return kind === "album"
+    ? state.autoDownloadLikedAlbums
+    : state.autoDownloadPlaylists;
+}
+
+function canRegister(kind: Kind, id: string, scope: string): boolean {
   return (
     !useLibrarySync.getState().extendedOfflineModeEnabled &&
+    !ruleOwns(kind) &&
     scope === currentAuthScope() &&
     !(id in useOffline.getState().downloadedCollections) &&
     !offlineDownloadService.isRemovingCollection(id)
@@ -134,7 +147,7 @@ function isStillIncomplete(
 ): boolean {
   return (
     known?.version === version &&
-    !(known.missingTrackId in useOffline.getState().downloadedTracks)
+    !isUserOwned(useOffline.getState().downloadedTracks[known.missingTrackId])
   );
 }
 
@@ -144,7 +157,11 @@ async function adopt<T extends { id: string; songCount: number }>(
   items: T[],
 ): Promise<void> {
   if (useLibrarySync.getState().extendedOfflineModeEnabled) return;
-  const { downloadedTracks, incompleteCollections } = useOffline.getState();
+  if (ruleOwns(kind)) return;
+  const { incompleteCollections } = useOffline.getState();
+  const downloadedTracks = userOwnedTracks(
+    useOffline.getState().downloadedTracks,
+  );
   if (Object.keys(downloadedTracks).length === 0) return;
   const scope = currentAuthScope();
   const { mayBeComplete, version } = source.prepare(downloadedTracks);
@@ -156,7 +173,7 @@ async function adopt<T extends { id: string; songCount: number }>(
       if (
         item.songCount <= 0 ||
         !mayBeComplete(item) ||
-        !canRegister(item.id, scope)
+        !canRegister(kind, item.id, scope)
       ) {
         continue;
       }
@@ -166,12 +183,12 @@ async function adopt<T extends { id: string; songCount: number }>(
       }
       try {
         const membership = await source.load(item.id);
-        if (!membership?.entries.length || !canRegister(item.id, scope)) {
+        if (!membership?.entries.length || !canRegister(kind, item.id, scope)) {
           continue;
         }
         const { entries, meta } = membership;
         const { downloadedTracks: current } = useOffline.getState();
-        const missing = entries.find((song) => !(song.id in current));
+        const missing = entries.find((song) => !isUserOwned(current[song.id]));
         if (missing) {
           // From the fetch, not the listing: fetching a smart playlist makes
           // Navidrome re-evaluate it, which moves `changed` past the listing's.
@@ -233,10 +250,16 @@ export function adoptDownloadedAlbums(items: AlbumID3[]): Promise<void> {
 }
 
 function cachedListings() {
+  // The freshest listing wins: an older one (another user filter, restored from
+  // the persisted cache) carries a stale `changed`, which never matches the
+  // recorded incomplete version and refetches the playlist after every drain.
+  const listings = queryClient
+    .getQueryCache()
+    .findAll({ queryKey: ["playlists"] })
+    .sort((a, b) => a.state.dataUpdatedAt - b.state.dataUpdatedAt);
   const byId = new Map<string, Playlist>();
-  for (const [, data] of queryClient.getQueriesData<{
-    playlists?: Playlists;
-  }>({ queryKey: ["playlists"] })) {
+  for (const query of listings) {
+    const data = query.state.data as { playlists?: Playlists } | undefined;
     for (const playlist of data?.playlists?.playlist ?? []) {
       byId.set(playlist.id, playlist);
     }
@@ -268,3 +291,7 @@ export function __resetCollectionAdoption(): void {
   pending.playlist = undefined;
   pending.album = undefined;
 }
+
+// Shared with the automatic downloads, which fetch the same memberships.
+export const loadAlbumMembership = albums.load;
+export const loadPlaylistMembership = playlists.load;

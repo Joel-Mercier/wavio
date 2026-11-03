@@ -47,7 +47,7 @@ export default function FolderDetail() {
   }>();
   const isRoot = root === "1";
 
-  const indexesQuery = useIndexes(isRoot ? { musicFolderId: id } : {});
+  const indexesQuery = useIndexes(isRoot ? { musicFolderIds: [id] } : {});
   const directoryQuery = useMusicDirectory(isRoot ? "" : id);
 
   const { isLoading, error, headerName, dirs, tracks } = useMemo(() => {

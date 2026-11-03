@@ -4,10 +4,15 @@ import { File, Paths } from "expo-file-system";
 import Share from "react-native-share";
 import * as z from "zod";
 import { getAuthScope, LOCAL_AUTH_SCOPE } from "@/config/authScope";
-import { flushPendingScopedWrites, storage } from "@/config/storage";
+import {
+  flushPendingScopedWrites,
+  notePersistedWrite,
+  storage,
+} from "@/config/storage";
 import { isSingletonServerType } from "@/services/backend/serverTraits";
 import {
   BACKUP_EXCLUDED_SCOPED_STORE_NAMES,
+  BACKUP_SECRET_FIELDS,
   GLOBAL_KEYS,
   SCOPED_STORE_NAMES,
 } from "@/services/backupStoreKeys";
@@ -17,6 +22,7 @@ import {
 } from "@/services/storageScopeMigration";
 import { useAppBase } from "@/stores/app";
 import useMusicFolders from "@/stores/musicFolders";
+import { useOidcBase } from "@/stores/oidc";
 import usePodcasts from "@/stores/podcasts";
 import { useServersBase } from "@/stores/servers";
 
@@ -40,13 +46,12 @@ const BACKUP_VERSION = 2;
 
 export type BackupFile = z.infer<typeof backupSchema>;
 
-const isBackupExcluded = (storeName: string) =>
+export const isBackupExcluded = (storeName: string) =>
   BACKUP_EXCLUDED_SCOPED_STORE_NAMES.some((excluded) =>
     storeName.startsWith(excluded),
   );
 
-function collectScopes(): string[] {
-  flushPendingScopedWrites();
+function collectScopes(allKeys: string[]): string[] {
   const { servers, users } = useServersBase.getState();
   const serverById = new Map(servers.map((s) => [s.id, s] as const));
   const scopes = new Set<string>();
@@ -64,7 +69,7 @@ function collectScopes(): string[] {
   // key is `<scope>:<storeName>`, and scopes never contain ":" (getAuthScope
   // replaces non-alphanumerics with "_"), so the scope is the slice before the
   // first matching store-name marker.
-  for (const key of storage.getAllKeys()) {
+  for (const key of allKeys) {
     for (const name of SCOPED_STORE_NAMES) {
       const idx = key.indexOf(`:${name}`);
       if (idx > 0) {
@@ -76,99 +81,209 @@ function collectScopes(): string[] {
   return Array.from(scopes);
 }
 
-// Secrets never travel in a backup file: the export goes out through the OS
-// share sheet (cloud drives, chat apps, email), and restore routes through the
-// re-login flow anyway — readRestoredAuthTarget only needs the identity fields.
-// The active session's password/tokens are blanked and the opt-in saved
-// passwords are dropped from the servers blob. Fails closed: a blob that can't
-// be parsed is omitted rather than exported unsanitized.
-function sanitizeGlobalForBackup(
-  key: string,
+const withoutKeys = (value: unknown, keys: readonly string[]): unknown => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const copy = { ...(value as Record<string, unknown>) };
+  for (const key of keys) delete copy[key];
+  return copy;
+};
+
+// No password, token or API key ever travels in a backup file: the export goes
+// out through the OS share sheet (cloud drives, chat apps, email), and anyone
+// holding the file must still sign in to the server to use it.
+// - `auth` keeps only the session's identity, for the re-login prompt, and is
+//   never marked signed in: the restored account opens on the login screen,
+//   even if the app is killed before the restore dialog is dismissed.
+// - `servers` loses saved passwords and custom header values, which are proxy
+//   credentials (Cloudflare Access service tokens, static bearer tokens).
+// - Every other store drops its BACKUP_SECRET_FIELDS.
+// Runs on restore as well, so an older file that still carries any of these
+// can't bring them back. Fails closed: a credential-bearing blob that can't be
+// parsed is left out rather than passed through unsanitized.
+export function sanitizeForBackup(
+  name: string,
   value: string,
 ): string | undefined {
-  if (key !== "auth" && key !== "servers") return value;
+  const secretFields = BACKUP_SECRET_FIELDS[name];
+  if (name !== "auth" && name !== "servers" && !secretFields) return value;
   try {
     const parsed = JSON.parse(value) as { state?: Record<string, unknown> };
     if (!parsed?.state || typeof parsed.state !== "object") return undefined;
-    if (key === "auth") {
-      parsed.state = {
-        ...parsed.state,
+    let state: Record<string, unknown> = { ...parsed.state };
+    if (name === "auth") {
+      state = {
+        ...state,
+        isAuthenticated: false,
         password: "",
         token: null,
         subsonicSalt: null,
         subsonicToken: null,
         jellyfinAccessToken: null,
       };
-    } else {
-      const users = parsed.state.users;
-      if (Array.isArray(users)) {
-        parsed.state = {
-          ...parsed.state,
-          users: users.map((user) => {
-            if (user && typeof user === "object") {
-              const { password: _password, ...rest } = user as Record<
-                string,
-                unknown
-              >;
-              return rest;
-            }
-            return user;
-          }),
-        };
+    } else if (name === "servers") {
+      if (Array.isArray(state.users)) {
+        state.users = state.users.map((user) =>
+          withoutKeys(user, ["password"]),
+        );
+      }
+      if (Array.isArray(state.servers)) {
+        state.servers = state.servers.map((server) =>
+          withoutKeys(server, ["headers"]),
+        );
       }
     }
-    return JSON.stringify(parsed);
+    if (secretFields) {
+      state = withoutKeys(state, secretFields) as Record<string, unknown>;
+    }
+    return JSON.stringify({ ...parsed, state });
   } catch {
     return undefined;
   }
 }
 
-export function buildBackup(): BackupFile {
+// Which keys a backup carries, without reading any values: the streamed writer
+// reads each one only when it gets to it.
+function planScopedKeys(): { scope: string; names: string[] }[] {
   flushPendingScopedWrites();
-  const global: Record<string, string> = {};
-  for (const key of GLOBAL_KEYS) {
-    const value = storage.getString(key);
-    if (value === undefined) continue;
-    const sanitized = sanitizeGlobalForBackup(key, value);
-    if (sanitized !== undefined) global[key] = sanitized;
-  }
-
   const allKeys = storage.getAllKeys();
-  const scoped = collectScopes().map((scope) => {
+  return collectScopes(allKeys).map((scope) => {
     const prefix = `${scope}:`;
-    const values: Record<string, string> = {};
+    const names: string[] = [];
     for (const key of allKeys) {
       if (!key.startsWith(prefix)) continue;
       const name = key.slice(prefix.length);
-      if (isBackupExcluded(name)) continue;
-      const value = storage.getString(key);
+      if (!isBackupExcluded(name)) names.push(name);
+    }
+    return { scope, names };
+  });
+}
+
+function readGlobalValue(key: string): string | undefined {
+  const value = storage.getString(key);
+  return value === undefined ? undefined : sanitizeForBackup(key, value);
+}
+
+function readScopedValue(scope: string, name: string): string | undefined {
+  const value = storage.getString(`${scope}:${name}`);
+  return value === undefined ? undefined : sanitizeForBackup(name, value);
+}
+
+const appVersion = () => Application.nativeApplicationVersion ?? "unknown";
+
+export function buildBackup(): BackupFile {
+  const plan = planScopedKeys();
+  const global: Record<string, string> = {};
+  for (const key of GLOBAL_KEYS) {
+    const value = readGlobalValue(key);
+    if (value !== undefined) global[key] = value;
+  }
+  const scoped = plan.map(({ scope, names }) => {
+    const values: Record<string, string> = {};
+    for (const name of names) {
+      const value = readScopedValue(scope, name);
       if (value !== undefined) values[name] = value;
     }
     return { scope, values };
   });
-
   return {
     version: BACKUP_VERSION,
-    appVersion: Application.nativeApplicationVersion ?? "unknown",
+    appVersion: appVersion(),
     exportedAt: new Date().toISOString(),
     global,
     scoped,
   };
 }
 
-function timestampSlug(): string {
-  const d = new Date();
+// buildBackup() + JSON.stringify holds the whole library twice and serializes it
+// in one uninterrupted pass on the JS thread: hundreds of milliseconds on a big
+// library, a visible stall in the UI and a late JS-driven track transition
+// during playback. This writes the same JSON (compact) in fragments instead,
+// reading each value only when it is reached. Every WRITE_CHUNK_CHARS goes to
+// disk through an async native write, which is also where the JS thread gets to
+// handle everything else.
+const WRITE_CHUNK_CHARS = 256 * 1024;
+// A single stored value can be several megabytes (play history, the offline
+// index), so long strings are escaped a slice at a time.
+const STRINGIFY_SLICE_CHARS = 64 * 1024;
+
+const isHighSurrogate = (code: number) => code >= 0xd800 && code <= 0xdbff;
+
+export async function writeBackupFile(file: File): Promise<void> {
+  const plan = planScopedKeys();
+  if (file.exists) file.delete();
+  file.create();
+
+  let buffer = "";
+  const flush = async () => {
+    if (!buffer) return;
+    const chunk = buffer;
+    buffer = "";
+    await file.write(chunk, { append: true });
+  };
+  const emit = async (fragment: string) => {
+    buffer += fragment;
+    if (buffer.length >= WRITE_CHUNK_CHARS) await flush();
+  };
+  const emitString = async (value: string) => {
+    if (value.length <= STRINGIFY_SLICE_CHARS) {
+      await emit(JSON.stringify(value));
+      return;
+    }
+    await emit('"');
+    let start = 0;
+    while (start < value.length) {
+      let end = Math.min(start + STRINGIFY_SLICE_CHARS, value.length);
+      // Never split a surrogate pair: each half alone would be escaped as a lone
+      // surrogate, or mangled outright when the chunk is encoded as UTF-8.
+      if (end < value.length && isHighSurrogate(value.charCodeAt(end - 1))) {
+        end -= 1;
+      }
+      await emit(JSON.stringify(value.slice(start, end)).slice(1, -1));
+      start = end;
+    }
+    await emit('"');
+  };
+  const emitRecord = async (
+    keys: readonly string[],
+    read: (key: string) => string | undefined,
+  ) => {
+    await emit("{");
+    let first = true;
+    for (const key of keys) {
+      const value = read(key);
+      if (value === undefined) continue;
+      await emit(`${first ? "" : ","}${JSON.stringify(key)}:`);
+      first = false;
+      await emitString(value);
+    }
+    await emit("}");
+  };
+
+  await emit(
+    `{"version":${BACKUP_VERSION},"appVersion":${JSON.stringify(appVersion())},"exportedAt":${JSON.stringify(new Date().toISOString())},"global":`,
+  );
+  await emitRecord(GLOBAL_KEYS, readGlobalValue);
+  await emit(',"scoped":[');
+  for (const [index, { scope, names }] of plan.entries()) {
+    await emit(
+      `${index === 0 ? "" : ","}{"scope":${JSON.stringify(scope)},"values":`,
+    );
+    await emitRecord(names, (name) => readScopedValue(scope, name));
+    await emit("}");
+  }
+  await emit("]}");
+  await flush();
+}
+
+export function timestampSlug(date = new Date()): string {
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
+  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
 }
 
 export async function exportBackup(): Promise<void> {
-  const backup = buildBackup();
   const fileName = `wavio-backup-${timestampSlug()}.json`;
   const file = new File(Paths.cache, fileName);
-  if (file.exists) file.delete();
-  file.create();
-  file.writeSync(JSON.stringify(backup, null, 2));
+  await writeBackupFile(file);
 
   await Share.open({
     title: fileName,
@@ -248,14 +363,23 @@ export async function restoreBackup(
   }
 
   for (const [key, value] of Object.entries(backup.global)) {
-    storage.set(key, value);
+    const sanitized = sanitizeForBackup(key, value);
+    if (sanitized === undefined) continue;
+    storage.set(key, sanitized);
+    notePersistedWrite(key, () => true);
   }
   for (const { scope, values } of scoped) {
     for (const [key, value] of Object.entries(values)) {
       if (isBackupExcluded(key)) continue;
-      storage.set(`${scope}:${key}`, value);
+      const sanitized = sanitizeForBackup(key, value);
+      if (sanitized !== undefined) storage.set(`${scope}:${key}`, sanitized);
     }
   }
+
+  // Single-sign-on sessions aren't part of a backup, but they would outlive
+  // the data they belonged to and sign a restored server in silently. Restore
+  // replaces everything, so they go too: whoever restores signs in themselves.
+  useOidcBase.setState({ sessions: {}, expiredNotice: null });
 
   // Bring the global, account-independent stores into memory so the restored
   // server list and app settings take effect immediately and can't be
@@ -263,9 +387,10 @@ export async function restoreBackup(
   // deliberately NOT rehydrated here: doing so would hot-swap the active
   // account in place (isAuthenticated stays true while the server changes),
   // which leaves React Query and the scoped-store hydration guard pointing at
-  // the previous server and produces mixed content. Instead the caller routes
-  // through the logout → re-login flow (switchToServer), the only path that
-  // cleanly resets both for the new server.
+  // the previous server and produces mixed content. Instead the caller logs out
+  // and opens the login form for the restored server, the only path that
+  // cleanly resets both for the new server and the one that makes whoever
+  // restores the file prove they know the password.
   await useServersBase.persist.rehydrate();
   await useAppBase.persist.rehydrate();
   await usePodcasts.persist.rehydrate();
@@ -284,7 +409,8 @@ export async function restoreBackup(
 
 // Reads the restored (server, user) from the backup's persisted auth blob
 // without touching the live auth store. The persisted shape is zustand's
-// `{ state, version }` wrapper.
+// `{ state, version }` wrapper. Only the identity counts: files written since
+// secrets were stripped never mark the session signed in.
 function readRestoredAuthTarget(
   backup: BackupFile,
 ): { serverId?: string; url: string; username: string } | null {
@@ -296,11 +422,10 @@ function readRestoredAuthTarget(
         serverId?: string;
         url?: string;
         username?: string;
-        isAuthenticated?: boolean;
       };
     };
     const state = parsed?.state;
-    if (!state?.isAuthenticated || !state.url) return null;
+    if (!state?.url) return null;
     return {
       serverId: state.serverId || undefined,
       url: state.url,

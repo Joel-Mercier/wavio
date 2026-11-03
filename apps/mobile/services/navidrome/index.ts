@@ -18,6 +18,9 @@ export const NAVIDROME_AUTH_HEADER = "X-ND-Authorization";
 const navidromeApiInstance = axios.create({
   baseURL: "",
   headers: { "Content-Type": "application/json" },
+  // A list filter is the key repeated (`library_id=1&library_id=2`), which the
+  // REST layer reads as an IN; axios' default `library_id[]=` matches nothing.
+  paramsSerializer: { indexes: null },
 });
 
 navidromeApiInstance.interceptors.request.use(

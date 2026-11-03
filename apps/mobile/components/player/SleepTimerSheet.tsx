@@ -16,7 +16,10 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { usePlayingTrack } from "@/hooks/player";
-import { usePlaybackEndProjector } from "@/hooks/player/usePlaybackEnd";
+import {
+  currentChapterEnd,
+  usePlaybackEndProjector,
+} from "@/hooks/player/usePlaybackEnd";
 import { useFormatClockTime } from "@/hooks/useFormatClockTime";
 import { isSleepTimerActive, useSleepTimer } from "@/services/sleepTimer";
 import useApp from "@/stores/app";
@@ -55,6 +58,8 @@ export default function SleepTimerSheet() {
   const active = useSleepTimer(isSleepTimerActive);
   const setMinutes = useSleepTimer((s) => s.setMinutes);
   const setEndOfTrack = useSleepTimer((s) => s.setEndOfTrack);
+  const setEndOfChapter = useSleepTimer((s) => s.setEndOfChapter);
+  const chapterEnd = useSleepTimer((s) => s.chapterEnd);
   const cancel = useSleepTimer((s) => s.cancel);
   const finishTrack = useApp((s) => s.sleepTimerFinishTrack);
   const setFinishTrack = useApp((s) => s.setSleepTimerFinishTrack);
@@ -63,7 +68,9 @@ export default function SleepTimerSheet() {
   const playingTrack = usePlayingTrack();
   const jukeboxActive = useJukebox((s) => s.active);
   const canEndWithTrack = !playingTrack?.isRadio && !jukeboxActive;
-  const { now, project, projectTrackEnd } = usePlaybackEndProjector(open);
+  const { now, project, projectTrackEnd, projectChapterEnd } =
+    usePlaybackEndProjector(open);
+  const canEndWithChapter = !jukeboxActive && !!currentChapterEnd(playingTrack);
   const formatClockTime = useFormatClockTime();
 
   const activeMinutes = durationMs != null ? durationMs / 60000 : null;
@@ -107,6 +114,12 @@ export default function SleepTimerSheet() {
 
   const handleEndOfTrackPress = () => {
     setEndOfTrack();
+    sheetRef.current?.dismiss();
+  };
+
+  const handleEndOfChapterPress = () => {
+    const end = currentChapterEnd(playingTrack);
+    if (end) setEndOfChapter(end.itemId, end.bookTime);
     sheetRef.current?.dismiss();
   };
 
@@ -251,6 +264,19 @@ export default function SleepTimerSheet() {
                 </VStack>
               )}
             </VStack>
+            {canEndWithChapter && (
+              <FadeOutScaleDown onPress={handleEndOfChapterPress}>
+                <HStack className="items-center justify-between">
+                  <Text
+                    className="text-lg"
+                    style={optionColor(chapterEnd != null)}
+                  >
+                    {t("app.player.sleepTimerEndOfChapter")}
+                  </Text>
+                  {endLabel(projectChapterEnd(chapterEnd?.bookTime))}
+                </HStack>
+              </FadeOutScaleDown>
+            )}
             {canEndWithTrack && (
               <FadeOutScaleDown onPress={handleEndOfTrackPress}>
                 <HStack className="items-center justify-between">

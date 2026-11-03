@@ -12,12 +12,12 @@ const CANDIDATE_COUNT = 200;
 
 export async function generateGenreMix(
   genre: string,
-  { musicFolderId, rand }: { musicFolderId?: string; rand: () => number },
+  { musicFolderIds, rand }: { musicFolderIds?: string[]; rand: () => number },
 ): Promise<GeneratedMix> {
   const rsp = await getRandomSongs({
     genre,
     size: CANDIDATE_COUNT,
-    musicFolderId,
+    musicFolderIds,
   });
   const candidates = rsp.songs?.song ?? [];
   const tracks = curateMix(

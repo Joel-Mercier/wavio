@@ -25,6 +25,7 @@ import ImageWithFallback from "@/components/ImageWithFallback";
 import MovingText from "@/components/MovingText";
 import { OFFLINE_BANNER_HEIGHT } from "@/components/OfflineBanner";
 import PlayPauseButton from "@/components/PlayPauseButton";
+import FloatingPlayerRestoreBadge from "@/components/player/FloatingPlayerRestoreBadge";
 import { openOutputSheet } from "@/components/player/OutputSheet";
 import PlaybackProgressBar from "@/components/player/PlaybackProgressBar";
 import SleepTimerBadge from "@/components/player/SleepTimerBadge";
@@ -41,6 +42,7 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { useStar, useUnstar } from "@/hooks/backend/useMediaAnnotation";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
+import { useCanCast } from "@/hooks/player/useCanCast";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
@@ -57,6 +59,7 @@ import useUpnp from "@/stores/upnp";
 import { hidesFloatingPlayer } from "@/utils/floatingPlayerRoutes";
 import { invalidateKeys } from "@/utils/invalidateKeys";
 import { TOAST_DURATION } from "@/utils/toastDuration";
+import { isSpokenWordTrack } from "@/utils/trackSource";
 
 export const FLOATING_PLAYER_HEIGHT = 64;
 // Width of the landscape left tab bar column; the player docks to its bottom.
@@ -99,7 +102,8 @@ export default function FloatingPlayer() {
   const playingRemotely = jukeboxActive || upnpConnected || casting;
   // The sheet is worth opening when there is any output to pick between, not
   // only when the server happens to have a jukebox.
-  const hasOutputs = capabilities.jukebox || capabilities.remoteStreamableUrl;
+  const canCast = useCanCast();
+  const hasOutputs = capabilities.jukebox || canCast;
   const queueLength = useQueue((s) => s.queue.length);
   const currentIndex = useQueue((s) => s.currentIndex);
   const repeatMode = useQueue((s) => s.repeatMode);
@@ -107,6 +111,7 @@ export default function FloatingPlayer() {
 
   const isRadio = !!playingTrack?.isRadio;
   const isPodcast = playingTrack?.source === "podcast";
+  const isSpokenWord = isSpokenWordTrack(playingTrack);
   const podcastSeries = (
     isPodcast ? playingTrack?.podcastSeries : null
   ) as PodcastSeries | null;
@@ -146,6 +151,11 @@ export default function FloatingPlayer() {
 
   const handlePress = () => {
     router.navigate("/player");
+  };
+
+  const handleRestorePress = () => {
+    setHidden(false);
+    translateY.value = withTiming(0, { duration: 220 });
   };
 
   const handlePlayPausePress = () => {
@@ -429,7 +439,7 @@ export default function FloatingPlayer() {
                 <MovingText animate={isPlaying}>
                   <Text className="text-gray-300 text-xs">
                     {playingTrack.artist ||
-                      (!isRadio && !isPodcast
+                      (!isRadio && !isSpokenWord
                         ? t("app.shared.unknownArtist")
                         : "")}
                   </Text>
@@ -446,7 +456,7 @@ export default function FloatingPlayer() {
                   }
                 />
               )}
-              {!isRadio && !isPodcast && (
+              {!isRadio && !isSpokenWord && (
                 <AnimatedHeart
                   hitSlop={8}
                   filled={!!playingTrack.starred}
@@ -508,23 +518,28 @@ export default function FloatingPlayer() {
     );
   }
 
+  const bottom =
+    insets.bottom +
+    TAB_BAR_CONTENT_HEIGHT +
+    (isOnline ? 0 : OFFLINE_BANNER_HEIGHT);
+
   if (hidden) {
-    return null;
+    return (
+      <Box
+        pointerEvents="box-none"
+        className="absolute right-0 left-0"
+        style={{ bottom }}
+      >
+        <FloatingPlayerRestoreBadge onPress={handleRestorePress} />
+      </Box>
+    );
   }
 
   return (
     <Animated.View
       pointerEvents="box-none"
       className="absolute right-0 left-0"
-      style={[
-        dismissStyle,
-        {
-          bottom:
-            insets.bottom +
-            TAB_BAR_CONTENT_HEIGHT +
-            (isOnline ? 0 : OFFLINE_BANNER_HEIGHT),
-        },
-      ]}
+      style={[dismissStyle, { bottom }]}
     >
       <SleepTimerBadge />
       <GestureDetector gesture={composedGesture}>
@@ -563,7 +578,7 @@ export default function FloatingPlayer() {
                   <MovingText animate={isPlaying}>
                     <Text className="text-gray-300">
                       {playingTrack.artist ||
-                        (!isRadio && !isPodcast
+                        (!isRadio && !isSpokenWord
                           ? t("app.shared.unknownArtist")
                           : "")}
                     </Text>
@@ -598,7 +613,7 @@ export default function FloatingPlayer() {
                     }
                   />
                 )}
-                {!playingTrack.isRadio && !isPodcast && (
+                {!playingTrack.isRadio && !isSpokenWord && (
                   <AnimatedHeart
                     hitSlop={12}
                     filled={!!playingTrack.starred}

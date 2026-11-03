@@ -1,20 +1,19 @@
 import { LegendList } from "@legendapp/list/react-native";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
-import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Search from "lucide-react-native/icons/search";
 import X from "lucide-react-native/icons/x";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { FLOATING_PLAYER_HEIGHT } from "@/components/FloatingPlayer";
-import { useSleepTimerBadgeSpace } from "@/components/player/SleepTimerBadge";
+import FloatingSubmitButton, {
+  FLOATING_SUBMIT_BUTTON_SPACE,
+} from "@/components/FloatingSubmitButton";
 import AddToPlaylistListItem from "@/components/playlists/AddToPlaylistListItem";
 import AddToPlaylistListItemSkeleton from "@/components/playlists/AddToPlaylistListItemSkeleton";
 import {
@@ -36,10 +35,10 @@ import { VStack } from "@/components/ui/vstack";
 import { usePlaylists, useUpdatePlaylist } from "@/hooks/backend/usePlaylists";
 import useDebounce from "@/hooks/useDebounce";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { getPlaylist } from "@/services/backend/playlists";
 import type { Playlist } from "@/services/openSubsonic/types";
 import { createSearchIndex } from "@/services/searchIndex";
-import useApp from "@/stores/app";
 import usePlaylistTargets from "@/stores/playlistTargets";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
@@ -80,8 +79,7 @@ export default function AddToPlaylistDetail() {
   const router = useRouter();
   const toast = useToast();
   const insets = useSafeAreaInsets();
-  const isWideLayout = useApp((s) => s.isWideLayout);
-  const sleepTimerBadgeSpace = useSleepTimerBadgeSpace();
+  const screenBottomPadding = useScreenBottomPadding();
   const recentTargets = usePlaylistTargets((state) => state.recentTargets);
   const { data, isLoading, error } = usePlaylists({});
   const doUpdatePlaylist = useUpdatePlaylist();
@@ -281,14 +279,6 @@ export default function AddToPlaylistDetail() {
     }
   };
 
-  // In landscape the player docks into the left sidebar, so content on the right
-  // needs no bottom clearance. Portrait: FloatingPlayer sits at bottom: 96 and is
-  // FLOATING_PLAYER_HEIGHT tall,
-  // so its top edge is this far from the bottom of the screen.
-  const floatingPlayerTop = isWideLayout
-    ? 0
-    : 96 + FLOATING_PLAYER_HEIGHT + sleepTimerBadgeSpace;
-
   const playlists = data?.playlists.playlist;
   const playlistById = useMemo(
     () => new Map((playlists ?? []).map((playlist) => [playlist.id, playlist])),
@@ -383,7 +373,7 @@ export default function AddToPlaylistDetail() {
         recycleItems
         data={isLoading ? SKELETON_ROWS : rows}
         contentContainerStyle={{
-          paddingBottom: floatingPlayerTop + 96,
+          paddingBottom: screenBottomPadding + FLOATING_SUBMIT_BUTTON_SPACE,
         }}
         renderItem={({ item, extraData }) =>
           item.kind === "skeleton" ? (
@@ -459,35 +449,11 @@ export default function AddToPlaylistDetail() {
           ) : null
         }
       />
-      <Box
-        pointerEvents="box-none"
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: floatingPlayerTop + 160,
-          justifyContent: "flex-end",
-        }}
-      >
-        <LinearGradient
-          pointerEvents="none"
-          colors={["transparent", "#000000"]}
-          locations={[0, 0.6]}
-          style={StyleSheet.absoluteFill}
-        />
-        <Center style={{ marginBottom: floatingPlayerTop + 16 }}>
-          <FadeOutScaleDown
-            className="items-center justify-center py-3 px-8 border border-emerald-500 bg-emerald-500 rounded-full"
-            onPress={handlePlaylistUpdatePress}
-            disabled={doUpdatePlaylist.isPending}
-          >
-            <Text className="text-primary-800 font-bold text-lg">
-              {t("app.playlists.finished")}
-            </Text>
-          </FadeOutScaleDown>
-        </Center>
-      </Box>
+      <FloatingSubmitButton
+        label={t("app.playlists.finished")}
+        onPress={handlePlaylistUpdatePress}
+        isPending={doUpdatePlaylist.isPending}
+      />
       <AlertDialog
         isOpen={showDuplicateDialog}
         onClose={handleCloseDuplicateDialog}

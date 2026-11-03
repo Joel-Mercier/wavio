@@ -2,6 +2,7 @@ import { LegendList } from "@legendapp/list/react-native";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/icons/arrow-left";
+import Mic from "lucide-react-native/icons/mic";
 import X from "lucide-react-native/icons/x";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -17,11 +18,12 @@ import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
+import { useCanSearchByRecording } from "@/hooks/audioMuse/useCanSearchByRecording";
 import { useSearch3 } from "@/hooks/backend/useSearching";
 import useDebounce from "@/hooks/useDebounce";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
+import useSearchMusicFolderIds from "@/hooks/useSearchMusicFolderIds";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
 import useRecentSearches, { type RecentSearch } from "@/stores/recentSearches";
 import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
@@ -42,6 +44,7 @@ export default function RecentSearchesScreen() {
     (store) => store.removeRecentSearch,
   );
   const addRecentSearch = useRecentSearches((store) => store.addRecentSearch);
+  const canSearchByRecording = useCanSearchByRecording();
   const form = useForm({
     defaultValues: {
       query: "",
@@ -56,7 +59,7 @@ export default function RecentSearchesScreen() {
   useEffect(() => {
     debounce(() => setDebouncedQuery(query));
   }, [query, debounce]);
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useSearchMusicFolderIds();
   const { data, isLoading, error } = useSearch3(debouncedQuery, {
     albumCount: 12,
     albumOffset: 0,
@@ -64,7 +67,7 @@ export default function RecentSearchesScreen() {
     songOffset: 0,
     artistCount: 12,
     artistOffset: 0,
-    musicFolderId,
+    musicFolderIds,
   });
 
   const searchData = useMemo(() => {
@@ -142,6 +145,15 @@ export default function RecentSearchesScreen() {
                   enterKeyHint="search"
                   onSubmitEditing={handleOnSumbit}
                 />
+                {canSearchByRecording && (
+                  <InputSlot
+                    testID="recording-search-button"
+                    className="pr-4"
+                    onPress={() => router.navigate("/recording-search")}
+                  >
+                    <InputIcon as={Mic} size="xl" />
+                  </InputSlot>
+                )}
                 <InputSlot
                   testID="search-clear-button"
                   className="pr-3"

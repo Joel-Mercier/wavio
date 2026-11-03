@@ -6,7 +6,7 @@ import HomeSection from "@/components/home/sections/HomeSection";
 import { ARTIST_CAROUSEL_SKELETON } from "@/components/home/sections/skeletons";
 import { useArtists } from "@/hooks/backend/useBrowsing";
 import type { ArtistID3 } from "@/services/openSubsonic/types";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import { sampleWithSeed } from "@/utils/shuffle";
 
 interface ArtistCarouselSectionProps {
@@ -22,10 +22,13 @@ function ArtistCarouselSection({
 }: ArtistCarouselSectionProps) {
   const enabled = useSectionEnabled(sectionIndex);
   const { t } = useTranslation();
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const [mountSeed] = useState(() => Date.now());
   const seed = shuffleSeed ?? mountSeed;
-  const { data, isLoading, error } = useArtists({ musicFolderId }, { enabled });
+  const { data, isLoading, error } = useArtists(
+    { musicFolderIds },
+    { enabled },
+  );
   const artists = useMemo<ArtistID3[]>(() => {
     const all =
       data?.artists?.index?.flatMap((index) => index.artist ?? []) ?? [];

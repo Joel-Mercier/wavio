@@ -6,7 +6,7 @@ import type { Shares } from "@/services/openSubsonic/types";
 
 export const createShare = async (
   _id: string,
-  _opts: { description?: string; expires?: number },
+  _opts: { description?: string; expires?: number; downloadable?: boolean },
 ) => {
   const shares: Shares = { share: [] };
   return fakeEnvelope({ shares });
@@ -21,5 +21,5 @@ export const getShares = async () => {
 
 export const updateShare = async (
   _id: string,
-  _opts: { description?: string; expires?: number },
+  _opts: { description?: string; expires?: number; downloadable?: boolean },
 ) => fakeEnvelope({});

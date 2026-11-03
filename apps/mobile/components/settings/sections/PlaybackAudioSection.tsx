@@ -125,6 +125,8 @@ export default function PlaybackAudioSection() {
   const setLyricsSource = useApp((store) => store.setLyricsSource);
   const lyricsKeepScreenOn = useApp((store) => store.lyricsKeepScreenOn);
   const setLyricsKeepScreenOn = useApp((store) => store.setLyricsKeepScreenOn);
+  const karaokeWordFill = useApp((store) => store.karaokeWordFill);
+  const setKaraokeWordFill = useApp((store) => store.setKaraokeWordFill);
   const waveformSeekbarEnabled = useApp(
     (store) => store.waveformSeekbarEnabled,
   );
@@ -347,6 +349,15 @@ export default function PlaybackAudioSection() {
           )}
           value={lyricsKeepScreenOn}
           onToggle={(value) => setLyricsKeepScreenOn(value)}
+          disabled={lyricsSource === "off"}
+        />
+        <SettingsToggleRow
+          label={t("app.settings.displaySettings.karaokeWordFillLabel")}
+          description={t(
+            "app.settings.displaySettings.karaokeWordFillDescription",
+          )}
+          value={karaokeWordFill}
+          onToggle={(value) => setKaraokeWordFill(value)}
           disabled={lyricsSource === "off"}
         />
         <SettingsToggleRow

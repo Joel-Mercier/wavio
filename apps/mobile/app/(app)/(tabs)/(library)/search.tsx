@@ -35,7 +35,7 @@ import type {
   Playlist,
 } from "@/services/openSubsonic/types";
 import { createSearchIndex } from "@/services/searchIndex";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
@@ -63,7 +63,7 @@ export default function LibrarySearchScreen() {
   const query = useSelector(form.store, (state) => state.values.query);
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const debounce = useDebounce(150);
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const favoriteRadioStations = useScopedRadioFavorites();
   const [filter, setFilter] = useState<SearchFilter[]>([]);
 
@@ -75,7 +75,7 @@ export default function LibrarySearchScreen() {
     data: starredData,
     isLoading: isLoadingStarred,
     error: starredError,
-  } = useStarred2({ musicFolderId });
+  } = useStarred2({ musicFolderIds });
   const {
     data: playlistsData,
     isLoading: isLoadingPlaylists,

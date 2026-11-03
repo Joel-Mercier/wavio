@@ -136,9 +136,33 @@ All persisted state is zustand with `react-native-mmkv` as the backing store (`c
 
 `utils/createSelectors.ts` auto-generates typed selector hooks for a store.
 
+### Backups
+
+`services/backup.ts` builds the export (`GLOBAL_KEYS` + every scoped store, minus the exclusions listed in `services/backupStoreKeys.ts`). Write files with `writeBackupFile`, which streams compact JSON a chunk at a time through async native writes. Never `JSON.stringify(buildBackup())` on a path that can run during use: on a big library that is a long stall on the JS thread.
+
+**A backup never carries a password, token or API key**, and a restore always ends on the login form:
+- **Export:** `sanitizeForBackup` strips `BACKUP_SECRET_FIELDS` (integration keys plus their `isConnected` flags), saved user passwords and custom header values. It also writes `auth` with `isAuthenticated: false`, so a crash before the restore dialog can't open the restored account.
+- **Restore:** the same sanitizer runs again on the way in, for older files. Restore also clears every SSO session in `stores/oidc.ts`. `BackupRestoreSection` then logs out and opens `/(auth)/login` directly, never `switchToServer`'s silent path.
+- **Adding a credential to a persisted store:** list it in `BACKUP_SECRET_FIELDS`. The drift guard in `__tests__/backup.store-coverage.test.ts` fails otherwise.
+- **Android's OS backup** (Google cloud backup and phone-to-phone transfer) stays on at Expo's default `allowBackup=true`, deliberately: it belongs to the platform and the user, and it is how app state follows someone to a new phone. It copies app storage as files, so it carries the raw MMKV file (credentials included) and downloads, and none of the sanitizing above applies to it. Keep things out of it per file with `getNoBackupStorage()` / `Paths.cache`, never by turning it off.
+
+**Automatic backups (issue #262, Android-only for now)** write daily into a SAF folder the user picked, at a time of day they chose (`services/autoBackup.ts`, settings in `stores/app.ts`).
+- **Scheduling:** `modules/auto-backup` schedules it with a WorkManager one-shot that re-arms itself each run. `expo-background-task` can't hit a time of day, and exact alarms need a permission Play restricts.
+- **Pending flag:** every persisted-store write goes through `setPersistedWriteObserver` in `config/storage.ts`, and the first backed-up write after a backup raises a native `pending` flag. When the flag isn't set, the worker finishes without booting JS. Only a write that changes the stored value counts: zustand's persist re-writes stores with identical values (opening the app does), and counting those made a byte-identical backup every night the app had been opened.
+- **When JS does run:** the worker boots the React host if the process is cold and sends `due`. A run that comes due while the app is in the foreground waits until the app is backgrounded.
+- **State and retention:** run status lives in `getNoBackupStorage("autoBackup")`, never in a backed-up store, or each run would mark the next one pending. Pruning keeps the `autoBackupKeepCount` setting's worth and only touches `wavio-auto-backup-*.json`.
+- **iOS:** the module's `BGProcessingTask` side exists, but the UI is off there, because iOS has no persistable folder grant.
+
 ### Playback
 
 `expo-audio` is the audio engine. `services/player.ts` is the registered background service; the queue store drives it. Offline downloads go through `services/offlineDownloadService.ts` + `hooks/useOfflineDownloads.ts` using `expo-file-system`.
+
+**Who owns a download.** Every downloaded track and collection carries a `source` (`stores/offline.ts`), ranked `user` > `rule` > `auto`:
+- **`user`:** saved by hand. Absent means `user`.
+- **`rule`:** the automatic downloads (liked songs, liked albums, playlists; issue #266), run by `services/offline/autoDownloadService.ts` with its pure logic in `autoDownloadPlan.ts`.
+- **`auto`:** the extended-offline library sync.
+
+Each owner only removes its own content, and `stageTracks` hands content to a higher-ranked owner, never back down. The automatic downloads work from the difference between what the enabled rules want and what they hold. Only a fresh listing may release something the server no longer lists; a rule switched off or an item excluded is acted on without one. While the library sync is on, released `rule` content is demoted to `auto` instead of deleted. Removing an automatic download by hand writes an `exclude` override (`autoDownloadOverrides`), or the next sync would fetch it again. Any new store field that holds server ids (like `likedSongIds` and the override keys) must also go through `services/navidromeIdMigration/remap.ts`.
 
 **Background timers.** JS `setTimeout` / `setInterval` stop within seconds of the app leaving the foreground and never fire again until the UI reopens — with audio playing, with or without a car (measured on MIUI; RN pauses timers when the Activity pauses). Anything that must keep running during background playback (network probes and recovery polls, prefetch / download / scrobble / replay backoffs, the play-queue sync debounce, the throttled MMKV and React Query persistence flushes, the jukebox status poll and the remote-output lock-screen pulse) uses `services/backgroundTimer.ts` (`setBackgroundTimeout` / `setBackgroundInterval` / `clearBackgroundTimer` / `backgroundSleep`), driven by a main-thread `Handler` message in `modules/car-auto` and falling back to JS timers on iOS and in tests. Keep plain JS timers for UI-only work (debounced inputs, animations, progress tickers) and for polls that should stop in the background — the reachable-state heartbeat in `services/network.ts` is one on purpose, so an idle backgrounded app never pings the server every 30 s. The unreachable-server recovery poll is on a background timer but gated by `services/recoveryPollGate.ts` (wired from `index.js`): it only runs while the app isn't backgrounded, audio is playing, or a car is connected.
 

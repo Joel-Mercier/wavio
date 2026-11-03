@@ -4,6 +4,7 @@ import {
   albumSegments,
   type DestinationTrack,
 } from "@/services/offline/fileNaming";
+import { probeWritableTree } from "@/services/writableTree";
 import { useAppBase } from "@/stores/app";
 import { currentAuthScope } from "@/stores/auth";
 
@@ -32,8 +33,6 @@ import { currentAuthScope } from "@/stores/auth";
 // returns null off Android and every path below collapses to app storage.
 
 export type DownloadLocationStatus = "app-storage" | "ok" | "unavailable";
-
-const WRITE_PROBE_NAME = "wavio-write-test.tmp";
 
 // SAF trees that Android grants but that are useless or off-limits to us: the
 // Download/ root and the app-data sandboxes are refused outright on API 30+, and
@@ -88,7 +87,7 @@ export function isSupportedTreeUri(uri: string): boolean {
 // look like `primary:Music/Rock`), the only provider we accept a tree from.
 // Decoded here explicitly rather than depending on URL parsing of a `content://`
 // scheme.
-function entryName(uri: string): string {
+export function entryName(uri: string): string {
   let decoded = uri;
   try {
     decoded = decodeURIComponent(uri);
@@ -275,25 +274,11 @@ async function findExistingDirectory(
   return current;
 }
 
-// Whether the picked folder can still be written to. The grant is revocable from
-// Android's settings and the volume can be unmounted, so this is checked at
-// startup as well as right after picking.
 export async function probeDownloadLocation(
   uri = externalRootUri(),
 ): Promise<DownloadLocationStatus> {
   if (!uri) return "app-storage";
-  try {
-    const root = new Directory(uri);
-    if (!root.exists) return "unavailable";
-    // Creating a real document *is* the write test: `exists` alone can't tell a
-    // read-only tree from a writable one, and the picker still returns a URI for
-    // trees API 30+ refuses to grant (Download/, Android/data).
-    const probe = root.createFile(WRITE_PROBE_NAME, "application/octet-stream");
-    if (probe.exists) probe.delete();
-    return "ok";
-  } catch {
-    return "unavailable";
-  }
+  return probeWritableTree(uri) ? "ok" : "unavailable";
 }
 
 // Whether a downloaded track's bytes count against the volume `Paths` measures.

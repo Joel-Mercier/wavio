@@ -42,7 +42,7 @@ import { useTrackSort } from "@/hooks/useTrackSort";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { FAVORITES_QUEUE_SOURCE_ID } from "@/utils/activeRecentPlay";
@@ -67,12 +67,12 @@ export default function FavoritesScreen() {
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const {
     data: starredData,
     isLoading,
     error,
-  } = useStarred2({ musicFolderId });
+  } = useStarred2({ musicFolderIds });
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const offlineModeEnabled = useOfflineModeEnabled();
   const sort = useApp((store) => store.favoritesSort);

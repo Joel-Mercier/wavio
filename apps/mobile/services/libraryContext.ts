@@ -14,13 +14,13 @@ import { useMusicFoldersBase } from "@/stores/musicFolders";
  *
  * services/libraryMatch.ts deliberately takes both as arguments so it stays a
  * pure function of its inputs; React callers get them from useCapabilities and
- * useCurrentMusicFolderId. This is the equivalent for the callers that have no
+ * useCurrentMusicFolderIds. This is the equivalent for the callers that have no
  * component to read from — endless radio, Android Auto, the scrobbling
  * recommendation tiers — so they don't each hand-roll the same three store
  * reads and quietly disagree about capability overrides.
  */
 export type LibrarySearchContext = {
-  musicFolderId?: string;
+  musicFolderIds?: string[];
   multiFieldSearch: boolean;
 };
 
@@ -36,7 +36,7 @@ export function currentLibrarySearchContext(): LibrarySearchContext {
   const scope = currentAuthScope();
   const capabilities = currentLibraryCapabilities();
   return {
-    musicFolderId: scope
+    musicFolderIds: scope
       ? useMusicFoldersBase.getState().selections[scope]
       : undefined,
     multiFieldSearch: capabilities.multiFieldSearch,

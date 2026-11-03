@@ -57,7 +57,7 @@ type ListOpts = {
   fromYear?: number;
   toYear?: number;
   genre?: string;
-  musicFolderId?: string;
+  musicFolderIds?: string[];
   // Overrides the direction the list type serves by default, which SQLite can
   // honour for any order (see repository.ts albumOrderSql).
   order?: SortDirection;
@@ -134,7 +134,7 @@ export const getRandomSongs = async (
     fromYear?: number;
     toYear?: number;
     genre?: string;
-    musicFolderId?: string;
+    musicFolderIds?: string[];
   } = {},
 ) => {
   const rows = await querySongs({
@@ -157,7 +157,7 @@ export const getSongs = async (
     size?: number;
     offset?: number;
     sort?: SongSortType;
-    musicFolderId?: string;
+    musicFolderIds?: string[];
   } = {},
 ) => {
   const limit = opts.size ?? 50;
@@ -176,7 +176,7 @@ export const getSongs = async (
 
 export const getSongsByGenre = async (
   genre: string,
-  opts: { count?: number; offset?: number; musicFolderId?: string } = {},
+  opts: { count?: number; offset?: number; musicFolderIds?: string[] } = {},
 ) => {
   const rows = await querySongs({
     genre,
@@ -187,7 +187,7 @@ export const getSongsByGenre = async (
 };
 
 export const getMostPlayedSongs = async (
-  opts: { size?: number; offset?: number; musicFolderId?: string } = {},
+  opts: { size?: number; offset?: number; musicFolderIds?: string[] } = {},
 ) => {
   const rows = await queryTopSongs(opts.size ?? 10, opts.offset ?? 0);
   return localEnvelope({ songs: { song: rows.map(mapRowToChild) } });
@@ -237,7 +237,7 @@ async function starredArtists(): Promise<ArtistID3[]> {
   return rows.filter((r) => r != null).map(mapAggToArtist);
 }
 
-export const getStarred = async (_opts: { musicFolderId?: string } = {}) => {
+export const getStarred = async (_opts: { musicFolderIds?: string[] } = {}) => {
   const [song, albums, artists] = await Promise.all([
     starredSongs(),
     starredAlbums(),
@@ -266,7 +266,9 @@ export const getStarred = async (_opts: { musicFolderId?: string } = {}) => {
   return localEnvelope({ starred: { album, artist, song } });
 };
 
-export const getStarred2 = async (_opts: { musicFolderId?: string } = {}) => {
+export const getStarred2 = async (
+  _opts: { musicFolderIds?: string[] } = {},
+) => {
   const [song, album, artist] = await Promise.all([
     starredSongs(),
     starredAlbums(),

@@ -45,7 +45,7 @@ export const useSearch2 = (
     albumOffset?: number;
     songCount?: number;
     songOffset?: number;
-    musicFolderId?: string;
+    musicFolderIds?: string[];
   },
 ) => {
   return useQuery({
@@ -65,7 +65,7 @@ export const useSearch3 = (
     albumOffset?: number;
     songCount?: number;
     songOffset?: number;
-    musicFolderId?: string;
+    musicFolderIds?: string[];
   },
   // Lets a caller that renders the results behind a tab hold the search back
   // until that tab is actually shown.

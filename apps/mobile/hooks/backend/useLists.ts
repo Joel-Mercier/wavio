@@ -3,6 +3,7 @@ import {
   type AlbumListType,
   getAlbumList,
   getAlbumList2,
+  getLeastPlayedAlbums,
   getMostPlayedSongs,
   getNowPlaying,
   getRandomSongs,
@@ -22,7 +23,7 @@ export const useAlbumList = (params: {
   fromYear?: number;
   toYear?: number;
   genre?: string;
-  musicFolderId?: string;
+  musicFolderIds?: string[];
 }) => {
   return useQuery({
     queryKey: ["albumList", params],
@@ -41,7 +42,7 @@ export const useAlbumList2 = (
     fromYear?: number;
     toYear?: number;
     genre?: string;
-    musicFolderId?: string;
+    musicFolderIds?: string[];
     order?: SortDirection;
   },
   options?: { enabled?: boolean },
@@ -63,7 +64,7 @@ export const useInfiniteAlbumList2 = (
     fromYear?: number;
     toYear?: number;
     genre?: string;
-    musicFolderId?: string;
+    musicFolderIds?: string[];
     // The direction the browse is sorted in — part of the key, and `undefined`
     // for a caller that doesn't sort (utils/albumSort.ts). JSON.stringify drops
     // it, so an unsorted browse keeps the exact key it had before this list
@@ -98,6 +99,35 @@ export const useInfiniteAlbumList2 = (
   });
 };
 
+export const useLeastPlayedAlbums = (
+  params: { size?: number; musicFolderIds?: string[] },
+  options?: { enabled?: boolean },
+) => {
+  return useQuery({
+    queryKey: ["leastPlayedAlbums", params],
+    queryFn: () => getLeastPlayedAlbums(params),
+    enabled: options?.enabled,
+  });
+};
+
+export const useInfiniteLeastPlayedAlbums = (
+  params: { size?: number; musicFolderIds?: string[] },
+  options?: { enabled?: boolean },
+) => {
+  const size = params.size ?? 20;
+  return useInfiniteQuery({
+    queryKey: ["leastPlayedAlbums:infinite", { ...params, size }],
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) =>
+      getLeastPlayedAlbums({ ...params, size, offset: pageParam }),
+    // Each page trims its pool, so a page can come back short (or empty) while
+    // the server still has albums: only an empty pool ends the list.
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.poolCount === 0 ? undefined : allPages.length * size,
+    enabled: options?.enabled,
+  });
+};
+
 export const usePlayNow = () => {
   return useQuery({
     queryKey: ["playNow"],
@@ -126,7 +156,7 @@ export const useRandomSongs = (
     fromYear?: number;
     toYear?: number;
     genre?: string;
-    musicFolderId?: string;
+    musicFolderIds?: string[];
   },
   options?: { enabled?: boolean },
 ) => {
@@ -150,7 +180,7 @@ export const useInfiniteSongs = (
     query?: string;
     size?: number;
     sort?: SongSortType;
-    musicFolderId?: string;
+    musicFolderIds?: string[];
   } = {},
   options?: { enabled?: boolean },
 ) => {
@@ -181,7 +211,7 @@ export const useSongsByGenre = (
     genre: string;
     count?: number;
     offset?: number;
-    musicFolderId?: string;
+    musicFolderIds?: string[];
   },
   options?: { enabled?: boolean },
 ) => {
@@ -196,7 +226,7 @@ export const useSongsByGenre = (
 };
 
 export const useMostPlayedSongs = (
-  params: { size?: number; musicFolderId?: string } = {},
+  params: { size?: number; musicFolderIds?: string[] } = {},
   options?: { enabled?: boolean },
 ) => {
   return useQuery({
@@ -209,7 +239,7 @@ export const useMostPlayedSongs = (
 };
 
 export const useInfiniteMostPlayedSongs = (
-  params: { size?: number; musicFolderId?: string } = {},
+  params: { size?: number; musicFolderIds?: string[] } = {},
 ) => {
   const size = params.size ?? 20;
   return useInfiniteQuery({
@@ -234,9 +264,9 @@ export const useInfiniteMostPlayedSongs = (
 
 // Favorites aren't folder-scoped (see services/openSubsonic/lists.ts), so the
 // query key stays constant — switching libraries no longer spawns a redundant
-// per-folder favorites cache entry. musicFolderId is kept in the signature for
+// per-folder favorites cache entry. musicFolderIds is kept in the signature for
 // caller compatibility but ignored.
-export const useStarred = (_params: { musicFolderId?: string } = {}) => {
+export const useStarred = (_params: { musicFolderIds?: string[] } = {}) => {
   return useQuery({
     queryKey: ["starred"],
     queryFn: () => {
@@ -246,7 +276,7 @@ export const useStarred = (_params: { musicFolderId?: string } = {}) => {
 };
 
 export const useStarred2 = (
-  _params: { musicFolderId?: string } = {},
+  _params: { musicFolderIds?: string[] } = {},
   options?: { enabled?: boolean },
 ) => {
   return useQuery({

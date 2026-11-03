@@ -45,6 +45,7 @@ jest.mock("@/services/jellyfin/mappers", () => ({
     id: item.Id,
     name: item.Name ?? item.Id,
   }),
+  favoriteAsStarred: () => undefined,
   COMMON_FIELDS: "",
 }));
 

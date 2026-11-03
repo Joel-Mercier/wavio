@@ -121,3 +121,17 @@ export interface NavidromeCreateUserBody {
   isAdmin?: boolean;
   password: string;
 }
+
+export interface NavidromeTranscoding {
+  id: string;
+  name: string;
+  targetFormat: string;
+  defaultBitRate?: number;
+}
+
+export interface NavidromeShare {
+  id: string;
+  downloadable?: boolean;
+  format?: string;
+  maxBitRate?: number;
+}

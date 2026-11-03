@@ -23,7 +23,8 @@ jest.mock("@/stores/auth", () => ({
 import * as React from "react";
 import TestRenderer from "react-test-renderer";
 import {
-  useCurrentMusicFolderId,
+  normalizeMusicFolderSelection,
+  useCurrentMusicFolderIds,
   useMusicFoldersBase,
 } from "@/stores/musicFolders";
 
@@ -54,62 +55,97 @@ describe("musicFolders store", () => {
     expect(get().selections).toEqual({});
   });
 
-  test("setCurrentFolder stores the id under the given scope", () => {
-    get().setCurrentFolder("scopeA", "folder-1");
-    expect(get().selections).toEqual({ scopeA: "folder-1" });
+  test("setCurrentFolders stores the ids under the given scope", () => {
+    get().setCurrentFolders("scopeA", ["folder-1", "folder-2"]);
+    expect(get().selections).toEqual({ scopeA: ["folder-1", "folder-2"] });
   });
 
-  test("setCurrentFolder overwrites previous id for the same scope", () => {
-    get().setCurrentFolder("scopeA", "folder-1");
-    get().setCurrentFolder("scopeA", "folder-2");
-    expect(get().selections).toEqual({ scopeA: "folder-2" });
+  test("setCurrentFolders overwrites previous ids for the same scope", () => {
+    get().setCurrentFolders("scopeA", ["folder-1"]);
+    get().setCurrentFolders("scopeA", ["folder-2"]);
+    expect(get().selections).toEqual({ scopeA: ["folder-2"] });
   });
 
-  test("setCurrentFolder keeps selections for other scopes intact", () => {
-    get().setCurrentFolder("scopeA", "folder-1");
-    get().setCurrentFolder("scopeB", "folder-2");
+  test("setCurrentFolders keeps selections for other scopes intact", () => {
+    get().setCurrentFolders("scopeA", ["folder-1"]);
+    get().setCurrentFolders("scopeB", ["folder-2"]);
     expect(get().selections).toEqual({
-      scopeA: "folder-1",
-      scopeB: "folder-2",
+      scopeA: ["folder-1"],
+      scopeB: ["folder-2"],
     });
   });
 
-  test("setCurrentFolder accepts undefined to clear a single scope value", () => {
-    get().setCurrentFolder("scopeA", "folder-1");
-    get().setCurrentFolder("scopeA", undefined);
+  test("setCurrentFolders stores an empty list as 'all libraries'", () => {
+    get().setCurrentFolders("scopeA", ["folder-1"]);
+    get().setCurrentFolders("scopeA", []);
     expect(get().selections).toEqual({ scopeA: undefined });
   });
 
+  test("setCurrentFolders drops duplicate ids", () => {
+    get().setCurrentFolders("scopeA", ["folder-1", "folder-1"]);
+    expect(get().selections).toEqual({ scopeA: ["folder-1"] });
+  });
+
   test("clearScope removes the entry for the given scope only", () => {
-    get().setCurrentFolder("scopeA", "folder-1");
-    get().setCurrentFolder("scopeB", "folder-2");
+    get().setCurrentFolders("scopeA", ["folder-1"]);
+    get().setCurrentFolders("scopeB", ["folder-2"]);
     get().clearScope("scopeA");
-    expect(get().selections).toEqual({ scopeB: "folder-2" });
+    expect(get().selections).toEqual({ scopeB: ["folder-2"] });
     expect(Object.hasOwn(get().selections, "scopeA")).toBe(false);
   });
 
   test("clearScope is a no-op when the scope has no entry", () => {
-    get().setCurrentFolder("scopeA", "folder-1");
+    get().setCurrentFolders("scopeA", ["folder-1"]);
     get().clearScope("scopeB");
-    expect(get().selections).toEqual({ scopeA: "folder-1" });
+    expect(get().selections).toEqual({ scopeA: ["folder-1"] });
   });
 });
 
-describe("useCurrentMusicFolderId", () => {
+describe("normalizeMusicFolderSelection", () => {
+  test("lifts a legacy single id into a list", () => {
+    expect(normalizeMusicFolderSelection("folder-1")).toEqual(["folder-1"]);
+  });
+
+  test("reads anything else as 'all libraries'", () => {
+    expect(normalizeMusicFolderSelection(undefined)).toBeUndefined();
+    expect(normalizeMusicFolderSelection(null)).toBeUndefined();
+    expect(normalizeMusicFolderSelection([])).toBeUndefined();
+  });
+});
+
+describe("persist migration", () => {
+  test("rewrites v0 single-id selections as lists", async () => {
+    const { migrate } = useMusicFoldersBase.persist.getOptions();
+    const migrated = await migrate?.(
+      { selections: { scopeA: "folder-1", scopeB: undefined } },
+      0,
+    );
+    expect(migrated).toEqual({
+      selections: { scopeA: ["folder-1"], scopeB: undefined },
+    });
+  });
+});
+
+describe("useCurrentMusicFolderIds", () => {
   beforeEach(() => {
     mockAuthState.scope = undefined;
     useMusicFoldersBase.setState({ selections: {} });
   });
 
-  test("useCurrentMusicFolderId returns undefined when no scope", () => {
+  test("returns undefined when no scope", () => {
     mockAuthState.scope = undefined;
-    useMusicFoldersBase.setState({ selections: { anything: "f1" } });
-    expect(callHook(useCurrentMusicFolderId)).toBeUndefined();
+    useMusicFoldersBase.setState({ selections: { anything: ["f1"] } });
+    expect(callHook(useCurrentMusicFolderIds)).toBeUndefined();
   });
 
-  test("useCurrentMusicFolderId reads selection for the active scope", () => {
+  test("reads the selection for the active scope", () => {
     mockAuthState.scope = "srv_1_alice";
-    useMusicFoldersBase.setState({ selections: { srv_1_alice: "folder-9" } });
-    expect(callHook(useCurrentMusicFolderId)).toBe("folder-9");
+    useMusicFoldersBase.setState({
+      selections: { srv_1_alice: ["folder-9", "folder-3"] },
+    });
+    expect(callHook(useCurrentMusicFolderIds)).toEqual([
+      "folder-9",
+      "folder-3",
+    ]);
   });
 });

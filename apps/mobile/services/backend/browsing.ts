@@ -41,8 +41,8 @@ export const getArtistInfo2 = dispatch(S.getArtistInfo2, J.getArtistInfo2);
 export const getArtists = dispatch(S.getArtists, J.getArtists, L.getArtists);
 // Subsonic getGenres has no musicFolderId param, so with a library selected on
 // Navidrome the list comes from the native per-library endpoint instead.
-const subsonicGetGenres = (params: { musicFolderId?: string } = {}) =>
-  isNavidrome() && params.musicFolderId ? N.getGenres(params) : S.getGenres();
+const subsonicGetGenres = (params: { musicFolderIds?: string[] } = {}) =>
+  isNavidrome() && params.musicFolderIds ? N.getGenres(params) : S.getGenres();
 export const getGenres = dispatch(subsonicGetGenres, J.getGenres, L.getGenres);
 export const getIndexes = dispatch(S.getIndexes, J.getIndexes, L.getIndexes);
 export const getMusicDirectory = dispatch(

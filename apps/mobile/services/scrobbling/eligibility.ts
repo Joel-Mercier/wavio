@@ -1,4 +1,5 @@
 import type { QueueTrack } from "@/stores/queue";
+import { isSpokenWordTrack } from "@/utils/trackSource";
 
 // Last.fm and ListenBrainz agree on the rule, to the second: a track counts once
 // the listener has heard half of it, or four minutes, whichever comes first, and
@@ -48,7 +49,7 @@ export type ScrobblableTrack = QueueTrack & {
  */
 export function isScrobblableTrack(track: QueueTrack): boolean {
   const candidate = track as ScrobblableTrack;
-  if (candidate.source === "podcast") return false;
+  if (isSpokenWordTrack(candidate)) return false;
   if (candidate.isRadio) return false;
   if (candidate.isUntitled) return false;
   return Boolean(track.title?.trim()) && Boolean(track.artist?.trim());

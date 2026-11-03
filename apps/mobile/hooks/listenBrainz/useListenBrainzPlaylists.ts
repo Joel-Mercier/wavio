@@ -9,7 +9,7 @@ import {
 } from "@/services/listenBrainz/playlists";
 import type { ListenBrainzPlaylistTrack } from "@/services/listenBrainz/types";
 import { retryUnlessClientError } from "@/services/retry";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 
 // Daily Jams is rebuilt once a day and the weekly pair once a week, so the list
 // of them is close to static within a session.
@@ -56,7 +56,7 @@ export function useListenBrainzPlaylist(mbid: string | undefined) {
  *
  * The key deliberately omits `tracks` — the mbid already pins exactly which
  * tracks these are, and hashing a fifty-element array on every render would cost
- * more than it protects. `musicFolderId` does belong in it: that one changes
+ * more than it protects. `musicFolderIds` does belong in it: that one changes
  * within a session and changes the answer.
  */
 export function useLibraryResolvedTracks(
@@ -64,14 +64,14 @@ export function useLibraryResolvedTracks(
   tracks: ListenBrainzPlaylistTrack[] | undefined,
   { enabled = true } = {},
 ) {
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const { multiFieldSearch } = useCapabilities();
 
   return useQuery({
-    queryKey: ["listenbrainz", "resolve", mbid, musicFolderId ?? null],
+    queryKey: ["listenbrainz", "resolve", mbid, musicFolderIds ?? null],
     queryFn: ({ signal }) =>
       matchTracksToLibrary(tracks ?? [], {
-        musicFolderId,
+        musicFolderIds,
         signal,
         multiFieldSearch,
       }),

@@ -11,6 +11,7 @@ import useRadioStations from "@/stores/radioStations";
 import useRecentPlays from "@/stores/recentPlays";
 import useRecentSearches from "@/stores/recentSearches";
 import { isCanonicalIdStable } from "@/utils/navidromeCanonicalId";
+import { isLibraryTrack } from "@/utils/trackSource";
 
 // Trigger half of the canonical-id migration (navidrome/navidrome#5824).
 //
@@ -58,7 +59,7 @@ export function probeCandidates(): string[] {
   for (const track of useQueue.getState().queue) {
     // Radio stations and podcast episodes carry uuids from Radio Browser /
     // Taddy, not the server; getSong knows nothing about either.
-    if (track.isRadio || track.source === "podcast") continue;
+    if (!isLibraryTrack(track)) continue;
     consider(track.id);
   }
   for (const entry of usePlayHistory.getState().history) consider(entry.id);

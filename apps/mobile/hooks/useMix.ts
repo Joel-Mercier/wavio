@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { generateArtistMix } from "@/services/mixes/artistMix";
 import { generateGenreMix } from "@/services/mixes/genreMix";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import { mulberry32 } from "@/utils/shuffle";
 
 export type MixKind = "artist" | "genre";
@@ -20,17 +20,17 @@ export function useMix({
   /** Bumped to regenerate; each value is its own, stable mix. */
   seed: number;
 }) {
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   return useQuery({
-    queryKey: ["mix", kind, id, musicFolderId, seed],
+    queryKey: ["mix", kind, id, musicFolderIds, seed],
     queryFn: ({ signal }) => {
       const rand = mulberry32(seed);
       return kind === "artist"
         ? generateArtistMix(
             { id, name, musicBrainzId },
-            { musicFolderId, rand, signal },
+            { musicFolderIds, rand, signal },
           )
-        : generateGenreMix(id, { musicFolderId, rand });
+        : generateGenreMix(id, { musicFolderIds, rand });
     },
     enabled: !!id,
     staleTime: Number.POSITIVE_INFINITY,

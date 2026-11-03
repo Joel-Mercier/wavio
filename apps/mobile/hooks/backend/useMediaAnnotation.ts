@@ -11,6 +11,7 @@ import {
 } from "@/services/backend/mediaAnnotation";
 import { enqueueLove } from "@/services/lastFm/scrobbler";
 import { getIsEffectivelyOnline } from "@/services/network";
+import { requestAutoDownloadSync } from "@/services/offline/autoDownloadTrigger";
 import {
   enqueueOfflineMutation,
   isQueuedResult,
@@ -174,6 +175,7 @@ const applyStarResult = (
     });
   }
   invalidateKeys(queryClient, STARRED_AFFECTED_KEYS);
+  requestAutoDownloadSync();
 };
 
 // For callers outside React, such as the media notification's favorite button.

@@ -38,6 +38,7 @@ export type HomeSectionDescriptor =
     }
   | { id: string; kind: "randomSongs" }
   | { id: string; kind: "mostPlayedTracks" }
+  | { id: string; kind: "leastPlayedAlbums" }
   | { id: string; kind: "randomArtists" }
   | { id: string; kind: "playlists" }
   | { id: string; kind: "starred" }
@@ -118,6 +119,7 @@ const HOME_SECTION_CATALOG_ENTRIES = [
     capability: "setRating",
   },
   { key: "albumList:random", labelKey: "app.home.random" },
+  { key: "leastPlayedAlbums", labelKey: "app.home.leastPlayed" },
   { key: "podcasts", labelKey: "app.home.podcasts", capability: "podcasts" },
   {
     key: "internetRadio",
@@ -515,6 +517,8 @@ export function buildHomeFeed({
       params: { type: "random" },
     },
   });
+
+  sections.push({ id: "leastPlayedAlbums", kind: "leastPlayedAlbums" });
 
   if (capabilities.podcasts) {
     sections.push({ id: "podcasts", kind: "podcasts" });

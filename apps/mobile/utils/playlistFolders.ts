@@ -46,7 +46,13 @@ export type PlaylistFolderOptions = {
   assignments: PlaylistFolderAssignments;
 };
 
-type GroupablePlaylist = { id: string; name: string; created?: string | Date };
+type GroupablePlaylist = {
+  id: string;
+  name: string;
+  created?: string | Date;
+  songCount?: number;
+  duration?: number;
+};
 
 export type PlaylistFolderMember<T> = { playlist: T; title: string };
 
@@ -66,6 +72,8 @@ export type LibraryPlaylistFolderRow = {
   folderColor: PlaylistFolderColor | null;
   playlistCount: number;
   created?: string;
+  songCount?: number;
+  duration?: number;
 };
 
 export const folderKey = (name: string) => name.trim().toLowerCase();
@@ -179,6 +187,20 @@ export function groupPlaylistsIntoFolders<T extends GroupablePlaylist>(
   return { rootPlaylists, folders: [...groups.values()] };
 }
 
+// Undefined when no member reports the field (an offline download carries no
+// duration), so the folder sorts as "no data" rather than as an empty one.
+function sumOf<T extends GroupablePlaylist>(
+  members: PlaylistFolderMember<T>[],
+  field: "songCount" | "duration",
+): number | undefined {
+  let total: number | undefined;
+  for (const { playlist } of members) {
+    const value = playlist[field];
+    if (typeof value === "number") total = (total ?? 0) + value;
+  }
+  return total;
+}
+
 export function playlistFolderRow<T extends GroupablePlaylist>(
   group: PlaylistFolderGroup<T>,
 ): LibraryPlaylistFolderRow {
@@ -202,6 +224,8 @@ export function playlistFolderRow<T extends GroupablePlaylist>(
     playlistCount: group.members.length,
     created:
       created === undefined ? undefined : new Date(created).toISOString(),
+    songCount: sumOf(group.members, "songCount"),
+    duration: sumOf(group.members, "duration"),
   };
 }
 

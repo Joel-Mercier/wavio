@@ -36,30 +36,57 @@ export function getNoBackupStorage(id: string): MMKV {
   return instance;
 }
 
+// Told the store name (never the scope prefix) on every persisted-store write,
+// with a lazy check of whether the write changes what is stored: zustand's
+// persist re-writes a store on every `set`, identical or not, and opening the
+// app does that to several stores. services/autoBackup uses it to know whether
+// there is anything new to back up, so it has to stay a plain function call.
+type PersistedWriteObserver = (
+  name: string,
+  changesStored: () => boolean,
+) => void;
+
+let persistedWriteObserver: PersistedWriteObserver | null = null;
+
+export const setPersistedWriteObserver = (
+  observer: PersistedWriteObserver | null,
+) => {
+  persistedWriteObserver = observer;
+};
+
+export const notePersistedWrite = (
+  name: string,
+  changesStored: () => boolean,
+) => {
+  persistedWriteObserver?.(name, changesStored);
+};
+
+const writeItem = (name: string, key: string, value: string) => {
+  notePersistedWrite(name, () => storage.getString(key) !== value);
+  storage.set(key, value);
+};
+
+const removeItem = (name: string, key: string) => {
+  notePersistedWrite(name, () => storage.getString(key) !== undefined);
+  storage.remove(key);
+};
+
 export const zustandStorage: StateStorage = {
-  setItem: (name, value) => {
-    return storage.set(name, value);
-  },
+  setItem: (name, value) => writeItem(name, name, value),
   getItem: (name) => {
     const value = storage.getString(name);
     return value ?? null;
   },
-  removeItem: (name) => {
-    return storage.remove(name);
-  },
+  removeItem: (name) => removeItem(name, name),
 };
 
 export const createScopedStorage = (scope: string): StateStorage => ({
-  setItem: (name, value) => {
-    return storage.set(`${scope}:${name}`, value);
-  },
+  setItem: (name, value) => writeItem(name, `${scope}:${name}`, value),
   getItem: (name) => {
     const value = storage.getString(`${scope}:${name}`);
     return value ?? null;
   },
-  removeItem: (name) => {
-    return storage.remove(`${scope}:${name}`);
-  },
+  removeItem: (name) => removeItem(name, `${scope}:${name}`),
 });
 
 // On a (server, user) switch the app resets every scoped store in memory before
@@ -89,7 +116,7 @@ export const createDynamicScopedStorage = (
 ): StateStorage => ({
   setItem: (name, value) => {
     if (scopedWritesSuspended) return;
-    return storage.set(`${getScope()}:${name}`, value);
+    writeItem(name, `${getScope()}:${name}`, value);
   },
   getItem: (name) => {
     const value = storage.getString(`${getScope()}:${name}`);
@@ -97,7 +124,7 @@ export const createDynamicScopedStorage = (
   },
   removeItem: (name) => {
     if (scopedWritesSuspended) return;
-    return storage.remove(`${getScope()}:${name}`);
+    removeItem(name, `${getScope()}:${name}`);
   },
 });
 
@@ -140,7 +167,8 @@ export const createThrottledScopedJSONStorage = <S>(
   getScope: () => string,
   delayMs: number,
 ): PersistStorage<S> => {
-  let pending: { key: string; value: StorageValue<S> } | null = null;
+  let pending: { name: string; key: string; value: StorageValue<S> } | null =
+    null;
   let timer: BackgroundTimer | null = null;
 
   const flush = () => {
@@ -150,9 +178,9 @@ export const createThrottledScopedJSONStorage = <S>(
     }
     pendingFlushers.delete(flush);
     if (!pending) return;
-    const { key, value } = pending;
+    const { name, key, value } = pending;
     pending = null;
-    storage.set(key, JSON.stringify(value));
+    writeItem(name, key, JSON.stringify(value));
   };
 
   registerFlushOnBackground();
@@ -162,7 +190,7 @@ export const createThrottledScopedJSONStorage = <S>(
       if (scopedWritesSuspended) return;
       const key = `${getScope()}:${name}`;
       if (pending && pending.key !== key) flush();
-      pending = { key, value };
+      pending = { name, key, value };
       pendingFlushers.add(flush);
       if (!timer) timer = setBackgroundTimeout(flush, delayMs);
     },
@@ -176,7 +204,7 @@ export const createThrottledScopedJSONStorage = <S>(
       if (scopedWritesSuspended) return;
       const key = `${getScope()}:${name}`;
       if (pending?.key === key) pending = null;
-      storage.remove(key);
+      removeItem(name, key);
     },
   };
 };

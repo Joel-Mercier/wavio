@@ -18,7 +18,7 @@ const TRACK_COLUMNS =
   "id, uri, path, folder, size, mtime, title, artist, album, album_artist, " +
   "composer, genre, year, track_number, track_total, disc_number, disc_total, " +
   "duration_ms, bitrate, sample_rate, is_compilation, suffix, artwork_path, " +
-  "artwork_mime, lyrics, music_brainz_id, artists_json, replay_gain_json, " +
+  "artwork_mime, music_brainz_id, artists_json, replay_gain_json, " +
   "album_key, artist_key, indexed_at";
 
 // Track reads alias the table as `t` and LEFT JOIN per-track play stats so every
@@ -123,6 +123,23 @@ export async function queryLibrarySize(): Promise<number> {
 export async function queryTrackById(id: string): Promise<TrackRow | null> {
   const db = await getLocalLibraryDb();
   return db.getFirstAsync<TrackRow>(`${TRACK_SELECT} WHERE t.id = ?`, id);
+}
+
+export type TrackLyricsRow = {
+  title: string | null;
+  artist: string | null;
+  lyrics: string | null;
+  lyrics_sidecar: string | null;
+};
+
+export async function queryTrackLyrics(
+  id: string,
+): Promise<TrackLyricsRow | null> {
+  const db = await getLocalLibraryDb();
+  return db.getFirstAsync<TrackLyricsRow>(
+    "SELECT title, artist, lyrics, lyrics_sidecar FROM tracks_resolved WHERE id = ?",
+    id,
+  );
 }
 
 /**

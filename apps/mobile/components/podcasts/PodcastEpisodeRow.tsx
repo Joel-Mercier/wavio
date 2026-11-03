@@ -11,6 +11,7 @@ import {
   EpisodeProgressBar,
   MarkAsPlayedButton,
 } from "@/components/podcasts/EpisodeProgress";
+import SwipeToMarkPlayed from "@/components/podcasts/SwipeToMarkPlayed";
 import RichText from "@/components/RichText";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -19,7 +20,9 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useIsTrackAvailableOffline } from "@/hooks/offline";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import usePodcastPlayed from "@/hooks/usePodcastPlayed";
 import type { PodcastEpisode } from "@/services/openSubsonic/types";
+import { markPodcastEpisodePlayed } from "@/services/podcastProgress";
 import { artworkUrl } from "@/utils/artwork";
 import { formatDistanceToNow } from "@/utils/date";
 import { isPlayablePodcastEpisode } from "@/utils/podcastEpisodeToTrack";
@@ -73,6 +76,7 @@ export default function PodcastEpisodeRow({
 
   const isDownloaded = useIsTrackAvailableOffline(episode.id);
   const isOnline = useIsOnline();
+  const isPlayed = usePodcastPlayed(episode.id, "server");
 
   // Joined rather than interpolated so a feed that declares no date or no
   // duration can't leave a stray separator behind. An episode the server hasn't
@@ -91,7 +95,7 @@ export default function PodcastEpisodeRow({
     .join(" ⦁ ");
 
   const row = (
-    <VStack className="px-6 my-3 gap-y-2 border-b border-b-primary-400">
+    <VStack className="px-6 gap-y-2 border-b border-b-primary-400">
       <HStack className="gap-x-4">
         <ImageWithFallback
           source={{ uri: image }}
@@ -120,7 +124,7 @@ export default function PodcastEpisodeRow({
       {!!meta && <Text className="flex-1 text-white">{meta}</Text>}
       <HStack className="items-center justify-between mb-4">
         <HStack className="items-center gap-x-4">
-          <MarkAsPlayedButton id={episode.id} size={22} />
+          <MarkAsPlayedButton id={episode.id} source="server" size={22} />
           <EpisodeDownloadButton
             episode={episode}
             seriesName={seriesName}
@@ -150,9 +154,22 @@ export default function PodcastEpisodeRow({
     </VStack>
   );
 
-  // The controls inside are Pressables of their own, so a tap on one of them
-  // becomes the responder: the row neither animates nor navigates behind it.
-  if (!onPress) return row;
-
-  return <FadeOutScaleDown onPress={onPress}>{row}</FadeOutScaleDown>;
+  // The swipe wrapper owns the vertical margin so its panel spans the row
+  // itself, not the gap to the next one.
+  return (
+    <SwipeToMarkPlayed
+      enabled={!isPlayed}
+      onMarkPlayed={() => markPodcastEpisodePlayed(episode.id, "server")}
+      className="my-3"
+    >
+      {onPress ? (
+        // The controls inside are Pressables of their own, so a tap on one of
+        // them becomes the responder: the row neither animates nor navigates
+        // behind it.
+        <FadeOutScaleDown onPress={onPress}>{row}</FadeOutScaleDown>
+      ) : (
+        row
+      )}
+    </SwipeToMarkPlayed>
+  );
 }

@@ -23,14 +23,14 @@ export const useUsers = (options?: { enabled?: boolean }) => {
   });
 };
 
-export const useGetUser = (username: string) => {
+export const useGetUser = (username: string, enabled = true) => {
   const { adminUsers } = useCapabilities();
   return useQuery({
     queryKey: ["getUser", username],
     queryFn: () => {
       return getUser(username);
     },
-    enabled: !!username && adminUsers,
+    enabled: enabled && !!username && adminUsers,
   });
 };
 

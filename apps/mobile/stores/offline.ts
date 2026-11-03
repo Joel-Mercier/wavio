@@ -5,12 +5,28 @@ import type { Child } from "@/services/openSubsonic/types";
 import { currentAuthScope } from "@/stores/auth";
 import createSelectors from "@/utils/createSelectors";
 
-// Who caused a track/collection to be downloaded. "user" = an explicit save
-// (single-track download, "Save for offline" on a collection, starred
-// auto-sync); "auto" = the extended-offline library sync. Absent means "user"
-// so data persisted before the flag existed keeps its explicit-save semantics.
-// Disabling extended offline mode removes only "auto" content.
-export type OfflineSource = "user" | "auto";
+// Who caused a track/collection to be downloaded, highest rank first. "user" =
+// an explicit save (single-track download, "Save for offline" on a collection,
+// and liked songs downloaded before the automatic downloads existed); "rule" =
+// an automatic download (liked songs, liked albums, playlists — see
+// services/offline/autoDownloadService.ts); "auto" = the extended-offline
+// library sync. Absent means "user" so data persisted before the flag existed
+// keeps its explicit-save semantics. Each owner only ever removes its own
+// content, and a higher rank takes over content a lower one fetched.
+export type OfflineSource = "user" | "rule" | "auto";
+
+export type AutoDownloadKind = "song" | "album" | "playlist";
+
+// A per-item exception to the automatic downloads, keyed by
+// `${kind}:${id}` (autoDownloadKey). "exclude" is written when the user removes
+// an automatic download, so the next sync doesn't fetch it again; "include"
+// opts a playlist the rule skips by default (a smart playlist) back in. The
+// name is kept so the exclusions can be listed with no server.
+export type AutoDownloadOverride = {
+  mode: "include" | "exclude";
+  kind: AutoDownloadKind;
+  name: string;
+};
 
 export type OfflineTrack = {
   id: string;
@@ -68,6 +84,9 @@ export type OfflineCollection = {
   year?: number;
   savedAt: string;
   source?: OfflineSource;
+  // The server-side version an automatic download was last fetched at, so an
+  // unchanged album or playlist isn't fetched again on every sync.
+  ruleVersion?: string;
 };
 
 // Why services/offline/collectionAdoption.ts left a collection unregistered:
@@ -92,8 +111,23 @@ export type DownloadProgress = {
 };
 
 export interface OfflineStore {
+  // The liked-songs automatic download (named before the other rules existed).
   offlineModeEnabled: boolean;
   setOfflineModeEnabled: (enabled: boolean) => void;
+  autoDownloadLikedAlbums: boolean;
+  setAutoDownloadLikedAlbums: (enabled: boolean) => void;
+  autoDownloadPlaylists: boolean;
+  setAutoDownloadPlaylists: (enabled: boolean) => void;
+  autoDownloadOverrides: Record<string, AutoDownloadOverride>;
+  // A null update drops the entry.
+  updateAutoDownloadOverrides: (
+    updates: Record<string, AutoDownloadOverride | null>,
+  ) => void;
+  // The liked songs as of the last successful listing, null before the first.
+  // Lets a rule be switched off (or an album unliked) while offline without
+  // deleting a song that is still liked.
+  likedSongIds: string[] | null;
+  setLikedSongIds: (ids: string[] | null) => void;
 
   downloadedTracks: Record<string, OfflineTrack>;
   addDownloadedTrack: (track: OfflineTrack) => void;
@@ -169,6 +203,10 @@ export interface OfflineStore {
 
 const initialOfflineState = {
   offlineModeEnabled: false,
+  autoDownloadLikedAlbums: false,
+  autoDownloadPlaylists: false,
+  autoDownloadOverrides: {} as Record<string, AutoDownloadOverride>,
+  likedSongIds: null as string[] | null,
   downloadedTracks: {} as Record<string, OfflineTrack>,
   downloadedCollections: {} as Record<string, OfflineCollection>,
   incompleteCollections: {} as Record<string, IncompleteCollection>,
@@ -190,6 +228,42 @@ const useOfflineBase = create<OfflineStore>()(
 
       setOfflineModeEnabled: (enabled) => {
         set({ offlineModeEnabled: enabled });
+      },
+
+      setAutoDownloadLikedAlbums: (enabled) => {
+        set({ autoDownloadLikedAlbums: enabled });
+      },
+
+      setAutoDownloadPlaylists: (enabled) => {
+        set({ autoDownloadPlaylists: enabled });
+      },
+
+      updateAutoDownloadOverrides: (updates) => {
+        set((state) => {
+          const autoDownloadOverrides = { ...state.autoDownloadOverrides };
+          let changed = false;
+          for (const [key, override] of Object.entries(updates)) {
+            if (override) {
+              const current = autoDownloadOverrides[key];
+              if (
+                current?.mode === override.mode &&
+                current.name === override.name
+              ) {
+                continue;
+              }
+              autoDownloadOverrides[key] = override;
+              changed = true;
+            } else if (key in autoDownloadOverrides) {
+              delete autoDownloadOverrides[key];
+              changed = true;
+            }
+          }
+          return changed ? { autoDownloadOverrides } : state;
+        });
+      },
+
+      setLikedSongIds: (ids) => {
+        set({ likedSongIds: ids });
       },
 
       addDownloadedTrack: (track) => {
@@ -596,6 +670,10 @@ const useOfflineBase = create<OfflineStore>()(
       skipHydration: true,
       partialize: (state) => ({
         offlineModeEnabled: state.offlineModeEnabled,
+        autoDownloadLikedAlbums: state.autoDownloadLikedAlbums,
+        autoDownloadPlaylists: state.autoDownloadPlaylists,
+        autoDownloadOverrides: state.autoDownloadOverrides,
+        likedSongIds: state.likedSongIds,
         downloadedTracks: state.downloadedTracks,
         downloadedCollections: state.downloadedCollections,
         incompleteCollections: state.incompleteCollections,

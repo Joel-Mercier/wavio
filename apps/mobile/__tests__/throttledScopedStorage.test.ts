@@ -10,8 +10,10 @@ jest.mock("react-native-mmkv", () => ({
 }));
 
 import {
+  createDynamicScopedStorage,
   createThrottledScopedJSONStorage,
   flushPendingScopedWrites,
+  setPersistedWriteObserver,
   withScopedWritesSuspended,
 } from "@/config/storage";
 
@@ -29,6 +31,7 @@ beforeEach(() => {
 
 afterEach(() => {
   flushPendingScopedWrites();
+  setPersistedWriteObserver(null);
   jest.useRealTimers();
 });
 
@@ -88,5 +91,51 @@ describe("createThrottledScopedJSONStorage", () => {
     jest.advanceTimersByTime(1000);
 
     expect(mockMem.has("a:s")).toBe(false);
+  });
+});
+
+describe("persisted write observer", () => {
+  const observe = () => {
+    const writes: [string, boolean][] = [];
+    setPersistedWriteObserver((name, changesStored) => {
+      writes.push([name, changesStored()]);
+    });
+    return writes;
+  };
+
+  it("tells a change from a re-write of the same value", () => {
+    const storage = createDynamicScopedStorage(() => scope);
+    const writes = observe();
+    storage.setItem("s", "1");
+    storage.setItem("s", "1");
+    storage.setItem("s", "2");
+    storage.removeItem("s");
+    storage.removeItem("s");
+
+    expect(writes).toEqual([
+      ["s", true],
+      ["s", false],
+      ["s", true],
+      ["s", true],
+      ["s", false],
+    ]);
+  });
+
+  it("reports a throttled write when it lands, once per flush", () => {
+    const storage = make();
+    storage.setItem("s", value(1));
+    jest.advanceTimersByTime(1000);
+    const writes = observe();
+    for (let n = 0; n < 5; n++) storage.setItem("s", value(1));
+    expect(writes).toEqual([]);
+
+    jest.advanceTimersByTime(1000);
+    storage.setItem("s", value(2));
+    flushPendingScopedWrites();
+
+    expect(writes).toEqual([
+      ["s", false],
+      ["s", true],
+    ]);
   });
 });

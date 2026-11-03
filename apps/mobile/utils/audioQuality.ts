@@ -1,5 +1,6 @@
 import type { StreamFormat } from "@/stores/app";
 import type { QueueTrack } from "@/stores/queue";
+import { isLibraryTrack } from "@/utils/trackSource";
 
 export function formatSampleRate(hz: number): string {
   const khz = hz / 1000;
@@ -20,7 +21,7 @@ function sourceFormat(track: QueueTrack): string | undefined {
 // the streamed/transcoded output. Returns null for radio/podcast or when no
 // quality data is available.
 export function formatAudioQuality(track: QueueTrack | null): string | null {
-  if (!track || track.isRadio || track.source === "podcast") return null;
+  if (!isLibraryTrack(track)) return null;
 
   const parts: string[] = [];
   const format = sourceFormat(track);
@@ -135,7 +136,7 @@ export function localFileTranscodeInfo(
   entry: { suffix: string | undefined; bytes: number } | null,
   source?: { suffix?: string; bitRate?: number },
 ): LocalFileTranscodeInfo {
-  if (!track || !entry || track.isRadio || track.source === "podcast") {
+  if (!isLibraryTrack(track) || !entry) {
     return NOT_COMPARABLE;
   }
 
@@ -208,7 +209,7 @@ export function getTranscodeInfo(
     formatTranscode?: boolean;
   },
 ): TranscodeInfo {
-  if (!track || track.isRadio || track.source === "podcast") {
+  if (!isLibraryTrack(track)) {
     return { active: false, fromLabel: null, toLabel: null };
   }
 

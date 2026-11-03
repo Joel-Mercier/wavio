@@ -5,7 +5,7 @@ import { matchSimilarArtists } from "@/services/audioMuse/artists";
 import type { AudioMuseSimilarArtist } from "@/services/audioMuse/types";
 import { getArtistsByIds } from "@/services/backend/browsing";
 import type { ArtistID3 } from "@/services/openSubsonic/types";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 
 // Stable identity for the not-yet-loaded case, so callers can hand the query's
 // `data` straight in without a fresh [] re-running every memo each render.
@@ -32,11 +32,11 @@ export function useHydratedArtists(
   enabled = true,
 ) {
   const rows = results ?? NO_RESULTS;
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   // enabled:false observes the cache without ever fetching it, and still
   // re-renders when another screen fills that key in.
   const { data: cachedIndex } = useArtists(
-    { musicFolderId },
+    { musicFolderIds },
     { enabled: false },
   );
 

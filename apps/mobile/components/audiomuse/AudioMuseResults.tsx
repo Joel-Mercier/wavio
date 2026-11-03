@@ -1,4 +1,5 @@
 import { LegendList } from "@legendapp/list/react-native";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
@@ -28,7 +29,10 @@ export default function AudioMuseResults({
   canSave = true,
   defaultPlaylistName,
   indexScope = "analysis",
+  header,
 }: {
+  /** Scrolls with the list, above the count and actions. */
+  header?: ReactNode;
   itemIds: string[];
   source: QueueSource;
   emptyMessage?: string;
@@ -83,6 +87,7 @@ export default function AudioMuseResults({
       }
       ListHeaderComponent={
         <VStack className="pb-2 gap-y-3">
+          {header}
           <VStack className="gap-y-1 px-6">
             <Text className="text-primary-100" numberOfLines={1}>
               {t("app.shared.songCount", { count: tracks?.length ?? 0 })}

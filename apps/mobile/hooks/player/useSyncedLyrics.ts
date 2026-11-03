@@ -9,6 +9,7 @@ import {
   hasLyricContent,
   sanitizeStructuredLyrics,
 } from "@/utils/lyrics";
+import { isLibraryTrack } from "@/utils/trackSource";
 
 function pickSyncedLyrics(
   list: StructuredLyrics[] | undefined,
@@ -33,10 +34,7 @@ function pickSyncedLyrics(
 export function useBackendLyrics(track: QueueTrack | undefined | null) {
   const lyricsSource = useApp((s) => s.lyricsSource);
   const trackId = track?.id;
-  const isRadio = !!track?.isRadio;
-  const isPodcast = track?.source === "podcast";
-  const eligible =
-    !!trackId && !isRadio && !isPodcast && lyricsSource !== "off";
+  const eligible = !!trackId && isLibraryTrack(track) && lyricsSource !== "off";
   const backend = useGetLyricsBySongId(
     trackId ?? "",
     { enhanced: true },

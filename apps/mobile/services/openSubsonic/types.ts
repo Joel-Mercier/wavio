@@ -332,6 +332,8 @@ export interface Playlist {
   public?: boolean;
   songCount: number;
   allowedUser?: string[];
+  // OpenSubsonic: only set on smart playlists, for when they next re-evaluate.
+  validUntil?: string;
 }
 
 export interface Playlists {

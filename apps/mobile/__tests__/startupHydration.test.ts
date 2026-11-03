@@ -85,7 +85,17 @@ jest.mock("@/config/i18n", () => ({
   __esModule: true,
   default: { changeLanguage: mockChangeLanguage },
   applyZodLocale: mockApplyZodLocale,
-  SupportedLanguages: ["en", "fr", "de", "it", "es", "pt-BR", "zh-CN", "ru"],
+  SupportedLanguages: [
+    "en",
+    "fr",
+    "de",
+    "it",
+    "es",
+    "pt-BR",
+    "zh-CN",
+    "ru",
+    "pl",
+  ],
 }));
 
 let mockLocales: { languageCode: string | null }[] = [];

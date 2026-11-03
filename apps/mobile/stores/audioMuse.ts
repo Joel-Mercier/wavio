@@ -55,6 +55,15 @@ export interface AudioMuseFeatures {
    * the text-search index: a deployment can serve one without the other.
    */
   semGroveEnabled: boolean;
+  /**
+   * What /api/version reported, verbatim ("v3.6.4"). null on deployments older
+   * than 3.6.2, which predate the endpoint — features are then probed instead.
+   */
+  serverVersion: string | null;
+  /** The Neural Fingerprint model is on, so a recorded clip can be identified. */
+  recordingSearchEnabled: boolean;
+  /** Tracks carrying a neural fingerprint on the selected server; null = unknown. */
+  neuralIndexedCount: number | null;
   lastProbeAt: number | null;
 }
 
@@ -128,6 +137,9 @@ const initialState = {
   fingerprintSecret: "",
   artistSimilarityEnabled: false,
   semGroveEnabled: false,
+  serverVersion: null,
+  recordingSearchEnabled: false,
+  neuralIndexedCount: null,
   lastProbeAt: null,
 };
 
@@ -192,6 +204,9 @@ const useAudioMuseBase = create<AudioMuseStore>()(
         fingerprintSecret: state.fingerprintSecret,
         artistSimilarityEnabled: state.artistSimilarityEnabled,
         semGroveEnabled: state.semGroveEnabled,
+        serverVersion: state.serverVersion,
+        recordingSearchEnabled: state.recordingSearchEnabled,
+        neuralIndexedCount: state.neuralIndexedCount,
         lastProbeAt: state.lastProbeAt,
       }),
     },
@@ -315,6 +330,24 @@ export function selectLyricsPathAvailable(state: {
   semGroveEnabled: boolean;
 }): boolean {
   return selectSongPathAvailable(state) && state.semGroveEnabled;
+}
+
+/**
+ * Whether a recorded clip can be identified. The model is opt-in and only learnt
+ * from /api/models, which deployments older than 3.6.2 don't serve, so those
+ * never offer it. An explicit 0 fingerprinted tracks means nothing could ever
+ * match — the model was switched on but no analysis has run since.
+ */
+export function selectRecordingSearchAvailable(state: {
+  isConnected: boolean;
+  recordingSearchEnabled: boolean;
+  neuralIndexedCount: number | null;
+}): boolean {
+  return (
+    state.isConnected &&
+    state.recordingSearchEnabled &&
+    state.neuralIndexedCount !== 0
+  );
 }
 
 /** Which index a result set was drawn from, so an empty one can be explained. */

@@ -84,8 +84,8 @@
       [
         "expo-audio",
         {
-          "microphonePermission": false,
-          "recordAudioAndroid": false,
+          "microphonePermission": "Allow $(PRODUCT_NAME) to record a short clip so AudioMuse-AI can identify the song playing around you.",
+          "recordAudioAndroid": true,
           "enableBackgroundPlayback": true,
           "enableBackgroundRecording": false
         }

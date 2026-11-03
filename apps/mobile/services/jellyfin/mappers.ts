@@ -6,6 +6,7 @@ import type {
   ArtistWithAlbumsID3,
   Child,
   Contributor,
+  CueLine,
   Genre,
   MusicFolder,
   Playlist,
@@ -28,7 +29,7 @@ function parseDate(value?: string): Date | undefined {
   return Number.isNaN(d.getTime()) ? undefined : d;
 }
 
-function favoriteAsStarred(item: BaseItemDto): Date | undefined {
+export function favoriteAsStarred(item: BaseItemDto): Date | undefined {
   if (item.UserData?.IsFavorite) {
     // Jellyfin doesn't expose when an item was favorited; LastPlayedDate is the
     // closest proxy. Fall back to now (not epoch) so "recently starred" sorts
@@ -246,24 +247,53 @@ export function mapScanStatus(refreshInProgress: boolean): ScanStatus {
   return { scanning: refreshInProgress };
 }
 
+type JellyfinLyricCue = {
+  Position: number;
+  EndPosition: number;
+  Start: number;
+  End?: number | null;
+};
+
 export type JellyfinLyricsResponse = {
-  Lyrics?: { Start?: number; Text: string }[];
+  Lyrics?: { Start?: number; Text: string; Cues?: JellyfinLyricCue[] | null }[];
   Metadata?: { Lyricist?: string; Title?: string; IsSynced?: boolean };
 };
+
+const ticksToMs = (ticks: number) => Math.round(ticks / 10_000);
 
 export function mapJellyfinLyrics(
   payload: JellyfinLyricsResponse,
 ): StructuredLyrics | null {
   if (!payload?.Lyrics || payload.Lyrics.length === 0) return null;
-  const synced = payload.Lyrics.some((l) => typeof l.Start === "number");
+  const lines = payload.Lyrics;
+  const synced = lines.some((l) => typeof l.Start === "number");
+  const cueLine: CueLine[] = [];
+  lines.forEach((l, index) => {
+    if (!l.Cues?.length) return;
+    const next = lines[index + 1]?.Start;
+    cueLine.push({
+      index,
+      start: typeof l.Start === "number" ? ticksToMs(l.Start) : undefined,
+      end: typeof next === "number" ? ticksToMs(next) : undefined,
+      value: l.Text,
+      // Positions are UTF-16 offsets into Text, the same unit JS slices in.
+      cue: l.Cues.map((c) => ({
+        start: ticksToMs(c.Start),
+        end: typeof c.End === "number" ? ticksToMs(c.End) : undefined,
+        byteStart: c.Position,
+        byteEnd: c.EndPosition,
+        value: l.Text.slice(c.Position, c.EndPosition),
+      })),
+    });
+  });
   return {
     lang: "und",
     synced,
-    line: payload.Lyrics.map((l) => ({
+    line: lines.map((l) => ({
       value: l.Text,
-      start:
-        typeof l.Start === "number" ? Math.round(l.Start / 10_000) : undefined,
+      start: typeof l.Start === "number" ? ticksToMs(l.Start) : undefined,
     })),
+    ...(cueLine.length ? { cueLine } : {}),
     displayTitle: payload.Metadata?.Title,
   };
 }

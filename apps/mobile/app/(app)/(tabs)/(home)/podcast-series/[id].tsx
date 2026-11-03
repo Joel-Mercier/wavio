@@ -1,9 +1,14 @@
+import {
+  type BottomSheetModal,
+  BottomSheetScrollView,
+} from "@gorhom/bottom-sheet";
 import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/icons/arrow-left";
+import EllipsisVertical from "lucide-react-native/icons/ellipsis-vertical";
 import Podcast from "lucide-react-native/icons/mic-signal";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import Animated, {
   Extrapolation,
@@ -13,10 +18,12 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
+import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import CollapsibleTabs, {
   type CollapsibleSceneProps,
 } from "@/components/CollapsibleTabs";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import MarkAllPlayedMenuItems from "@/components/podcasts/MarkAllPlayedMenuItems";
 import PodcastListItem from "@/components/podcasts/PodcastListItem";
 import PodcastListItemSkeleton from "@/components/podcasts/PodcastListItemSkeleton";
 import PodcastSeriesListItem from "@/components/podcasts/PodcastSeriesListItem";
@@ -76,6 +83,13 @@ export default function PodcastSeriesScreen() {
       ) ?? [],
     [data],
   );
+  // Only what has been paged in: fetching the rest would cost a Taddy request
+  // per 25 episodes.
+  const episodeIds = useMemo(
+    () => episodes.map((episode) => episode.uuid),
+    [episodes],
+  );
+  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const series = data?.pages?.[0]?.data?.getPodcastSeries ?? null;
   const description = series?.description ?? null;
   const firstGenre = podcastSeries.genres?.[0];
@@ -192,20 +206,30 @@ export default function PodcastSeriesScreen() {
                   )}
             </Text>
           )}
-          <FadeOutScaleDown
-            onPress={() =>
-              isFavorite
-                ? handleRemoveFavoritePodcastPress()
-                : handleAddFavoritePodcastPress()
-            }
-            className="border border-white rounded-full self-start mt-4 py-1 px-2.5"
-          >
-            <Text className="text-white">
-              {isFavorite
-                ? t("app.podcasts.unsubscribe")
-                : t("app.podcasts.subscribe")}
-            </Text>
-          </FadeOutScaleDown>
+          <HStack className="mt-4 items-center gap-x-4">
+            <FadeOutScaleDown
+              onPress={() =>
+                isFavorite
+                  ? handleRemoveFavoritePodcastPress()
+                  : handleAddFavoritePodcastPress()
+              }
+              className="border border-white rounded-full self-start py-1 px-2.5"
+            >
+              <Text className="text-white">
+                {isFavorite
+                  ? t("app.podcasts.unsubscribe")
+                  : t("app.podcasts.subscribe")}
+              </Text>
+            </FadeOutScaleDown>
+            {episodeIds.length > 0 && (
+              <FadeOutScaleDown
+                testID="podcast-series-menu-button"
+                onPress={() => bottomSheetModalRef.current?.present()}
+              >
+                <EllipsisVertical color={white} />
+              </FadeOutScaleDown>
+            )}
+          </HStack>
         </VStack>
       </VStack>
     </LinearGradient>
@@ -377,6 +401,48 @@ export default function PodcastSeriesScreen() {
           </FadeOutScaleDown>
         </Box>
       </Box>
+      <CenteredBottomSheetModal
+        ref={bottomSheetModalRef}
+        backgroundStyle={{ backgroundColor: "rgb(41, 41, 41)" }}
+        handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
+      >
+        <BottomSheetScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ alignItems: "center" }}
+        >
+          <Box className="p-6 w-full mb-12">
+            <HStack className="items-center">
+              {podcastSeries.imageUrl ? (
+                <Image
+                  source={{ uri: podcastSeries.imageUrl }}
+                  className="w-16 h-16 aspect-square rounded-md"
+                  alt={podcastSeries.name}
+                />
+              ) : (
+                <Box className="w-16 h-16 aspect-square rounded-md bg-primary-800 items-center justify-center">
+                  <Podcast size={24} color={white} />
+                </Box>
+              )}
+              <VStack className="ml-4 flex-1">
+                <Heading
+                  className="text-white font-normal"
+                  size="lg"
+                  numberOfLines={1}
+                >
+                  {podcastSeries.name}
+                </Heading>
+              </VStack>
+            </HStack>
+            <VStack className="mt-6 gap-y-8">
+              <MarkAllPlayedMenuItems
+                ids={episodeIds}
+                source="taddy"
+                onDone={() => bottomSheetModalRef.current?.dismiss()}
+              />
+            </VStack>
+          </Box>
+        </BottomSheetScrollView>
+      </CenteredBottomSheetModal>
     </Box>
   );
 }

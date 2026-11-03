@@ -25,8 +25,8 @@ export type SemVer = {
 
 // A newer release than the running version: the parsed version, the release
 // metadata (for changelog + fallback link) and the arch-matched APK to install.
-// `asset` is null when no published APK matches this device's ABI (e.g. an x86
-// emulator) — the UI then offers only the browser fallback.
+// `asset` is null when no published APK matches this device's ABI (e.g. a 32-bit
+// x86 device) — the UI then offers only the browser fallback.
 export type GithubUpdate = {
   version: string;
   release: GithubRelease;

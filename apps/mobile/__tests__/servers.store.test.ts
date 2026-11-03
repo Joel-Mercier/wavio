@@ -1,3 +1,5 @@
+import { getAuthScope, LOCAL_AUTH_SCOPE } from "@/config/authScope";
+import { usePodcastPlayedBase } from "@/stores/podcastPlayed";
 import {
   addServerFormSchema,
   editServerFormSchema,
@@ -209,6 +211,39 @@ describe("servers store actions", () => {
     useServersBase.getState().removeServer(s.id);
     expect(useServersBase.getState().servers).toHaveLength(0);
     expect(useServersBase.getState().users).toHaveLength(0);
+  });
+
+  it("removeServer forgets every user's podcast played marks", () => {
+    usePodcastPlayedBase.setState({ played: {} });
+    const a = useServersBase
+      .getState()
+      .addServer({ name: "A", url: "https://a.example.com" });
+    const b = useServersBase
+      .getState()
+      .addServer({ name: "B", url: "https://b.example.com" });
+    const played = usePodcastPlayedBase.getState();
+    played.markPlayed(getAuthScope(a.id, "u1"), "ep");
+    // Signed in once but never saved to the users list.
+    played.markPlayed(getAuthScope(a.id, "ghost"), "ep");
+    played.markPlayed(getAuthScope(b.id, "u1"), "ep");
+    played.markPlayed("taddy", "ep");
+    useServersBase.getState().removeServer(a.id);
+    expect(Object.keys(usePodcastPlayedBase.getState().played).sort()).toEqual(
+      [getAuthScope(b.id, "u1"), "taddy"].sort(),
+    );
+  });
+
+  it("removing the local library forgets its fixed scope's marks", () => {
+    usePodcastPlayedBase.setState({ played: {} });
+    const local = useServersBase
+      .getState()
+      .addServer({ name: "Local", url: "", type: "local" });
+    usePodcastPlayedBase.getState().markPlayed(LOCAL_AUTH_SCOPE, "ep");
+    usePodcastPlayedBase.getState().markPlayed("taddy", "ep");
+    useServersBase.getState().removeServer(local.id);
+    expect(Object.keys(usePodcastPlayedBase.getState().played)).toEqual([
+      "taddy",
+    ]);
   });
 
   it("removeUser only removes matching pair", () => {

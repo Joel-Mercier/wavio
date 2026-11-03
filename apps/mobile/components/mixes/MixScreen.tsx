@@ -22,13 +22,12 @@ import type { Child } from "@/services/openSubsonic/types";
 import type { QueueSource } from "@/stores/queue";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
+import { randomSeed } from "@/utils/shuffle";
 
 const FEATURED_SHOWN = 3;
 // Stable while loading, so useTrackListPress doesn't republish the selection
 // pool on every render.
 const NO_TRACKS: Child[] = [];
-
-const randomSeed = () => Math.floor(Math.random() * 2 ** 31) + 1;
 
 export default function MixScreen() {
   const { t } = useTranslation();

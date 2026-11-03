@@ -35,19 +35,19 @@ export const getAlbumList = async (
     fromYear,
     toYear,
     genre,
-    musicFolderId,
+    musicFolderIds,
   }: {
     size?: number;
     offset?: number;
     fromYear?: number;
     toYear?: number;
     genre?: string;
-    musicFolderId?: string;
+    musicFolderIds?: string[];
   },
 ) =>
   folderScopedRequest<{ albumList: AlbumList }>(
     "/rest/getAlbumList",
-    { type, size, offset, fromYear, toYear, genre, musicFolderId },
+    { type, size, offset, fromYear, toYear, genre, musicFolderIds },
     { albumList: {} },
   );
 
@@ -91,7 +91,7 @@ export const getAlbumList2 = async (
     fromYear,
     toYear,
     genre,
-    musicFolderId,
+    musicFolderIds,
     order,
   }: {
     size?: number;
@@ -99,7 +99,7 @@ export const getAlbumList2 = async (
     fromYear?: number;
     toYear?: number;
     genre?: string;
-    musicFolderId?: string;
+    musicFolderIds?: string[];
     // Accepted (this is the signature `dispatch` types the whole backend off)
     // but honoured only for `byYear`: the Subsonic spec gives getAlbumList2 no
     // sort-order parameter, so every other type is stuck with the direction it
@@ -116,7 +116,7 @@ export const getAlbumList2 = async (
       offset,
       ...yearBounds(type, fromYear, toYear, order),
       genre,
-      musicFolderId,
+      musicFolderIds,
     },
     { albumList2: {} },
   );
@@ -143,17 +143,17 @@ export const getRandomSongs = async ({
   fromYear,
   toYear,
   genre,
-  musicFolderId,
+  musicFolderIds,
 }: {
   size?: number;
   fromYear?: number;
   toYear?: number;
   genre?: string;
-  musicFolderId?: string;
+  musicFolderIds?: string[];
 }) => {
   const rsp = await folderScopedRequest<{ randomSongs: Songs }>(
     "/rest/getRandomSongs",
-    { size, fromYear, toYear, genre, musicFolderId },
+    { size, fromYear, toYear, genre, musicFolderIds },
     { randomSongs: {} },
   );
   return okEnvelope<{ songs: Songs }>({ songs: rsp.randomSongs ?? {} });
@@ -174,12 +174,12 @@ export const getSongs = async ({
   query = "",
   size,
   offset,
-  musicFolderId,
+  musicFolderIds,
 }: {
   query?: string;
   size?: number;
   offset?: number;
-  musicFolderId?: string;
+  musicFolderIds?: string[];
   sort?: SongSortType;
 }) => {
   const rsp = await search3(query, {
@@ -187,7 +187,7 @@ export const getSongs = async ({
     songOffset: offset,
     albumCount: 0,
     artistCount: 0,
-    musicFolderId,
+    musicFolderIds,
   });
   return okEnvelope<{ songs: Songs }>({
     songs: { song: rsp.searchResult3?.song ?? [] },
@@ -200,12 +200,12 @@ export const getSongsByGenre = async (
   {
     count,
     offset,
-    musicFolderId,
-  }: { count?: number; offset?: number; musicFolderId?: string },
+    musicFolderIds,
+  }: { count?: number; offset?: number; musicFolderIds?: string[] },
 ) => {
   const rsp = await folderScopedRequest<{ songsByGenre: Songs }>(
     "/rest/getSongsByGenre",
-    { genre, count, offset, musicFolderId },
+    { genre, count, offset, musicFolderIds },
     { songsByGenre: {} },
   );
   return okEnvelope<{ songs: Songs }>({ songs: rsp.songsByGenre ?? {} });
@@ -215,9 +215,10 @@ export const getSongsByGenre = async (
 // Jellyfin/local, which ignore the folder too, and the playlists endpoint).
 // Scoping starred items by music folder meant a selected library holding none of
 // them silently blanked the Library view (folderScopedRequest swallows Subsonic
-// code 70), so musicFolderId is accepted for signature parity but unused.
-export const getStarred = async (_params: { musicFolderId?: string } = {}) =>
+// code 70), so musicFolderIds is accepted for signature parity but unused.
+export const getStarred = async (_params: { musicFolderIds?: string[] } = {}) =>
   subsonicRequest<{ starred: Starred }>("/rest/getStarred");
 
-export const getStarred2 = async (_params: { musicFolderId?: string } = {}) =>
-  subsonicRequest<{ starred2: Starred2 }>("/rest/getStarred2");
+export const getStarred2 = async (
+  _params: { musicFolderIds?: string[] } = {},
+) => subsonicRequest<{ starred2: Starred2 }>("/rest/getStarred2");

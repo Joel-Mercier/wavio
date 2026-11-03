@@ -186,6 +186,50 @@ export interface AudioMuseSemGroveStats {
   song_count?: number;
 }
 
+/** GET /api/version — from AudioMuse 3.6.2, behind the auth barrier. */
+export interface AudioMuseVersion {
+  app_version?: string;
+}
+
+export interface AudioMuseModelCoverage {
+  count?: number | null;
+  total?: number;
+  percentage?: number | null;
+}
+
+/**
+ * GET /api/models — which analysis models the deployment runs, and how much of
+ * the catalogue each has indexed. Shipped alongside /api/version, so a deployment
+ * that answers one answers the other. `local` is the selected server's share.
+ */
+export interface AudioMuseModels {
+  server_id?: string;
+  models?: Record<
+    string,
+    {
+      enabled?: boolean;
+      global?: AudioMuseModelCoverage;
+      local?: AudioMuseModelCoverage;
+    }
+  >;
+}
+
+/**
+ * One row of POST /api/recording_search/search, best match first. Only the first
+ * row can be `identified`: its score cleared the deployment's floor *and* led the
+ * runner-up by enough to rule out a close call.
+ */
+export interface AudioMuseRecordingMatch extends AudioMuseTrack {
+  score?: number;
+  identified?: boolean;
+}
+
+export interface AudioMuseRecordingSearchResponse {
+  clip_seconds?: number;
+  count?: number;
+  results?: AudioMuseRecordingMatch[];
+}
+
 /** GET /api/servers — the media servers this deployment analyses. */
 export interface AudioMuseServersResponse {
   servers?: {

@@ -21,6 +21,7 @@ import {
   useGetScanStatus,
   useStartScan,
 } from "@/hooks/backend/useMediaLibraryScanning";
+import useLibraryPicker from "@/hooks/useLibraryPicker";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
 import {
   isIndexBackedType,
@@ -53,6 +54,9 @@ export default function MusicLibrarySection() {
   // whose scan costs bandwidth, so the only one the Wi-Fi guard applies to.
   const networkShare = isNetworkShareType(serverType);
   const scanOnWifiOnly = useApp((store) => store.scanOnWifiOnly);
+  const searchAllLibraries = useApp((store) => store.searchAllLibraries);
+  const setSearchAllLibraries = useApp((store) => store.setSearchAllLibraries);
+  const { canPick: canPickLibrary } = useLibraryPicker();
   const setScanOnWifiOnly = useApp((store) => store.setScanOnWifiOnly);
   const albumArtNames = useApp((store) => store.albumArtNames);
   const setAlbumArtNames = useApp((store) => store.setAlbumArtNames);
@@ -374,6 +378,18 @@ export default function MusicLibrarySection() {
                 </BadgeText>
               </Badge>
             </HStack>
+            {canPickLibrary && (
+              <SettingsToggleRow
+                label={t(
+                  "app.settings.musicLibrarySettings.searchAllLibrariesLabel",
+                )}
+                description={t(
+                  "app.settings.musicLibrarySettings.searchAllLibrariesDescription",
+                )}
+                value={searchAllLibraries}
+                onToggle={setSearchAllLibraries}
+              />
+            )}
           </>
         )}
       </VStack>

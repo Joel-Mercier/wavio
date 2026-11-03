@@ -14,6 +14,12 @@ import { getAiProvider, useAudioMuseBase } from "@/stores/audioMuse";
 // takes far longer than the instance's 15s reachability budget.
 const CHAT_TIMEOUT_MS = 180_000;
 
+// AudioMuse aimed for a fixed 100 songs until v3.5.2, which made it `n` and
+// defaulted it to the deployment's INSTANT_PLAYLIST_DEFAULT_N_RESULTS (50).
+// Sending it keeps the playlist the same size on every version; older servers
+// ignore the field, and a count written in the prompt still wins server-side.
+export const CHAT_PLAYLIST_SIZE = 100;
+
 export type ChatPlaylistOptions = {
   /** Called for every progress line the pipeline emits. */
   onLog?: (line: string) => void;
@@ -78,6 +84,7 @@ async function streamChatPlaylist(
     },
     body: JSON.stringify({
       userInput,
+      n: CHAT_PLAYLIST_SIZE,
       ...aiProviderField(),
       ...(serverId ? { server: serverId } : {}),
     }),
@@ -113,7 +120,7 @@ async function requestChatPlaylist(
     "/chat/api/chatPlaylist",
     {
       method: "post",
-      data: { userInput, ...aiProviderField() },
+      data: { userInput, n: CHAT_PLAYLIST_SIZE, ...aiProviderField() },
       timeout: CHAT_TIMEOUT_MS,
       signal,
     },

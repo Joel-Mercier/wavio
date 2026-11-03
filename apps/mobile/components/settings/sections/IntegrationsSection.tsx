@@ -12,6 +12,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { isIndexBackedType } from "@/services/backend/serverTraits";
+import useAudiobookshelf from "@/stores/audiobookshelf";
 import useAudioMuse from "@/stores/audioMuse";
 import { useAuthBase } from "@/stores/auth";
 import useLastFm from "@/stores/lastFm";
@@ -80,6 +81,9 @@ export default function IntegrationsSection() {
   );
   const lastScanAt = useMusicBrainz((store) => store.lastScanAt);
   const isAudioMuseConnected = useAudioMuse((store) => store.isConnected);
+  const isAudiobookshelfConnected = useAudiobookshelf(
+    (store) => store.isConnected,
+  );
   const listenBrainzUserName = useListenBrainz((store) => store.userName);
   const lastFmUserName = useLastFm((store) => store.userName);
 
@@ -105,6 +109,14 @@ export default function IntegrationsSection() {
             isConfigured={isAudioMuseConnected}
           />
         )}
+        <IntegrationRow
+          title={t("app.settings.integrations.audiobookshelf.title")}
+          description={t(
+            "app.settings.integrations.audiobookshelf.description",
+          )}
+          href="/integrations/audiobookshelf"
+          isConfigured={isAudiobookshelfConnected}
+        />
         {/* Offered on every backend, local library included: the app submits
             listens itself, so it needs nothing from the server — and a local
             library is the one setup where no server could be scrobbling. */}

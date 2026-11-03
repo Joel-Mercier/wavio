@@ -4,7 +4,7 @@ import type { AlbumListType } from "@/services/openSubsonic/lists";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
-import { useCurrentMusicFolderId } from "@/stores/musicFolders";
+import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import {
   type AlbumSortField,
   type AlbumSortType,
@@ -42,13 +42,13 @@ function hasRows(albums: AlbumID3[] | undefined): boolean | undefined {
 function useAlbumSortCoverage(
   enabled: boolean,
 ): Partial<Record<AlbumSortField, boolean>> {
-  const musicFolderId = useCurrentMusicFolderId();
+  const musicFolderIds = useCurrentMusicFolderIds();
   const options = { enabled };
   const playCount = useAlbumList2(
     {
       type: albumSortListType("playCount"),
       size: COVERAGE_PROBE_SIZE,
-      musicFolderId,
+      musicFolderIds,
     },
     options,
   );
@@ -56,7 +56,7 @@ function useAlbumSortCoverage(
     {
       type: albumSortListType("lastPlayed"),
       size: COVERAGE_PROBE_SIZE,
-      musicFolderId,
+      musicFolderIds,
     },
     options,
   );
@@ -64,7 +64,7 @@ function useAlbumSortCoverage(
     {
       type: albumSortListType("rating"),
       size: COVERAGE_PROBE_SIZE,
-      musicFolderId,
+      musicFolderIds,
     },
     options,
   );

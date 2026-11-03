@@ -4,9 +4,14 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import AutoDownloadExclusionsSheet, {
+  useAutoDownloadExclusions,
+} from "@/components/settings/AutoDownloadExclusionsSheet";
+import AutoDownloadPlaylistsSheet from "@/components/settings/AutoDownloadPlaylistsSheet";
 import OptionsBottomSheetModal from "@/components/settings/OptionsBottomSheetModal";
 import {
   SettingsActionRow,
+  SettingsSectionTitle,
   SettingsSelectRow,
   SettingsToggleRow,
 } from "@/components/settings/SettingsRows";
@@ -20,23 +25,29 @@ import {
   AlertDialogHeader,
 } from "@/components/ui/alert-dialog";
 import { Box } from "@/components/ui/box";
+import { Divider } from "@/components/ui/divider";
 import { Heading } from "@/components/ui/heading";
 import { Progress, ProgressFilledTrack } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { useStarred2 } from "@/hooks/backend/useLists";
 import {
   useDownloadedCollections,
   useDownloadedTracksCount,
   useDownloadLocation,
   useLibrarySyncStatus,
-  useOfflineDownloads,
-  useTotalDownloadSize,
 } from "@/hooks/offline";
+import {
+  useAutoDownloadCollectionCount,
+  useLikedSongsDownloadStatus,
+} from "@/hooks/offline/useAutoDownloadStatus";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { folderLabel } from "@/services/local/paths";
 import { librarySyncService } from "@/services/offline";
+import {
+  type AutoDownloadRule,
+  autoDownloadService,
+} from "@/services/offline/autoDownloadService";
 import { clearTrackCache } from "@/services/trackCache";
 import useApp, {
   type StreamFormat,
@@ -46,6 +57,7 @@ import useApp, {
   type TrackCacheCount,
 } from "@/stores/app";
 import useLibrarySync from "@/stores/librarySync";
+import useOffline from "@/stores/offline";
 import useOfflineMutations from "@/stores/offlineMutations";
 import useTrackCache from "@/stores/trackCache";
 import { niceBytes } from "@/utils/fileSize";
@@ -72,6 +84,64 @@ const downloadFormatOptions: StreamFormat[] = [
   "mp3",
   "aac",
 ];
+
+type DisableTarget = AutoDownloadRule | "library";
+
+const DISABLE_CONFIRM_KEYS: Record<
+  DisableTarget,
+  { title: string; description: string }
+> = {
+  likedSongs: {
+    title: "app.settings.offlineSettings.autoDownloadDisableConfirmTitle",
+    description:
+      "app.settings.offlineSettings.autoDownloadLikedSongsDisableConfirmDescription",
+  },
+  likedAlbums: {
+    title: "app.settings.offlineSettings.autoDownloadDisableConfirmTitle",
+    description:
+      "app.settings.offlineSettings.autoDownloadLikedAlbumsDisableConfirmDescription",
+  },
+  playlists: {
+    title: "app.settings.offlineSettings.autoDownloadDisableConfirmTitle",
+    description:
+      "app.settings.offlineSettings.autoDownloadPlaylistsDisableConfirmDescription",
+  },
+  library: {
+    title: "app.settings.offlineSettings.extendedOfflineDisableConfirmTitle",
+    description:
+      "app.settings.offlineSettings.extendedOfflineDisableConfirmDescription",
+  },
+};
+
+function LikedSongsStatusLine() {
+  const { t } = useTranslation();
+  const { known, count, done, size } = useLikedSongsDownloadStatus();
+  if (!known) return null;
+  return (
+    <Text className="text-emerald-400 text-sm">
+      {t("app.settings.offlineSettings.downloadedTracksProgress", {
+        count,
+        done,
+        size: niceBytes(size),
+      })}
+    </Text>
+  );
+}
+
+function CollectionRuleStatusLine({
+  kind,
+  statusKey,
+}: {
+  kind: "album" | "playlist";
+  statusKey: string;
+}) {
+  const { t } = useTranslation();
+  const count = useAutoDownloadCollectionCount(kind);
+  if (count === 0) return null;
+  return (
+    <Text className="text-emerald-400 text-sm">{t(statusKey, { count })}</Text>
+  );
+}
 
 const pausedStatusKeys = {
   pausedOffline: "app.settings.offlineSettings.extendedOfflinePausedOffline",
@@ -227,7 +297,10 @@ export default function DownloadsOfflineSection() {
   const setDownloadFormat = useApp((store) => store.setDownloadFormat);
   const downloadMaxBitRate = useApp((store) => store.downloadMaxBitRate);
   const setDownloadMaxBitRate = useApp((store) => store.setDownloadMaxBitRate);
-  const { offlineModeEnabled, setOfflineModeEnabled } = useOfflineDownloads();
+  const likedSongsEnabled = useOffline((s) => s.offlineModeEnabled);
+  const likedAlbumsEnabled = useOffline((s) => s.autoDownloadLikedAlbums);
+  const playlistsEnabled = useOffline((s) => s.autoDownloadPlaylists);
+  const exclusions = useAutoDownloadExclusions();
   // Use the plain selector form (not `.use.queue()`): the React Compiler only
   // recognizes a call as a hook by its `use*` call-site name, so the member
   // form gets memoized as a normal call and skips the underlying store hook on
@@ -240,12 +313,10 @@ export default function DownloadsOfflineSection() {
     (s) => s.setExtendedOfflineModeEnabled,
   );
   const downloadedTracksCount = useDownloadedTracksCount();
-  const totalDownloadSize = useTotalDownloadSize();
   const downloadedCollections = useDownloadedCollections();
-  const { data: starredTracksData } = useStarred2({});
-  const totalTracksToDownload = starredTracksData?.starred2?.song?.length ?? 0;
-
-  const [showDisableConfirm, setShowDisableConfirm] = useState(false);
+  const [disableTarget, setDisableTarget] = useState<DisableTarget | null>(
+    null,
+  );
   const [isDisabling, setIsDisabling] = useState(false);
   const [disableProgress, setDisableProgress] = useState<{
     done: number;
@@ -257,6 +328,10 @@ export default function DownloadsOfflineSection() {
   const bottomSheetTrackCacheCountModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetTrackCacheBudgetModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetDownloadLocationModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetAutoDownloadPlaylistsModalRef =
+    useRef<BottomSheetModal>(null);
+  const bottomSheetAutoDownloadExclusionsModalRef =
+    useRef<BottomSheetModal>(null);
   const {
     downloadLocationUri,
     pick: pickDownloadLocation,
@@ -297,21 +372,38 @@ export default function DownloadsOfflineSection() {
       // The root LibrarySyncController reacts to the flag and starts the crawl.
       setExtendedOfflineModeEnabled(true);
     } else {
-      setShowDisableConfirm(true);
+      setDisableTarget("library");
     }
   };
 
+  const handleRuleToggle = (rule: AutoDownloadRule, value: boolean) => {
+    if (value || !autoDownloadService.holdsContent(rule)) {
+      void autoDownloadService.setRuleEnabled(rule, value);
+      return;
+    }
+    setDisableTarget(rule);
+  };
+
   const handleDisableConfirmPress = async () => {
+    if (!disableTarget) return;
     setIsDisabling(true);
     setDisableProgress({ done: 0, total: 0 });
+    const onProgress = (done: number, total: number) =>
+      setDisableProgress({ done, total });
     try {
-      await librarySyncService.disable((done, total) =>
-        setDisableProgress({ done, total }),
-      );
+      if (disableTarget === "library") {
+        await librarySyncService.disable(onProgress);
+      } else {
+        await autoDownloadService.setRuleEnabled(
+          disableTarget,
+          false,
+          onProgress,
+        );
+      }
     } finally {
       setIsDisabling(false);
       setDisableProgress(null);
-      setShowDisableConfirm(false);
+      setDisableTarget(null);
     }
   };
 
@@ -334,6 +426,12 @@ export default function DownloadsOfflineSection() {
       title={t("app.settings.menu.downloads.title")}
       overlays={
         <>
+          <AutoDownloadPlaylistsSheet
+            modalRef={bottomSheetAutoDownloadPlaylistsModalRef}
+          />
+          <AutoDownloadExclusionsSheet
+            modalRef={bottomSheetAutoDownloadExclusionsModalRef}
+          />
           <OptionsBottomSheetModal
             modalRef={bottomSheetDownloadFormatModalRef}
             header={t("app.settings.offlineSettings.downloadFormatLabel")}
@@ -425,22 +523,72 @@ export default function DownloadsOfflineSection() {
       }
     >
       <VStack className="gap-y-4">
+        <SettingsSectionTitle
+          title={t("app.settings.offlineSettings.autoDownloadsTitle")}
+        />
+        <Text className="text-primary-100 text-sm">
+          {t("app.settings.offlineSettings.autoDownloadsDescription")}
+        </Text>
         <SettingsToggleRow
-          label={t("app.settings.offlineSettings.offlineModeLabel")}
-          description={t("app.settings.offlineSettings.offlineModeDescription")}
-          value={offlineModeEnabled}
-          onToggle={(value) => setOfflineModeEnabled(value)}
-        >
-          {offlineModeEnabled && (
-            <Text className="text-emerald-400 text-sm">
-              {t("app.settings.offlineSettings.downloadedTracksProgress", {
-                count: Math.max(totalTracksToDownload, downloadedTracksCount),
-                done: downloadedTracksCount,
-                size: niceBytes(totalDownloadSize),
-              })}
-            </Text>
+          label={t("app.settings.offlineSettings.autoDownloadLikedSongsLabel")}
+          description={t(
+            "app.settings.offlineSettings.autoDownloadLikedSongsDescription",
           )}
+          value={likedSongsEnabled}
+          onToggle={(value) => handleRuleToggle("likedSongs", value)}
+        >
+          {likedSongsEnabled && <LikedSongsStatusLine />}
         </SettingsToggleRow>
+        {capabilities.offlineDownload && (
+          <>
+            <SettingsToggleRow
+              label={t(
+                "app.settings.offlineSettings.autoDownloadLikedAlbumsLabel",
+              )}
+              description={t(
+                "app.settings.offlineSettings.autoDownloadLikedAlbumsDescription",
+              )}
+              value={likedAlbumsEnabled}
+              onToggle={(value) => handleRuleToggle("likedAlbums", value)}
+            >
+              <CollectionRuleStatusLine
+                kind="album"
+                statusKey="app.settings.offlineSettings.autoDownloadLikedAlbumsStatus"
+              />
+            </SettingsToggleRow>
+            <SettingsToggleRow
+              label={t(
+                "app.settings.offlineSettings.autoDownloadPlaylistsLabel",
+              )}
+              description={t(
+                "app.settings.offlineSettings.autoDownloadPlaylistsDescription",
+              )}
+              value={playlistsEnabled}
+              onToggle={(value) => handleRuleToggle("playlists", value)}
+            >
+              <CollectionRuleStatusLine
+                kind="playlist"
+                statusKey="app.settings.offlineSettings.autoDownloadPlaylistsStatus"
+              />
+            </SettingsToggleRow>
+            {playlistsEnabled && (
+              <SettingsActionRow
+                label={t(
+                  "app.settings.offlineSettings.autoDownloadChoosePlaylistsLabel",
+                )}
+                description={t(
+                  "app.settings.offlineSettings.autoDownloadChoosePlaylistsDescription",
+                )}
+                actionLabel={t(
+                  "app.settings.offlineSettings.autoDownloadChoosePlaylistsAction",
+                )}
+                onPress={() =>
+                  bottomSheetAutoDownloadPlaylistsModalRef.current?.present()
+                }
+              />
+            )}
+          </>
+        )}
         {capabilities.offlineDownload && (
           <SettingsToggleRow
             label={t("app.settings.offlineSettings.extendedOfflineLabel")}
@@ -453,6 +601,27 @@ export default function DownloadsOfflineSection() {
             <LibrarySyncStatusLine />
           </SettingsToggleRow>
         )}
+        {exclusions.length > 0 && (
+          <SettingsActionRow
+            label={t(
+              "app.settings.offlineSettings.autoDownloadExclusionsLabel",
+            )}
+            description={t(
+              "app.settings.offlineSettings.autoDownloadExclusionsDescription",
+              { count: exclusions.length },
+            )}
+            actionLabel={t(
+              "app.settings.offlineSettings.autoDownloadExclusionsAction",
+            )}
+            onPress={() =>
+              bottomSheetAutoDownloadExclusionsModalRef.current?.present()
+            }
+          />
+        )}
+        <Divider className="bg-primary-400" />
+        <SettingsSectionTitle
+          title={t("app.settings.offlineSettings.downloadSettingsTitle")}
+        />
         <SettingsToggleRow
           label={t("app.settings.offlineSettings.downloadsWifiOnlyLabel")}
           description={t(
@@ -595,10 +764,10 @@ export default function DownloadsOfflineSection() {
         )}
       </VStack>
       <AlertDialog
-        isOpen={showDisableConfirm}
+        isOpen={disableTarget !== null}
         onClose={() => {
           if (isDisabling) return;
-          setShowDisableConfirm(false);
+          setDisableTarget(null);
         }}
         size="md"
       >
@@ -606,16 +775,13 @@ export default function DownloadsOfflineSection() {
         <AlertDialogContent className="bg-primary-800 border-primary-400">
           <AlertDialogHeader>
             <Heading className="text-white font-bold" size="md">
-              {t(
-                "app.settings.offlineSettings.extendedOfflineDisableConfirmTitle",
-              )}
+              {disableTarget && t(DISABLE_CONFIRM_KEYS[disableTarget].title)}
             </Heading>
           </AlertDialogHeader>
           <AlertDialogBody className="mt-3 mb-4">
             <Text className="text-primary-50" size="sm">
-              {t(
-                "app.settings.offlineSettings.extendedOfflineDisableConfirmDescription",
-              )}
+              {disableTarget &&
+                t(DISABLE_CONFIRM_KEYS[disableTarget].description)}
             </Text>
           </AlertDialogBody>
           <VStack className="gap-y-4">
@@ -643,9 +809,7 @@ export default function DownloadsOfflineSection() {
             )}
             <AlertDialogFooter className="items-center justify-center">
               <FadeOutScaleDown
-                onPress={
-                  isDisabling ? undefined : () => setShowDisableConfirm(false)
-                }
+                onPress={isDisabling ? undefined : () => setDisableTarget(null)}
                 className={`items-center justify-center py-3 px-8 border border-white rounded-full mr-4${
                   isDisabling ? " opacity-50" : ""
                 }`}

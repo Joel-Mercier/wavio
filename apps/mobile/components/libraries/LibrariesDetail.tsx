@@ -1,7 +1,7 @@
 import { LegendList } from "@legendapp/list/react-native";
-import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/icons/arrow-left";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import EmptyDisplay from "@/components/EmptyDisplay";
@@ -12,32 +12,21 @@ import LibraryListItemSkeleton from "@/components/library/LibraryListItemSkeleto
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { useMusicFolders as useMusicFoldersQuery } from "@/hooks/backend/useBrowsing";
+import { Text } from "@/components/ui/text";
+import useApplyMusicFolderSelection from "@/hooks/useApplyMusicFolderSelection";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import useLibraryPicker, { musicFolderLabel } from "@/hooks/useLibraryPicker";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { MusicFolder } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
-import { useAuthBase, useCurrentAuthScope } from "@/stores/auth";
-import {
-  useCurrentMusicFolderId,
-  useMusicFoldersBase,
-} from "@/stores/musicFolders";
+import type { MusicFolderSelection } from "@/stores/musicFolders";
 import { loadingData } from "@/utils/loadingData";
+import {
+  sameMusicFolderSelection,
+  toggleMusicFolder,
+} from "@/utils/musicFolderSelection";
 import { goBackOrHome } from "@/utils/navigation";
 import { cn } from "@/utils/tailwind";
-
-const FOLDER_QUERY_PREFIXES = [
-  "albumList2",
-  "albumList",
-  "starred2",
-  "starred",
-  "search3",
-  "search2",
-  "artists",
-  "indexes",
-  "randomSongs",
-  "songsByGenre",
-];
 
 export default function LibrariesDetail() {
   const { t } = useTranslation();
@@ -45,25 +34,39 @@ export default function LibrariesDetail() {
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const isWideLayout = useApp((s) => s.isWideLayout);
-  const queryClient = useQueryClient();
-  const { data, isLoading, error } = useMusicFoldersQuery();
-  const scope = useCurrentAuthScope();
-  const currentFolderId = useCurrentMusicFolderId();
-  const setCurrentFolder = useMusicFoldersBase((s) => s.setCurrentFolder);
-  const isJellyfin = useAuthBase((s) => s.serverType === "jellyfin");
+  const { folders, selection, isLoading, error, multiSelect, allowAll } =
+    useLibraryPicker();
+  const apply = useApplyMusicFolderSelection();
   // Switching invalidates and refetches every folder-scoped query, which needs
   // the server — offline it would just blank the library, so keep the current
   // selection until the server is reachable again.
   const isOnline = useIsOnline();
+  // Multi-select ticks are applied once, when the screen goes away, so a few
+  // taps cost one refetch.
+  const [draft, setDraft] = useState<{ ids: MusicFolderSelection } | null>(
+    null,
+  );
+  const changed =
+    draft && !sameMusicFolderSelection(draft.ids, selection) ? draft : null;
+  const pending = useRef(changed);
+  useEffect(() => {
+    pending.current = changed;
+  }, [changed]);
+  useEffect(
+    () => () => {
+      if (pending.current) apply(pending.current.ids);
+    },
+    [apply],
+  );
+  const shown = draft ? draft.ids : selection;
+  const allIds = folders.map((f) => String(f.id));
 
-  const folders = data?.musicFolders?.musicFolder ?? [];
-
-  const select = (id: string | undefined) => {
-    if (!scope) return;
-    setCurrentFolder(scope, id);
-    for (const prefix of FOLDER_QUERY_PREFIXES) {
-      queryClient.invalidateQueries({ queryKey: [prefix] });
+  const choose = (ids: MusicFolderSelection) => {
+    if (multiSelect) {
+      setDraft({ ids });
+      return;
     }
+    apply(ids);
     goBackOrHome(router);
   };
 
@@ -81,6 +84,11 @@ export default function LibrariesDetail() {
         </Heading>
         <Box className="w-6" />
       </HStack>
+      {multiSelect && !isLoading && folders.length > 1 && (
+        <Text className="text-sm text-primary-100 mb-4">
+          {t("app.libraries.pickOneOrMore")}
+        </Text>
+      )}
       {error && <ErrorDisplay error={error} />}
       {!error && (
         <LegendList
@@ -89,12 +97,12 @@ export default function LibrariesDetail() {
             isLoading ? (loadingData(6) as unknown as MusicFolder[]) : folders
           }
           ListHeaderComponent={
-            isLoading || isJellyfin ? null : (
+            isLoading || !allowAll ? null : (
               <LibraryRow
                 label={t("app.libraries.allLibraries")}
-                isSelected={currentFolderId === undefined}
+                isSelected={shown === undefined}
                 disabled={!isOnline}
-                onPress={() => select(undefined)}
+                onPress={() => choose(undefined)}
               />
             )
           }
@@ -109,17 +117,24 @@ export default function LibrariesDetail() {
               <LibraryListItemSkeleton layout="list" />
             ) : (
               <LibraryRow
-                label={item.name ?? `Library ${item.id}`}
+                label={musicFolderLabel(item)}
                 isDefault={index === 0}
-                isSelected={currentFolderId === String(item.id)}
+                isSelected={shown?.includes(String(item.id)) ?? false}
                 disabled={!isOnline}
-                onPress={() => select(String(item.id))}
+                onPress={() =>
+                  choose(
+                    multiSelect
+                      ? toggleMusicFolder(shown, String(item.id), allIds)
+                      : [String(item.id)],
+                  )
+                }
               />
             )
           }
           keyExtractor={(item, index) =>
             isLoading ? `skeleton-${index}` : String(item.id)
           }
+          extraData={shown}
           contentContainerStyle={{
             paddingBottom: screenBottomPadding,
           }}
