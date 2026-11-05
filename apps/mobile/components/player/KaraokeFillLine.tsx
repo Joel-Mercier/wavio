@@ -12,7 +12,6 @@ import type { CueLine } from "@/services/openSubsonic/types";
 import {
   buildFillWords,
   type FillWord,
-  KARAOKE_UPCOMING_COLOR,
   LYRIC_FLEX_ALIGN,
   type LyricAlign,
   wordFillProgress,
@@ -53,11 +52,7 @@ function FillWordView({
           width.value = e.nativeEvent.layout.width;
         }}
       >
-        <Text
-          className={textClassName}
-          numberOfLines={1}
-          style={{ color: KARAOKE_UPCOMING_COLOR }}
-        >
+        <Text className={textClassName} numberOfLines={1}>
           {word.text}
         </Text>
         <Animated.View

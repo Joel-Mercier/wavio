@@ -16,7 +16,7 @@
 <a href="https://crowdin.com/?utm_term=click-badge-add-on"><img src="https://badges.crowdin.net/badge/light/crowdin-on-dark.png" srcset="https://badges.crowdin.net/badge/light/crowdin-on-dark@2x.png 2x" alt="Crowdin | Agile localization for tech companies" height="28"></a>
 <a href="https://sentry.io"><img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/sentry-badge.svg" alt="Sentry" height="28"></a>
 
-[Presentation website](https://wavio-app.vercel.app) · [Get it on Google Play](https://play.google.com/store/apps/details?id=com.jmercier.wavio) · [Get it on Github](https://github.com/Joel-Mercier/wavio/releases/latest)
+[Presentation website](https://wavio-app.vercel.app) · [Presentation video](https://www.youtube.com/watch?v=VwLAz1QfZBg) · [Get it on Google Play](https://play.google.com/store/apps/details?id=com.jmercier.wavio) · [Get it on Github](https://github.com/Joel-Mercier/wavio/releases/latest)
 
 ## Table of contents
 - [How to install](#how-to-install)
