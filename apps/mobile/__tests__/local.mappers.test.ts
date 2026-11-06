@@ -68,6 +68,15 @@ const bareRow: TrackRow = {
 };
 
 describe("local mapRowToChild with missing metadata", () => {
+  it("does not use the embedded artwork MIME as the audio content type", () => {
+    const child = mapRowToChild({
+      ...bareRow,
+      suffix: "m4a",
+      artwork_mime: "image/jpeg",
+    });
+    expect(child.contentType).toBeUndefined();
+  });
+
   it("maps a fully tagless row without throwing", () => {
     expect(() => mapRowToChild(bareRow)).not.toThrow();
   });
