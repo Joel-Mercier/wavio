@@ -1,0 +1,40 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+group = 'expo.modules.httpstack'
+version = '0.0.1'
+
+def expoModulesCorePlugin = new File(project(":expo-modules-core").projectDir.absolutePath, "ExpoModulesCorePlugin.gradle")
+apply from: expoModulesCorePlugin
+applyKotlinExpoModulesCorePlugin()
+useCoreDependencies()
+useExpoPublishing()
+
+android {
+  namespace "expo.modules.httpstack"
+  compileSdk rootProject.ext.compileSdkVersion ?: 36
+  defaultConfig {
+    minSdkVersion rootProject.ext.minSdkVersion ?: 26
+    targetSdkVersion rootProject.ext.targetSdkVersion ?: 36
+    consumerProguardFiles "consumer-rules.pro"
+  }
+  buildFeatures {
+    buildConfig true
+  }
+}
+
+dependencies {
+  implementation project(':expo-modules-core')
+  // OkHttp and OkHttpClientProvider come from React Native at runtime. No
+  // version pin: react-android carries OkHttp as an `api` dependency, so
+  // compiling against it yields exactly the version React Native ships, and its
+  // own version comes from the `com.facebook.react.rootproject` plugin.
+  compileOnly "com.facebook.react:react-android"
+  compileOnly 'com.squareup.okhttp3:okhttp'
+  // cronet-okhttp pulls org.chromium.net:cronet (Java API + the platform
+  // HttpEngine provider, no native library). Play Services Cronet covers
+  // Android 12/13 devices whose platform has no HttpEngine. Never add
+  // cronet-embedded: it bundles ~8 MB of native code.
+  implementation "com.google.net.cronet:cronet-okhttp:0.1.2"
+  implementation "com.google.android.gms:play-services-cronet:18.1.1"
+}

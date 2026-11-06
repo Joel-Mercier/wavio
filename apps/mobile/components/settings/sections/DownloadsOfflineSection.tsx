@@ -1,6 +1,6 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { type Href, useRouter } from "expo-router";
-import { useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -42,6 +42,12 @@ import {
   useLikedSongsDownloadStatus,
 } from "@/hooks/offline/useAutoDownloadStatus";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import {
+  addTransportChangeListener,
+  isHttpStackAvailable,
+} from "@/modules/http-stack";
+import { speaksHttpType } from "@/services/backend/serverTraits";
+import { type Http3Status, http3StatusForUrl } from "@/services/httpTransport";
 import { folderLabel } from "@/services/local/paths";
 import { librarySyncService } from "@/services/offline";
 import {
@@ -56,6 +62,7 @@ import useApp, {
   type TrackCacheBudgetMb,
   type TrackCacheCount,
 } from "@/stores/app";
+import useAuth from "@/stores/auth";
 import useLibrarySync from "@/stores/librarySync";
 import useOffline from "@/stores/offline";
 import useOfflineMutations from "@/stores/offlineMutations";
@@ -275,6 +282,43 @@ function LibrarySyncStatusLine() {
         </Box>
       )}
     </VStack>
+  );
+}
+
+const HTTP3_STATUS_KEYS: Record<Http3Status, string> = {
+  active: "app.settings.offlineSettings.http3StatusActive",
+  inactive: "app.settings.offlineSettings.http3StatusInactive",
+  cleartext: "app.settings.offlineSettings.http3StatusCleartext",
+  customTls: "app.settings.offlineSettings.http3StatusCustomTls",
+  tlsFallback: "app.settings.offlineSettings.http3StatusTlsFallback",
+  unavailable: "app.settings.offlineSettings.http3StatusUnavailable",
+};
+
+function Http3Row() {
+  const { t } = useTranslation();
+  const http3Enabled = useApp((store) => store.http3Enabled);
+  const setHttp3Enabled = useApp((store) => store.setHttp3Enabled);
+  const url = useAuth((store) => store.url);
+  const serverType = useAuth((store) => store.serverType);
+  const status = useSyncExternalStore(addTransportChangeListener, () =>
+    http3Enabled ? http3StatusForUrl(url) : null,
+  );
+  const showStatus =
+    status !== null && (status === "unavailable" || speaksHttpType(serverType));
+
+  return (
+    <SettingsToggleRow
+      label={t("app.settings.offlineSettings.http3Label")}
+      description={t("app.settings.offlineSettings.http3Description")}
+      value={http3Enabled}
+      onToggle={(value) => setHttp3Enabled(value)}
+    >
+      {showStatus && (
+        <Text className="text-primary-100 text-xs">
+          {t(HTTP3_STATUS_KEYS[status])}
+        </Text>
+      )}
+    </SettingsToggleRow>
   );
 }
 
@@ -737,6 +781,7 @@ export default function DownloadsOfflineSection() {
           value={autoSignOutOnServerUnreachable}
           onToggle={(value) => setAutoSignOutOnServerUnreachable(value)}
         />
+        {isHttpStackAvailable() && <Http3Row />}
         <SettingsActionRow
           label={t("app.settings.offlineSettings.manageDownloadsLabel")}
           description={t(

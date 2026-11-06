@@ -1,9 +1,10 @@
 package expo.modules.ssltrust
 
+import android.app.Application
 import android.content.Context
 import android.security.KeyChain
 import android.util.Log
-import java.lang.reflect.Proxy
+import expo.modules.httpstack.HttpStack
 import java.net.Socket
 import java.security.KeyStore
 import java.security.MessageDigest
@@ -15,7 +16,6 @@ import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLEngine
 import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509ExtendedKeyManager
 import javax.net.ssl.X509TrustManager
@@ -95,11 +95,13 @@ object SslTrustStore {
   fun remove(hostname: String) {
     entries.remove(hostname.lowercase())
     persist()
+    HttpStack.clearPinnedHosts()
   }
 
   fun clearAll() {
     entries.clear()
     persist()
+    HttpStack.clearPinnedHosts()
   }
 
   /** Whether any trusted entry matches this exact leaf fingerprint. */
@@ -144,10 +146,12 @@ object SslTrustStore {
 
   /**
    * Install the custom trust manager globally:
-   *  1. `HttpsURLConnection` defaults — covers ExoPlayer (expo-audio) and Glide
-   *     (expo-image), both of which use `HttpsURLConnection`.
-   *  2. React Native's `OkHttpClientProvider` factory (reflection) — covers
-   *     axios / RN networking. Best-effort; failure here is non-fatal.
+   *  1. `HttpsURLConnection` defaults — covers the remaining HttpURLConnection
+   *     users (widget covers, notification artwork).
+   *  2. `HttpStack` (modules/http-stack), which owns React Native's OkHttp
+   *     factory — covers axios / fetch, ExoPlayer, expo-image and downloads.
+   *     Hosts this store trusts or presents a client cert to stay on OkHttp:
+   *     Cronet can't use this trust manager or key manager.
    */
   @Synchronized
   fun installCustomTrustManager() {
@@ -162,14 +166,17 @@ object SslTrustStore {
       sslContext.init(
         arrayOf(MtlsKeyManager()), arrayOf(appTm), java.security.SecureRandom(),
       )
-      val socketFactory = sslContext.socketFactory
+      val tls = SslTrustTls(sslContext.socketFactory, appTm)
 
-      HttpsURLConnection.setDefaultSSLSocketFactory(socketFactory)
-      HttpsURLConnection.setDefaultHostnameVerifier(
-        CustomOkHttpClientFactory.CustomHostnameVerifier(),
-      )
+      HttpsURLConnection.setDefaultSSLSocketFactory(tls.sslSocketFactory)
+      HttpsURLConnection.setDefaultHostnameVerifier(tls.hostnameVerifier)
 
-      installOkHttpFactory(socketFactory, appTm)
+      (appContext as? Application)?.let { HttpStack.install(it) }
+      HttpStack.registerTls(tls)
+      HttpStack.addTransportVeto("ssl-trust") { request ->
+        val host = request.url.host
+        isCertificateTrusted(host) || getClientAlias(host) != null
+      }
 
       installed = true
       installError = null
@@ -195,68 +202,6 @@ object SslTrustStore {
       }
     }
     throw IllegalStateException("no system X509TrustManager available")
-  }
-
-  /**
-   * Inject a [CustomOkHttpClientFactory] into RN's OkHttpClientProvider. RN is
-   * provided by the host app at runtime, so we reach it via reflection and a
-   * dynamic Proxy implementing the (RN-owned) `OkHttpClientFactory` interface.
-   */
-  private fun installOkHttpFactory(
-    socketFactory: SSLSocketFactory,
-    trustManager: X509TrustManager,
-  ) {
-    try {
-      val providerClass =
-        Class.forName("com.facebook.react.modules.network.OkHttpClientProvider")
-      val factoryInterface =
-        Class.forName("com.facebook.react.modules.network.OkHttpClientFactory")
-      val factory = CustomOkHttpClientFactory(socketFactory, trustManager)
-      val proxy = Proxy.newProxyInstance(
-        factoryInterface.classLoader,
-        arrayOf(factoryInterface),
-      ) { _, method, _ ->
-        if (method.name == "createNewNetworkModuleClient") {
-          factory.createNewNetworkModuleClient()
-        } else {
-          null
-        }
-      }
-      providerClass
-        .getMethod("setOkHttpClientFactory", factoryInterface)
-        .invoke(null, proxy)
-
-      // RN caches a singleton client lazily; null it so any later
-      // getOkHttpClient() rebuilds through our factory. Installed from
-      // Application.onCreate (SslTrustPackage) this is normally a no-op (the
-      // client isn't built yet), but it keeps a JS-triggered re-init honest.
-      clearCachedClient(providerClass)
-    } catch (e: Exception) {
-      Log.w(TAG, "OkHttp factory install failed (non-fatal): ${e.message}")
-    }
-  }
-
-  /**
-   * Null the cached client in RN's `OkHttpClientProvider`. It's a Kotlin `object`,
-   * so the `client` field lives on the `INSTANCE`, not as a static. The field was
-   * `sClient` in older (Java) RN, so fall back to that name. Best-effort.
-   */
-  private fun clearCachedClient(providerClass: Class<*>) {
-    val instance = try {
-      providerClass.getDeclaredField("INSTANCE").get(null)
-    } catch (_: Exception) {
-      null
-    }
-    for (name in listOf("client", "sClient")) {
-      try {
-        val field = providerClass.getDeclaredField(name)
-        field.isAccessible = true
-        field.set(instance, null)
-        return
-      } catch (_: Exception) {
-        // Try the next known field name.
-      }
-    }
   }
 
   // --- persistence -----------------------------------------------------------

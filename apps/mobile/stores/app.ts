@@ -249,6 +249,11 @@ interface AppStore {
   setTrackCacheOnCellular: (trackCacheOnCellular: boolean) => void;
   autoSignOutOnServerUnreachable: boolean;
   setAutoSignOutOnServerUnreachable: (enabled: boolean) => void;
+  // Android-only (issue #267): route https traffic through Cronet so servers
+  // that advertise HTTP/3 are reached over QUIC. Mirrored to native prefs by
+  // services/httpTransport.ts, since routing is decided before JS boots.
+  http3Enabled: boolean;
+  setHttp3Enabled: (enabled: boolean) => void;
   // Daily automatic backup (issue #262) into a SAF tree the user picked, so
   // Android-only for the same reason as downloadLocationUri. The time is minutes
   // after local midnight. Travels in a backup, and like downloadLocationUri the
@@ -539,6 +544,10 @@ export const useAppBase = create<AppStore>()(
       autoSignOutOnServerUnreachable: false,
       setAutoSignOutOnServerUnreachable: (enabled: boolean) => {
         set({ autoSignOutOnServerUnreachable: enabled });
+      },
+      http3Enabled: false,
+      setHttp3Enabled: (enabled: boolean) => {
+        set({ http3Enabled: enabled });
       },
       autoBackupEnabled: false,
       setAutoBackupEnabled: (enabled: boolean) => {

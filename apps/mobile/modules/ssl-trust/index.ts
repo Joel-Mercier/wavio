@@ -11,9 +11,11 @@ import { Platform } from "react-native";
  * which all traffic to that host is accepted.
  *
  * Platform mechanics differ (see the native sources):
- * - Android installs a global trust manager + OkHttp factory, so trusting a
- *   cert transparently covers axios, expo-image, expo-audio and downloads with
- *   no URL changes. `resolveServerBase` is a no-op there.
+ * - Android installs a global trust manager and lends it to the OkHttp factory
+ *   owned by modules/http-stack, so trusting a cert transparently covers axios,
+ *   expo-image, expo-audio and downloads with no URL changes. Trusted and mTLS
+ *   hosts always stay on OkHttp, never Cronet. `resolveServerBase` is a no-op
+ *   there.
  * - iOS covers URLSession traffic (axios/fetch, expo-image, downloads) via a
  *   custom URLProtocol, but AVPlayer (expo-audio) ignores URLProtocols, so a
  *   loopback reverse proxy fronts trusted hosts and `resolveServerBase` rewrites

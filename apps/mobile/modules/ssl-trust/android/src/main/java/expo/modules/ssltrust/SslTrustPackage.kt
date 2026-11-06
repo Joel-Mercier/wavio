@@ -6,8 +6,9 @@ import expo.modules.core.interfaces.ApplicationLifecycleListener
 import expo.modules.core.interfaces.Package
 
 /**
- * Installs the custom trust manager + OkHttp factory during `Application.onCreate`,
- * before React Native constructs its `NetworkingModule`.
+ * Installs the custom trust manager and lends it to `HttpStack` (which owns the
+ * OkHttp factory) during `Application.onCreate`, before React Native constructs
+ * its `NetworkingModule`.
  *
  * `NetworkingModule` captures a single `OkHttpClient` in its constructor (from
  * `OkHttpClientProvider`) and reuses it for every request, so the factory must be
