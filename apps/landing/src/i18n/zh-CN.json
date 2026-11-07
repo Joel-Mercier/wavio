@@ -30,6 +30,13 @@
 		"googlePlay": "Google Play",
 		"githubRelease": "在 GitHub 上获取"
 	},
+	"video": {
+		"watch": "Watch the trailer",
+		"title": "Wavio trailer",
+		"play": "Resume",
+		"replay": "Replay",
+		"close": "关闭"
+	},
 	"versions": {
 		"github": "GitHub",
 		"playStore": "Google Play 商店",
