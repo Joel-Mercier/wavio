@@ -28,18 +28,22 @@ jest.mock("@/config/storage", () => {
   };
 });
 
-jest.mock("@/stores/auth", () => ({
-  useAuthBase: {
-    getState: () => ({
-      url: "https://server",
-      username: "n",
-      serverType: "opensubsonic",
-    }),
-    subscribe: jest.fn(() => jest.fn()),
-  },
-  registerLogoutHandler: jest.fn(),
-  currentAuthScope: () => "scope",
-}));
+// `url` moves on a route swap (primary <-> fallback), like the real store.
+jest.mock("@/stores/auth", () => {
+  const state = {
+    url: "https://server",
+    username: "n",
+    serverType: "opensubsonic",
+  };
+  return {
+    useAuthBase: {
+      getState: () => state,
+      subscribe: jest.fn(() => jest.fn()),
+    },
+    registerLogoutHandler: jest.fn(),
+    currentAuthScope: () => "scope",
+  };
+});
 
 jest.mock("@tanstack/react-query", () => ({
   onlineManager: { isOnline: () => true },
@@ -84,9 +88,9 @@ jest.mock("expo-audio", () => {
 const mockTranscodeActive = { value: true };
 jest.mock("@/services/backend/streaming", () => ({
   streamUrl: (id: string, opts?: { timeOffset?: number }) =>
-    `https://server/stream/${id}${
-      opts?.timeOffset ? `?timeOffset=${opts.timeOffset}` : ""
-    }`,
+    `${
+      jest.requireMock("@/stores/auth").useAuthBase.getState().url
+    }/stream/${id}${opts?.timeOffset ? `?timeOffset=${opts.timeOffset}` : ""}`,
   trackTranscodeInfo: () => ({
     active: mockTranscodeActive.value,
     fromLabel: null,
@@ -104,6 +108,7 @@ jest.mock("@/services/network", () => ({
   getServerReachable: () => true,
   getIsEffectivelyOnline: () => true,
   probeServer: jest.fn(),
+  subscribeRouteSwap: jest.fn(() => () => {}),
 }));
 
 jest.mock("@/config/i18n", () => ({
@@ -112,17 +117,34 @@ jest.mock("@/config/i18n", () => ({
   applyZodLocale: jest.fn(),
 }));
 
-import { playTracks, seekTo } from "@/services/player";
+import { getStreamStartOffset, playTracks, seekTo } from "@/services/player";
 import useOffline from "@/stores/offline";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 
 const { __player: player } = jest.requireMock("expo-audio") as {
   __player: {
+    play: jest.Mock;
     replace: jest.Mock;
     seekTo: jest.Mock;
     addListener: jest.Mock;
     setLockScreenStreamOffset: jest.Mock;
+    currentTime: number;
+    playing: boolean;
   };
+};
+
+const auth = (
+  jest.requireMock("@/stores/auth") as {
+    useAuthBase: { getState: () => { url: string } };
+  }
+).useAuthBase.getState();
+
+const swapRoute = (url: string, fromFailed: boolean) => {
+  auth.url = url;
+  const { subscribeRouteSwap } = jest.requireMock("@/services/network") as {
+    subscribeRouteSwap: jest.Mock;
+  };
+  subscribeRouteSwap.mock.calls[0][0]({ fromFailed });
 };
 
 const track = (id: string): QueueTrack =>
@@ -138,6 +160,9 @@ const lastLoadedUrl = () =>
   player.replace.mock.calls.at(-1)?.[0]?.uri as string | undefined;
 
 beforeEach(() => {
+  auth.url = "https://server";
+  player.currentTime = 0;
+  player.playing = false;
   mockTranscodeActive.value = true;
   player.replace.mockClear();
   player.seekTo.mockClear();
@@ -164,16 +189,17 @@ describe("seeking a transcoded stream", () => {
     expect(lastLoadedUrl()).toContain("timeOffset=60");
   });
 
-  test("keeps reloading after the network stops predicting a transcode", () => {
+  test("reloads a stream that is no longer transcoded without an offset", () => {
     playTracks([track("a")], 0);
-    // Cellular → Wi-Fi mid-track: the settings no longer ask for a transcode,
-    // but the stream in the engine is still the one cellular loaded.
+    // Cellular → Wi-Fi mid-track: the stream in the engine is still the one
+    // cellular loaded, so it can't be seeked natively, but the replacement is a
+    // direct-play stream that would ignore an offset and start at 0.
     mockTranscodeActive.value = false;
 
     seekTo(60);
 
-    expect(player.seekTo).not.toHaveBeenCalled();
-    expect(lastLoadedUrl()).toContain("timeOffset=60");
+    expect(lastLoadedUrl()).toBe("https://server/stream/a");
+    expect(player.seekTo).toHaveBeenCalledWith(60);
   });
 
   test("seeks natively once a track loads without a transcode", () => {
@@ -233,5 +259,82 @@ describe("the OS media controls on a transcoded stream", () => {
     expect(player.seekTo).not.toHaveBeenCalled();
     expect(lastLoadedUrl()).toContain("timeOffset=90");
     expect(lastOffset()).toBe(90_000);
+  });
+});
+
+// Issue #273: a swap to the fallback route mid-track reloaded the current track
+// through the transcode-only offset path. A direct-play stream ignores the
+// offset and restarts at 0 while the clock carried on from the old position.
+describe("a route swap mid-track", () => {
+  test("reloads a direct-play stream on the new route and seeks it", () => {
+    mockTranscodeActive.value = false;
+    playTracks([track("a")], 0);
+    player.currentTime = 70;
+
+    swapRoute("https://fallback", true);
+
+    expect(lastLoadedUrl()).toBe("https://fallback/stream/a");
+    expect(player.seekTo).toHaveBeenLastCalledWith(70);
+    expect(getStreamStartOffset()).toBe(0);
+  });
+
+  test("reloads a transcoded stream on the new route at an offset", () => {
+    playTracks([track("a")], 0);
+    player.currentTime = 70;
+
+    swapRoute("https://fallback", true);
+
+    expect(lastLoadedUrl()).toBe("https://fallback/stream/a?timeOffset=70");
+    expect(player.seekTo).not.toHaveBeenCalled();
+    expect(getStreamStartOffset()).toBe(70);
+  });
+
+  test("leaves the loaded source alone when its route didn't fail", () => {
+    mockTranscodeActive.value = false;
+    playTracks([track("a")], 0);
+    const loads = player.replace.mock.calls.length;
+
+    swapRoute("https://fallback", false);
+
+    expect(player.replace.mock.calls.length).toBe(loads);
+  });
+
+  const statusListener = () =>
+    player.addListener.mock.calls.find(
+      ([event]) => event === "playbackStatusUpdate",
+    )?.[1] as (status: object) => void;
+
+  test("recovers a source whose route went away after a swap", () => {
+    mockTranscodeActive.value = false;
+    playTracks([track("a")], 0);
+    swapRoute("https://fallback", false);
+    player.currentTime = 95;
+    player.play.mockClear();
+    const onStatus = statusListener();
+
+    onStatus({ playbackState: "buffering", playing: true, currentTime: 95 });
+    onStatus({ playbackState: "idle", playing: false, currentTime: 95 });
+    onStatus({ error: "Source error", playing: false, currentTime: 95 });
+
+    expect(lastLoadedUrl()).toBe("https://fallback/stream/a");
+    expect(player.seekTo).toHaveBeenLastCalledWith(95);
+    expect(player.play).toHaveBeenCalled();
+  });
+
+  // The queue ending parks the player on its last track, paused at 0, which
+  // re-reads the source: on a dead route that fails, and the recovery must not
+  // start the finished queue over.
+  test("recovers a paused source without starting playback", () => {
+    mockTranscodeActive.value = false;
+    playTracks([track("a")], 0);
+    swapRoute("https://fallback", false);
+    player.play.mockClear();
+    const onStatus = statusListener();
+
+    onStatus({ playbackState: "ready", playing: false, currentTime: 0 });
+    onStatus({ error: "Source error", playing: false, currentTime: 0 });
+
+    expect(lastLoadedUrl()).toBe("https://fallback/stream/a");
+    expect(player.play).not.toHaveBeenCalled();
   });
 });

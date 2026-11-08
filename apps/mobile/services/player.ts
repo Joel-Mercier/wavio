@@ -56,6 +56,7 @@ import {
   getIsOnline,
   getServerReachable,
   probeServer,
+  subscribeRouteSwap,
   USER_AGENT,
 } from "@/services/network";
 import { downloadedFileIsReadable } from "@/services/offline/downloadDestination";
@@ -799,9 +800,21 @@ function syncSessionStreamOffset(offsetSeconds: number | null) {
 // the rest of the app moves on to refreshed tokens — see retryAfterTokenRefresh.
 let loadedSourceAuthorization: string | undefined;
 
+// The server route the loaded source streams from, or null when it isn't on the
+// active server (a file, a radio stream, a third-party enclosure).
+let loadedSourceRoute: string | null = null;
+
+// `playing` as of the last status from a live source. A failed engine reports
+// not playing whatever the user asked for, while a buffering one reports what
+// they asked for, so this is what a recovery should restore.
+let playingBeforeError = false;
+
 function audioSource(uri: string) {
   const headers = mergeCustomHeaders(uri, { "User-Agent": USER_AGENT });
   loadedSourceAuthorization = headers.Authorization;
+  loadedSourceRoute = isActiveServerUrl(uri)
+    ? useAuthBase.getState().url
+    : null;
   return { uri, headers };
 }
 
@@ -1358,23 +1371,7 @@ async function describeFailedSource(resolved: {
 // Pick a track back up where it failed, on a source rebuilt with the current
 // headers.
 function reloadInPlace(track: QueueTrack, seconds: number) {
-  if (isTranscodedStream(track)) {
-    reloadAtOffset(track, seconds);
-    player.play();
-    return;
-  }
-  const { url } = resolveTrackUrl(track);
-  syncSessionStreamOffset(null);
-  player.replace(audioSource(url));
-  player.volume = getReplayGainFactor(track);
-  applyPlaybackRate(track);
-  pendingResumeId = track.id;
-  pendingResumeAt = seconds;
-  try {
-    player.seekTo(seconds);
-  } catch (error) {
-    logSwallowed("seek after token refresh", error);
-  }
+  reloadAt(track, seconds);
   player.play();
 }
 
@@ -1445,6 +1442,9 @@ function canRetryAfterTokenRefresh(trackId: string): boolean {
 }
 
 function handlePlaybackStatus(status: AudioStatus) {
+  if (!status.error && status.playbackState !== "idle") {
+    playingBeforeError = status.playing;
+  }
   // A genuine engine-level playback failure (decode error, dead stream URL,
   // unreadable offline file). expo-audio clears `error` on a fresh load /
   // successful resume, so dedupe on the message to report each failure once.
@@ -1453,6 +1453,18 @@ function handlePlaybackStatus(status: AudioStatus) {
     const current = useQueue.getState().getCurrent();
     const resolved = current ? resolveTrackUrl(current) : null;
     const needsNetwork = resolved ? !resolved.isOffline : true;
+    if (
+      current &&
+      resolved &&
+      !resolved.isOffline &&
+      loadedSourceRoute &&
+      loadedSourceRoute !== useAuthBase.getState().url
+    ) {
+      reportBreadcrumb("player", "stale-route-reload", { trackId: current.id });
+      reloadAt(current, effectivePosition(player.currentTime ?? 0));
+      if (playingBeforeError) player.play();
+      return;
+    }
     if (
       current &&
       resolved &&
@@ -2151,28 +2163,22 @@ registerLogoutHandler(clearArtworkCache);
 //
 // The next track load re-resolves its URL and follows the new route for free,
 // but the *currently loaded* source was handed to the player as an already
-// resolved absolute URL: it keeps playing off its buffer and then errors on the
-// dead host. handlePlaybackStatus only re-resolves the URL to classify that
-// error for Sentry — the sole branch that actually reloads is the decode-error
-// transcode fallback — so playback would just stop, and file a bogus report. A
-// swap is a *known* event, so re-resolve deliberately and eat a ~1s gap.
-let lastRouteUrl = useAuthBase.getState().url;
-useAuthBase.subscribe((state) => {
-  if (state.url === lastRouteUrl) return;
-  const previous = lastRouteUrl;
-  lastRouteUrl = state.url;
-  // Login (""-> url) and logout (url -> "") are not swaps; logout has its own
-  // teardown and login has nothing loaded yet.
-  if (!previous || !state.url) return;
+// resolved absolute URL. When its route just failed a probe, it keeps playing
+// off its buffer and then errors on the dead host, so rebuild it now and eat a
+// ~1s gap. A return to a preferred primary leaves it alone: the route it streams
+// from was never probed and is presumably still up, and reloading would only
+// interrupt the track. If that route goes away after all, handlePlaybackStatus
+// recovers the stale source on the active route.
+subscribeRouteSwap(({ fromFailed }) => {
   rewriteQueueRoutes();
+  if (!fromFailed) return;
   const current = useQueue.getState().getCurrent();
   if (!current) return;
   // Downloaded tracks play from disk and radio/podcast sources are absolute
   // URLs on other hosts — none of them care which route the server is on.
   if (current.isRadio || isSpokenWordTrack(current)) return;
   if (resolveTrackUrl(current).isOffline) return;
-  // reloadAtOffset preserves paused-ness, so this is safe either way.
-  reloadAtOffset(current, getCurrentTime());
+  reloadAt(current, getCurrentTime());
 });
 
 // Called from both the UI root and the car session (which is the only caller in
@@ -2641,21 +2647,39 @@ export function skipPrevious(options?: { force?: boolean }) {
   queue.previous();
 }
 
-// Seek within a transcoded stream by re-requesting it at an offset (Subsonic
-// `timeOffset` / Jellyfin `StartTimeTicks`) and playing on from there — the
-// loaded stream itself isn't seekable, so a plain player.seekTo just restarts
-// it. The same track keeps playing, so the scrobble/now-playing state is
-// intentionally left intact.
-function reloadAtOffset(track: QueueTrack, seconds: number) {
+// Rebuild the current track's source (fresh route, headers and transcode
+// decision) and carry on from `seconds`, keeping paused-ness.
+//
+// What the *new* source is decides how: a transcoded stream isn't seekable, so it
+// is re-requested at an offset (Subsonic `timeOffset` / Jellyfin
+// `StartTimeTicks`) and `streamStartOffset` is added back to every position read.
+// Anything else is loaded plainly and seeked: a direct-play stream ignores the
+// offset parameters and starts at 0, so applying the offset there restarts the
+// audio while the clock carries on from where it was (issue #273).
+function reloadAt(track: QueueTrack, seconds: number) {
   const wasPlaying = player.playing;
-  streamStartOffset = Math.max(0, seconds);
-  const { url, transcoded } = resolveTrackUrl(track, streamStartOffset);
+  const at = Math.max(0, seconds);
+  const plain = resolveTrackUrl(track);
+  const { url, transcoded } = plain.transcoded
+    ? resolveTrackUrl(track, at)
+    : plain;
+  streamStartOffset = transcoded ? at : 0;
   loadedTranscode = { trackId: track.id, active: transcoded };
-  syncSessionStreamOffset(transcoded ? streamStartOffset : null);
+  syncSessionStreamOffset(transcoded ? at : null);
   player.replace(audioSource(url));
   player.volume = getReplayGainFactor(track);
   applyPlaybackRate(track);
-  pendingResumeId = null;
+  if (transcoded) {
+    pendingResumeId = null;
+  } else {
+    pendingResumeId = track.id;
+    pendingResumeAt = at;
+    try {
+      player.seekTo(at);
+    } catch (error) {
+      logSwallowed("seek on reload", error);
+    }
+  }
   if (wasPlaying) player.play();
 }
 
@@ -2667,7 +2691,7 @@ export function seekTo(seconds: number) {
   }
   const current = useQueue.getState().getCurrent();
   if (current && isTranscodedStream(current)) {
-    reloadAtOffset(current, seconds);
+    reloadAt(current, seconds);
     return;
   }
   player.seekTo(seconds);

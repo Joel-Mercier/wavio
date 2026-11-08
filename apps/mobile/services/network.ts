@@ -97,6 +97,12 @@ const OFFLINE_GRACE_MS = 2500;
 const typeListeners = new Set<(type: NetInfoStateType) => void>();
 const onlineListeners = new Set<() => void>();
 const reachableListeners = new Set<() => void>();
+const routeSwapListeners = new Set<(swap: RouteSwap) => void>();
+
+// `fromFailed`: the route being left was probed in the same round and didn't
+// answer. False for a return to a preferred primary, where the route being left
+// was never probed and is presumably still serving whatever was loaded off it.
+export type RouteSwap = { fromFailed: boolean };
 
 let recoveryTimer: BackgroundTimer | null = null;
 // Off while nobody can benefit from a recovery: backgrounded, nothing playing,
@@ -157,6 +163,13 @@ export function subscribeServerReachable(cb: () => void): () => void {
   reachableListeners.add(cb);
   return () => {
     reachableListeners.delete(cb);
+  };
+}
+
+export function subscribeRouteSwap(cb: (swap: RouteSwap) => void): () => void {
+  routeSwapListeners.add(cb);
+  return () => {
+    routeSwapListeners.delete(cb);
   };
 }
 
@@ -326,10 +339,15 @@ export async function probeServer({
   try {
     // probeUrl owns its own deadline and never throws, so a round always
     // settles and probeInFlight can't wedge.
+    const failed = new Set<string>();
     for (const candidate of orderCandidates(preferPrimary)) {
-      if (!(await probeUrl(candidate))) continue;
-      if (candidate !== useAuthBase.getState().url) {
-        adoptRoute(candidate);
+      if (!(await probeUrl(candidate))) {
+        failed.add(candidate);
+        continue;
+      }
+      const from = useAuthBase.getState().url;
+      if (candidate !== from) {
+        adoptRoute(candidate, failed.has(from));
       }
       consecutiveProbeFailures = 0;
       cancelQuickReprobe();
@@ -370,13 +388,15 @@ export async function probeServer({
 // Point the session at a different route for the same server. Only `url` moves:
 // the storage scope is keyed on the server id, so nothing rehydrates and the
 // queue, downloads and cache stay exactly where they are.
-function adoptRoute(url: string): void {
+function adoptRoute(url: string, fromFailed: boolean): void {
   const from = useAuthBase.getState().url;
   useAuthBase.getState().setActiveUrl(url);
   reportBreadcrumb("network", "route-swap", {
     from: scrubUrl(from),
     to: scrubUrl(url),
+    fromFailed,
   });
+  for (const cb of routeSwapListeners) cb({ fromFailed });
 }
 
 // Should this trigger try the primary first? Bounded by

@@ -105,6 +105,7 @@ import {
   resetServerReachable,
   setRecoveryPollEnabled,
   subscribeConnectionType,
+  subscribeRouteSwap,
 } from "@/services/network";
 
 // Mirror of RECOVERY_POLL_MS in services/network.ts.
@@ -639,6 +640,27 @@ describe("fallback URL failover", () => {
     mockPing.mockResolvedValue({});
     await probeServer({ preferPrimary: true });
     expect(mockAuthState.url).toBe(PRIMARY);
+  });
+
+  // Issue #273: the player reloads the loaded track only when the route it
+  // streams from has failed. A voluntary return home must not interrupt it.
+  it("reports whether the route being left failed its probe", async () => {
+    await setDeviceOnline(true);
+    const swaps: boolean[] = [];
+    const unsubscribe = subscribeRouteSwap(({ fromFailed }) =>
+      swaps.push(fromFailed),
+    );
+
+    onlyReachable(FALLBACK);
+    await probeServer();
+    mockPing.mockResolvedValue({});
+    await probeServer({ preferPrimary: true });
+    onlyReachable(PRIMARY);
+    mockAuthState.url = FALLBACK;
+    await probeServer();
+    unsubscribe();
+
+    expect(swaps).toEqual([true, false, true]);
   });
 
   it("stays on the fallback when a preferred primary is still unreachable", async () => {
