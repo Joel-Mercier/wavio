@@ -53,6 +53,7 @@ import navidromeApiInstance from "@/services/navidrome";
 import openSubsonicApiInstance, {
   folderScopedRequest,
 } from "@/services/openSubsonic";
+import { search2, search3 } from "@/services/openSubsonic/searching";
 
 const okResponse = {
   data: { "subsonic-response": { status: "ok", version: "1.16.1" } },
@@ -85,6 +86,28 @@ describe("folderScopedRequest", () => {
     const uri = await subsonicUri({ query: "a", musicFolderIds: undefined });
     expect(uri).not.toContain("musicFolderId");
   });
+});
+
+describe("search", () => {
+  it.each([
+    ["search2", search2],
+    ["search3", search3],
+  ])(
+    "%s hands the abort signal to axios, not the query string",
+    async (_, search) => {
+      const get = jest
+        .spyOn(openSubsonicApiInstance, "get")
+        .mockResolvedValue(okResponse);
+      const { signal } = new AbortController();
+      await search("velvet", { songCount: 12, signal });
+      const [url, config] = get.mock.calls[0] as [string, AxiosRequestConfig];
+      get.mockRestore();
+      expect(config.signal).toBe(signal);
+      expect(
+        openSubsonicApiInstance.getUri({ ...config, url, baseURL: "" }),
+      ).not.toContain("signal");
+    },
+  );
 });
 
 describe("navidrome native API", () => {

@@ -2,6 +2,7 @@
 // keeps its punctuation, so the client retries an empty first page with the
 // longest alphanumeric run and applies the punctuation-blind match itself.
 const mockGet = jest.fn();
+let mockServerVersion: string | null = null;
 
 jest.mock("@/services/jellyfin/index", () => ({
   __esModule: true,
@@ -9,28 +10,49 @@ jest.mock("@/services/jellyfin/index", () => ({
 }));
 
 jest.mock("@/stores/auth", () => ({
-  useAuthBase: { getState: () => ({ jellyfinUserId: "user-1" }) },
+  useAuthBase: {
+    getState: () => ({
+      jellyfinUserId: "user-1",
+      serverVersion: mockServerVersion,
+    }),
+  },
 }));
 
 import { search3 } from "@/services/jellyfin/searching";
 
-type Call = { url: string; params: Record<string, unknown> };
+type Call = {
+  url: string;
+  params: Record<string, unknown>;
+  signal?: AbortSignal;
+};
 
 const calls = (): Call[] =>
   mockGet.mock.calls.map(([url, config]) => ({
     url,
-    params: (config as { params: Record<string, unknown> }).params,
+    ...(config as Omit<Call, "url">),
   }));
 
 const artistCalls = () => calls().filter((c) => c.url === "/Artists");
 
+type Item = { Id: string; Name: string };
+
 const respondWith = (
-  byTerm: Record<string, Array<{ Id: string; Name: string }>>,
+  byTerm: Record<string, Item[]>,
+  byKind: Record<string, Record<string, Item[]>> = {},
 ) => {
   mockGet.mockImplementation(
-    async (_url: string, config: { params: { SearchTerm: string } }) => ({
-      data: { Items: byTerm[config.params.SearchTerm] ?? [] },
-    }),
+    async (
+      url: string,
+      config: { params: { SearchTerm: string; IncludeItemTypes: string } },
+    ) => {
+      const kind =
+        url === "/Artists" ? "MusicArtist" : config.params.IncludeItemTypes;
+      const items =
+        byKind[kind]?.[config.params.SearchTerm] ??
+        byTerm[config.params.SearchTerm] ??
+        [];
+      return { data: { Items: items } };
+    },
   );
 };
 
@@ -38,6 +60,7 @@ const artistsOnly = { albumCount: 0, songCount: 0, artistCount: 12 };
 
 beforeEach(() => {
   mockGet.mockReset();
+  mockServerVersion = null;
 });
 
 describe("Jellyfin search fallback", () => {
@@ -117,5 +140,67 @@ describe("Jellyfin search fallback", () => {
     respondWith({});
     await search3("Tyler the Creator", artistsOnly);
     expect(calls().every((c) => c.url === "/Artists")).toBe(true);
+  });
+
+  it("does not retry when another kind found something", async () => {
+    respondWith(
+      {},
+      { Audio: { "Velvet 18526": [{ Id: "s1", Name: "Velvet 18526" }] } },
+    );
+    const rsp = await search3("Velvet 18526", {
+      albumCount: 12,
+      artistCount: 12,
+      songCount: 12,
+    });
+    expect(rsp.searchResult3.song?.map((s) => s.id)).toEqual(["s1"]);
+    expect(calls().map((c) => c.params.SearchTerm)).toEqual([
+      "Velvet 18526",
+      "Velvet 18526",
+      "Velvet 18526",
+    ]);
+  });
+
+  it("retries every first-page kind when the whole search is empty", async () => {
+    respondWith(
+      {},
+      { Audio: { creator: [{ Id: "s1", Name: "Tyler, the Creator" }] } },
+    );
+    const rsp = await search3("Tyler the Creator", {
+      albumCount: 12,
+      artistCount: 12,
+      songCount: 12,
+    });
+    expect(rsp.searchResult3.song?.map((s) => s.id)).toEqual(["s1"]);
+    expect(
+      calls().filter((c) => c.params.SearchTerm === "creator"),
+    ).toHaveLength(3);
+  });
+
+  it("never retries on a server that ignores punctuation itself", async () => {
+    mockServerVersion = "12.0.0";
+    respondWith({ creator: [{ Id: "a1", Name: "Tyler, the Creator" }] });
+    await search3("Tyler the Creator", artistsOnly);
+    expect(artistCalls()).toHaveLength(1);
+  });
+});
+
+describe("Jellyfin search requests", () => {
+  it("skip the total record count", async () => {
+    respondWith({});
+    await search3("bicep", { albumCount: 12, artistCount: 12, songCount: 12 });
+    expect(calls()).toHaveLength(3);
+    for (const call of calls()) {
+      expect(call.params.EnableTotalRecordCount).toBe(false);
+    }
+  });
+
+  it("pass the abort signal through, fallback included", async () => {
+    respondWith({});
+    const { signal } = new AbortController();
+    await search3("Tyler the Creator", { ...artistsOnly, signal });
+    expect(artistCalls()).toHaveLength(2);
+    for (const call of artistCalls()) {
+      expect(call.signal).toBe(signal);
+    }
   });
 });
