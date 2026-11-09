@@ -14,8 +14,9 @@ import {
   useIsCollectionAvailableOffline,
   useIsDetailCached,
 } from "@/hooks/offline";
+import { useGridArtworkSize } from "@/hooks/useGridArtworkSize";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { formatReleaseTypes } from "@/utils/releaseTypes";
 import { cn } from "@/utils/tailwind";
 
@@ -42,6 +43,8 @@ function AlbumListItem({
   const { t } = useTranslation();
   const isDetailCached = useIsDetailCached(["album", album.id]);
   const isDownloaded = useIsCollectionAvailableOffline("album", album.id);
+  const gridArtworkSize = useGridArtworkSize();
+  const artworkSize = layout === "grid" ? gridArtworkSize : ARTWORK_THUMB_SIZE;
   return (
     <FadeOutScaleDown
       href={`/albums/${album.id}`}
@@ -62,7 +65,9 @@ function AlbumListItem({
       >
         <ImageWithFallback
           source={
-            album.coverArt ? { uri: artworkUrl(album.coverArt) } : undefined
+            album.coverArt
+              ? { uri: artworkUrl(album.coverArt, artworkSize) }
+              : undefined
           }
           // size="none" in grid so the Image's default md size (h-20 w-20)
           // isn't injected — the grid cell sizes purely off w-full +

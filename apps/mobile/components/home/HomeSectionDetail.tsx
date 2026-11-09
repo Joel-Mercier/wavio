@@ -31,7 +31,7 @@ import { playTracks, togglePlayPause } from "@/services/player";
 import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
-import { gridColumnCount } from "@/utils/grid";
+import { COVER_GRID, gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
 import { mapWithConcurrency } from "@/utils/mapWithConcurrency";
 import { goBackOrHome } from "@/utils/navigation";
@@ -68,13 +68,7 @@ export default function HomeSectionDetail() {
   const { width } = useWindowDimensions();
   const { layout, toggle } = useAlbumScreenLayout(`home-section:${type}`);
   const gridColumns =
-    layout === "grid"
-      ? gridColumnCount(width, {
-          minItemWidth: 160,
-          minColumns: 3,
-          maxColumns: 5,
-        })
-      : 1;
+    layout === "grid" ? gridColumnCount(width, COVER_GRID) : 1;
   const musicFolderIds = useCurrentMusicFolderIds();
   const offsetY = useSharedValue(0);
   const headerStyle = useAnimatedStyle(() => ({

@@ -11,7 +11,6 @@ import { Uniwind } from "uniwind";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import {
   FLOATING_PLAYER_HEIGHT,
-  SIDEBAR_WIDTH,
   TAB_BAR_CONTENT_HEIGHT,
 } from "@/components/FloatingPlayer";
 import { OFFLINE_BANNER_HEIGHT } from "@/components/OfflineBanner";
@@ -30,7 +29,7 @@ import {
 } from "@/components/ui/toast";
 import { useIsFloatingPlayerVisible } from "@/hooks/player";
 import { useIsOnline } from "@/hooks/useIsOnline";
-import useApp from "@/stores/app";
+import useApp, { SIDEBAR_WIDTH } from "@/stores/app";
 import useQueue from "@/stores/queue";
 import useTrackSelection from "@/stores/trackSelection";
 import { childToTrack } from "@/utils/childToTrack";

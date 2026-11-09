@@ -11,7 +11,7 @@ import { useIsTrackAvailableOffline } from "@/hooks/offline";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks } from "@/services/player";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 
 interface SongCardProps {
@@ -37,7 +37,7 @@ function SongCard({ track, trackList, index }: SongCardProps) {
       <VStack className="w-32 gap-y-2">
         {track.coverArt ? (
           <Image
-            source={{ uri: artworkUrl(track.coverArt) }}
+            source={{ uri: artworkUrl(track.coverArt, ARTWORK_THUMB_SIZE) }}
             className="w-32 h-32 rounded-md aspect-square"
             alt="Track cover"
           />

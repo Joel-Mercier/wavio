@@ -4,7 +4,7 @@ import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import { Box } from "@/components/ui/box";
 import type { FavoritePodcast } from "@/stores/podcasts";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 
 interface FavoritePodcastListItemProps {
   podcast: FavoritePodcast;
@@ -20,6 +20,11 @@ export default function FavoritePodcastListItem({
     const image =
       podcast.imageUrl ||
       (podcast.coverArt ? artworkUrl(podcast.coverArt) : undefined);
+    const thumbnail =
+      podcast.imageUrl ||
+      (podcast.coverArt
+        ? artworkUrl(podcast.coverArt, ARTWORK_THUMB_SIZE)
+        : undefined);
     return (
       <FadeOutScaleDown
         href={{
@@ -35,7 +40,7 @@ export default function FavoritePodcastListItem({
         className="rounded-lg"
       >
         <ImageWithFallback
-          source={{ uri: image }}
+          source={{ uri: thumbnail }}
           className="aspect-square"
           alt={podcast.name}
           fallback={

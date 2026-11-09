@@ -46,7 +46,7 @@ import {
   DEFAULT_ALBUM_SORT,
   OFFLINE_ALBUM_SORT_FIELDS,
 } from "@/utils/albumSort";
-import { gridColumnCount } from "@/utils/grid";
+import { COVER_GRID, gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
 import {
@@ -71,13 +71,7 @@ export default function AllAlbumsScreen() {
   const { width } = useWindowDimensions();
   const { layout, toggle } = useAlbumScreenLayout("library-albums");
   const gridColumns =
-    layout === "grid"
-      ? gridColumnCount(width, {
-          minItemWidth: 160,
-          minColumns: 3,
-          maxColumns: 5,
-        })
-      : 1;
+    layout === "grid" ? gridColumnCount(width, COVER_GRID) : 1;
   const form = useForm({ defaultValues: { query: "" } });
   const query = useSelector(form.store, (state) => state.values.query);
   const [debouncedQuery, setDebouncedQuery] = useState("");

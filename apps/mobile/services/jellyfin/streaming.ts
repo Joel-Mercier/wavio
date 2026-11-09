@@ -215,6 +215,10 @@ export function offlineTranscodeSuffix(format: StreamFormat): string {
 
 export function artworkUrl(id?: string, size?: number): string {
   if (!id) return "";
-  const sizeParam = size ? `?maxHeight=${size}&maxWidth=${size}` : "";
+  // Without an explicit quality Jellyfin re-encodes at a much higher default: a
+  // 600px resize of a 1426px cover came back larger than the original.
+  const sizeParam = size
+    ? `?maxHeight=${size}&maxWidth=${size}&quality=90`
+    : "";
   return `${baseUrl()}/Items/${id}/Images/Primary${sizeParam}`;
 }

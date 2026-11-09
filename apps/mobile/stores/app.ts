@@ -20,6 +20,8 @@ import type { OfflineTrackSortType, TrackSortType } from "@/utils/trackSort";
 // Width (dp) at or above which the app switches to its "wide" layout: left
 // sidebar nav, docked player, two-column player, larger grids.
 export const WIDE_LAYOUT_BREAKPOINT = 600;
+// Width of the wide layout's left tab bar column; the player docks to its bottom.
+export const SIDEBAR_WIDTH = 240;
 
 const isWideLayout = (windowWidth: number) =>
   windowWidth >= WIDE_LAYOUT_BREAKPOINT;

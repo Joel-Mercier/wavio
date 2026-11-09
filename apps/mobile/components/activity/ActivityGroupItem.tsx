@@ -17,7 +17,7 @@ import { VStack } from "@/components/ui/vstack";
 import type { Child } from "@/services/openSubsonic/types";
 import type { ActivityEntry, ActivitySource } from "@/stores/activity";
 import type { ActivityGroup } from "@/utils/activityGrouping";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 
 interface ActivityGroupItemProps {
@@ -76,6 +76,7 @@ function ActivityGroupItem({
             ? {
                 uri: artworkUrl(
                   group.source.coverArt || group.entries[0]?.coverArt,
+                  ARTWORK_THUMB_SIZE,
                 ),
               }
             : undefined
@@ -172,7 +173,9 @@ function StackedCover({
         <Box className="absolute right-0 bottom-0">
           <ImageWithFallback
             source={
-              back.coverArt ? { uri: artworkUrl(back.coverArt) } : undefined
+              back.coverArt
+                ? { uri: artworkUrl(back.coverArt, ARTWORK_THUMB_SIZE) }
+                : undefined
             }
             className="w-12 h-12 rounded"
             alt={back.title}
@@ -187,7 +190,9 @@ function StackedCover({
       <Box className="absolute left-0 top-0">
         <ImageWithFallback
           source={
-            front?.coverArt ? { uri: artworkUrl(front.coverArt) } : undefined
+            front?.coverArt
+              ? { uri: artworkUrl(front.coverArt, ARTWORK_THUMB_SIZE) }
+              : undefined
           }
           className="w-14 h-14 rounded border border-primary-800"
           alt={front?.title}

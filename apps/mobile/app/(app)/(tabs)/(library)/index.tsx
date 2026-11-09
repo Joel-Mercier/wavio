@@ -92,7 +92,7 @@ import useApp, {
 import useAuth from "@/stores/auth";
 import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import usePodcasts from "@/stores/podcasts";
-import { gridColumnCount } from "@/utils/grid";
+import { COVER_GRID, gridColumnCount } from "@/utils/grid";
 import {
   availableLibrarySortFields,
   DEFAULT_LIBRARY_SORT,
@@ -177,13 +177,7 @@ export default function LibraryScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const gridColumns =
-    layout === "grid"
-      ? gridColumnCount(width, {
-          minItemWidth: 160,
-          minColumns: 3,
-          maxColumns: 5,
-        })
-      : 1;
+    layout === "grid" ? gridColumnCount(width, COVER_GRID) : 1;
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetModalSortRef = useRef<BottomSheetModal>(null);
   const libraryPickerRef = useRef<BottomSheetModal>(null);

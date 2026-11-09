@@ -49,7 +49,7 @@ import { useIsOnline } from "@/hooks/useIsOnline";
 import { useTrackArtwork } from "@/hooks/useTrackArtwork";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
 import type { PodcastSeries } from "@/services/taddyPodcasts/types";
-import useApp from "@/stores/app";
+import useApp, { SIDEBAR_WIDTH } from "@/stores/app";
 import useCast from "@/stores/cast";
 import useFloatingPlayer from "@/stores/floatingPlayer";
 import useJukebox from "@/stores/jukebox";
@@ -62,8 +62,6 @@ import { TOAST_DURATION } from "@/utils/toastDuration";
 import { isSpokenWordTrack } from "@/utils/trackSource";
 
 export const FLOATING_PLAYER_HEIGHT = 64;
-// Width of the landscape left tab bar column; the player docks to its bottom.
-export const SIDEBAR_WIDTH = 240;
 // Approximate default react-navigation bottom tab content height (excluding the
 // safe-area inset). The portrait player sits directly on top of the tab bar, so
 // its bottom must track the real tab bar height instead of a hardcoded value.

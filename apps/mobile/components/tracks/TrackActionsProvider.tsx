@@ -100,7 +100,7 @@ import usePlaylistsStore from "@/stores/playlists";
 import usePlaylistTargets from "@/stores/playlistTargets";
 import useQueue, { type QueueTrack, upcomingIndicesOf } from "@/stores/queue";
 import useTrackSelection from "@/stores/trackSelection";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { logError } from "@/utils/log";
 import { TOAST_DURATION } from "@/utils/toastDuration";
@@ -1002,7 +1002,9 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
               <HStack className="items-center">
                 {track.coverArt ? (
                   <Image
-                    source={{ uri: artworkUrl(track.coverArt) }}
+                    source={{
+                      uri: artworkUrl(track.coverArt, ARTWORK_THUMB_SIZE),
+                    }}
                     className="w-16 h-16 rounded-md aspect-square"
                     alt="Track cover"
                   />

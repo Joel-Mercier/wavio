@@ -45,7 +45,7 @@ import type { Child } from "@/services/openSubsonic/types";
 import { playTracks } from "@/services/player";
 import useApp, { type SwipeAction } from "@/stores/app";
 import useTrackSelection from "@/stores/trackSelection";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { cn } from "@/utils/tailwind";
 import { type TrackActionsApi, useTrackActions } from "./TrackActionsProvider";
@@ -322,7 +322,9 @@ function TrackListItem({
         {showCoverArt && (
           <ImageWithFallback
             source={
-              track.coverArt ? { uri: artworkUrl(track.coverArt) } : undefined
+              track.coverArt
+                ? { uri: artworkUrl(track.coverArt, ARTWORK_THUMB_SIZE) }
+                : undefined
             }
             className="w-16 h-16 rounded-md aspect-square"
             alt="Track cover"

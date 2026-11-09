@@ -105,7 +105,7 @@ import useRecentPlays from "@/stores/recentPlays";
 import useTrackSelection from "@/stores/trackSelection";
 import type { AlbumListRow } from "@/utils/albumDiscRows";
 import { buildAlbumListRows } from "@/utils/albumDiscRows";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { format, formatDuration } from "@/utils/date";
 import { loadingData } from "@/utils/loadingData";
@@ -172,7 +172,11 @@ export default function AlbumDetail() {
     isLoading: discoverMoreIsLoading,
     error: discoverMoreError,
   } = useArtist(data?.album?.artistId ?? "");
-  const colors = useImageColors(artworkUrl(data?.album?.coverArt));
+  const colors = useImageColors(
+    data?.album?.coverArt
+      ? artworkUrl(data?.album?.coverArt, ARTWORK_THUMB_SIZE)
+      : undefined,
+  );
   const topColor =
     (colors?.platform === "ios"
       ? colors.primary
@@ -908,7 +912,12 @@ export default function AlbumDetail() {
                 <ImageWithFallback
                   source={
                     data?.album?.artistId
-                      ? { uri: artworkUrl(data?.album?.artistId) }
+                      ? {
+                          uri: artworkUrl(
+                            data?.album?.artistId,
+                            ARTWORK_THUMB_SIZE,
+                          ),
+                        }
                       : undefined
                   }
                   className="w-8 h-8 rounded-full aspect-square"
@@ -1186,7 +1195,12 @@ export default function AlbumDetail() {
               <ImageWithFallback
                 source={
                   data?.album?.coverArt
-                    ? { uri: artworkUrl(data?.album?.coverArt) }
+                    ? {
+                        uri: artworkUrl(
+                          data?.album?.coverArt,
+                          ARTWORK_THUMB_SIZE,
+                        ),
+                      }
                     : undefined
                 }
                 className="w-16 h-16 rounded-md aspect-square"

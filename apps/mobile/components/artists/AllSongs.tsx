@@ -39,7 +39,7 @@ import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useQueue, { MAX_QUEUE_TRACKS, type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
@@ -103,7 +103,11 @@ export default function AllSongs() {
       ? Math.max(discographySongCount, songs.length)
       : songs.length;
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
-  const colors = useImageColors(artworkUrl(data?.artist?.coverArt));
+  const colors = useImageColors(
+    data?.artist?.coverArt
+      ? artworkUrl(data?.artist?.coverArt, ARTWORK_THUMB_SIZE)
+      : undefined,
+  );
   const topColor =
     (colors?.platform === "ios"
       ? colors.primary

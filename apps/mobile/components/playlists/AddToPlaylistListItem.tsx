@@ -15,7 +15,7 @@ import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import type { Playlist } from "@/services/openSubsonic/types";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 
 export default function AddToPlaylistListItem({
   playlist,
@@ -34,7 +34,9 @@ export default function AddToPlaylistListItem({
         <HStack className="items-center">
           {playlist.coverArt ? (
             <Image
-              source={{ uri: artworkUrl(playlist.coverArt) }}
+              source={{
+                uri: artworkUrl(playlist.coverArt, ARTWORK_THUMB_SIZE),
+              }}
               className="w-16 h-16 rounded-md aspect-square"
               alt="Playlist cover"
             />

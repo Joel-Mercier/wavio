@@ -113,7 +113,7 @@ import usePlaylists, { type PlaylistSortType } from "@/stores/playlists";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import useTrackSelection from "@/stores/trackSelection";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { formatDuration } from "@/utils/date";
 import { loadingData } from "@/utils/loadingData";
@@ -229,7 +229,11 @@ export default function PlaylistDetail() {
   );
   const sortFieldLabel = useSortFieldLabel<TrackSortField>(sortLabels);
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
-  const colors = useImageColors(artworkUrl(playlistData?.playlist?.coverArt));
+  const colors = useImageColors(
+    playlistData?.playlist?.coverArt
+      ? artworkUrl(playlistData?.playlist?.coverArt, ARTWORK_THUMB_SIZE)
+      : undefined,
+  );
   const topColor =
     (colors?.platform === "ios"
       ? colors.primary
@@ -1130,7 +1134,12 @@ export default function PlaylistDetail() {
               <ImageWithFallback
                 source={
                   playlistData?.playlist?.coverArt
-                    ? { uri: artworkUrl(playlistData?.playlist?.coverArt) }
+                    ? {
+                        uri: artworkUrl(
+                          playlistData?.playlist?.coverArt,
+                          ARTWORK_THUMB_SIZE,
+                        ),
+                      }
                     : undefined
                 }
                 className="w-16 h-16 rounded-md aspect-square"

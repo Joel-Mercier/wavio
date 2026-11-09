@@ -1,7 +1,7 @@
 // Offline, the player is the only screen that renders a *track*-level cover id.
-// Every list and detail screen renders the album's, so expo-image's URL-keyed
-// disk cache holds album covers from earlier browsing and holds nothing for the
-// track id — which is why the player, and only the player, lost its artwork.
+// Every list row and card renders the album's thumbnail, so expo-image's disk
+// cache holds album covers from earlier browsing and holds nothing for the track
+// id — which is why the player, and only the player, lost its artwork.
 
 const mockAuth = {
   url: "https://music.example",
@@ -41,7 +41,10 @@ jest.mock("@/stores/offline", () => ({
   default: { getState: () => ({ artworkCache: {}, artworkAliases: {} }) },
 }));
 
-import { resolveOfflineTrackArtwork } from "@/utils/artwork";
+import {
+  ARTWORK_THUMB_SIZE,
+  resolveOfflineTrackArtwork,
+} from "@/utils/artwork";
 
 // Navidrome cover ids carry an updated-at token; the offline cache is keyed by
 // the entity part alone (artworkCacheKey).
@@ -92,14 +95,15 @@ describe("resolveOfflineTrackArtwork", () => {
     ).toBe("file:///art/al-abc_1.jpg");
   });
 
-  // Nothing cached to disk: hand back the URL the album screens render, which
-  // expo-image is holding, rather than the track URL nothing ever requested.
+  // Nothing cached to disk: hand back the thumbnail URL the album's rows render,
+  // which expo-image is holding, rather than the track URL nothing requested.
   it("falls back to the album's cover URL, not the track's", () => {
     const resolved = resolveOfflineTrackArtwork(
       track,
       maps({ downloadedCollections: { abc: { coverArt: ALBUM_COVER_ID } } }),
     );
     expect(resolved).toContain(encodeURIComponent(ALBUM_COVER_ID));
+    expect(resolved).toContain(`size=${ARTWORK_THUMB_SIZE}`);
     expect(resolved).not.toContain(encodeURIComponent(TRACK_COVER_ID));
   });
 

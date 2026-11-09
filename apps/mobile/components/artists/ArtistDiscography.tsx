@@ -14,7 +14,7 @@ import { useAlbumScreenLayout } from "@/hooks/useAlbumScreenLayout";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import useApp from "@/stores/app";
-import { gridColumnCount } from "@/utils/grid";
+import { COVER_GRID, gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
 import {
@@ -42,13 +42,7 @@ export default function ArtistDiscography() {
   const { width } = useWindowDimensions();
   const { layout, toggle } = useAlbumScreenLayout("artist-discography");
   const gridColumns =
-    layout === "grid"
-      ? gridColumnCount(width, {
-          minItemWidth: 160,
-          minColumns: 3,
-          maxColumns: 5,
-        })
-      : 1;
+    layout === "grid" ? gridColumnCount(width, COVER_GRID) : 1;
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
   const { data, isLoading, error } = useArtist(id);
   const listRef = useRef<LegendListRef>(null);

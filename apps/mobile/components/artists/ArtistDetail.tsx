@@ -89,7 +89,7 @@ import useApp from "@/stores/app";
 import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
 import { logError } from "@/utils/log";
@@ -180,7 +180,11 @@ export default function ArtistDetail() {
   const capabilities = useCapabilities();
   const isOnline = useIsOnline();
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
-  const colors = useImageColors(artworkUrl(data?.artist?.coverArt));
+  const colors = useImageColors(
+    data?.artist?.coverArt
+      ? artworkUrl(data?.artist?.coverArt, ARTWORK_THUMB_SIZE)
+      : undefined,
+  );
   const topColor =
     (colors?.platform === "ios"
       ? colors.primary
@@ -638,7 +642,12 @@ export default function ArtistDetail() {
                   <HStack className="items-center mb-6">
                     <Box className="relative">
                       <ImageWithFallback
-                        source={{ uri: artworkUrl(data?.artist?.coverArt) }}
+                        source={{
+                          uri: artworkUrl(
+                            data?.artist?.coverArt,
+                            ARTWORK_THUMB_SIZE,
+                          ),
+                        }}
                         alt="Liked songs cover"
                         className="w-16 h-16 rounded-full aspect-square"
                         fallback={artistThumbnailFallback}
@@ -827,7 +836,12 @@ export default function ArtistDetail() {
                   <HStack className="items-center">
                     <Box className="relative">
                       <ImageWithFallback
-                        source={{ uri: artworkUrl(data?.artist?.coverArt) }}
+                        source={{
+                          uri: artworkUrl(
+                            data?.artist?.coverArt,
+                            ARTWORK_THUMB_SIZE,
+                          ),
+                        }}
                         alt="All songs cover"
                         className="w-16 h-16 rounded-full aspect-square"
                         fallback={artistThumbnailFallback}
@@ -977,7 +991,9 @@ export default function ArtistDetail() {
             <HStack className="items-center">
               {data?.artist?.coverArt ? (
                 <Image
-                  source={{ uri: artworkUrl(data?.artist?.coverArt) }}
+                  source={{
+                    uri: artworkUrl(data?.artist?.coverArt, ARTWORK_THUMB_SIZE),
+                  }}
                   className="w-16 h-16 rounded-full aspect-square"
                   alt="Track cover"
                 />

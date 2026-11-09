@@ -33,7 +33,7 @@ import {
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { Playlist } from "@/services/openSubsonic/types";
 import useAuth from "@/stores/auth";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { goBackOrHome } from "@/utils/navigation";
 
 const AnimatedBox = Animated.createAnimatedComponent(Box);
@@ -46,7 +46,7 @@ function PlaylistRow({ playlist }: { playlist: Playlist }) {
       <HStack className="items-center gap-x-4">
         {playlist.coverArt ? (
           <Image
-            source={{ uri: artworkUrl(playlist.coverArt) }}
+            source={{ uri: artworkUrl(playlist.coverArt, ARTWORK_THUMB_SIZE) }}
             className="w-14 h-14 rounded-md"
             alt="Playlist cover"
           />

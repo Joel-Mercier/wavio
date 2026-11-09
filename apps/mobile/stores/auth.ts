@@ -11,6 +11,7 @@ import {
   usesSubsonicAuthType,
 } from "@/services/backend/serverTraits";
 import {
+  setImageCacheOwner,
   setSessionBearer,
   setSessionCredentials,
 } from "@/services/serverHeaders";
@@ -379,6 +380,18 @@ const publishSessionBearer = (): void => {
 publishSessionBearer();
 useAuthBase.subscribe(publishSessionBearer);
 useOidcBase.subscribe(publishSessionBearer);
+
+// Image cache keys are scoped to the signed-in (server, user), like every other
+// piece of per-account state.
+const publishImageCacheOwner = (state: AuthStore): void => {
+  setImageCacheOwner(
+    state.isAuthenticated && state.serverId && state.username
+      ? { serverId: state.serverId, username: state.username, url: state.url }
+      : null,
+  );
+};
+publishImageCacheOwner(useAuthBase.getState());
+useAuthBase.subscribe(publishImageCacheOwner);
 
 // SMB is the other half of that: its credentials stay inside the native module,
 // which holds an authenticated session and a bound loopback listener for as long

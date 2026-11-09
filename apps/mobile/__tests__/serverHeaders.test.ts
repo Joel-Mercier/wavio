@@ -36,6 +36,7 @@ import {
   customHeadersForUrl,
   mergeCustomHeaders,
   requestHeadersForUrl,
+  setImageCacheOwner,
   setSessionBearer,
   withServerHeaders,
 } from "@/services/serverHeaders";
@@ -205,18 +206,29 @@ describe("requestHeadersForUrl", () => {
   });
 });
 
+const keyOf = (uri: string) =>
+  (withServerHeaders({ uri }) as { cacheKey?: string }).cacheKey;
+
+const signIn = (over: Partial<Server> = {}, username = "joel") => {
+  const saved = server(over);
+  setServers([saved]);
+  setImageCacheOwner({ serverId: saved.id, username, url: saved.url });
+};
+
 describe("withServerHeaders", () => {
   it("attaches headers to a matching image source", () => {
-    setServers([server()]);
+    signIn();
     expect(
       withServerHeaders({ uri: "https://music.example.com/rest/getCoverArt" }),
     ).toEqual({
       uri: "https://music.example.com/rest/getCoverArt",
       headers: WITH_AGENT,
+      cacheKey: "1_joel/rest/getCoverArt",
     });
     expect(withServerHeaders("https://music.example.com/cover.jpg")).toEqual({
       uri: "https://music.example.com/cover.jpg",
       headers: WITH_AGENT,
+      cacheKey: "1_joel/cover.jpg",
     });
   });
 
@@ -224,7 +236,7 @@ describe("withServerHeaders", () => {
     // The whole point of this change: expo-image's native loader would
     // otherwise send `Dalvik/*` and get scored as a bot.
     setServers([]);
-    expect(withServerHeaders("https://cdn.example.com/art.jpg")).toEqual({
+    expect(withServerHeaders("https://cdn.example.com/art.jpg")).toStrictEqual({
       uri: "https://cdn.example.com/art.jpg",
       headers: { "User-Agent": USER_AGENT },
     });
@@ -240,12 +252,67 @@ describe("withServerHeaders", () => {
   });
 
   it("preserves extra source fields rather than reusing the wrapper", () => {
-    setServers([server()]);
+    signIn();
     const source = { uri: "https://music.example.com/x", width: 64 };
     expect(withServerHeaders(source)).toEqual({
       ...source,
       headers: WITH_AGENT,
+      cacheKey: "1_joel/x",
     });
+    const keyed = { ...source, cacheKey: "mine" };
+    expect(withServerHeaders(keyed)).toEqual({
+      ...keyed,
+      headers: WITH_AGENT,
+    });
+  });
+
+  it("caches a server's cover under a key that outlives the session", () => {
+    signIn({ fallbackUrl: "http://10.0.0.2:4533" });
+    const lan = keyOf(
+      "http://10.0.0.2:4533/rest/getCoverArt?id=al-1_68e6&u=joel&t=a&s=b&size=300",
+    );
+    expect(lan).toBe("1_joel/rest/getCoverArt?id=al-1_68e6&size=300");
+    expect(
+      keyOf(
+        "https://music.example.com/rest/getCoverArt?id=al-1_68e6&u=joel&t=c&s=d&size=300",
+      ),
+    ).toBe(lan);
+  });
+
+  it("scopes keys to the signed-in user", () => {
+    const uri = "https://music.example.com/Items/abc/Images/Primary";
+    signIn();
+    expect(keyOf(uri)).toBe("1_joel/Items/abc/Images/Primary");
+    setImageCacheOwner({
+      serverId: "1",
+      username: "kid",
+      url: "https://music.example.com",
+    });
+    expect(keyOf(uri)).toBe("1_kid/Items/abc/Images/Primary");
+  });
+
+  it("only keys images of the signed-in server", () => {
+    const uri = "https://music.example.com/rest/getCoverArt?id=al-1_68e6";
+    setServers([server(), server({ id: "2" })]);
+    setImageCacheOwner({
+      serverId: "2",
+      username: "joel",
+      url: "https://music.example.com",
+    });
+    expect(keyOf(uri)).toBe("2_joel/rest/getCoverArt?id=al-1_68e6");
+    setImageCacheOwner(null);
+    expect(keyOf(uri)).toBeUndefined();
+  });
+
+  it("follows edits to the saved server's routes", () => {
+    const uri = "http://10.0.0.2:4533/rest/getCoverArt?id=al-1_68e6";
+    signIn();
+    expect(keyOf(uri)).toBeUndefined();
+    useServersBase.setState(
+      { servers: [server({ fallbackUrl: "http://10.0.0.2:4533" })] },
+      false,
+    );
+    expect(keyOf(uri)).toBe("1_joel/rest/getCoverArt?id=al-1_68e6");
   });
 
   it("leaves everything else identical", () => {

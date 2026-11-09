@@ -36,7 +36,7 @@ import useApp from "@/stores/app";
 import usePlaylistsStore, {
   type PlaylistFolderAssignmentUpdates,
 } from "@/stores/playlists";
-import { gridColumnCount } from "@/utils/grid";
+import { COVER_GRID, gridColumnCount } from "@/utils/grid";
 import {
   availableLibrarySortFields,
   DEFAULT_LIBRARY_SORT,
@@ -85,13 +85,7 @@ export default function PlaylistFolderDetail() {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const gridColumns =
-    layout === "grid"
-      ? gridColumnCount(width, {
-          minItemWidth: 160,
-          minColumns: 3,
-          maxColumns: 5,
-        })
-      : 1;
+    layout === "grid" ? gridColumnCount(width, COVER_GRID) : 1;
 
   const playlists = useMemo(() => {
     const listed = data?.playlists?.playlist ?? [];

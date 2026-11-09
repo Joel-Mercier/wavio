@@ -12,15 +12,12 @@ import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCSSVariable } from "uniwind";
 import AddBottomSheet from "@/components/AddBottomSheet";
-import {
-  SIDEBAR_WIDTH,
-  TAB_BAR_CONTENT_HEIGHT,
-} from "@/components/FloatingPlayer";
+import { TAB_BAR_CONTENT_HEIGHT } from "@/components/FloatingPlayer";
 import OfflineBanner, {
   OFFLINE_BANNER_HEIGHT,
 } from "@/components/OfflineBanner";
 import { useIsOnline } from "@/hooks/useIsOnline";
-import useApp from "@/stores/app";
+import useApp, { SIDEBAR_WIDTH } from "@/stores/app";
 
 export default function TabLayout() {
   const { t } = useTranslation();

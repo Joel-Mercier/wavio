@@ -18,7 +18,7 @@ import { useIsOnline } from "@/hooks/useIsOnline";
 import type { NowPlayingEntry } from "@/services/openSubsonic/types";
 import { playTracks } from "@/services/player";
 import { useAuthBase } from "@/stores/auth";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 
 const NowPlayingCard = memo(function NowPlayingCard({
@@ -41,7 +41,7 @@ const NowPlayingCard = memo(function NowPlayingCard({
       <VStack className="w-32 gap-y-2">
         {entry.coverArt ? (
           <Image
-            source={{ uri: artworkUrl(entry.coverArt) }}
+            source={{ uri: artworkUrl(entry.coverArt, ARTWORK_THUMB_SIZE) }}
             className="w-32 h-32 rounded-md aspect-square"
             alt="Track cover"
           />

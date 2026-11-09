@@ -63,7 +63,7 @@ import { playTracks, togglePlayPause } from "@/services/player";
 import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { logError } from "@/utils/log";
 import { goBackOrHome } from "@/utils/navigation";
@@ -99,7 +99,11 @@ export default function LikedSongs() {
   const capabilities = useCapabilities();
   const isOnline = useIsOnline();
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
-  const colors = useImageColors(artworkUrl(data?.artist?.coverArt));
+  const colors = useImageColors(
+    data?.artist?.coverArt
+      ? artworkUrl(data?.artist?.coverArt, ARTWORK_THUMB_SIZE)
+      : undefined,
+  );
   const topColor =
     (colors?.platform === "ios"
       ? colors.primary
@@ -532,7 +536,9 @@ export default function LikedSongs() {
             <HStack className="items-center">
               {data?.artist?.coverArt ? (
                 <Image
-                  source={{ uri: artworkUrl(data?.artist?.coverArt) }}
+                  source={{
+                    uri: artworkUrl(data?.artist?.coverArt, ARTWORK_THUMB_SIZE),
+                  }}
                   className="w-16 h-16 rounded-full aspect-square"
                   alt="Track cover"
                 />

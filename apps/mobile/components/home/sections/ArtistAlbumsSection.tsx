@@ -5,7 +5,7 @@ import { useSectionEnabled } from "@/components/home/enabledSections";
 import HomeSection from "@/components/home/sections/HomeSection";
 import { ALBUM_CAROUSEL_SKELETON } from "@/components/home/sections/skeletons";
 import { useArtist } from "@/hooks/backend/useBrowsing";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 
 interface ArtistAlbumsSectionProps {
   artistId: string;
@@ -33,7 +33,11 @@ function ArtistAlbumsSection({
     <HomeSection
       title={artist?.name ?? ""}
       subtitle={t("app.home.moreFrom")}
-      imageUrl={artist?.coverArt ? artworkUrl(artist.coverArt) : undefined}
+      imageUrl={
+        artist?.coverArt
+          ? artworkUrl(artist.coverArt, ARTWORK_THUMB_SIZE)
+          : undefined
+      }
       seeAllHref={
         artist?.id
           ? { pathname: "/artists/[id]", params: { id: artist.id } }

@@ -27,6 +27,14 @@ export const resolveCachedArtwork = (
   return alias ? artworkCache[alias] : undefined;
 };
 
+// The size every list row and card asks for (grid tiles may ask for more, see
+// hooks/useGridArtworkSize). Matches Navidrome's default UICoverArtSize, which
+// it pre-generates for every album and artist at scan time, so these requests
+// are served straight from its image cache.
+export const ARTWORK_THUMB_SIZE = 300;
+// For grid tiles drawn well past the thumbnail's pixels (tablets, foldables).
+export const ARTWORK_GRID_LARGE_SIZE = 600;
+
 // Some `coverArt` values are already a URI rather than a server cover id: the
 // local backend stores a `file://` path to the artwork it extracted, and
 // on-device podcasts (which back Navidrome and Jellyfin too, see
@@ -97,13 +105,14 @@ export const resolveOfflineTrackArtwork = (
   if (cachedAlbum) return cachedAlbum;
 
   // Nothing on disk. Fall back to the album's *server* URL rather than the
-  // track's own, even though neither can be fetched offline: the album cover is
-  // what every list and detail screen renders, so expo-image (cachePolicy
-  // "memory-disk", keyed by URL) is holding those bytes from earlier browsing.
-  // A track-level cover id is requested nowhere else in the app, so its URL is
-  // always a cache miss — which is why the player was the only screen that lost
-  // its artwork offline.
-  if (albumCoverArt) return artworkUrl(albumCoverArt);
+  // track's own, even though neither can be fetched offline: every list row and
+  // card showing the downloaded album renders this thumbnail URL, so expo-image
+  // (cachePolicy "memory-disk") is holding those bytes from earlier browsing —
+  // including albums an automatic download fetched without the user ever
+  // opening them. A track-level cover is requested nowhere but the player, so
+  // its URL is always a cache miss, which is why the player was the only screen
+  // that lost its artwork offline.
+  if (albumCoverArt) return artworkUrl(albumCoverArt, ARTWORK_THUMB_SIZE);
 
   return track.artwork;
 };

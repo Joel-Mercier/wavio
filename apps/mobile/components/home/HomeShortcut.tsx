@@ -15,7 +15,7 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
 import type { RecentPlay } from "@/stores/recentPlays";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 
 interface HomeShortcutProps {
@@ -89,7 +89,7 @@ function HomeShortcut({ recentPlay, isActive, playing }: HomeShortcutProps) {
                   uri:
                     recentPlay.type === "internetRadioStation"
                       ? recentPlay.coverArt
-                      : artworkUrl(recentPlay.coverArt),
+                      : artworkUrl(recentPlay.coverArt, ARTWORK_THUMB_SIZE),
                 }
               : undefined
           }

@@ -42,7 +42,7 @@ import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
-import { gridColumnCount } from "@/utils/grid";
+import { COVER_GRID, gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
 
@@ -73,13 +73,7 @@ export default function GenreScreen() {
   const { width } = useWindowDimensions();
   const { layout, toggle } = useAlbumScreenLayout("genre-albums");
   const gridColumns =
-    layout === "grid"
-      ? gridColumnCount(width, {
-          minItemWidth: 160,
-          minColumns: 3,
-          maxColumns: 5,
-        })
-      : 1;
+    layout === "grid" ? gridColumnCount(width, COVER_GRID) : 1;
   const musicFolderIds = useCurrentMusicFolderIds();
   const {
     data,
