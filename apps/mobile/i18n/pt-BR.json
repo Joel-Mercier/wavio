@@ -1807,7 +1807,7 @@
 					"cellularAudioQualityLabel": "Qualidade de áudio (celular)",
 					"cellularAudioQualityDescription": "Limite a taxa de transferência ao usar a rede móvel para economizar dados. Será utilizado o valor mais baixo entre esse limite e o limite do Wi-Fi.",
 					"streamingFormatLabel": "Formato de streaming",
-					"streamingFormatDescription": "Peça ao servidor para transcodificar os fluxos para este formato. Selecione “Original” para reprodução com precisão de bits; escolha um formato caso alguns arquivos não sejam reproduzidos (por exemplo, ALAC).",
+					"streamingFormatDescription": "Ask the server to transcode streams to this format. Keep Original for bit-perfect playback; pick a format if some files won't play.",
 					"cellularStreamingFormatLabel": "Formato de streaming (celular)",
 					"cellularStreamingFormatDescription": "Transcodifique para um formato diferente quando estiver usando rede móvel. Com a opção “Igual ao Wi-Fi”, um stream original ainda terá sua resolução reduzida de acordo com o limite de taxa de bits da rede móvel, utilizando o formato preferido pelo seu servidor.",
 					"streamingFormatOptions": {
