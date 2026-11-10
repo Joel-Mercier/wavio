@@ -1909,7 +1909,7 @@
 					"cellularAudioQualityLabel": "Стриминг через мобильную сеть",
 					"cellularAudioQualityDescription": "Ограничение битрейта при использовании мобильной сети для экономии трафика. Приложение выберет наменьший из двух лимитов: Wi-Fi или мобильной сети",
 					"streamingFormatLabel": "Формат потока",
-					"streamingFormatDescription": "Сервер будет транскодировать потоки. «Оригинал» для побитового качества. Выбирай другой формат, если файлы не запускаются (например, ALAC).",
+					"streamingFormatDescription": "Ask the server to transcode streams to this format. Keep Original for bit-perfect playback; pick a format if some files won't play.",
 					"cellularStreamingFormatLabel": "Формат потоковой передачи (сотовая связь)",
 					"cellularStreamingFormatDescription": "При подключении к сотовой сети выполнять транскодирование в другой формат. При выборе параметра «Как при Wi-Fi» исходный поток по-прежнему подвергается понижению разрешения в соответствии с ограничением скорости передачи данных по сотовой сети с использованием формата, предпочитаемого вашим сервером.",
 					"streamingFormatOptions": {
