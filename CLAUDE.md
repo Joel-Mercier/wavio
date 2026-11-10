@@ -157,6 +157,8 @@ All persisted state is zustand with `react-native-mmkv` as the backing store (`c
 
 `expo-audio` is the audio engine. `services/player.ts` is the registered background service; the queue store drives it. Offline downloads go through `services/offlineDownloadService.ts` + `hooks/useOfflineDownloads.ts` using `expo-file-system`.
 
+**ALAC on Android.** Android has no reliable ALAC decoder (none on Pixels, a broken one on some Qualcomm phones), so `modules/alac-decoder` ships FFmpeg's ALAC decoder (LGPL, prebuilt by `native/build.sh`, like audio-tagger's TagLib) behind Media3's `FfmpegAudioRenderer`. The expo-audio patch builds both players with its `AlacRenderersFactory`, which ranks that renderer ahead of MediaCodec; FFmpeg is built with ALAC only, so every other codec still goes to MediaCodec. ALAC therefore streams, downloads and prefetches untouched on every backend (Jellyfin's raw accept-list includes `m4a|alac`). Its copied Media3 sources must match expo-audio's `androidxMedia3Version`: bump them together (`__tests__/alacDecoder.media3Version.test.ts` fails otherwise; re-sync steps in `modules/alac-decoder/native/README.md`).
+
 **Who owns a download.** Every downloaded track and collection carries a `source` (`stores/offline.ts`), ranked `user` > `rule` > `auto`:
 - **`user`:** saved by hand. Absent means `user`.
 - **`rule`:** the automatic downloads (liked songs, liked albums, playlists; issue #266), run by `services/offline/autoDownloadService.ts` with its pure logic in `autoDownloadPlan.ts`.

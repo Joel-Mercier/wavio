@@ -663,12 +663,12 @@ function applyPlaybackRate(track: QueueTrack | null) {
   }
 }
 
-// Only Subsonic/Navidrome honour the `format=` transcode the fallback relies
-// on. Jellyfin negotiates its own profile and local files play off disk, so a
-// retry there would just reload the identical URL.
+// Every media server can be asked for the fallback transcode: Subsonic/Navidrome
+// through `format=`, Jellyfin through a forced opus profile on the universal
+// endpoint (services/jellyfin/streaming.ts). Index-backed libraries play the
+// file itself, so a retry there would just reload the same bytes.
 function canTranscodeFallback(): boolean {
-  const type = useAuthBase.getState().serverType;
-  return type === "opensubsonic" || type === "navidrome";
+  return isServerTranscodeBackend();
 }
 
 // Distinguish a device codec/decoder failure (recoverable by transcoding) from
@@ -693,8 +693,8 @@ const ENGINE_GENERIC_FAILURE_RE =
   /source error|unexpected runtime error|renderer error/i;
 
 // Raised by the expo-audio patch when the device has no decoder for the source's
-// audio at all (ALAC on most non-Qualcomm phones). media3 itself stays silent in
-// that case: it skips the track, plays nothing, and reports no error.
+// audio at all. media3 itself stays silent in that case: it skips the track,
+// plays nothing, and reports no error.
 function isUnsupportedFormatError(message: string): boolean {
   return /^unsupported audio format/i.test(message);
 }
@@ -1496,13 +1496,13 @@ function handlePlaybackStatus(status: AudioStatus) {
       );
       return;
     }
-    // A device that can't decode the source (e.g. ALAC ExoPlayer advertises but
-    // fails to decode) — re-arm this track to stream through a server transcode
-    // and reload it once, before treating it as a failure. A downloaded file
-    // can hit the same wall (a raw ALAC saved before the download path learned
-    // to transcode it): when the device is online it too can recover by
-    // streaming the transcode over the disk file, so allow the fallback for an
-    // offline source as long as we still have network to reach the server.
+    // A device that can't decode the source (a codec it advertises but fails to
+    // decode, or one it has no decoder for) — re-arm this track to stream
+    // through a server transcode and reload it once, before treating it as a
+    // failure. A downloaded file can hit the same wall: when the device is
+    // online it too can recover by streaming the transcode over the disk file,
+    // so allow the fallback for an offline source as long as we still have
+    // network to reach the server.
     const canRecoverOfflineViaStream =
       !!resolved?.isOffline && getIsOnline() && getServerReachable();
     // The bad bytes were a prefetched copy (offline source, but no download owns
@@ -1554,8 +1554,8 @@ function handlePlaybackStatus(status: AudioStatus) {
     // still shows as present. Say so.
     //
     // A format this device can't decode is different: the engine would otherwise
-    // sit on a track that never makes a sound (a local ALAC file, or a server
-    // whose transcode was already tried). Name it and move on to the next one.
+    // sit on a track that never makes a sound (a local file, or a server whose
+    // transcode was already tried). Name it and move on to the next one.
     if (current && !current.isRadio && unsupportedFormat) {
       usePlaybackNotice.getState().raise("PLAYBACK_FORMAT_UNSUPPORTED", {
         track: current.title ?? "",

@@ -18,9 +18,11 @@ const FALLBACK_TRANSCODE_FORMAT: StreamFormat = "opus";
 // can direct-play, so the source streams untouched unless the bitrate cap forces
 // a transcode. Also the accept-list JELLYFIN_DEFAULT_TRANSCODE_CODEC lands on.
 // A `container|codec` pair (universal-endpoint syntax, as used by jellyfin-web)
-// direct-plays only that codec — m4a holds AAC (playable) or ALAC (ExoPlayer
-// can't decode it), so only the AAC case direct-plays.
-const RAW_CONTAINERS = "mp3,aac,m4a|aac,m4b|aac,flac,ogg,opus,wav";
+// direct-plays only that codec: an MP4 file holds AAC or ALAC, both playable
+// (iOS natively, Android through modules/alac-decoder), while anything else
+// muxed in one still transcodes. `m4a` covers .m4b and .mp4 too (see
+// MP4_CONTAINER_NAMES); an `m4b` entry would never match.
+const RAW_CONTAINERS = "mp3,aac,m4a|aac,m4a|alac,flac,ogg,opus,wav";
 
 // Codec a bitrate-forced transcode uses when the format is "raw". Kept in sync
 // with utils/audioQuality.ts (rawTranscodeFormat) so the player's predicted
@@ -59,7 +61,7 @@ function formatProfile(format: StreamFormat): {
       return {
         audioCodec: "aac",
         transcodingContainer: "ts",
-        containers: "aac,m4a|aac,m4b|aac",
+        containers: "aac,m4a|aac",
       };
     default:
       return {
@@ -68,6 +70,18 @@ function formatProfile(format: StreamFormat): {
         containers: RAW_CONTAINERS,
       };
   }
+}
+
+// The names Jellyfin matches an accept-list entry against for any MP4-family
+// file (.m4a, .m4b, .mp4, .mov): ffprobe's `mov,mp4,m4a,3gp,3g2,mj2`. Its item
+// listings shorten that to `m4a` for .m4a files and to `mov` for the rest, so a
+// suffix of `mov` still matches an `m4a|alac` entry, and `m4b` never appears.
+const MP4_CONTAINER_NAMES = ["mov", "mp4", "m4a", "3gp", "3g2", "mj2"];
+
+function serverContainerNames(suffix: string): string[] {
+  return suffix === "m4b" || MP4_CONTAINER_NAMES.includes(suffix)
+    ? MP4_CONTAINER_NAMES
+    : [suffix];
 }
 
 // Predicts whether the universal endpoint will direct-play this track under the
@@ -82,6 +96,7 @@ export function willDirectPlay(
 ): boolean {
   const container = track.suffix?.toLowerCase();
   if (!container) return false;
+  const containerNames = serverContainerNames(container);
   const codec =
     typeof track.contentType === "string"
       ? track.contentType.split("/").pop()?.toLowerCase()
@@ -90,7 +105,7 @@ export function willDirectPlay(
     .containers.split(",")
     .some((entry) => {
       const [entryContainer, entryCodec] = entry.split("|");
-      if (entryContainer !== container) return false;
+      if (!containerNames.includes(entryContainer)) return false;
       return !entryCodec || entryCodec === codec;
     });
 }

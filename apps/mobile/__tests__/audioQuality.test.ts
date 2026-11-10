@@ -229,6 +229,80 @@ describe("localFileTranscodeInfo", () => {
     expect(info.toLabel).toBe("MP3 · 320 kbps");
   });
 
+  // Navidrome reports ALAC at its uncompressed rate (sample rate × bits ×
+  // channels), not what the file averages, so an untouched copy measures far
+  // below it.
+  it.each([
+    ["16-bit 44.1 kHz stereo", 1411, 44100, 675],
+    ["16-bit 44.1 kHz mono", 706, 44100, 353],
+    ["24-bit 96 kHz stereo", 4608, 96000, 2546],
+    ["24-bit 48 kHz 5.1", 6912, 48000, 4340],
+  ])(
+    "doesn't read a raw ALAC copy as downsampled (%s)",
+    (_label, reported, samplingRate, measured) => {
+      const info = localFileTranscodeInfo(
+        track({
+          suffix: "m4a",
+          bitRate: reported,
+          samplingRate,
+          duration: 200,
+        }),
+        entry("m4a", measured),
+      );
+      expect(info.active).toBe(false);
+      expect(info.comparable).toBe(true);
+    },
+  );
+
+  it("doesn't call a Jellyfin `mov` source cached as m4a a transcode", () => {
+    const info = localFileTranscodeInfo(
+      track({ suffix: "mov", bitRate: 675, duration: 200 }),
+      entry("m4a", 675),
+    );
+    expect(info.active).toBe(false);
+  });
+
+  it("still reports a lossless source transcoded to another container", () => {
+    const info = localFileTranscodeInfo(
+      track({
+        suffix: "m4a",
+        bitRate: 1411,
+        samplingRate: 44100,
+        duration: 200,
+      }),
+      entry("opus", 128),
+    );
+    expect(info.active).toBe(true);
+    expect(info.fromLabel).toBe("M4A · 1411 kbps");
+    expect(info.toLabel).toBe("OPUS · 128 kbps");
+  });
+
+  it("keeps comparing a measured bitrate off the uncompressed grid", () => {
+    // 320 kbps at 44.1 kHz is ~7 bits per frame: a lossy source, so a smaller
+    // same-container copy is a real downsample.
+    const info = localFileTranscodeInfo(
+      track({
+        suffix: "mp3",
+        bitRate: 320,
+        samplingRate: 44100,
+        duration: 200,
+      }),
+      entry("mp3", 128),
+    );
+    expect(info.active).toBe(true);
+  });
+
+  it("uses the sample rate recorded with a download", () => {
+    // Queued from the Downloads screen, the track carries no sample rate.
+    const info = localFileTranscodeInfo(
+      track({ suffix: "m4a", duration: 200 }),
+      entry("m4a", 675),
+      { suffix: "m4a", bitRate: 1411, samplingRate: 44100 },
+    );
+    expect(info.active).toBe(false);
+    expect(info.comparable).toBe(true);
+  });
+
   it("calls a raw download comparable, so it can still be badged ORIGINAL", () => {
     const info = localFileTranscodeInfo(
       track({ suffix: "flac", bitRate: 1016, duration: 200 }),

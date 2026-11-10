@@ -215,7 +215,14 @@ describe("what a completed download records", () => {
     );
 
     offlineDownloadService.enqueueTracks(
-      [{ ...makeChild("flacTrack"), suffix: "flac", bitRate: 1016 }],
+      [
+        {
+          ...makeChild("flacTrack"),
+          suffix: "flac",
+          bitRate: 1016,
+          samplingRate: 44100,
+        },
+      ],
       "user",
     );
     await jest.advanceTimersByTimeAsync(1000);
@@ -224,5 +231,6 @@ describe("what a completed download records", () => {
     expect(saved?.path).toMatch(/\.mp3$/);
     expect(saved?.sourceSuffix).toBe("flac");
     expect(saved?.sourceBitRate).toBe(1016);
+    expect(saved?.sourceSamplingRate).toBe(44100);
   });
 });

@@ -148,7 +148,7 @@ A single `bun install` at the repo root installs both. Most scripts are exposed 
 - **Android SDK** with platform 37 and the build tools, usually via Android Studio, with `ANDROID_HOME` (or `ANDROID_SDK_ROOT`) exported and `platform-tools` on your `PATH`
 - An Android device with USB debugging on, or an emulator
 
-You do **not** need an NDK or CMake: the only C++ in the repo (TagLib, in `apps/mobile/modules/audio-tagger`) ships as prebuilt `.so` files committed under `jniLibs/`, and Gradle only packages them.
+You do **not** need an NDK or CMake: the only C++ in the repo (TagLib in `apps/mobile/modules/audio-tagger`, FFmpeg's ALAC decoder in `apps/mobile/modules/alac-decoder`) ships as prebuilt `.so` files committed under `jniLibs/`, and Gradle only packages them.
 
 You also do **not** need a Sentry account to develop the app — Sentry is disabled in `__DEV__` and only matters for release builds. An Expo account is optional too: it's needed for EAS builds and for the `bun run mobile:start`/`android`/`ios`/`web` scripts, but not for the `bunx expo …` workflow below. See [Using your own Expo account](#using-your-own-expo-account).
 

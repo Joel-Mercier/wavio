@@ -9,9 +9,8 @@
  * the state isn't private to one of them.
  *
  * Runtime-only, deliberately: a decode failure is a property of this device and
- * this file, and both are re-derived on the next launch (the download path
- * transcodes undecodable codecs, and a cache entry evicted on the failure comes
- * back through a fresh fetch).
+ * this file, and both are re-derived on the next launch (a cache entry evicted
+ * on the failure comes back through a fresh fetch).
  */
 
 // Ids whose raw stream failed to decode and have since been re-armed to stream
@@ -19,12 +18,10 @@
 // track keeps a genuinely broken source from looping.
 const transcodeRetriedIds = new Set<string>();
 
-// Ids whose *on-disk* copy failed to decode (e.g. an ALAC file saved before the
-// download path learned to transcode it, or a prefetched copy of the same) and
-// have since been forced to stream through a server transcode instead of playing
-// off disk. Only meaningful while online; the download itself is corrected
-// separately (offlineFileInfo transcodes such codecs), so this just bridges
-// already-downloaded raw files.
+// Ids whose *on-disk* copy (a download or a prefetched copy) failed to decode
+// and have since been forced to stream through a server transcode instead of
+// playing off disk. Only meaningful while online: the file itself is left alone,
+// so offline it fails again.
 const streamOverOfflineIds = new Set<string>();
 
 export function noteTranscodeRetried(trackId: string): void {

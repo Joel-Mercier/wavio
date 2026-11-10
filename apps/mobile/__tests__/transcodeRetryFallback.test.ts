@@ -28,13 +28,15 @@ jest.mock("@/config/storage", () => {
   };
 });
 
+const authState = {
+  url: "https://server",
+  username: "n",
+  serverType: "opensubsonic",
+};
+
 jest.mock("@/stores/auth", () => ({
   useAuthBase: {
-    getState: () => ({
-      url: "https://server",
-      username: "n",
-      serverType: "opensubsonic",
-    }),
+    getState: () => authState,
     subscribe: jest.fn(() => jest.fn()),
   },
   registerLogoutHandler: jest.fn(),
@@ -140,6 +142,7 @@ const track = (id: string): QueueTrack =>
 const loadCount = () => player.replace.mock.calls.length;
 
 beforeEach(() => {
+  authState.serverType = "opensubsonic";
   player.replace.mockClear();
   useOffline.setState({ downloadedTracks: {} } as never);
   useQueue.setState({
@@ -186,6 +189,23 @@ describe("transcode retry on an engine playback failure", () => {
     expect(loadCount()).toBe(before);
   });
 
+  it("reloads through a transcode on Jellyfin too", () => {
+    authState.serverType = "jellyfin";
+    playTracks([track("jellyfin-source")]);
+    const before = loadCount();
+    emitStatus("Source error");
+    expect(loadCount()).toBe(before + 1);
+    expect(player.replace.mock.calls.at(-1)?.[0].uri).toContain("format=");
+  });
+
+  it("does not reload a library file, which no server can transcode", () => {
+    authState.serverType = "local";
+    playTracks([track("local-source")]);
+    const before = loadCount();
+    emitStatus("Source error");
+    expect(loadCount()).toBe(before);
+  });
+
   it("retries a given track only once", () => {
     playTracks([track("t4")]);
     emitStatus("Source error");
@@ -197,9 +217,9 @@ describe("transcode retry on an engine playback failure", () => {
   });
 });
 
-// A device with no decoder for the source (ALAC on a Pixel) never gets a media3
-// error at all: the track is just never selected and a silent clock runs. The
-// expo-audio patch reports that as "Unsupported audio format: <mime>".
+// A device with no decoder for the source never gets a media3 error at all: the
+// track is just never selected and a silent clock runs. The expo-audio patch
+// reports that as "Unsupported audio format: <mime>".
 describe("audio format the device cannot decode", () => {
   const unsupported = "Unsupported audio format: audio/alac";
   const currentId = () => useQueue.getState().getCurrent()?.id;

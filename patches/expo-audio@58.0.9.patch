@@ -1,3 +1,15 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 88e464d2030f4b3a929a5b4c80521bdaecebd966..8635ac54497afbaa1d92490f47739d7269a73102 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -35,6 +35,7 @@ dependencies {
+   implementation "androidx.media3:media3-datasource-okhttp:$androidxMedia3Version"
+   implementation "androidx.media3:media3-exoplayer-hls:$androidxMedia3Version"
+   implementation "androidx.media3:media3-exoplayer-smoothstreaming:$androidxMedia3Version"
++  implementation project(':alac-decoder')
+ 
+   testImplementation 'junit:junit:4.13.2'
+   testImplementation 'io.mockk:mockk:1.14.9'
 diff --git a/android/src/main/java/expo/modules/audio/AudioModule.kt b/android/src/main/java/expo/modules/audio/AudioModule.kt
 index 6c81fce3dd518d3b82e3280940a001c7be84dd0a..c929ddf288b9bd729accea06d48812480dcf9106 100644
 --- a/android/src/main/java/expo/modules/audio/AudioModule.kt
@@ -77,10 +89,10 @@ index 6c81fce3dd518d3b82e3280940a001c7be84dd0a..c929ddf288b9bd729accea06d4881248
          runOnMain {
            player.setSamplingEnabled(enabled)
 diff --git a/android/src/main/java/expo/modules/audio/AudioPlayer.kt b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
-index fb2d0b57fb8718df04e5c073b70837b2658f2c16..6237d94ffc849031c879ddf41eb7a05219b2e6a3 100644
+index fb2d0b57fb8718df04e5c073b70837b2658f2c16..854855c42b04920476c2a525c6cc56bbc5af5876 100644
 --- a/android/src/main/java/expo/modules/audio/AudioPlayer.kt
 +++ b/android/src/main/java/expo/modules/audio/AudioPlayer.kt
-@@ -11,6 +11,7 @@ import androidx.media3.common.C
+@@ -11,11 +11,13 @@ import androidx.media3.common.C
  import androidx.media3.common.PlaybackException
  import androidx.media3.common.PlaybackParameters
  import androidx.media3.common.Player
@@ -88,7 +100,13 @@ index fb2d0b57fb8718df04e5c073b70837b2658f2c16..6237d94ffc849031c879ddf41eb7a052
  import androidx.media3.common.util.UnstableApi
  import androidx.media3.exoplayer.DefaultLoadControl
  import androidx.media3.exoplayer.ExoPlayer
-@@ -23,6 +24,16 @@ import java.lang.ref.WeakReference
+ import androidx.media3.exoplayer.source.MediaSource
+ import androidx.media3.session.MediaSession
++import expo.modules.alacdecoder.AlacRenderersFactory
+ import expo.modules.audio.service.AudioPlaybackServiceConnection
+ import expo.modules.kotlin.AppContext
+ import expo.modules.kotlin.exception.Exceptions
+@@ -23,6 +25,16 @@ import java.lang.ref.WeakReference
  
  private const val PLAYBACK_STATUS_UPDATE = "playbackStatusUpdate"
  private const val AUDIO_SAMPLE_UPDATE = "audioSampleUpdate"
@@ -105,7 +123,11 @@ index fb2d0b57fb8718df04e5c073b70837b2658f2c16..6237d94ffc849031c879ddf41eb7a052
  private const val SEEK_JUMP_INTERVAL_MS: Long = 10_000
  
  @UnstableApi
-@@ -37,6 +48,7 @@ class AudioPlayer(
+@@ -34,9 +46,11 @@ class AudioPlayer(
+   bufferDurationMs: Long = 0
+ ) : BaseAudioPlayer(
+   player = ExoPlayer.Builder(context)
++    .setRenderersFactory(AlacRenderersFactory(context))
      .setLooper(context.mainLooper)
      .setAudioAttributes(AudioAttributes.DEFAULT, false)
      .setHandleAudioBecomingNoisy(true)
@@ -113,7 +135,7 @@ index fb2d0b57fb8718df04e5c073b70837b2658f2c16..6237d94ffc849031c879ddf41eb7a052
      .setSeekForwardIncrementMs(SEEK_JUMP_INTERVAL_MS)
      .setSeekBackIncrementMs(SEEK_JUMP_INTERVAL_MS)
      .apply {
-@@ -65,6 +77,14 @@ class AudioPlayer(
+@@ -65,6 +79,14 @@ class AudioPlayer(
    // Lock screen controls
    override var isActiveForLockScreen = false
    override var metadata: Metadata? = null
@@ -128,13 +150,13 @@ index fb2d0b57fb8718df04e5c073b70837b2658f2c16..6237d94ffc849031c879ddf41eb7a052
    override var lockScreenOptions: AudioLockScreenOptions? = null
    override var mediaSession: MediaSession = buildBasicMediaSession(context, ref) { requestPlay() }
    override val serviceConnection = AudioPlaybackServiceConnection(WeakReference(this), appContext)
-@@ -89,8 +109,27 @@ class AudioPlayer(
+@@ -89,8 +111,27 @@ class AudioPlayer(
        ?: throw Exceptions.ReactContextLost()
    }
  
-+  // Audio this device has no decoder for (ALAC on most non-Qualcomm phones) is
-+  // never selected, so the player runs a silent clock and raises no error at
-+  // all. Report it like a playback error, once per source, and stop the clock.
++  // Audio this device has no decoder for is never selected, so the player runs
++  // a silent clock and raises no error at all. Report it like a playback error,
++  // once per source, and stop the clock.
 +  private var unsupportedAudioReported = false
 +  private val unsupportedAudioListener = object : Player.Listener {
 +    override fun onTracksChanged(tracks: Tracks) {
@@ -156,7 +178,7 @@ index fb2d0b57fb8718df04e5c073b70837b2658f2c16..6237d94ffc849031c879ddf41eb7a052
      source?.let {
        setMediaSource(source)
      }
-@@ -98,11 +137,72 @@ class AudioPlayer(
+@@ -98,11 +139,72 @@ class AudioPlayer(
  
    fun setMediaSource(source: MediaSource) {
      previousPlaybackState = Player.STATE_IDLE
@@ -230,7 +252,7 @@ index fb2d0b57fb8718df04e5c073b70837b2658f2c16..6237d94ffc849031c879ddf41eb7a052
      previousPlaybackState = Player.STATE_IDLE
      ref.pause()
 diff --git a/android/src/main/java/expo/modules/audio/AudioPlaylist.kt b/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
-index bf3f9c5e5535ddf5e98484310642aa73bd6ae86c..7385de41ae36873ce5c3b1f01bea1c1a74602126 100644
+index bf3f9c5e5535ddf5e98484310642aa73bd6ae86c..a4af7ac74a75559de42c85feaabdb6c2d03f8a75 100644
 --- a/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
 +++ b/android/src/main/java/expo/modules/audio/AudioPlaylist.kt
 @@ -2,6 +2,7 @@ package expo.modules.audio
@@ -241,7 +263,19 @@ index bf3f9c5e5535ddf5e98484310642aa73bd6ae86c..7385de41ae36873ce5c3b1f01bea1c1a
  import androidx.media3.common.MediaItem
  import androidx.media3.common.PlaybackException
  import androidx.media3.common.Player
-@@ -29,6 +30,7 @@ class AudioPlaylist(
+@@ -10,6 +11,7 @@ import androidx.media3.exoplayer.ExoPlayer
+ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+ import androidx.media3.datasource.DataSource
+ import androidx.media3.session.MediaSession
++import expo.modules.alacdecoder.AlacRenderersFactory
+ import expo.modules.audio.service.AudioPlaybackServiceConnection
+ import expo.modules.kotlin.AppContext
+ import java.lang.ref.WeakReference
+@@ -26,9 +28,11 @@ class AudioPlaylist(
+   dataSourceFactory: DataSource.Factory
+ ) : BaseAudioPlayer(
+   player = ExoPlayer.Builder(context)
++    .setRenderersFactory(AlacRenderersFactory(context))
      .setLooper(context.mainLooper)
      .setAudioAttributes(AudioAttributes.DEFAULT, false)
      .setHandleAudioBecomingNoisy(true)

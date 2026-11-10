@@ -221,6 +221,7 @@ export default function AudioQualityLine({
         source: {
           suffix: downloaded.sourceSuffix,
           bitRate: downloaded.sourceBitRate,
+          samplingRate: downloaded.sourceSamplingRate,
         },
       }
     : cacheEntry

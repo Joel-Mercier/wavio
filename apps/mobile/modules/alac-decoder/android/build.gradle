@@ -1,0 +1,40 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+group = 'expo.modules.alacdecoder'
+version = '0.0.1'
+
+def expoModulesCorePlugin = new File(project(":expo-modules-core").projectDir.absolutePath, "ExpoModulesCorePlugin.gradle")
+apply from: expoModulesCorePlugin
+applyKotlinExpoModulesCorePlugin()
+useCoreDependencies()
+useExpoPublishing()
+
+android {
+  namespace "expo.modules.alacdecoder"
+  compileSdk rootProject.ext.compileSdkVersion ?: 36
+  defaultConfig {
+    minSdkVersion rootProject.ext.minSdkVersion ?: 26
+    targetSdkVersion rootProject.ext.targetSdkVersion ?: 36
+    consumerProguardFiles "consumer-rules.pro"
+  }
+  // No externalNativeBuild: libwavioalac.so is prebuilt and committed under
+  // jniLibs (rebuild with native/build.sh), like audio-tagger's TagLib.
+  sourceSets {
+    main {
+      jniLibs.srcDirs = ['src/main/jniLibs']
+    }
+  }
+}
+
+dependencies {
+  // Media3 comes from expo-audio at runtime. The version must stay equal to
+  // expo-audio's androidxMedia3Version (enforced by __tests__/alacDecoder.media3Version.test.ts):
+  // the Java sources here are copied from that exact Media3 release.
+  def androidxMedia3Version = "1.9.1"
+  compileOnly "androidx.media3:media3-exoplayer:$androidxMedia3Version"
+  compileOnly "androidx.media3:media3-decoder:$androidxMedia3Version"
+  // Annotations only, as in Media3's own decoder_ffmpeg build: Media3 doesn't
+  // pass checker-qual on to its consumers' compile classpath.
+  compileOnly "org.checkerframework:checker-qual:3.13.0"
+}

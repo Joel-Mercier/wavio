@@ -889,6 +889,7 @@ export class OfflineDownloadService {
       sortName: track.sortName,
       sourceSuffix: track.suffix,
       sourceBitRate: track.bitRate,
+      sourceSamplingRate: track.samplingRate,
       fileSuffix: suffix,
     };
   }
