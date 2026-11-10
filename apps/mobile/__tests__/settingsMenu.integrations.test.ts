@@ -34,6 +34,7 @@ jest.mock("lucide-react-native/icons/cloud-download", () => () => null);
 jest.mock("lucide-react-native/icons/download", () => () => null);
 jest.mock("lucide-react-native/icons/hard-drive", () => () => null);
 jest.mock("lucide-react-native/icons/library", () => () => null);
+jest.mock("lucide-react-native/icons/life-buoy", () => () => null);
 jest.mock("lucide-react-native/icons/mic-signal", () => () => null);
 jest.mock("lucide-react-native/icons/palette", () => () => null);
 jest.mock("lucide-react-native/icons/radio", () => () => null);
