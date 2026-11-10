@@ -872,6 +872,10 @@
 					"updates": {
 						"title": "Actualizaciones",
 						"description": "Comprueba si hay actualizaciones de las aplicaciones e instálalas"
+					},
+					"support": {
+						"title": "Help & feedback",
+						"description": "Report a bug, suggest a feature or ask a question"
 					}
 				},
 				"integrations": {
@@ -1603,6 +1607,22 @@
 					"rateDescription": "¿Te gusta Wavio? Una valoración en Google Play ayuda a que otras personas lo encuentren.",
 					"rateAction": "Valoración",
 					"currentVersionLabel": "Versión actual"
+				},
+				"supportSettings": {
+					"openIssueLabel": "Open an issue on GitHub",
+					"openIssueDescription": "Report a bug, request a feature or ask a question. The diagnostics report is copied first, ready to paste into a bug report.",
+					"openIssueAction": "Abrir",
+					"copyLabel": "Copy diagnostics report",
+					"copyDescription": "Your app version, device model and every setting, to paste into a bug report",
+					"copyAction": "Copy",
+					"previewLabel": "Preview the report",
+					"previewDescription": "See exactly what gets copied before you share it",
+					"previewShow": "Show",
+					"previewHide": "Hide",
+					"privacyNotice": "GitHub issues are public, so the report is anonymous: it never includes server addresses, usernames, passwords, tokens, server or library names, folder paths or anything about what you listen to. Those are left out or reduced to whether they are set.",
+					"copySuccess": "Diagnostics report copied to the clipboard",
+					"copySuccessOpening": "Diagnostics report copied. If you're reporting a bug, paste it into the Diagnostics report field.",
+					"copyError": "Couldn't build the diagnostics report"
 				},
 				"storageSettings": {
 					"title": "Almacenamiento",
