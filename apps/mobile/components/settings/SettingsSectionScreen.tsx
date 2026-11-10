@@ -11,6 +11,7 @@ import PlaybackAudioSection from "@/components/settings/sections/PlaybackAudioSe
 import PodcastsSection from "@/components/settings/sections/PodcastsSection";
 import SecuritySection from "@/components/settings/sections/SecuritySection";
 import StorageDataSection from "@/components/settings/sections/StorageDataSection";
+import SupportSection from "@/components/settings/sections/SupportSection";
 import UpdatesSection from "@/components/settings/sections/UpdatesSection";
 
 const SECTIONS: Record<string, React.ComponentType> = {
@@ -26,6 +27,7 @@ const SECTIONS: Record<string, React.ComponentType> = {
   backup: BackupRestoreSection,
   security: SecuritySection,
   updates: UpdatesSection,
+  support: SupportSection,
 };
 
 export default function SettingsSectionScreen() {

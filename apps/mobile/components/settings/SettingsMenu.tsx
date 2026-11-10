@@ -5,6 +5,7 @@ import CloudDownload from "lucide-react-native/icons/cloud-download";
 import Download from "lucide-react-native/icons/download";
 import HardDrive from "lucide-react-native/icons/hard-drive";
 import Library from "lucide-react-native/icons/library";
+import LifeBuoy from "lucide-react-native/icons/life-buoy";
 import Podcast from "lucide-react-native/icons/mic-signal";
 import Palette from "lucide-react-native/icons/palette";
 import Radio from "lucide-react-native/icons/radio";
@@ -49,6 +50,7 @@ const MENU_ENTRIES: {
   { key: "backup", icon: Archive },
   { key: "security", icon: ShieldCheck },
   { key: "updates", icon: RefreshCw },
+  { key: "support", icon: LifeBuoy },
 ];
 
 export default function SettingsMenu() {
