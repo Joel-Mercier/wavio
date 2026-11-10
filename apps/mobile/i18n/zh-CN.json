@@ -860,6 +860,10 @@
 					"updates": {
 						"title": "更新",
 						"description": "检查并安装应用更新"
+					},
+					"support": {
+						"title": "Help & feedback",
+						"description": "Report a bug, suggest a feature or ask a question"
 					}
 				},
 				"integrations": {
@@ -1554,6 +1558,22 @@
 					"rateDescription": "喜欢 Wavio 吗？在 Google Play 上给它评分，能帮助其他人发现这款应用",
 					"rateAction": "评分",
 					"currentVersionLabel": "当前版本"
+				},
+				"supportSettings": {
+					"openIssueLabel": "Open an issue on GitHub",
+					"openIssueDescription": "Report a bug, request a feature or ask a question. The diagnostics report is copied first, ready to paste into a bug report.",
+					"openIssueAction": "打开",
+					"copyLabel": "Copy diagnostics report",
+					"copyDescription": "Your app version, device model and every setting, to paste into a bug report",
+					"copyAction": "Copy",
+					"previewLabel": "Preview the report",
+					"previewDescription": "See exactly what gets copied before you share it",
+					"previewShow": "Show",
+					"previewHide": "Hide",
+					"privacyNotice": "GitHub issues are public, so the report is anonymous: it never includes server addresses, usernames, passwords, tokens, server or library names, folder paths or anything about what you listen to. Those are left out or reduced to whether they are set.",
+					"copySuccess": "Diagnostics report copied to the clipboard",
+					"copySuccessOpening": "Diagnostics report copied. If you're reporting a bug, paste it into the Diagnostics report field.",
+					"copyError": "Couldn't build the diagnostics report"
 				},
 				"storageSettings": {
 					"title": "存储空间",
