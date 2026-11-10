@@ -1909,7 +1909,7 @@
 					"cellularAudioQualityLabel": "Jakość dźwięku (komórkowa)",
 					"cellularAudioQualityDescription": "Przytrzymaj bitrate w komórce, aby zapisać dane. Dolna część tego i górna granica Wi-Fi jest używana.",
 					"streamingFormatLabel": "Format strumieniowania",
-					"streamingFormatDescription": "Poproś serwer o transkodowanie strumieni do tego formatu. Zachowaj oryginał dla doskonałego odtwarzania; wybierz format, jeśli niektóre pliki nie będą odtwarzać (np. ALAC).",
+					"streamingFormatDescription": "Ask the server to transcode streams to this format. Keep Original for bit-perfect playback; pick a format if some files won't play.",
 					"cellularStreamingFormatLabel": "Format strumieniowania (komórkowy)",
 					"cellularStreamingFormatDescription": "Transkoduj do innego formatu w komórce. Z takim samym jak Wi-Fi, oryginalny strumień jest ciągle pobierany przez limit przepływności komórkowej, przy użyciu formatu preferowanego przez Twój serwer.",
 					"streamingFormatOptions": {
