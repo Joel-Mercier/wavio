@@ -5,6 +5,7 @@ import React from "react";
 import { Platform } from "react-native";
 import { withUniwind } from "uniwind";
 import { withServerHeaders } from "@/services/serverHeaders";
+import { imageRecyclingKey } from "@/utils/imageRecyclingKey";
 
 const StyledExpoImage = withUniwind(ExpoImage);
 
@@ -31,19 +32,30 @@ const imageStyle = tva({
 // so every cover-less item would crash its screen (issue #208).
 type ImageProps = VariantProps<typeof imageStyle> &
   React.ComponentProps<typeof StyledExpoImage>;
+
 const Image = React.forwardRef<
   React.ComponentRef<typeof StyledExpoImage>,
   ImageProps & { className?: string }
 >(function Image({ size = "md", className, ...props }, ref) {
   if (!props.source) return null;
+  // Cover art from a server behind an authenticating proxy needs that
+  // server's custom headers, and every caller builds its source inline.
+  const source = withServerHeaders(props.source);
   return (
     <StyledExpoImage
       cachePolicy="memory-disk"
       role="img"
       {...props}
-      // Cover art from a server behind an authenticating proxy needs that
-      // server's custom headers, and every caller builds its source inline.
-      source={withServerHeaders(props.source)}
+      source={source}
+      // A recycled list cell otherwise keeps showing the previous item's cover
+      // until the new one decodes (issue #275). Views that move to another
+      // cover in place on purpose, like the player, pass `recyclingKey={null}`
+      // to hold the old frame instead of blanking.
+      recyclingKey={
+        props.recyclingKey === undefined
+          ? imageRecyclingKey(props.source)
+          : props.recyclingKey
+      }
       className={imageStyle({ size, class: className })}
       ref={ref}
       style={[

@@ -1,26 +1,26 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { AnimatedLegendList } from "@legendapp/list/reanimated";
-import { useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/icons/arrow-down";
-import ArrowLeft from "lucide-react-native/icons/arrow-left";
 import ArrowUp from "lucide-react-native/icons/arrow-up";
 import Search from "lucide-react-native/icons/search";
 import { useCallback, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import Animated, {
+import {
   Extrapolation,
   interpolate,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
 } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
+import {
+  DetailHero,
+  DetailStickyHeader,
+} from "@/components/DetailScreenHeader";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import PlayPauseButton from "@/components/PlayPauseButton";
-import ScreenHeaderGradient from "@/components/ScreenHeaderGradient";
 import ShuffleToggle from "@/components/ShuffleToggle";
 import SortOptionsSheet, {
   useSortFieldLabel,
@@ -28,9 +28,7 @@ import SortOptionsSheet, {
 import TrackListItem from "@/components/tracks/TrackListItem";
 import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
-import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
-import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useStarred2 } from "@/hooks/backend/useLists";
@@ -48,11 +46,8 @@ import useRecentPlays from "@/stores/recentPlays";
 import { FAVORITES_QUEUE_SOURCE_ID } from "@/utils/activeRecentPlay";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
-import { goBackOrHome } from "@/utils/navigation";
 import { sortItems } from "@/utils/sort";
 import { TRACK_SORT_SPECS } from "@/utils/trackSort";
-
-const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 const SKELETON_DATA = loadingData(16);
 const EMPTY_DATA: Child[] = [];
@@ -63,8 +58,6 @@ export default function FavoritesScreen() {
     "--color-black",
   ]) as string[];
   const { t } = useTranslation();
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
   const musicFolderIds = useCurrentMusicFolderIds();
@@ -167,31 +160,10 @@ export default function FavoritesScreen() {
 
   return (
     <Box className="h-full">
-      <AnimatedBox
-        className="w-full z-10 absolute top-0 left-0 right-0"
-        style={[headerStyle]}
-      >
-        <ScreenHeaderGradient opaque>
-          <HStack
-            className="items-center justify-between pb-4 px-6"
-            style={{ paddingTop: insets.top + 16 }}
-          >
-            <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
-              <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                <ArrowLeft size={24} color={white} />
-              </Box>
-            </FadeOutScaleDown>
-            <Heading
-              numberOfLines={1}
-              className="text-white font-bold text-center truncate flex-1"
-              size="lg"
-            >
-              {t("app.favorites.title")}
-            </Heading>
-            <Box className="w-10" />
-          </HStack>
-        </ScreenHeaderGradient>
-      </AnimatedBox>
+      <DetailStickyHeader
+        title={t("app.favorites.title")}
+        style={headerStyle}
+      />
       <AnimatedLegendList
         recycleItems
         onScroll={scrollHandler}
@@ -200,24 +172,7 @@ export default function FavoritesScreen() {
         renderItem={renderRow}
         ListHeaderComponent={
           <>
-            <ScreenHeaderGradient height={192}>
-              <Box className="flex-1" style={{ paddingTop: insets.top }}>
-                <VStack className="mt-6 px-6 items-start justify-between h-full -mb-12">
-                  <Pressable onPress={() => goBackOrHome(router)}>
-                    <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                      <ArrowLeft size={24} color={white} />
-                    </Box>
-                  </Pressable>
-                  <Heading
-                    numberOfLines={2}
-                    className="text-white mb-12 font-bold"
-                    size="xl"
-                  >
-                    {t("app.favorites.favorite_tracks")}
-                  </Heading>
-                </VStack>
-              </Box>
-            </ScreenHeaderGradient>
+            <DetailHero title={t("app.favorites.favorite_tracks")} />
             <VStack className="px-6">
               <HStack className="items-center gap-x-4 mb-4">
                 <Text className="text-primary-100" numberOfLines={1}>

@@ -38,4 +38,30 @@ describe("ui Image", () => {
     const root = render({ source: { uri: "file:///a.jpg" }, alt: "cover" });
     expect(root.root.findByType(ExpoImage).props.alt).toBe("cover");
   });
+
+  // Issue #275: a recycled list cell kept the previous item's cover.
+  test("derives a recycling key from the source", () => {
+    const root = render({ source: { uri: "file:///a.jpg" }, alt: "cover" });
+    expect(root.root.findByType(ExpoImage).props.recyclingKey).toBe(
+      "file:///a.jpg",
+    );
+  });
+
+  test("keeps an explicit null recycling key", () => {
+    const root = render({
+      source: { uri: "file:///a.jpg" },
+      recyclingKey: null,
+      alt: "cover",
+    });
+    expect(root.root.findByType(ExpoImage).props.recyclingKey).toBeNull();
+  });
+
+  test("keeps an explicit recycling key", () => {
+    const root = render({
+      source: { uri: "file:///a.jpg" },
+      recyclingKey: "album-1",
+      alt: "cover",
+    });
+    expect(root.root.findByType(ExpoImage).props.recyclingKey).toBe("album-1");
+  });
 });

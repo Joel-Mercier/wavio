@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { Image } from "@/components/ui/image";
+import { sourceUri } from "@/utils/imageRecyclingKey";
 
 type ImageProps = ComponentProps<typeof Image>;
 
@@ -14,15 +15,6 @@ interface ImageWithFallbackProps extends ImageProps {
   // Rendered instead of the image when there's no source URI or the image
   // fails to load (e.g. offline with uncached art, or missing cover art).
   fallback: ReactNode;
-}
-
-function getUri(source: ImageProps["source"]): string | undefined {
-  if (!source) return undefined;
-  if (typeof source === "string") return source || undefined;
-  if (typeof source === "object" && !Array.isArray(source) && "uri" in source) {
-    return (source as { uri?: string }).uri || undefined;
-  }
-  return undefined;
 }
 
 // Wraps the shared expo-image based Image with an onError fallback. Unlike a
@@ -33,7 +25,7 @@ const ImageWithFallback = forwardRef<
   ComponentRef<typeof Image>,
   ImageWithFallbackProps
 >(function ImageWithFallback({ fallback, onError, ...props }, ref) {
-  const uri = getUri(props.source);
+  const uri = sourceUri(props.source);
   const [errored, setErrored] = useState(false);
 
   // Reset on source change so recycled list rows don't keep a previous

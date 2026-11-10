@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/icons/arrow-left";
 import ListMusic from "lucide-react-native/icons/list-music";
 import { useTranslation } from "react-i18next";
-import Animated, {
+import {
   Extrapolation,
   interpolate,
   useAnimatedScrollHandler,
@@ -12,6 +12,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
+import { DetailStickyHeader } from "@/components/DetailScreenHeader";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -35,8 +36,6 @@ import type { Playlist } from "@/services/openSubsonic/types";
 import useAuth from "@/stores/auth";
 import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { goBackOrHome } from "@/utils/navigation";
-
-const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 function PlaylistRow({ playlist }: { playlist: Playlist }) {
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
@@ -142,31 +141,7 @@ export default function ProfileScreen() {
 
   return (
     <Box className="h-full">
-      <AnimatedBox
-        className="w-full z-10 absolute top-0 left-0 right-0"
-        style={[headerStyle]}
-      >
-        <ScreenHeaderGradient opaque>
-          <HStack
-            className="items-center justify-between pb-4 px-6"
-            style={{ paddingTop: insets.top + 16 }}
-          >
-            <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
-              <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                <ArrowLeft size={24} color={white} />
-              </Box>
-            </FadeOutScaleDown>
-            <Heading
-              numberOfLines={1}
-              className="text-white font-bold text-center truncate flex-1"
-              size="lg"
-            >
-              {displayName}
-            </Heading>
-            <Box className="w-10" />
-          </HStack>
-        </ScreenHeaderGradient>
-      </AnimatedBox>
+      <DetailStickyHeader title={displayName} style={headerStyle} />
       <AnimatedLegendList
         recycleItems
         onScroll={scrollHandler}

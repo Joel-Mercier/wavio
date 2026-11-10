@@ -25,6 +25,7 @@ import { Uniwind } from "uniwind";
 import AlbumListItem from "@/components/albums/AlbumListItem";
 import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
+import { DetailStickyHeader } from "@/components/DetailScreenHeader";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -45,8 +46,6 @@ import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import { COVER_GRID, gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
-
-const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 export default function GenreScreen() {
   const { t } = useTranslation();
@@ -111,42 +110,24 @@ export default function GenreScreen() {
   ) : null;
   return (
     <Box className="h-full">
-      <AnimatedBox
-        className="w-full z-10 absolute top-0 left-0 right-0"
-        style={[headerStyle]}
-      >
-        <ScreenHeaderGradient opaque>
-          <HStack
-            className="items-center justify-between pb-4 px-6"
-            style={{ paddingTop: insets.top + 16 }}
-          >
-            <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
+      <DetailStickyHeader
+        title={id}
+        style={headerStyle}
+        right={
+          <HStack className="items-center gap-x-3">
+            <FadeOutScaleDown testID="album-layout-toggle" onPress={toggle}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                <ArrowLeft size={24} color={white} />
+                {layout === "list" ? (
+                  <LayoutGrid size={20} color={white} />
+                ) : (
+                  <List size={20} color={white} />
+                )}
               </Box>
             </FadeOutScaleDown>
-            <Heading
-              numberOfLines={1}
-              className="text-white font-bold text-center truncate flex-1"
-              size="lg"
-            >
-              {id}
-            </Heading>
-            <HStack className="items-center gap-x-3">
-              <FadeOutScaleDown testID="album-layout-toggle" onPress={toggle}>
-                <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                  {layout === "list" ? (
-                    <LayoutGrid size={20} color={white} />
-                  ) : (
-                    <List size={20} color={white} />
-                  )}
-                </Box>
-              </FadeOutScaleDown>
-              {optionsButton}
-            </HStack>
+            {optionsButton}
           </HStack>
-        </ScreenHeaderGradient>
-      </AnimatedBox>
+        }
+      />
       <AnimatedLegendList
         recycleItems
         key={`genre-albums-${layout}-${gridColumns}`}

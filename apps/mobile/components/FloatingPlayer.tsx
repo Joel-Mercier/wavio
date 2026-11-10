@@ -419,6 +419,7 @@ export default function FloatingPlayer() {
             <HStack className="items-center gap-x-2">
               <ImageWithFallback
                 source={artwork ? { uri: artwork } : undefined}
+                recyclingKey={null}
                 className="w-10 h-10 rounded aspect-square"
                 alt="Track cover"
                 contentFit={playingTrack.isRadio ? "contain" : "cover"}
@@ -553,6 +554,7 @@ export default function FloatingPlayer() {
                 <Box style={{ zIndex: 2 }} className="rounded-md">
                   <ImageWithFallback
                     source={artwork ? { uri: artwork } : undefined}
+                    recyclingKey={null}
                     className="w-12 h-12 rounded-md aspect-square"
                     alt="Track cover"
                     contentFit={playingTrack.isRadio ? "contain" : "cover"}

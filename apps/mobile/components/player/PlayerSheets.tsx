@@ -62,6 +62,7 @@ import {
 import { usePlaybackProgress } from "@/hooks/player";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import { useTrackArtwork } from "@/hooks/useTrackArtwork";
 import type { ShareLinkOptions } from "@/services/backend/sharing";
 import { isTlsTrustFailure } from "@/services/errorReporting";
 import { getCurrentTime } from "@/services/player";
@@ -127,6 +128,7 @@ export default function PlayerSheets({
   const { t } = useTranslation();
   const capabilities = useCapabilities();
   const isOnline = useIsOnline();
+  const artwork = useTrackArtwork(playingTrack);
   const audioMuseSimilarAvailable = useAudioMuse(selectSimilarTracksAvailable);
   const audioMuseSongPathAvailable = useAudioMuse(selectSongPathAvailable);
   const lyricsSource = useApp((s) => s.lyricsSource);
@@ -542,11 +544,8 @@ export default function PlayerSheets({
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
               <ImageWithFallback
-                source={
-                  playingTrack?.artwork
-                    ? { uri: playingTrack.artwork }
-                    : undefined
-                }
+                source={artwork ? { uri: artwork } : undefined}
+                recyclingKey={null}
                 className="w-16 h-16 rounded-md aspect-square"
                 alt="Track cover"
                 contentFit={isRadio ? "contain" : "cover"}

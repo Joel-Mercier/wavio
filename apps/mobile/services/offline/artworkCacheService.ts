@@ -25,7 +25,7 @@ import { useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import useOffline from "@/stores/offline";
 import { artworkUrl } from "@/utils/artwork";
-import { artworkCacheKey } from "@/utils/artworkCacheKey";
+import { artworkCacheFileName, artworkCacheKey } from "@/utils/artworkCacheKey";
 
 const ARTWORK_SIZE = 600;
 // Covers are small next to audio files, so they can run wider than the track
@@ -384,10 +384,8 @@ export class ArtworkCacheService {
       if (!serverId || !username) return true;
       const dir = this.dir();
       dir.create({ idempotent: true, intermediates: true });
-      // Timestamped filename: a refreshed cover must get a NEW file:// URI,
-      // else expo-image's URI-keyed cache keeps showing the old bytes.
       const key = artworkCacheKey(coverArt);
-      const fileName = `${key.replace(/[^a-zA-Z0-9._-]/g, "_")}_${Date.now()}.jpg`;
+      const fileName = artworkCacheFileName(key, Date.now());
       const previous = useOffline.getState().artworkCache[key];
       const source = artworkUrl(coverArt, ARTWORK_SIZE);
       const result = await File.downloadFileAsync(

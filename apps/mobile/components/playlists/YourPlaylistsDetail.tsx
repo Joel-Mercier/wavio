@@ -1,19 +1,19 @@
 import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useQueryClient } from "@tanstack/react-query";
-import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
-import ArrowLeft from "lucide-react-native/icons/arrow-left";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import Animated, {
+import {
   Extrapolation,
   interpolate,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
 } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
+import {
+  DetailHero,
+  DetailStickyHeader,
+} from "@/components/DetailScreenHeader";
 import { Box } from "@/components/ui/box";
 import { usePlaylists } from "@/hooks/backend/usePlaylists";
 import { useIsPlaying } from "@/hooks/player";
@@ -26,34 +26,23 @@ import useQueue, { MAX_QUEUE_TRACKS, type QueueSource } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
 import { mapWithConcurrency } from "@/utils/mapWithConcurrency";
-import { goBackOrHome } from "@/utils/navigation";
 import { shuffleWithSeed } from "@/utils/shuffle";
 import EmptyDisplay from "../EmptyDisplay";
 import ErrorDisplay from "../ErrorDisplay";
-import FadeOutScaleDown from "../FadeOutScaleDown";
 import PlayPauseButton from "../PlayPauseButton";
 import ShuffleToggle from "../ShuffleToggle";
-import { Heading } from "../ui/heading";
 import { HStack } from "../ui/hstack";
-import { Pressable } from "../ui/pressable";
 import { VStack } from "../ui/vstack";
 import PlaylistListItem from "./PlaylistListItem";
 import PlaylistListItemSkeleton from "./PlaylistListItemSkeleton";
 
-const AnimatedBox = Animated.createAnimatedComponent(Box);
-
 const SOURCE_ID = "home-playlists";
 
 export default function YourPlaylistsDetail() {
-  const [emerald500, white] = Uniwind.getCSSVariable([
-    "--color-emerald-500",
-    "--color-white",
-  ]) as string[];
+  const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const { t } = useTranslation();
   const { showErrorToast } = useSettingsToast();
   const screenBottomPadding = useScreenBottomPadding();
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [seed] = useState(() => Date.now());
   const offsetY = useSharedValue(0);
@@ -138,31 +127,7 @@ export default function YourPlaylistsDetail() {
 
   return (
     <Box className="h-full">
-      <AnimatedBox
-        className="w-full z-10 absolute top-0 left-0 right-0"
-        style={[headerStyle]}
-      >
-        <LinearGradient colors={["#000", emerald500]} locations={[0, 0.7]}>
-          <HStack
-            className="items-center justify-between pb-4 px-6 bg-black/25"
-            style={{ paddingTop: insets.top + 16 }}
-          >
-            <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
-              <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                <ArrowLeft size={24} color={white} />
-              </Box>
-            </FadeOutScaleDown>
-            <Heading
-              numberOfLines={1}
-              className="text-white font-bold flex-1 mx-4 text-center"
-              size="lg"
-            >
-              {heading}
-            </Heading>
-            <Box className="w-10" />
-          </HStack>
-        </LinearGradient>
-      </AnimatedBox>
+      <DetailStickyHeader title={heading} style={headerStyle} />
       <AnimatedLegendList
         recycleItems
         onScroll={scrollHandler}
@@ -182,39 +147,7 @@ export default function YourPlaylistsDetail() {
         }
         ListHeaderComponent={
           <>
-            <LinearGradient
-              colors={[emerald500, "#000000"]}
-              className="h-48"
-              style={{ height: 192 }}
-            >
-              <Box
-                className="bg-black/25 flex-1"
-                style={{ paddingTop: insets.top }}
-              >
-                <VStack className="mt-6 px-6 items-start justify-between h-full -mb-12">
-                  <Pressable onPress={() => goBackOrHome(router)}>
-                    {({ pressed }) => (
-                      <Animated.View
-                        className="transition duration-100 w-10 h-10 rounded-full bg-black/40 items-center justify-center"
-                        style={{
-                          transform: [{ scale: pressed ? 0.95 : 1 }],
-                          opacity: pressed ? 0.5 : 1,
-                        }}
-                      >
-                        <ArrowLeft size={24} color={white} />
-                      </Animated.View>
-                    )}
-                  </Pressable>
-                  <Heading
-                    numberOfLines={2}
-                    className="text-white mb-12"
-                    size="xl"
-                  >
-                    {heading}
-                  </Heading>
-                </VStack>
-              </Box>
-            </LinearGradient>
+            <DetailHero title={heading} />
             <VStack className="px-6">
               <HStack className="items-center justify-end mb-4">
                 <HStack className="items-center gap-x-4">
