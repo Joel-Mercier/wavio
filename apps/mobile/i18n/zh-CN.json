@@ -1756,7 +1756,7 @@
 					"cellularAudioQualityLabel": "音质（移动网络）",
 					"cellularAudioQualityDescription": "限制移动网络下的比特率以节省流量。实际使用 Wi-Fi 和移动网络两者中的较低值。",
 					"streamingFormatLabel": "流媒体格式",
-					"streamingFormatDescription": "请求服务器将音频流转码为此格式。选择“原始”以获得无损原音；如果部分文件（如 ALAC）无法播放，可选择其他格式。",
+					"streamingFormatDescription": "Ask the server to transcode streams to this format. Keep Original for bit-perfect playback; pick a format if some files won't play.",
 					"cellularStreamingFormatLabel": "流媒体格式（移动网络）",
 					"cellularStreamingFormatDescription": "在使用蜂窝网络时转码为其他格式。如果选择“与 Wi-Fi 相同”，原始流仍会根据蜂窝网络的比特率上限进行降采样，并采用服务器首选的格式。",
 					"streamingFormatOptions": {
