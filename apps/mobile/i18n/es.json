@@ -1807,7 +1807,7 @@
 					"cellularAudioQualityLabel": "Calidad de audio (móvil)",
 					"cellularAudioQualityDescription": "Limita la velocidad de transmisión cuando te conectes a la red móvil para ahorrar datos. Se aplicará el límite más bajo entre este y el de la red Wi-Fi.",
 					"streamingFormatLabel": "Formato de streaming",
-					"streamingFormatDescription": "Pide al servidor que transcodifique las transmisiones a este formato. Selecciona «Original» para una reproducción fiel al bit; elige un formato si algunos archivos no se reproducen (por ejemplo, ALAC).",
+					"streamingFormatDescription": "Ask the server to transcode streams to this format. Keep Original for bit-perfect playback; pick a format if some files won't play.",
 					"cellularStreamingFormatLabel": "Formato de streaming (móvil)",
 					"cellularStreamingFormatDescription": "Transcodifica a un formato diferente cuando te conectes a la red móvil. Con la opción «Igual que en Wi-Fi», la transmisión original se reduce a la velocidad de transmisión máxima permitida por la red móvil, utilizando el formato que prefiera tu servidor.",
 					"streamingFormatOptions": {
