@@ -1720,7 +1720,17 @@
 					"privacyNotice": "GitHub проблемы являются открытыми, поэтому отчет является анонимным: он никогда не включает адреса серверов, имена пользователей, пароли, токены, имена серверов или библиотек, пути к папкам или что-нибудь о том, что вы слушаете. Все они оставлены или сокращены до того, как они будут установлены.",
 					"copySuccess": "Отчёт о диагностике скопирован в буфер обмена",
 					"copySuccessOpening": "Отчёт о диагностике скопирован. Если вы сообщаете об ошибке, вставьте его в поле отчета о диагностике.",
-					"copyError": "Не удалось создать отчет диагностики"
+					"copyError": "Не удалось создать отчет диагностики",
+					"castingLogLabel": "Record a casting log",
+					"castingLogDescription": "Temporary, for debugging speakers and TVs (UPnP/DLNA, Sonos). Start it, reproduce the problem, then share the log. It keeps recording through crashes and restarts until you stop it.",
+					"castingLogStart": "Начало",
+					"castingLogStop": "Stop",
+					"castingLogStarted": "Recording the casting log. Reproduce the problem, then come back to share it.",
+					"castingLogStopped": "Casting log stopped. You can share it now.",
+					"castingLogShareLabel": "Share the casting log",
+					"castingLogShareDescription": "Sends the log with the diagnostics report attached. It has no passwords or tokens, but it does include your server's address and your speakers' network addresses, so send it privately rather than posting it publicly.",
+					"castingLogShareAction": "Поделиться",
+					"castingLogEmpty": "Nothing recorded yet. Start the casting log and reproduce the problem first."
 				},
 				"storageSettings": {
 					"title": "Хранилище",
