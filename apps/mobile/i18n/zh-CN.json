@@ -1573,7 +1573,17 @@
 					"privacyNotice": "GitHub 问题是公开的，所以报告是匿名的：它绝不包括服务器地址、用户名， 密码、令牌、服务器或库名、文件夹路径或任何关于您聆听的内容。 它们被排除在外，或被排除在外，或被排除在是否确定的范围之外。",
 					"copySuccess": "诊断报告已复制到剪贴板",
 					"copySuccessOpening": "诊断报告已复制。如果您报告了一个bug，请将其粘贴到诊断报告字段。",
-					"copyError": "无法生成诊断报告"
+					"copyError": "无法生成诊断报告",
+					"castingLogLabel": "Record a casting log",
+					"castingLogDescription": "Temporary, for debugging speakers and TVs (UPnP/DLNA, Sonos). Start it, reproduce the problem, then share the log. It keeps recording through crashes and restarts until you stop it.",
+					"castingLogStart": "开始",
+					"castingLogStop": "Stop",
+					"castingLogStarted": "Recording the casting log. Reproduce the problem, then come back to share it.",
+					"castingLogStopped": "Casting log stopped. You can share it now.",
+					"castingLogShareLabel": "Share the casting log",
+					"castingLogShareDescription": "Sends the log with the diagnostics report attached. It has no passwords or tokens, but it does include your server's address and your speakers' network addresses, so send it privately rather than posting it publicly.",
+					"castingLogShareAction": "分享",
+					"castingLogEmpty": "Nothing recorded yet. Start the casting log and reproduce the problem first."
 				},
 				"storageSettings": {
 					"title": "存储空间",
