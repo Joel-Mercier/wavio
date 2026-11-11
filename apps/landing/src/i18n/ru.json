@@ -31,10 +31,10 @@
 		"githubRelease": "Скачайте на GitHub"
 	},
 	"video": {
-		"watch": "Watch the trailer",
-		"title": "Wavio trailer",
-		"play": "Resume",
-		"replay": "Replay",
+		"watch": "Смотреть трейлер",
+		"title": "Прицеп Вавио",
+		"play": "Возобновить",
+		"replay": "Повтор",
 		"close": "Закрыть"
 	},
 	"versions": {
