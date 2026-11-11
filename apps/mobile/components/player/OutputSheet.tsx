@@ -42,13 +42,17 @@ import { VStack } from "@/components/ui/vstack";
 import { useCanCast } from "@/hooks/player/useCanCast";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { isUpnpAvailable, type UpnpDevice } from "@/modules/upnp-cast";
-import { castDisconnect, castSetVolume } from "@/services/cast";
+import {
+  castDisconnect,
+  castScrubVolume,
+  castSetVolume,
+} from "@/services/cast";
 import {
   activate as activateJukebox,
   jukeboxCommitGain,
   jukeboxReconcileFromServer,
   jukeboxRefreshStatus,
-  jukeboxSetGain,
+  jukeboxScrubGain,
   playsOnJukebox,
   takeOverLocally,
 } from "@/services/jukebox";
@@ -66,9 +70,9 @@ import {
   upnpDisconnect,
   upnpRefreshGroup,
   upnpRemoveFromGroup,
+  upnpScrubDeviceVolume,
+  upnpScrubVolume,
   upnpSearch,
-  upnpSetDeviceVolume,
-  upnpSetVolume,
   upnpStartDiscovery,
   upnpStopDiscovery,
 } from "@/services/upnp";
@@ -490,7 +494,7 @@ export default function OutputSheet() {
                 </Text>
                 <GestureSlider
                   value={jukeboxGain}
-                  onScrub={jukeboxSetGain}
+                  onScrub={jukeboxScrubGain}
                   onComplete={jukeboxCommitGain}
                 />
                 {jukeboxStatus && (
@@ -516,7 +520,7 @@ export default function OutputSheet() {
                 </Text>
                 <GestureSlider
                   value={upnpVolume}
-                  onScrub={upnpSetVolume}
+                  onScrub={upnpScrubVolume}
                   onComplete={upnpCommitVolume}
                 />
                 {upnpGrouped &&
@@ -533,7 +537,7 @@ export default function OutputSheet() {
                           <GestureSlider
                             value={member.volume}
                             onScrub={(volume) =>
-                              upnpSetDeviceVolume(member.id, volume)
+                              upnpScrubDeviceVolume(member.id, volume)
                             }
                             onComplete={(volume) =>
                               upnpCommitDeviceVolume(member.id, volume)
@@ -552,7 +556,7 @@ export default function OutputSheet() {
                 </Text>
                 <GestureSlider
                   value={castVolume}
-                  onScrub={castSetVolume}
+                  onScrub={castScrubVolume}
                   onComplete={castSetVolume}
                 />
               </VStack>

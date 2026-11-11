@@ -16,6 +16,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.Closeable
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
@@ -70,6 +71,10 @@ class UpnpCastModule : Module() {
 
     Events("device", "state", "lost")
 
+    OnCreate {
+      appContext.reactContext?.let { UpnpTrace.init(it) }
+    }
+
     OnDestroy {
       pollJob?.cancel()
       listener?.close()
@@ -97,7 +102,9 @@ class UpnpCastModule : Module() {
         val found = ConcurrentHashMap<String, Map<String, Any>>()
         // Answers come in from one coroutine per network at once.
         val fetches = ConcurrentLinkedQueue<Job>()
+        UpnpTrace.record("SSDP", "search for ${timeoutMs.toLong()}ms")
         Ssdp.discover(context, timeoutMs.toLong()) { reply ->
+          UpnpTrace.record("SSDP", "answer from ${reply.address}: ${reply.location}")
           // Concurrently: each description is a request to a different device, and
           // one slow to answer should not decide how long the whole list takes.
           fetches += launch {
@@ -190,7 +197,9 @@ class UpnpCastModule : Module() {
         return@AsyncFunction
       }
       scope.launch {
+        UpnpTrace.record("SESSION", "connect to ${target.description.displayName} ($deviceId at ${target.location}, sonos=${target.description.isSonos})")
         if (target.state() == null) {
+          UpnpTrace.record("SESSION", "connect failed: no answer to the first poll")
           promise.resolve(false)
           return@launch
         }
@@ -200,6 +209,7 @@ class UpnpCastModule : Module() {
         if (target.description.isSonos) target.followCoordinator()
         session = target
         startPolling()
+        UpnpTrace.record("SESSION", "connected")
         promise.resolve(true)
       }
     }
@@ -219,6 +229,11 @@ class UpnpCastModule : Module() {
         return@AsyncFunction
       }
       current.latestRequested = maxOf(current.latestRequested, generation)
+      UpnpTrace.record(
+        "LOAD",
+        "#${generation.toInt()} ${track.mime} autoplay=$autoplay start=${startPositionMs.toLong()}ms " +
+          "duration=${track.durationSec}s artwork=${track.artworkUrl != null}\n  $url"
+      )
       scope.launch {
         val result = current.load(
           Track(
@@ -233,6 +248,10 @@ class UpnpCastModule : Module() {
           autoplay,
           startPositionMs.toLong(),
           generation
+        )
+        UpnpTrace.record(
+          "LOAD",
+          "#${generation.toInt()} -> ok=${result.ok} reason=${result.reason} holding=${result.trackUri}"
         )
         promise.resolve(loadResultMap(result))
       }
@@ -324,6 +343,7 @@ class UpnpCastModule : Module() {
           ?.groupOf(current.deviceId)?.coordinator
         val room = sonosRoom(deviceId)
         val ok = coordinator != null && room != null && room.joinGroup(coordinator)
+        UpnpTrace.record("GROUP", "add $deviceId to $coordinator's group: ok=$ok (room found=${room != null})")
         afterGroupChange(current)
         promise.resolve(ok)
       }
@@ -341,6 +361,7 @@ class UpnpCastModule : Module() {
       }
       scope.launch {
         val ok = sonosRoom(deviceId)?.leaveGroup() ?: false
+        UpnpTrace.record("GROUP", "remove $deviceId: ok=$ok")
         afterGroupChange(current)
         promise.resolve(ok)
       }
@@ -360,9 +381,42 @@ class UpnpCastModule : Module() {
       }
     }
 
+    // TEMPORARY (issue #220): the casting log, see UpnpTrace.
+    Function("isTracing") { UpnpTrace.enabled }
+
+    Function("hasTrace") { UpnpTrace.hasLog() }
+
+    Function("trace") { message: String -> UpnpTrace.record("JS", message) }
+
+    Function("setTracing") { enabled: Boolean ->
+      appContext.reactContext?.let { UpnpTrace.setEnabled(it, enabled) }
+      UpnpTrace.enabled
+    }
+
+    Function("clearTrace") { UpnpTrace.clear() }
+
+    AsyncFunction("shareTrace") { header: String, promise: Promise ->
+      val activity = appContext.currentActivity
+      if (activity == null) {
+        promise.resolve(false)
+        return@AsyncFunction
+      }
+      scope.launch {
+        val shared = runCatching {
+          val intent = UpnpTrace.shareIntent(activity, header) ?: return@runCatching false
+          withContext(Dispatchers.Main) { activity.startActivity(intent) }
+          true
+        }.onFailure {
+          UpnpTrace.record("TRACE", "share failed: ${it.javaClass.simpleName}: ${it.message}")
+        }.getOrDefault(false)
+        promise.resolve(shared)
+      }
+    }
+
     AsyncFunction("disconnect") { promise: Promise ->
       val current = session
       val epoch = sessionEpoch
+      UpnpTrace.record("SESSION", "disconnect from ${current?.deviceId}")
       pollJob?.cancel()
       pollJob = null
       session = null
@@ -387,7 +441,15 @@ class UpnpCastModule : Module() {
       val id = description.udn ?: address
       // The hidden half of a stereo pair answers a search like any speaker, under
       // the same room name; offered, it is a duplicate row that plays half the music.
-      if (SonosTopology.read(description)?.member(id)?.invisible == true) return null
+      if (SonosTopology.read(description)?.member(id)?.invisible == true) {
+        UpnpTrace.record("DEVICE", "hidden (invisible Sonos member): $id at $location")
+        return null
+      }
+      UpnpTrace.record(
+        "DEVICE",
+        "offered: ${description.displayName} ($id at $location, model=${description.modelName}, " +
+          "manufacturer=${description.manufacturer}, sonos=${description.isSonos})"
+      )
       known[id] = RendererSession(id, address, location, description)
       return deviceMap(id, address, location, description)
     } finally {
@@ -431,6 +493,7 @@ class UpnpCastModule : Module() {
         val state = current.state()
         val now = System.currentTimeMillis()
         if (state?.regrouped == true) {
+          UpnpTrace.record("SESSION", "lost: ${current.deviceId} was regrouped from outside")
           // Taken over from the Sonos app. Dropped before the app hears of it, so
           // the disconnect that follows does not stop another group's music.
           session = null
@@ -448,6 +511,7 @@ class UpnpCastModule : Module() {
         } else {
           if (silentSince == 0L) silentSince = now
           if (now - silentSince >= LOST_AFTER_MS) {
+            UpnpTrace.record("SESSION", "lost: ${current.deviceId} silent for ${now - silentSince}ms")
             sendEvent("lost", mapOf("deviceId" to current.deviceId))
             break
           }

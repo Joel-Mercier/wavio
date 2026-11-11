@@ -563,8 +563,17 @@ function clearGainThrottle() {
 }
 
 export function jukeboxSetGain(gain: number) {
+  useJukebox.getState().setGain(Math.max(0, Math.min(1, gain)));
+  jukeboxScrubGain(gain);
+}
+
+/**
+ * Mid-drag: the server only, throttled. Writing the store on every frame
+ * re-renders the output sheet under the gesture, which React aborts as an
+ * update loop.
+ */
+export function jukeboxScrubGain(gain: number) {
   const clamped = Math.max(0, Math.min(1, gain));
-  useJukebox.getState().setGain(clamped);
   pendingGain = clamped;
   const elapsed = Date.now() - lastGainSentAt;
   if (elapsed >= GAIN_SEND_INTERVAL_MS) {

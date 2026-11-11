@@ -31,6 +31,7 @@ import {
   pause as pauseLocal,
   takeOverFromRemote,
 } from "@/services/player";
+import { upnpTrace } from "@/services/upnpTrace";
 import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
 import useJukebox from "@/stores/jukebox";
 import useQueue, { type QueueTrack } from "@/stores/queue";
@@ -127,8 +128,23 @@ function resetPlaybackState(positionSec: number, duration: number) {
 let stateSubscription: { remove: () => void } | undefined;
 let lostSubscription: { remove: () => void } | undefined;
 
+let lastTracedState = "";
+
+function traceState(state: UpnpState) {
+  const key = `${state.playbackState} ${state.transportStatus ?? ""} ${state.trackUri ?? ""} gen=${state.generation ?? 0}`;
+  if (key === lastTracedState) return;
+  lastTracedState = key;
+  upnpTrace(
+    () =>
+      `state ${state.playbackState} status=${state.transportStatus} pos=${state.positionMs}/${state.durationMs}ms ` +
+      `gen=${state.generation} (current ${currentGeneration}) pending=${pendingCommands} ` +
+      `loading=${loading} wasPlaying=${wasPlaying} ours=${!state.trackUri || !loadedTrackUri || sameStreamUri(state.trackUri, loadedTrackUri)}`,
+  );
+}
+
 function onNativeState(state: UpnpState) {
   if (!isUpnpConnected()) return;
+  traceState(state);
   if ((state.generation ?? 0) !== currentGeneration) return;
   if (pendingCommands > 0) return;
   const position = (state.positionMs ?? 0) / 1000;
@@ -273,6 +289,13 @@ async function loadOnRenderer(
     if (!isUpnpConnected()) return false;
   }
   const url = castContentUrl(track);
+  upnpTrace(
+    () =>
+      `load track ${track.id} suffix=${track.suffix} bitRate=${track.bitRate} ` +
+      `radio=${!!track.isRadio} source=${track.source} duration=${track.duration} ` +
+      `autoplay=${autoplay} start=${startSeconds}s automatic=${!!options.automatic} ` +
+      `url=${url ? url.split("?")[0] : "none"}`,
+  );
   if (!url || url.startsWith("file://")) {
     handleRemoteLoadFailure({
       automatic: options.automatic ?? false,
@@ -306,6 +329,9 @@ async function loadOnRenderer(
     );
     // A newer load has been asked for meanwhile; whatever this one did on the
     // renderer, the other is in charge of the story from here.
+    upnpTrace(
+      `load #${generation} result ok=${result.ok} reason=${result.reason} holding=${result.trackUri}`,
+    );
     if (generation !== currentGeneration || !isUpnpConnected()) return false;
     if (!result.ok) {
       if (result.reason === "superseded") return false;
@@ -338,6 +364,7 @@ async function loadOnRenderer(
     notifyChange();
     return true;
   } catch (error) {
+    upnpTrace(`load #${generation} threw: ${String(error)}`);
     if (generation !== currentGeneration) return false;
     loading = false;
     wasPlaying = false;
@@ -482,6 +509,9 @@ async function probeKnownRenderers(): Promise<void> {
  */
 export async function upnpConnect(device: UpnpDevice): Promise<boolean> {
   if (!Native) return false;
+  upnpTrace(
+    `connect to ${device.name} (${device.id}, sonos=${!!device.isSonos}) on ${getConnectionType()}`,
+  );
   const position = getLocalTime();
   const wasLocallyPlaying = isLocalPlaying();
   pauseLocal();
@@ -492,6 +522,7 @@ export async function upnpConnect(device: UpnpDevice): Promise<boolean> {
   } catch (error) {
     reportError(error, { area: "player", endpoint: "upnp.connect" });
   }
+  upnpTrace(`connect result ${connected}`);
   if (!connected) {
     // It answered a search or a probe and then nothing since: off, most likely,
     // and a row that fails on every tap is worse than none until it shows again.
@@ -590,6 +621,7 @@ function detach() {
  */
 export async function upnpDisconnect(): Promise<void> {
   if (!isUpnpConnected()) return;
+  upnpTrace("disconnect (back to this device)");
   const position = interpolatedPosition();
   const shouldPlay = wasPlaying;
 
@@ -633,6 +665,7 @@ registerLogoutHandler(() => {
 // on it. Playback comes back here, paused: it may well still be playing over
 // there, and two outputs at once is the one thing worse than silence.
 function onRendererLost() {
+  upnpTrace(`lost event (connected=${isUpnpConnected()})`);
   if (!isUpnpConnected()) return;
   const name = useUpnpBase.getState().deviceName ?? "";
   // The last position the renderer confirmed, not the clock that kept running
@@ -937,9 +970,74 @@ function upnpSeek(seconds: number) {
   });
 }
 
+function sendVolume(volume: number) {
+  void Native?.setVolume(Math.round(Math.max(0, Math.min(1, volume)) * 100));
+}
+
 export function upnpSetVolume(volume: number) {
   useUpnpBase.getState().setVolume(volume);
-  void Native?.setVolume(Math.round(Math.max(0, Math.min(1, volume)) * 100));
+  sendVolume(volume);
+}
+
+// A drag fires on every frame, and each send is a SOAP request the speaker has
+// to answer: a few a second follow the finger closely enough, and the release
+// sends the exact value anyway.
+const VOLUME_SEND_INTERVAL_MS = 150;
+const volumeSends = new Map<
+  string,
+  {
+    sentAt: number;
+    pending: number | null;
+    timer: ReturnType<typeof setTimeout> | null;
+  }
+>();
+
+function throttleVolume(
+  key: string,
+  volume: number,
+  send: (volume: number) => void,
+) {
+  let entry = volumeSends.get(key);
+  if (!entry) {
+    entry = { sentAt: 0, pending: null, timer: null };
+    volumeSends.set(key, entry);
+  }
+  const slot = entry;
+  const elapsed = Date.now() - slot.sentAt;
+  if (elapsed >= VOLUME_SEND_INTERVAL_MS && !slot.timer) {
+    slot.sentAt = Date.now();
+    send(volume);
+    return;
+  }
+  slot.pending = volume;
+  slot.timer ??= setTimeout(
+    () => {
+      slot.timer = null;
+      if (slot.pending == null) return;
+      const next = slot.pending;
+      slot.pending = null;
+      slot.sentAt = Date.now();
+      send(next);
+    },
+    Math.max(0, VOLUME_SEND_INTERVAL_MS - elapsed),
+  );
+}
+
+// The release's own send is the last word: a trailing drag value landing after
+// it would undo it.
+function settleVolume(key: string) {
+  const entry = volumeSends.get(key);
+  if (entry?.timer) clearTimeout(entry.timer);
+  volumeSends.delete(key);
+}
+
+/**
+ * Mid-drag: the device only, a few times a second. Writing the store on every
+ * frame re-renders the output sheet under the gesture, which React aborts as an
+ * update loop.
+ */
+export function upnpScrubVolume(volume: number) {
+  throttleVolume("group", volume, sendVolume);
 }
 
 /**
@@ -947,6 +1045,7 @@ export function upnpSetVolume(volume: number) {
  * own share, so the rooms are read back once it has landed.
  */
 export async function upnpCommitVolume(volume: number): Promise<void> {
+  settleVolume("group");
   const clamped = Math.max(0, Math.min(1, volume));
   useUpnpBase.getState().setVolume(clamped);
   try {
@@ -981,6 +1080,7 @@ export async function upnpRefreshGroup(): Promise<void> {
   if (!Native || !isUpnpConnected()) return;
   try {
     const group = await Native.groupState();
+    upnpTrace(() => `group ${JSON.stringify(group)}`);
     if (!isUpnpConnected()) return;
     useUpnpBase.getState().setGroup(group ? toStoreGroup(group) : null);
   } catch (error) {
@@ -1022,11 +1122,13 @@ async function changeGroup(deviceId: string, join: boolean): Promise<boolean> {
       ? Native.addToGroup(deviceId)
       : Native.removeFromGroup(deviceId));
   } catch (error) {
+    upnpTrace(`${join ? "add" : "remove"} ${deviceId} threw: ${String(error)}`);
     reportError(error, {
       area: "player",
       endpoint: join ? "upnp.groupAdd" : "upnp.groupRemove",
     });
   }
+  upnpTrace(`${join ? "add" : "remove"} ${deviceId} -> ${ok}`);
   if (!ok && isUpnpConnected()) useUpnpBase.getState().setGroup(before);
   await upnpRefreshGroup();
   return ok;
@@ -1037,7 +1139,30 @@ export const upnpAddToGroup = (deviceId: string) => changeGroup(deviceId, true);
 export const upnpRemoveFromGroup = (deviceId: string) =>
   changeGroup(deviceId, false);
 
-async function pushDeviceVolume(deviceId: string, volume: number) {
+async function sendDeviceVolume(deviceId: string, volume: number) {
+  try {
+    await Native?.setDeviceVolume(
+      deviceId,
+      Math.round(Math.max(0, Math.min(1, volume)) * 100),
+    );
+  } catch (error) {
+    reportError(error, { area: "player", endpoint: "upnp.setDeviceVolume" });
+  }
+}
+
+/** One room's own volume mid-drag, 0..1: the device only (see upnpScrubVolume). */
+export function upnpScrubDeviceVolume(deviceId: string, volume: number) {
+  throttleVolume(deviceId, volume, (next) => {
+    void sendDeviceVolume(deviceId, next);
+  });
+}
+
+/** The end of a room's volume gesture: the group's own volume moved with it. */
+export async function upnpCommitDeviceVolume(
+  deviceId: string,
+  volume: number,
+): Promise<void> {
+  settleVolume(deviceId);
   const clamped = Math.max(0, Math.min(1, volume));
   const { group, setGroup } = useUpnpBase.getState();
   if (group) {
@@ -1048,24 +1173,7 @@ async function pushDeviceVolume(deviceId: string, volume: number) {
       ),
     });
   }
-  try {
-    await Native?.setDeviceVolume(deviceId, Math.round(clamped * 100));
-  } catch (error) {
-    reportError(error, { area: "player", endpoint: "upnp.setDeviceVolume" });
-  }
-}
-
-/** One room's own volume, 0..1, while the rest of the group stays put. */
-export function upnpSetDeviceVolume(deviceId: string, volume: number) {
-  void pushDeviceVolume(deviceId, volume);
-}
-
-/** The end of a room's volume gesture: the group's own volume moved with it. */
-export async function upnpCommitDeviceVolume(
-  deviceId: string,
-  volume: number,
-): Promise<void> {
-  await pushDeviceVolume(deviceId, volume);
+  await sendDeviceVolume(deviceId, clamped);
   await adoptRendererVolume();
 }
 

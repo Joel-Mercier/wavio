@@ -350,6 +350,11 @@ class RendererSession(
   }
 
   private fun follow(coordinator: DeviceDescription) {
+    UpnpTrace.record(
+      "SESSION",
+      "$deviceId now drives coordinator ${coordinator.displayName} (${coordinator.udn}) " +
+        "at ${coordinator.controlUrl(Services.AV_TRANSPORT)}"
+    )
     avTransport = coordinator.controlUrl(Services.AV_TRANSPORT)
     groupRenderingControl = coordinator.controlUrl(Services.GROUP_RENDERING_CONTROL)
     lastTransportState = null

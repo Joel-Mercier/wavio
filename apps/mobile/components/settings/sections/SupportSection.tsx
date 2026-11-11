@@ -9,6 +9,12 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
 import { buildBugReport, NEW_ISSUE_URL } from "@/services/bugReport";
+import {
+  isUpnpTraceAvailable,
+  isUpnpTracing,
+  setUpnpTracing,
+  shareUpnpTrace,
+} from "@/services/upnpTrace";
 
 const MONOSPACE = {
   fontFamily: Platform.select({ ios: "Menlo", default: "monospace" }),
@@ -18,6 +24,30 @@ export default function SupportSection() {
   const { t } = useTranslation();
   const { showSuccessToast, showErrorToast } = useSettingsToast();
   const [preview, setPreview] = useState<string | null>(null);
+  const [tracing, setTracing] = useState(isUpnpTracing);
+
+  const toggleTracing = () => {
+    const next = setUpnpTracing(!tracing);
+    setTracing(next);
+    showSuccessToast(
+      t(
+        next
+          ? "app.settings.supportSettings.castingLogStarted"
+          : "app.settings.supportSettings.castingLogStopped",
+      ),
+    );
+  };
+
+  const onShareTrace = async () => {
+    let shared = false;
+    try {
+      shared = await shareUpnpTrace(buildBugReport());
+    } catch {
+      shared = false;
+    }
+    if (!shared)
+      showErrorToast(t("app.settings.supportSettings.castingLogEmpty"));
+  };
 
   const copyReport = async () => {
     try {
@@ -71,6 +101,32 @@ export default function SupportSection() {
           tone="info"
           message={t("app.settings.supportSettings.privacyNotice")}
         />
+        {isUpnpTraceAvailable() && (
+          <>
+            <SettingsActionRow
+              label={t("app.settings.supportSettings.castingLogLabel")}
+              description={t(
+                "app.settings.supportSettings.castingLogDescription",
+              )}
+              actionLabel={
+                tracing
+                  ? t("app.settings.supportSettings.castingLogStop")
+                  : t("app.settings.supportSettings.castingLogStart")
+              }
+              onPress={toggleTracing}
+            />
+            <SettingsActionRow
+              label={t("app.settings.supportSettings.castingLogShareLabel")}
+              description={t(
+                "app.settings.supportSettings.castingLogShareDescription",
+              )}
+              actionLabel={t(
+                "app.settings.supportSettings.castingLogShareAction",
+              )}
+              onPress={onShareTrace}
+            />
+          </>
+        )}
         {preview !== null && (
           <ScrollView
             horizontal
