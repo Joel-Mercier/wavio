@@ -31,10 +31,10 @@
 		"githubRelease": "在 GitHub 上获取"
 	},
 	"video": {
-		"watch": "Watch the trailer",
-		"title": "Wavio trailer",
-		"play": "Resume",
-		"replay": "Replay",
+		"watch": "观看预告片",
+		"title": "Wavio 拖车",
+		"play": "恢复",
+		"replay": "回放",
 		"close": "关闭"
 	},
 	"versions": {
