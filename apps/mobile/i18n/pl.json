@@ -1720,7 +1720,17 @@
 					"privacyNotice": "Problemy GitHub są publiczne, więc raport jest anonimowy: nigdy nie zawiera adresów serwera, nazw użytkowników, hasła, tokeny, nazwy serwerów lub bibliotek, ścieżki folderów lub cokolwiek o tym, co słuchasz. Są one pozostawione lub ograniczone do tego, czy zostały ustalone.",
 					"copySuccess": "Raport diagnostyczny skopiowany do schowka",
 					"copySuccessOpening": "Raport diagnostyczny skopiowany. Jeśli zgłosisz błąd, wklej go do pola raportu Diagnostyki.",
-					"copyError": "Nie można zbudować raportu diagnostycznego"
+					"copyError": "Nie można zbudować raportu diagnostycznego",
+					"castingLogLabel": "Record a casting log",
+					"castingLogDescription": "Temporary, for debugging speakers and TVs (UPnP/DLNA, Sonos). Start it, reproduce the problem, then share the log. It keeps recording through crashes and restarts until you stop it.",
+					"castingLogStart": "Rozpocznij",
+					"castingLogStop": "Stop",
+					"castingLogStarted": "Recording the casting log. Reproduce the problem, then come back to share it.",
+					"castingLogStopped": "Casting log stopped. You can share it now.",
+					"castingLogShareLabel": "Share the casting log",
+					"castingLogShareDescription": "Sends the log with the diagnostics report attached. It has no passwords or tokens, but it does include your server's address and your speakers' network addresses, so send it privately rather than posting it publicly.",
+					"castingLogShareAction": "Udostępnij",
+					"castingLogEmpty": "Nothing recorded yet. Start the casting log and reproduce the problem first."
 				},
 				"storageSettings": {
 					"title": "Pamięć",
