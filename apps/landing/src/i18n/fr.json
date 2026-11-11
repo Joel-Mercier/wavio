@@ -31,10 +31,10 @@
 		"githubRelease": "Télécharger sur GitHub"
 	},
 	"video": {
-		"watch": "Watch the trailer",
-		"title": "Wavio trailer",
-		"play": "Resume",
-		"replay": "Replay",
+		"watch": "Visionner la bande-annonce",
+		"title": "Bande-annonce de Wavio",
+		"play": "Continuer",
+		"replay": "Revoir",
 		"close": "Fermer"
 	},
 	"versions": {
