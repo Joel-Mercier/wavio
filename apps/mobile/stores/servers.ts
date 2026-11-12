@@ -12,6 +12,7 @@ import {
 import { oidcSessionKey, useOidcBase } from "@/stores/oidc";
 import { usePodcastPlayedBase } from "@/stores/podcastPlayed";
 import createSelectors from "@/utils/createSelectors";
+import { countNormalizedUrls, normalizeServerUrl } from "@/utils/serverUrl";
 
 export const serverTypeSchema = z.enum([
   "navidrome",
@@ -70,7 +71,7 @@ export const isBlankUrlInput = (value: string | undefined | null): boolean => {
 export const cleanOptionalUrl = (
   value: string | undefined | null,
 ): string | undefined =>
-  isBlankUrlInput(value) ? undefined : (value ?? "").trim();
+  isBlankUrlInput(value) ? undefined : normalizeServerUrl(value ?? "");
 
 // Shared by every form's superRefine: the fallback is optional, but a non-blank
 // one still has to be a real URL.
@@ -509,7 +510,7 @@ const useServersBase = create<ServersStore>()(
         plainPasswordAuth,
         oidc,
       }) => {
-        const trimmedUrl = url.trim();
+        const trimmedUrl = normalizeServerUrl(url);
         const cleanOidc = normalizeOidc(oidc);
         const trimmedName = name.trim();
         const cleanAlias = mtlsAlias?.trim() || undefined;
@@ -594,7 +595,9 @@ const useServersBase = create<ServersStore>()(
                   ...(patch.name !== undefined
                     ? { name: patch.name.trim() }
                     : {}),
-                  ...(patch.url !== undefined ? { url: patch.url.trim() } : {}),
+                  ...(patch.url !== undefined
+                    ? { url: normalizeServerUrl(patch.url) }
+                    : {}),
                   ...(patch.type !== undefined ? { type: patch.type } : {}),
                   ...(patch.paths !== undefined ? { paths: patch.paths } : {}),
                   ...(patch.libraryPath !== undefined
@@ -653,8 +656,10 @@ const useServersBase = create<ServersStore>()(
       getCurrentServer: () => get().servers.find((s) => s.current),
       getServerById: (id) => get().servers.find((s) => s.id === id),
       getServerByUrl: (url) => {
-        const trimmed = url.trim();
-        return get().servers.find((s) => s.url === trimmed);
+        const normalized = normalizeServerUrl(url);
+        return get().servers.find(
+          (s) => normalizeServerUrl(s.url) === normalized,
+        );
       },
       getUsersForServer: (id) => get().users.filter((u) => u.serverId === id),
       addOrUpdateUser: (user) => {
@@ -737,16 +742,28 @@ const useServersBase = create<ServersStore>()(
     {
       name: "servers",
       storage: createJSONStorage(() => zustandStorage),
-      version: 2,
+      version: 3,
       migrate: (persistedState, version) => {
         const state = persistedState as Partial<ServersStore> | undefined;
-        if (!state || version >= 2) return persistedState as ServersStore;
+        if (!state || version >= 3) return persistedState as ServersStore;
+        const servers = state.servers ?? [];
+        const sharing = countNormalizedUrls(servers);
         return {
           ...state,
-          servers: (state.servers ?? []).map((s) => ({
-            ...s,
-            type: (s as Server).type ?? "navidrome",
-          })),
+          servers: servers.map((s) => {
+            const url = normalizeServerUrl(s.url ?? "");
+            return {
+              ...s,
+              type: (s as Server).type ?? "navidrome",
+              // Two rows saved as `x` and `x/` are separate servers with their
+              // own ids and data; collapsing them would leave two rows that no
+              // URL lookup can tell apart.
+              url: (sharing.get(url) ?? 0) > 1 ? s.url : url,
+              ...(s.fallbackUrl
+                ? { fallbackUrl: normalizeServerUrl(s.fallbackUrl) }
+                : {}),
+            };
+          }),
         } as ServersStore;
       },
     },

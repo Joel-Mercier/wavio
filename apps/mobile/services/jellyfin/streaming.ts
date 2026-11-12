@@ -7,6 +7,7 @@ import {
 import { type StreamFormat, useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import type { QueueTrack } from "@/stores/queue";
+import { normalizeServerUrl } from "@/utils/serverUrl";
 
 const client = process.env.EXPO_PUBLIC_CLIENT_NAME || "Wavio";
 
@@ -155,7 +156,7 @@ function transcodeParams(opts?: StreamOptions): string {
 }
 
 function baseUrl(): string {
-  return useAuthBase.getState().url.replace(/\/+$/, "");
+  return normalizeServerUrl(useAuthBase.getState().url);
 }
 
 function authParam(): string {

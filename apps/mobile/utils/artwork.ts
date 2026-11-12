@@ -5,6 +5,7 @@ import { subsonicAuthQuery } from "@/services/openSubsonic/auth";
 import { useAuthBase } from "@/stores/auth";
 import useOffline from "@/stores/offline";
 import { artworkCacheKey } from "@/utils/artworkCacheKey";
+import { normalizeServerUrl } from "@/utils/serverUrl";
 
 const navidromeSubsonicApiVersion =
   process.env.EXPO_PUBLIC_OPENSUBSONIC_API_VERSION || "";
@@ -59,7 +60,7 @@ export const artworkUrl = (id?: string, size?: number) => {
   if (isArtworkUri(id)) return id as string;
   if (serverType === "jellyfin") return jellyfinArtworkUrl(id, size);
   const sizeParam = size ? `&size=${size}` : "";
-  return `${url}/rest/getCoverArt?id=${encodeURIComponent(id ?? "")}&${subsonicAuthQuery()}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}${sizeParam}`;
+  return `${normalizeServerUrl(url)}/rest/getCoverArt?id=${encodeURIComponent(id ?? "")}&${subsonicAuthQuery()}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}${sizeParam}`;
 };
 
 type ArtworkTrack = {

@@ -411,6 +411,21 @@ describe("persist migration", () => {
 
   it("leaves an already-current session untouched", () => {
     const state = { useTokenAuth: true, subsonicToken: null };
-    expect(migrate(state, 4)).toBe(state);
+    expect(migrate(state, 5)).toBe(state);
+  });
+
+  it("strips a trailing slash from a signed-in session's url (#277)", () => {
+    const state = {
+      url: "http://music.example.com:4533/",
+      useTokenAuth: true,
+      subsonicToken: "tok",
+      subsonicSalt: "salt",
+    };
+    const migrated = migrate(state, 4);
+    expect(migrated.url).toBe("http://music.example.com:4533");
+    expect(migrated.useTokenAuth).toBe(true);
+    expect(migrate({ url: "https://x.example.com//" }, 3).url).toBe(
+      "https://x.example.com",
+    );
   });
 });

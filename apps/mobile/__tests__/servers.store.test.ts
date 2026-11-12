@@ -9,6 +9,7 @@ import {
   serverUserSchema,
   useServersBase,
 } from "@/stores/servers";
+import { normalizeServerUrl } from "@/utils/serverUrl";
 
 jest.mock("@/config/storage", () => {
   const mem = new Map<string, string>();
@@ -838,5 +839,77 @@ describe("oidc server config", () => {
     expect(useServersBase.getState().getServerById(created.id)?.oidc).toEqual(
       {},
     );
+  });
+});
+
+describe("server url normalization (#277)", () => {
+  beforeEach(reset);
+
+  it("strips trailing slashes but keeps the base path", () => {
+    expect(normalizeServerUrl(" http://music.example.com:4533/ ")).toBe(
+      "http://music.example.com:4533",
+    );
+    expect(normalizeServerUrl("https://example.com/music//")).toBe(
+      "https://example.com/music",
+    );
+    expect(normalizeServerUrl("smb://nas/Music/")).toBe("smb://nas/Music");
+    expect(normalizeServerUrl("https://x.example.com")).toBe(
+      "https://x.example.com",
+    );
+    expect(normalizeServerUrl("https://")).toBe("https://");
+    expect(normalizeServerUrl("local")).toBe("local");
+  });
+
+  it("stores added and edited urls without a trailing slash", () => {
+    const store = useServersBase.getState();
+    const a = store.addServer({
+      name: "A",
+      url: "http://music.example.com:4533/",
+      fallbackUrl: "https://music.example.com/",
+    });
+    expect(a.url).toBe("http://music.example.com:4533");
+    expect(a.fallbackUrl).toBe("https://music.example.com");
+    expect(
+      store.addServer({ name: "A", url: "http://music.example.com:4533" }).id,
+    ).toBe(a.id);
+    store.editServer(a.id, { url: "http://10.0.0.2:4533/" });
+    expect(store.getServerById(a.id)?.url).toBe("http://10.0.0.2:4533");
+    expect(store.getServerByUrl("http://10.0.0.2:4533/")?.id).toBe(a.id);
+  });
+
+  it("migrates saved servers with a trailing slash", () => {
+    const migrated = useServersBase.persist.getOptions().migrate?.(
+      {
+        servers: [
+          {
+            id: "s1",
+            url: "http://music.example.com:4533/",
+            fallbackUrl: "https://music.example.com/",
+            type: "navidrome",
+          },
+        ],
+        users: [],
+      },
+      2,
+    ) as { servers: { url: string; fallbackUrl?: string }[] };
+    expect(migrated.servers[0].url).toBe("http://music.example.com:4533");
+    expect(migrated.servers[0].fallbackUrl).toBe("https://music.example.com");
+  });
+
+  it("leaves two rows that differ only by the slash as saved", () => {
+    const migrated = useServersBase.persist.getOptions().migrate?.(
+      {
+        servers: [
+          { id: "a", url: "http://x.example.com:4533", type: "navidrome" },
+          { id: "b", url: "http://x.example.com:4533/", type: "navidrome" },
+        ],
+        users: [],
+      },
+      2,
+    ) as { servers: { url: string }[] };
+    expect(migrated.servers.map((s) => s.url)).toEqual([
+      "http://x.example.com:4533",
+      "http://x.example.com:4533/",
+    ]);
   });
 });

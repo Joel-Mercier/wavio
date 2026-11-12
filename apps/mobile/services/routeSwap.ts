@@ -2,6 +2,7 @@ import { hasNetworkServerType } from "@/services/backend/serverTraits";
 import { useAuthBase } from "@/stores/auth";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import { useServersBase } from "@/stores/servers";
+import { normalizeServerUrl } from "@/utils/serverUrl";
 
 // Repoint queue entries at whichever of a server's routes is active.
 //
@@ -10,8 +11,8 @@ import { useServersBase } from "@/stores/servers";
 // absolute `url` and `artwork` strings into every entry, and `artwork` is read
 // back verbatim by the queue rows, the floating player, the lock screen and the
 // widget. Left alone, those keep pointing at the route we just failed away from.
-
-const stripSlash = (url: string) => url.replace(/\/+$/, "");
+// Entries baked from a server URL saved with a trailing slash carry `//rest/`
+// (issue #277), so the active route is rewritten too, to collapse that.
 
 /**
  * The active route plus the other routes the same server is known by.
@@ -26,15 +27,15 @@ function routeRewrites(): { active: string; known: string[] } | null {
   if (!url || !hasNetworkServerType(serverType)) return null;
   const server = useServersBase.getState().getServerById(serverId);
   if (!server) return null;
-  const active = stripSlash(url);
-  const known = [server.url, server.fallbackUrl]
-    .filter((u): u is string => !!u)
-    .map(stripSlash)
-    // Excluding the active route is what makes rewriting idempotent: a value
-    // already on the active route can't match anything.
-    .filter((u) => u !== active)
-    .sort((a, b) => b.length - a.length);
-  return known.length ? { active, known } : null;
+  const active = normalizeServerUrl(url);
+  const known = [
+    ...new Set(
+      [active, server.url, server.fallbackUrl]
+        .filter((u): u is string => !!u)
+        .map(normalizeServerUrl),
+    ),
+  ].sort((a, b) => b.length - a.length);
+  return { active, known };
 }
 
 /**
@@ -50,13 +51,15 @@ export function isActiveServerUrl(url: string | undefined): boolean {
   const server = useServersBase.getState().getServerById(serverId);
   return [activeUrl, server?.url, server?.fallbackUrl]
     .filter((u): u is string => !!u)
-    .map(stripSlash)
+    .map(normalizeServerUrl)
     .some((prefix) => url.startsWith(prefix));
 }
 
 function repoint(value: string, active: string, known: string[]): string {
   for (const prefix of known) {
-    if (value.startsWith(prefix)) return active + value.slice(prefix.length);
+    if (value.startsWith(prefix)) {
+      return active + value.slice(prefix.length).replace(/^\/{2,}/, "/");
+    }
   }
   return value;
 }

@@ -4,6 +4,7 @@ import { getDeviceId } from "@/services/jellyfin/deviceId";
 import { USER_AGENT } from "@/services/network";
 import { customHeadersForUrl } from "@/services/serverHeaders";
 import { useAuthBase } from "@/stores/auth";
+import { normalizeServerUrl } from "@/utils/serverUrl";
 
 const client = process.env.EXPO_PUBLIC_CLIENT_NAME || "Wavio";
 
@@ -34,7 +35,7 @@ const jellyfinApiInstance = axios.create({
 jellyfinApiInstance.interceptors.request.use(
   (request) => {
     const { url, jellyfinAccessToken } = useAuthBase.getState();
-    request.baseURL = url ? url.replace(/\/+$/, "") : "";
+    request.baseURL = url ? normalizeServerUrl(url) : "";
     request.headers.set("User-Agent", USER_AGENT);
     request.headers.set(
       "Authorization",

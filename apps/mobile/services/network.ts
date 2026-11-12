@@ -21,6 +21,7 @@ import {
 } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import { useServersBase } from "@/stores/servers";
+import { normalizeServerUrl } from "@/utils/serverUrl";
 
 // Re-exported for the existing importers; defined in utils/userAgent.ts, which
 // has no store/i18n dependencies. Consumers in the API clients must still read
@@ -292,8 +293,9 @@ function commitOffline() {
 function orderCandidates(preferPrimary: boolean): string[] {
   const { serverId, url } = useAuthBase.getState();
   const server = useServersBase.getState().getServerById(serverId);
-  const primary = server?.url;
-  const fallback = server?.fallbackUrl;
+  const primary = server?.url && normalizeServerUrl(server.url);
+  const fallback =
+    server?.fallbackUrl && normalizeServerUrl(server.fallbackUrl);
   if (!primary || !fallback) return [url];
   // The primary is preferred whenever we have a reason to think it might work:
   // it's normally the LAN route, which is faster and doesn't round-trip through

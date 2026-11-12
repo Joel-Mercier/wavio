@@ -26,6 +26,7 @@ import {
   serverTypeSchema,
 } from "@/stores/servers";
 import createSelectors from "@/utils/createSelectors";
+import { normalizeServerUrl } from "@/utils/serverUrl";
 
 // Side effects to run when the active session is torn down (logout / server
 // switch). Lets modules with no import-safe link to the auth store — notably
@@ -224,7 +225,7 @@ export const useAuthBase = create<AuthStore>()(
         const jellyfin = options.jellyfin ?? null;
         set({
           serverId: serverId.trim(),
-          url: url.trim(),
+          url: normalizeServerUrl(url),
           username: username.trim(),
           password: password.trim(),
           isAuthenticated: true,
@@ -245,7 +246,7 @@ export const useAuthBase = create<AuthStore>()(
       // fallback failover). Deliberately touches only `url`: the storage scope is
       // keyed on `serverId`, so swapping routes must not disturb any other state.
       setActiveUrl: (url: string) => {
-        set({ url: url.trim() });
+        set({ url: normalizeServerUrl(url) });
       },
       setNavidromeSession: (session: NavidromeNativeSession | null) => {
         set({
@@ -316,12 +317,15 @@ export const useAuthBase = create<AuthStore>()(
     {
       name: "auth",
       storage: createJSONStorage(() => zustandStorage),
-      version: 4,
+      version: 5,
       migrate: (persistedState, version) => {
         const state = persistedState as Partial<AuthStore> | undefined;
-        if (!state || version >= 4) return persistedState as AuthStore;
+        if (!state || version >= 5) return persistedState as AuthStore;
+        const url = normalizeServerUrl(state.url ?? "");
+        if (version === 4) return { ...state, url } as AuthStore;
         return {
           ...state,
+          url,
           serverType: state.serverType ?? "navidrome",
           jellyfinAccessToken: state.jellyfinAccessToken ?? null,
           jellyfinUserId: state.jellyfinUserId ?? null,

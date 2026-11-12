@@ -120,6 +120,7 @@ import useServers, {
   type ServerType,
   type ServerUser,
 } from "@/stores/servers";
+import { normalizeServerUrl } from "@/utils/serverUrl";
 import { TOAST_DURATION } from "@/utils/toastDuration";
 
 function ServerSelectRow({
@@ -246,7 +247,7 @@ export default function LoginScreen() {
     },
     onSubmit: async ({ value }) => {
       try {
-        const trimmedUrl = (value.url ?? "").trim();
+        const trimmedUrl = normalizeServerUrl(value.url ?? "");
         const trimmedUsername = (value.username ?? "").trim();
         const trimmedPassword = (value.password ?? "").trim();
         const serverType: ServerType = value.type;
@@ -755,7 +756,7 @@ export default function LoginScreen() {
                               setSsoIssuerHost(host);
                               if (ssoTouched) return;
                               const saved = servers.find(
-                                (s) => s.url === url?.trim(),
+                                (s) => s.url === normalizeServerUrl(url ?? ""),
                               )?.oidc;
                               if (host) {
                                 form.setFieldValue("authMethod", "oidc");

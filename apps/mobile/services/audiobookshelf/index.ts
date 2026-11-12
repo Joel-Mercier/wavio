@@ -27,7 +27,7 @@ const absApiInstance = axios.create({
   timeout: 15000,
 });
 
-export function normalizeServerUrl(url: string): string {
+export function normalizeAbsServerUrl(url: string): string {
   const trimmed = url.trim().replace(/\/+$/, "");
   if (!trimmed) return "";
   return /^https?:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`;

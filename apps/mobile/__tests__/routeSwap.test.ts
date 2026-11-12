@@ -60,6 +60,25 @@ beforeEach(() => {
 });
 
 describe("rewriteQueueRoutes", () => {
+  it("collapses the `//rest/` baked from a trailing-slash url (#277)", () => {
+    mockServer.fallbackUrl = undefined;
+    mockQueueState.queue = [
+      track({
+        url: `${PRIMARY}//rest/stream?id=t1`,
+        artwork: `${PRIMARY}//rest/getCoverArt?id=c1`,
+      }),
+    ];
+    rewriteQueueRoutes();
+    expect(mockQueueState.queue[0]).toMatchObject(track());
+  });
+
+  it("leaves entries already on the active route untouched", () => {
+    const entry = track();
+    mockQueueState.queue = [entry];
+    rewriteQueueRoutes();
+    expect(mockQueueState.queue[0]).toBe(entry);
+  });
+
   it("repoints entries baked under the other route at the active one", () => {
     mockAuthState.url = FALLBACK;
     mockQueueState.queue = [track()];

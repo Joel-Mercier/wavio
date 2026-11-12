@@ -1,6 +1,7 @@
 import axios from "axios";
 import { requestHeadersForUrl } from "@/services/serverHeaders";
 import { useAuthBase } from "@/stores/auth";
+import { normalizeServerUrl } from "@/utils/serverUrl";
 import { FileSourceError, fromHttpStatus, isFileSourceError } from "./errors";
 import { httpRangeReader } from "./httpRange";
 import type { ByteReader, FileSource, RemoteEntry } from "./types";
@@ -50,7 +51,7 @@ const ADDRESS_PREFIX = "webdav:";
 
 /** The active server's base URL, without a trailing slash. */
 function baseUrl(): string {
-  return useAuthBase.getState().url.replace(/\/+$/, "");
+  return normalizeServerUrl(useAuthBase.getState().url);
 }
 
 /**

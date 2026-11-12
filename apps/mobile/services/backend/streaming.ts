@@ -27,6 +27,7 @@ import { type StreamFormat, useAppBase } from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
 import type { QueueTrack } from "@/stores/queue";
 import { getTranscodeInfo, type TranscodeInfo } from "@/utils/audioQuality";
+import { normalizeServerUrl } from "@/utils/serverUrl";
 
 const navidromeSubsonicApiVersion =
   process.env.EXPO_PUBLIC_OPENSUBSONIC_API_VERSION || "";
@@ -90,11 +91,13 @@ function localFileUrl(id: string): string | null {
   return uri == null ? null : activeFileSource().playableUrl(uri);
 }
 
+const subsonicBaseUrl = () => normalizeServerUrl(useAuthBase.getState().url);
+
 export const hlsStreamUrl = (id: string) => {
   const local = localFileUrl(id);
   if (local != null) return local;
   if (isJellyfin()) return jellyfinHlsStreamUrl(id);
-  const { url } = useAuthBase.getState();
+  const url = subsonicBaseUrl();
   const { maxBitRate, cellularMaxBitRate } = useAppBase.getState();
   const effective = getEffectiveMaxBitRate(maxBitRate, cellularMaxBitRate);
   const bitRateParam = effective ? `&maxBitRate=${effective}` : "";
@@ -112,7 +115,7 @@ export const streamUrl = (
   const local = localFileUrl(id);
   if (local != null) return local;
   if (isJellyfin()) return jellyfinStreamUrl(id, opts);
-  const { url } = useAuthBase.getState();
+  const url = subsonicBaseUrl();
   const params = transcodeParams(opts?.forceTranscode ?? false);
   // Subsonic `timeOffset` (integer seconds) makes the server start transcoding
   // from that point (Navidrome's `ffmpeg -ss %t`), the only way to seek within a
@@ -153,7 +156,7 @@ export const analysisUrl = (
       suffix: jellyfinOfflineTranscodeSuffix(ANALYSIS_FORMAT),
     };
   }
-  const { url } = useAuthBase.getState();
+  const url = subsonicBaseUrl();
   if (!url) return null;
   return {
     url: resolveServerBase(
@@ -200,7 +203,7 @@ export const downloadUrl = (id: string) => {
   const local = localFileUrl(id);
   if (local != null) return local;
   if (isJellyfin()) return jellyfinDownloadUrl(id);
-  const { url } = useAuthBase.getState();
+  const url = subsonicBaseUrl();
   return resolveServerBase(
     `${url}/rest/download?id=${encodeURIComponent(id)}&${subsonicAuthQuery()}&v=${navidromeSubsonicApiVersion}&c=${navidromeClient}&f=json`,
   );
@@ -325,7 +328,7 @@ export const offlineFileInfo = (
       suffix: jellyfinOfflineTranscodeSuffix(format),
     };
   }
-  const { url } = useAuthBase.getState();
+  const url = subsonicBaseUrl();
   const bitRateParam = downloadMaxBitRate
     ? `&maxBitRate=${downloadMaxBitRate}`
     : "";
