@@ -34,9 +34,7 @@ import { useTranslation } from "react-i18next";
 import Animated, {
   Extrapolation,
   interpolate,
-  useAnimatedScrollHandler,
   useAnimatedStyle,
-  useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
@@ -45,6 +43,10 @@ import DownloadedBadge from "@/components/DownloadedBadge";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import FastScroller, {
+  STICKY_HEADER_CLEARANCE,
+  useFastScroll,
+} from "@/components/FastScroller";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import CollectionDownloadedCount from "@/components/offline/CollectionDownloadedCount";
 import RemoveDownloadsDialog from "@/components/offline/RemoveDownloadsDialog";
@@ -240,7 +242,8 @@ export default function PlaylistDetail() {
       : colors?.muted === black
         ? colors?.darkVibrant
         : colors?.muted) || black;
-  const offsetY = useSharedValue(0);
+  const fastScroll = useFastScroll();
+  const offsetY = fastScroll.offset;
   const headerStyle = useAnimatedStyle(() => {
     const opacity = interpolate(
       offsetY.value,
@@ -268,9 +271,6 @@ export default function PlaylistDetail() {
         },
       ],
     };
-  });
-  const scrollHandler = useAnimatedScrollHandler((event) => {
-    offsetY.value = event.contentOffset.y;
   });
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -894,7 +894,7 @@ export default function PlaylistDetail() {
       </AnimatedBox>
       <AnimatedLegendList
         recycleItems
-        onScroll={scrollHandler}
+        {...fastScroll.listProps}
         data={!playlistData ? SKELETON_DATA : data || EMPTY_DATA}
         keyExtractor={keyExtractor}
         renderItem={renderRow}
@@ -1074,6 +1074,12 @@ export default function PlaylistDetail() {
           paddingBottom: screenBottomPadding,
         }}
         showsVerticalScrollIndicator={false}
+      />
+      <FastScroller
+        fastScroll={fastScroll}
+        itemCount={data?.length ?? 0}
+        top={insets.top + STICKY_HEADER_CLEARANCE - (isWideLayout ? 16 : 0)}
+        bottom={screenBottomPadding}
       />
       <ShareOptionsSheet
         sheetRef={bottomSheetShareOptionsModalRef}

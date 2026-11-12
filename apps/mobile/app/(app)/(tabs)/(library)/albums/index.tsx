@@ -1,5 +1,5 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { LegendList, type LegendListRef } from "@legendapp/list/react-native";
+import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/icons/arrow-down";
@@ -18,6 +18,7 @@ import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import FastScroller, { useFastScroll } from "@/components/FastScroller";
 import SortOptionsSheet, {
   type SortLabels,
   useSortFieldLabel,
@@ -76,7 +77,7 @@ export default function AllAlbumsScreen() {
   const query = useSelector(form.store, (state) => state.values.query);
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const debounce = useDebounce(150);
-  const listRef = useRef<LegendListRef>(null);
+  const fastScroll = useFastScroll();
 
   useEffect(() => {
     debounce(() => setDebouncedQuery(query));
@@ -105,7 +106,7 @@ export default function AllAlbumsScreen() {
   // deleting characters).
   // biome-ignore lint/correctness/useExhaustiveDependencies: listParams is the trigger, not a read value
   useEffect(() => {
-    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+    fastScroll.getList()?.scrollToOffset({ offset: 0, animated: false });
   }, [debouncedQuery, listParams.type, listParams.order]);
 
   const {
@@ -256,7 +257,7 @@ export default function AllAlbumsScreen() {
     // no-op, the query key is unchanged and nothing downstream would react.
     // Refetch instead: every backend re-seeds a random order per request.
     if (resolved === activeSort && parseSortType(resolved).field === "random") {
-      listRef.current?.scrollToOffset({ offset: 0, animated: false });
+      fastScroll.getList()?.scrollToOffset({ offset: 0, animated: false });
       refetchBrowse();
     }
     setAllAlbumsSort(resolved);
@@ -310,84 +311,94 @@ export default function AllAlbumsScreen() {
       </Box>
       {error && <ErrorDisplay error={error as Error} />}
       {!error && (
-        <LegendList
-          recycleItems
-          ref={listRef}
-          key={`all-albums-${layout}-${gridColumns}`}
-          data={isLoading ? loadingData(12) : albums}
-          numColumns={gridColumns}
-          extraData={layout}
-          keyExtractor={(item, index) =>
-            isLoading ? `skeleton-${index}` : (item as AlbumID3).id
-          }
-          renderItem={({ item, index }: { item: AlbumID3; index: number }) =>
-            isLoading ? (
-              <AlbumListItemSkeleton
-                index={index}
-                layout={layout === "grid" ? "grid" : "vertical"}
-              />
-            ) : (
-              <AlbumListItem
-                album={item}
-                index={index}
-                layout={layout === "grid" ? "grid" : "vertical"}
-              />
-            )
-          }
-          ListHeaderComponent={
-            showSortControl ? (
-              <HStack
-                className={cn(
-                  "mb-4",
-                  // The grid layout already pads the container by 16.
-                  layout === "grid" ? "px-2" : "px-6",
-                )}
-              >
-                <FadeOutScaleDown onPress={handlePresentSortModalPress}>
-                  <HStack className="items-center gap-x-2">
-                    {!showSortDirection ? null : activeSort.endsWith("Desc") ? (
-                      <ArrowDown size={16} color={white} />
-                    ) : (
-                      <ArrowUp size={16} color={white} />
-                    )}
-                    <Text className="text-white font-bold">
-                      {sortFieldLabel(activeSortField)}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
-              </HStack>
-            ) : null
-          }
-          ListEmptyComponent={() =>
-            isLoading ? null : isSearching && !debouncedQuery ? null : (
-              <EmptyDisplay />
-            )
-          }
-          ListFooterComponent={
-            isFetchingNextPage ? (
-              <Box className="py-6">
-                <ActivityIndicator color={emerald500} />
-              </Box>
-            ) : null
-          }
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingBottom: screenBottomPadding,
-            paddingHorizontal: layout === "grid" ? 16 : 0,
-          }}
-          onEndReached={() => {
-            // `random` re-seeds per request, so its single page is the list.
-            if (
-              !isSearching &&
-              !isRandom &&
-              hasNextPage &&
-              !isFetchingNextPage
-            ) {
-              fetchNextPage();
+        <Box className="flex-1">
+          <AnimatedLegendList
+            recycleItems
+            {...fastScroll.listProps}
+            key={`all-albums-${layout}-${gridColumns}`}
+            data={isLoading ? loadingData(12) : albums}
+            numColumns={gridColumns}
+            extraData={layout}
+            keyExtractor={(item, index) =>
+              isLoading ? `skeleton-${index}` : (item as AlbumID3).id
             }
-          }}
-          onEndReachedThreshold={0.5}
-        />
+            renderItem={({ item, index }: { item: AlbumID3; index: number }) =>
+              isLoading ? (
+                <AlbumListItemSkeleton
+                  index={index}
+                  layout={layout === "grid" ? "grid" : "vertical"}
+                />
+              ) : (
+                <AlbumListItem
+                  album={item}
+                  index={index}
+                  layout={layout === "grid" ? "grid" : "vertical"}
+                />
+              )
+            }
+            ListHeaderComponent={
+              showSortControl ? (
+                <HStack
+                  className={cn(
+                    "mb-4",
+                    // The grid layout already pads the container by 16.
+                    layout === "grid" ? "px-2" : "px-6",
+                  )}
+                >
+                  <FadeOutScaleDown onPress={handlePresentSortModalPress}>
+                    <HStack className="items-center gap-x-2">
+                      {!showSortDirection ? null : activeSort.endsWith(
+                          "Desc",
+                        ) ? (
+                        <ArrowDown size={16} color={white} />
+                      ) : (
+                        <ArrowUp size={16} color={white} />
+                      )}
+                      <Text className="text-white font-bold">
+                        {sortFieldLabel(activeSortField)}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                </HStack>
+              ) : null
+            }
+            ListEmptyComponent={() =>
+              isLoading ? null : isSearching && !debouncedQuery ? null : (
+                <EmptyDisplay />
+              )
+            }
+            ListFooterComponent={
+              isFetchingNextPage ? (
+                <Box className="py-6">
+                  <ActivityIndicator color={emerald500} />
+                </Box>
+              ) : null
+            }
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingBottom: screenBottomPadding,
+              paddingHorizontal: layout === "grid" ? 16 : 0,
+            }}
+            onEndReached={() => {
+              // `random` re-seeds per request, so its single page is the list.
+              if (
+                !isSearching &&
+                !isRandom &&
+                hasNextPage &&
+                !isFetchingNextPage
+              ) {
+                fetchNextPage();
+              }
+            }}
+            onEndReachedThreshold={0.5}
+          />
+          <FastScroller
+            fastScroll={fastScroll}
+            itemCount={isLoading ? 0 : albums.length}
+            top={8}
+            bottom={screenBottomPadding}
+          />
+        </Box>
       )}
       <SortOptionsSheet
         ref={bottomSheetSortModalRef}

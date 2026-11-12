@@ -16,9 +16,7 @@ import { useWindowDimensions } from "react-native";
 import Animated, {
   Extrapolation,
   interpolate,
-  useAnimatedScrollHandler,
   useAnimatedStyle,
-  useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
@@ -29,6 +27,10 @@ import { DetailStickyHeader } from "@/components/DetailScreenHeader";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import FastScroller, {
+  STICKY_HEADER_CLEARANCE,
+  useFastScroll,
+} from "@/components/FastScroller";
 import ScreenHeaderGradient from "@/components/ScreenHeaderGradient";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -59,14 +61,12 @@ export default function GenreScreen() {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
-  const offsetY = useSharedValue(0);
+  const fastScroll = useFastScroll();
+  const offsetY = fastScroll.offset;
   const headerStyle = useAnimatedStyle(() => {
     return {
       opacity: interpolate(offsetY.value, [0, 50], [0, 1], Extrapolation.CLAMP),
     };
-  });
-  const scrollHandler = useAnimatedScrollHandler((event) => {
-    offsetY.value = event.contentOffset.y;
   });
   const { id } = useLocalSearchParams<{ id: string }>();
   const { width } = useWindowDimensions();
@@ -131,7 +131,7 @@ export default function GenreScreen() {
       <AnimatedLegendList
         recycleItems
         key={`genre-albums-${layout}-${gridColumns}`}
-        onScroll={scrollHandler}
+        {...fastScroll.listProps}
         data={isLoading ? loadingData(12) : albums}
         numColumns={gridColumns}
         extraData={layout}
@@ -212,6 +212,12 @@ export default function GenreScreen() {
           }
         }}
         onEndReachedThreshold={0.5}
+      />
+      <FastScroller
+        fastScroll={fastScroll}
+        itemCount={isLoading ? 0 : albums.length}
+        top={insets.top + STICKY_HEADER_CLEARANCE}
+        bottom={screenBottomPadding}
       />
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}

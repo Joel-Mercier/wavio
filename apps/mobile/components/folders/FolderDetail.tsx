@@ -1,4 +1,4 @@
-import { LegendList } from "@legendapp/list/react-native";
+import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/icons/arrow-left";
 import ChevronRight from "lucide-react-native/icons/chevron-right";
@@ -10,6 +10,7 @@ import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import FastScroller, { useFastScroll } from "@/components/FastScroller";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
@@ -40,6 +41,7 @@ export default function FolderDetail() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
+  const fastScroll = useFastScroll();
   const { id, name, root } = useLocalSearchParams<{
     id: string;
     name?: string;
@@ -138,61 +140,70 @@ export default function FolderDetail() {
       </Box>
       {error && <ErrorDisplay error={error} />}
       {!error && (
-        <LegendList
-          recycleItems
-          data={isLoading ? (loadingData(12) as unknown as Entry[]) : entries}
-          keyExtractor={(item, index) =>
-            isLoading
-              ? `skeleton-${index}`
-              : item.kind === "dir"
-                ? `d:${item.id}`
-                : `t:${item.child.id}`
-          }
-          renderItem={({ item, index }) => {
-            if (isLoading) {
-              return <TrackListItemSkeleton index={index} className="px-6" />;
+        <Box className="flex-1">
+          <AnimatedLegendList
+            {...fastScroll.listProps}
+            recycleItems
+            data={isLoading ? (loadingData(12) as unknown as Entry[]) : entries}
+            keyExtractor={(item, index) =>
+              isLoading
+                ? `skeleton-${index}`
+                : item.kind === "dir"
+                  ? `d:${item.id}`
+                  : `t:${item.child.id}`
             }
-            if (item.kind === "dir") {
+            renderItem={({ item, index }) => {
+              if (isLoading) {
+                return <TrackListItemSkeleton index={index} className="px-6" />;
+              }
+              if (item.kind === "dir") {
+                return (
+                  <FadeOutScaleDown
+                    href={{
+                      pathname: "/folders/[id]",
+                      params: { id: item.id, name: item.name },
+                    }}
+                    className="px-6 mb-4"
+                  >
+                    <HStack className="items-center">
+                      <Box className="w-12 h-12 rounded-md bg-primary-600 items-center justify-center mr-4">
+                        <Folder size={24} color={white} />
+                      </Box>
+                      <VStack className="flex-1">
+                        <Text
+                          numberOfLines={1}
+                          className="text-white text-md font-normal"
+                        >
+                          {item.name}
+                        </Text>
+                      </VStack>
+                      <ChevronRight size={20} color={gray200} />
+                    </HStack>
+                  </FadeOutScaleDown>
+                );
+              }
               return (
-                <FadeOutScaleDown
-                  href={{
-                    pathname: "/folders/[id]",
-                    params: { id: item.id, name: item.name },
-                  }}
-                  className="px-6 mb-4"
-                >
-                  <HStack className="items-center">
-                    <Box className="w-12 h-12 rounded-md bg-primary-600 items-center justify-center mr-4">
-                      <Folder size={24} color={white} />
-                    </Box>
-                    <VStack className="flex-1">
-                      <Text
-                        numberOfLines={1}
-                        className="text-white text-md font-normal"
-                      >
-                        {item.name}
-                      </Text>
-                    </VStack>
-                    <ChevronRight size={20} color={gray200} />
-                  </HStack>
-                </FadeOutScaleDown>
+                <TrackListItem
+                  track={item.child}
+                  index={index - dirs.length}
+                  onPress={handleTrackPress}
+                  className="px-6"
+                />
               );
-            }
-            return (
-              <TrackListItem
-                track={item.child}
-                index={index - dirs.length}
-                onPress={handleTrackPress}
-                className="px-6"
-              />
-            );
-          }}
-          ListEmptyComponent={() => (isLoading ? null : <EmptyDisplay />)}
-          contentContainerStyle={{
-            paddingBottom: screenBottomPadding,
-          }}
-          showsVerticalScrollIndicator={false}
-        />
+            }}
+            ListEmptyComponent={() => (isLoading ? null : <EmptyDisplay />)}
+            contentContainerStyle={{
+              paddingBottom: screenBottomPadding,
+            }}
+            showsVerticalScrollIndicator={false}
+          />
+          <FastScroller
+            fastScroll={fastScroll}
+            itemCount={isLoading ? 0 : entries.length}
+            top={8}
+            bottom={screenBottomPadding}
+          />
+        </Box>
       )}
     </Box>
   );

@@ -8,10 +8,9 @@ import { useTranslation } from "react-i18next";
 import {
   Extrapolation,
   interpolate,
-  useAnimatedScrollHandler,
   useAnimatedStyle,
-  useSharedValue,
 } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import {
   DetailHero,
@@ -20,6 +19,10 @@ import {
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import FastScroller, {
+  STICKY_HEADER_CLEARANCE,
+  useFastScroll,
+} from "@/components/FastScroller";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import ShuffleToggle from "@/components/ShuffleToggle";
 import SortOptionsSheet, {
@@ -59,6 +62,7 @@ export default function FavoritesScreen() {
   ]) as string[];
   const { t } = useTranslation();
   const screenBottomPadding = useScreenBottomPadding();
+  const insets = useSafeAreaInsets();
   const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
   const musicFolderIds = useCurrentMusicFolderIds();
   const {
@@ -70,7 +74,8 @@ export default function FavoritesScreen() {
   const offlineModeEnabled = useOfflineModeEnabled();
   const sort = useApp((store) => store.favoritesSort);
   const setFavoritesSort = useApp((store) => store.setFavoritesSort);
-  const offsetY = useSharedValue(0);
+  const fastScroll = useFastScroll();
+  const offsetY = fastScroll.offset;
   const headerStyle = useAnimatedStyle(() => {
     return {
       opacity: interpolate(
@@ -80,9 +85,6 @@ export default function FavoritesScreen() {
         Extrapolation.CLAMP,
       ),
     };
-  });
-  const scrollHandler = useAnimatedScrollHandler((event) => {
-    offsetY.value = event.contentOffset.y;
   });
   const handleTrackPressCallback = useCallback(() => {
     addRecentPlay({ id: "favorites", title: "Favorites", type: "favorites" });
@@ -166,7 +168,7 @@ export default function FavoritesScreen() {
       />
       <AnimatedLegendList
         recycleItems
-        onScroll={scrollHandler}
+        {...fastScroll.listProps}
         data={!starredData ? SKELETON_DATA : data || EMPTY_DATA}
         keyExtractor={keyExtractor}
         renderItem={renderRow}
@@ -236,6 +238,12 @@ export default function FavoritesScreen() {
           paddingBottom: screenBottomPadding,
         }}
         showsVerticalScrollIndicator={false}
+      />
+      <FastScroller
+        fastScroll={fastScroll}
+        itemCount={data?.length ?? 0}
+        top={insets.top + STICKY_HEADER_CLEARANCE}
+        bottom={screenBottomPadding}
       />
       <SortOptionsSheet
         ref={bottomSheetSortModalRef}
