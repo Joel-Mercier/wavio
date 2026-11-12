@@ -40,14 +40,13 @@
     "landing:preview": "bun run --cwd apps/landing preview"
   },
   "patchedDependencies": {
-    "expo-audio@58.0.9": "patches/expo-audio@58.0.9.patch",
-    "expo-file-system@58.0.9": "patches/expo-file-system@58.0.9.patch",
-    "uniwind@1.12.2": "patches/uniwind@1.12.2.patch",
+    "expo-audio@58.0.12": "patches/expo-audio@58.0.12.patch",
+    "expo-file-system@58.0.13": "patches/expo-file-system@58.0.13.patch",
     "zod@4.6.7": "patches/zod@4.6.7.patch"
   },
   "dependencies": {
-    "eas-cli": "^20.5.1",
+    "eas-cli": "^27.9.0",
     "jest": "~30.5.2",
-    "jest-expo": "~58.0.11"
+    "jest-expo": "~58.0.14"
   }
 }

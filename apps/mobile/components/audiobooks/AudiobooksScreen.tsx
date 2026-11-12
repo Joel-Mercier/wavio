@@ -1,4 +1,5 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
+import type { TFunction } from "i18next";
 import ChevronDown from "lucide-react-native/icons/chevron-down";
 import Search from "lucide-react-native/icons/search";
 import { useMemo, useRef } from "react";
@@ -33,10 +34,7 @@ export const AUDIOBOOKSHELF_SETTINGS_HREF = "/integrations/audiobookshelf";
 
 const BROWSE_VIEWS = ["books", "series", "authors", "collections"] as const;
 
-function shelfTitle(
-  t: (key: string, options?: Record<string, unknown>) => string,
-  shelf: AbsShelf,
-) {
+function shelfTitle(t: TFunction, shelf: AbsShelf) {
   return t(`app.audiobooks.shelves.${shelf.id}`, { defaultValue: shelf.label });
 }
 

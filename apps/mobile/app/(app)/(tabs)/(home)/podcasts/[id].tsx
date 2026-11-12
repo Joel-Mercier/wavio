@@ -209,7 +209,7 @@ export default function PodcastScreen() {
         .map((e) => taddyEpisodeToTrack(e));
       const start = tracks.findIndex((t) => t.id === podcast.uuid);
       if (tracks.length > 0) {
-        playTracks(tracks, start >= 0 ? start : 0);
+        playTracks(tracks, Math.max(start, 0));
         return;
       }
     }

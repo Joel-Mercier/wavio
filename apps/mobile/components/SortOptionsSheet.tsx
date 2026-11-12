@@ -51,7 +51,10 @@ export function useSortFieldLabel<F extends string>(
 ): (field: F) => string {
   const { t } = useTranslation();
   return useCallback(
-    (field: F) => labels?.[field] ?? t(`app.shared.sort.${field}`),
+    (field: F) => {
+      const key: string = `app.shared.sort.${field}`;
+      return labels?.[field] ?? t(key);
+    },
     [labels, t],
   );
 }

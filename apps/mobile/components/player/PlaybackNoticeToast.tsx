@@ -25,7 +25,7 @@ export default function PlaybackNoticeToast() {
 
   useEffect(() => {
     if (!notice) return;
-    showErrorToast(t(NOTICE_KEY[notice], params ?? undefined));
+    showErrorToast(t(NOTICE_KEY[notice], params ?? {}));
     // Clearing is what makes this fire once — `showErrorToast` is rebuilt every
     // render, so the effect re-runs freely and the guard above is what stops it.
     usePlaybackNotice.getState().clear();

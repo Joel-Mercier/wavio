@@ -35,7 +35,7 @@ maestro/
 **One journey per feature area, not per screen.** Each `launchApp { clearState }`
 is a full app restart + re-login, so spinning one up for every individual screen is
 wasteful and slow. Instead, each flow does a single cold start (via `login-demo`)
-and then walks all the *related* screens in that area in one session — e.g.
+and then walks all the _related_ screens in that area in one session — e.g.
 `navigation.yaml` covers the tab bar, the drawer and two drawer destinations
 together. Genuinely independent concerns (a write path, session teardown) stay in
 their own flow.
@@ -56,7 +56,7 @@ test against a real backend rather than mocking the zustand/MMKV stores: Maestro
 can't write into MMKV, and the dispatch layer + axios interceptors are part of what
 these critical paths exist to verify.
 
-When a flow *does* need to fabricate a value, Maestro's `output` object — populated
+When a flow _does_ need to fabricate a value, Maestro's `output` object — populated
 via `evalScript`/`runScript` — is the place to stash it and feed it back into
 commands. `playlists.yaml` uses this: it mints a run-unique, timestamped name
 (`output.playlistName = 'maestro-' + Date.now()`) so repeated runs never collide on
@@ -69,23 +69,23 @@ content with stable, content-agnostic handles: visible i18n text (filter chips,
 section headings, action labels), the `alt="Album cover"` image label, and a small
 set of `testID`s added to the app:
 
-| testID | Where | Used by |
-| --- | --- | --- |
-| `album-play-button` | album header Play button (`AlbumDetail`) | play-first-album subflow |
-| `floating-player` | mini-player (`FloatingPlayer`) | play-first-album subflow, playback |
-| `floating-player-play-pause` | mini-player play/pause (`FloatingPlayer`) | _(reserved)_ |
-| `open-drawer-button` | user avatar in every tab header | open-drawer subflow |
-| `home-radio-tab` | Radio sub-tab on Home (`HomeTabsNav`) | home, radio |
-| `library-create-button` | Library "+" button | playlists |
-| `library-search-button` | Library header search icon (`(library)/index`) | library-search |
-| `album-menu-button` | album header "…" menu (`AlbumDetail`) | album-actions, artist |
-| `track-menu-button` | per-track "…" menu (`TrackListItem`) | album-actions |
-| `playlist-menu-button` | playlist header "…" menu (`PlaylistDetail`) | playlists |
-| `genre-item` | each genre tile (`GenreListItem`) | search |
-| `search-clear-button` | clear "X" in the search field (`recent-searches`) | search |
-| `track-info-close-button` | Track info modal close "X" (`TrackActionsProvider`) | album-actions |
-| `player-play-pause-button` / `player-previous-button` / `player-next-button` / `player-queue-button` / `player-menu-button` | full player transport + "…" menu (`player.tsx`) | playback |
-| `player-favorite-button` | full player heart toggle (`player.tsx`, `AnimatedHeart`) | favorite-toggle |
+| testID                                                                                                                      | Where                                                    | Used by                            |
+| --------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | ---------------------------------- |
+| `album-play-button`                                                                                                         | album header Play button (`AlbumDetail`)                 | play-first-album subflow           |
+| `floating-player`                                                                                                           | mini-player (`FloatingPlayer`)                           | play-first-album subflow, playback |
+| `floating-player-play-pause`                                                                                                | mini-player play/pause (`FloatingPlayer`)                | _(reserved)_                       |
+| `open-drawer-button`                                                                                                        | user avatar in every tab header                          | open-drawer subflow                |
+| `home-radio-tab`                                                                                                            | Radio sub-tab on Home (`HomeTabsNav`)                    | home, radio                        |
+| `library-create-button`                                                                                                     | Library "+" button                                       | playlists                          |
+| `library-search-button`                                                                                                     | Library header search icon (`(library)/index`)           | library-search                     |
+| `album-menu-button`                                                                                                         | album header "…" menu (`AlbumDetail`)                    | album-actions, artist              |
+| `track-menu-button`                                                                                                         | per-track "…" menu (`TrackListItem`)                     | album-actions                      |
+| `playlist-menu-button`                                                                                                      | playlist header "…" menu (`PlaylistDetail`)              | playlists                          |
+| `genre-item`                                                                                                                | each genre tile (`GenreListItem`)                        | search                             |
+| `search-clear-button`                                                                                                       | clear "X" in the search field (`recent-searches`)        | search                             |
+| `track-info-close-button`                                                                                                   | Track info modal close "X" (`TrackActionsProvider`)      | album-actions                      |
+| `player-play-pause-button` / `player-previous-button` / `player-next-button` / `player-queue-button` / `player-menu-button` | full player transport + "…" menu (`player.tsx`)          | playback                           |
+| `player-favorite-button`                                                                                                    | full player heart toggle (`player.tsx`, `AnimatedHeart`) | favorite-toggle                    |
 
 The press wrappers `FadeOut` / `FadeOutScaleDown` forward a `testID` prop to their
 underlying `Pressable`, which is how the avatar / transport / "+" handles are wired
@@ -122,7 +122,7 @@ clean up after themselves on the shared demo server: `playlists.yaml` and
 `smart-playlist.yaml` each create then delete the playlist they make, and
 `favorite-toggle.yaml` stars a track then un-stars it (each tap confirmed by its
 own toast). `queue-management.yaml` clears the (local) playback queue and only
-*opens* the create-from-queue dialog before cancelling, so it never writes a
+_opens_ the create-from-queue dialog before cancelling, so it never writes a
 playlist; `album-actions.yaml` opens the Add-to-playlist picker but backs out
 without selecting one.
 Conditional `runFlow`s keep server-dependent steps no-ops where unsupported: the

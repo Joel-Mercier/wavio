@@ -75,30 +75,32 @@ const accessClassName = (
   return styleObject[keys[1]];
 };
 
+type CreatedIconProps = React.ComponentPropsWithoutRef<typeof UIIcon> &
+  VariantProps<typeof iconStyle> & {
+    height?: number | string;
+    width?: number | string;
+  };
+
 const createIconUI = ({ ...props }: ParameterTypes) => {
   const NewUIIcon = createIcon({ Root: Svg, ...props });
-  return React.forwardRef<
-    React.ComponentRef<typeof UIIcon>,
-    React.ComponentPropsWithoutRef<typeof UIIcon> &
-      VariantProps<typeof iconStyle> & {
-        height?: number | string;
-        width?: number | string;
-      }
-  >(function UIIcon({ className, ...inComingprops }, ref) {
-    const calculateClassName = React.useMemo(() => {
-      return className === undefined
-        ? accessClassName(inComingprops?.style)
-        : className;
-    }, [className, inComingprops?.style]);
-    return (
-      <NewUIIcon
-        // @ts-expect-error : TODO: fix this
-        ref={ref}
-        {...inComingprops}
-        className={calculateClassName}
-      />
-    );
-  });
+  return React.forwardRef<React.ComponentRef<typeof UIIcon>, CreatedIconProps>(
+    // biome-ignore lint/correctness/noComponentHookFactories: an icon factory called once per icon at module scope, never during render
+    function UIIcon({ className, ...inComingprops }, ref) {
+      const calculateClassName = React.useMemo(() => {
+        return className === undefined
+          ? accessClassName(inComingprops?.style)
+          : className;
+      }, [className, inComingprops?.style]);
+      return (
+        <NewUIIcon
+          // @ts-expect-error : TODO: fix this
+          ref={ref}
+          {...inComingprops}
+          className={calculateClassName}
+        />
+      );
+    },
+  );
 };
 
 export { createIconUI as createIcon };

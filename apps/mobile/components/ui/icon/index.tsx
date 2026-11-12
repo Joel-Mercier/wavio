@@ -82,6 +82,7 @@ const createIconUI = ({ ...props }: ParameterTypes) => {
       React.RefAttributes<React.ComponentRef<typeof Svg>>
   >;
 
+  // biome-ignore lint/correctness/noComponentHookFactories: an icon factory called once per icon at module scope, never during render
   return React.forwardRef<React.ComponentRef<typeof Svg>>(function UIIcon(
     {
       className,

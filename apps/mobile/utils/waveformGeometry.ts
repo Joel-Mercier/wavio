@@ -35,7 +35,7 @@ export function barCountForWidth(width: number): number {
   return Math.max(1, Math.floor((width + BAR_GAP) / BAR_PITCH));
 }
 
-const clamp01 = (v: number): number => (v < 0 ? 0 : v > 1 ? 1 : v);
+const clamp01 = (v: number): number => Math.min(Math.max(v, 0), 1);
 
 /**
  * Reduce the stored envelope to one value per drawn bar, taking the **maximum**

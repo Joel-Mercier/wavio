@@ -16,11 +16,11 @@ going to MediaCodec exactly as before.
 
 ## What is vendored from where
 
-| File | Source | License |
-| --- | --- | --- |
-| `android/src/main/java/expo/modules/alacdecoder/Ffmpeg*.java` | androidx/media `1.9.1`, `libraries/decoder_ffmpeg/src/main/java` | Apache-2.0 |
-| `native/ffmpeg_jni.cc` | androidx/media `1.9.1`, `libraries/decoder_ffmpeg/src/main/jni` | Apache-2.0 |
-| `android/src/main/jniLibs/<abi>/libwavioalac.so` | the above + FFmpeg `n7.1.5`, built by `build.sh` | LGPL-2.1-or-later (FFmpeg) |
+| File                                                          | Source                                                           | License                    |
+| ------------------------------------------------------------- | ---------------------------------------------------------------- | -------------------------- |
+| `android/src/main/java/expo/modules/alacdecoder/Ffmpeg*.java` | androidx/media `1.9.1`, `libraries/decoder_ffmpeg/src/main/java` | Apache-2.0                 |
+| `native/ffmpeg_jni.cc`                                        | androidx/media `1.9.1`, `libraries/decoder_ffmpeg/src/main/jni`  | Apache-2.0                 |
+| `android/src/main/jniLibs/<abi>/libwavioalac.so`              | the above + FFmpeg `n7.1.5`, built by `build.sh`                 | LGPL-2.1-or-later (FFmpeg) |
 
 The copies differ from upstream in exactly three ways (plus one path in a lint comment): the Java package
 (`expo.modules.alacdecoder`), the library name (`wavioalac` instead of `ffmpegJNI`, so

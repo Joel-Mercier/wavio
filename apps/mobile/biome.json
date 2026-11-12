@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.7/schema.json",
   "extends": "//",
   "files": {
     "ignoreUnknown": true,
@@ -15,6 +15,30 @@
   },
   "linter": {
     "rules": {
+      "correctness": {
+        "noReactNativeRawText": {
+          "level": "error",
+          "options": {
+            "skip": [
+              "AccordionContentText",
+              "AccordionTitleText",
+              "ActionsheetItemText",
+              "ActionsheetSectionHeaderText",
+              "AlertText",
+              "AvatarFallbackText",
+              "BadgeText",
+              "ButtonText",
+              "FormControlErrorText",
+              "FormControlHelperText",
+              "FormControlLabelText",
+              "Heading",
+              "LinkText",
+              "SelectInputText",
+              "SelectSectionHeaderText"
+            ]
+          }
+        }
+      },
       "style": {
         "noRestrictedImports": {
           "level": "error",
@@ -27,5 +51,17 @@
         }
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["__tests__/**"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noComponentHookFactories": "off"
+          }
+        }
+      }
+    }
+  ]
 }
