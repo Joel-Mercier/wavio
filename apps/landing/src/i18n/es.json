@@ -30,6 +30,13 @@
 		"googlePlay": "Google Play",
 		"githubRelease": "Consíguelo en GitHub"
 	},
+	"video": {
+		"watch": "Ver el trailer",
+		"title": "Trailer de Wavio",
+		"play": "Reanudar",
+		"replay": "Repetir",
+		"close": "Cerrar"
+	},
 	"versions": {
 		"github": "GitHub",
 		"playStore": "Play Store",

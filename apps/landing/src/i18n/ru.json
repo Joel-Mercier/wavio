@@ -30,6 +30,13 @@
 		"googlePlay": "Google Play",
 		"githubRelease": "Скачайте на GitHub"
 	},
+	"video": {
+		"watch": "Смотреть трейлер",
+		"title": "Прицеп Вавио",
+		"play": "Возобновить",
+		"replay": "Повтор",
+		"close": "Закрыть"
+	},
 	"versions": {
 		"github": "GitHub",
 		"playStore": "Play Store",
