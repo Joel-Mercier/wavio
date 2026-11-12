@@ -193,22 +193,17 @@ export default function LibraryScreen() {
   const {
     data: starredData,
     isLoading: isLoadingStarred,
-    isFetching: isFetchingStarred,
     error: starredError,
     refetch: refetchStarred,
   } = useStarred2({ musicFolderIds });
   const {
     data: playlistsData,
     isLoading: isLoadingPlaylists,
-    isFetching: isFetchingPlaylists,
     error: playlistsError,
     refetch: refetchPlaylists,
   } = usePlaylists({});
-  const {
-    data: musicFoldersData,
-    isFetching: isFetchingMusicFolders,
-    refetch: refetchMusicFolders,
-  } = useMusicFolders();
+  const { data: musicFoldersData, refetch: refetchMusicFolders } =
+    useMusicFolders();
 
   // Active filters slide to the front so the one in use is never buried at the
   // end of a scrolled-off row; deselecting drops the badge back into its
@@ -534,6 +529,7 @@ export default function LibraryScreen() {
   // layout remounts the list instead (its `key` changes) and it comes back at
   // offset 0 without emitting a scroll event, so the header has to be brought
   // back by hand in both cases or it stays collapsed over content at the top.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: sort, filter and layout are triggers: each change resets the list to the top
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
     collapsed.value = 0;
@@ -548,6 +544,7 @@ export default function LibraryScreen() {
   // Toggling a filter reorders the badges, so a row the user had scrolled to
   // the end no longer holds what they were looking at — bring it back to the
   // start, where the badge they just toggled now sits.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: filter is the trigger: a toggled badge scrolls the filter row back to the start
   useEffect(() => {
     filterScrollRef.current?.scrollTo({ x: 0, animated: true });
   }, [filter]);
@@ -555,172 +552,169 @@ export default function LibraryScreen() {
   return (
     <Box className="h-full">
       <TabHeaderGradient />
-      <>
-        <AnimatedBox
-          onLayout={handleHeaderLayout}
-          className="absolute top-0 left-0 right-0 z-10"
-          style={[{ paddingTop: insets.top }, headerStyle]}
-        >
-          <TabHeaderGradientBackdrop offsetY={collapsed} />
-          {/* Vertical spacing lives on this wrapper as padding (not margin) so
+
+      <AnimatedBox
+        onLayout={handleHeaderLayout}
+        className="absolute top-0 left-0 right-0 z-10"
+        style={[{ paddingTop: insets.top }, headerStyle]}
+      >
+        <TabHeaderGradientBackdrop offsetY={collapsed} />
+        {/* Vertical spacing lives on this wrapper as padding (not margin) so
               its onLayout height is the exact distance the header collapses,
               letting the filter row pin at the top. The title fades as it
               collapses; the filters and the sort/layout row stay put. */}
-          <AnimatedBox
-            onLayout={handleTitleLayout}
-            style={titleStyle}
-            className={cn("px-6 pb-6", { "pt-6": !isWideLayout })}
-          >
-            <HStack className="items-center justify-between">
-              <HStack className="items-center gap-x-4 flex-1 mr-4">
+        <AnimatedBox
+          onLayout={handleTitleLayout}
+          style={titleStyle}
+          className={cn("px-6 pb-6", { "pt-6": !isWideLayout })}
+        >
+          <HStack className="items-center justify-between">
+            <HStack className="items-center gap-x-4 flex-1 mr-4">
+              <FadeOutScaleDown
+                testID="open-drawer-button"
+                onPress={() => setShowDrawer(true)}
+              >
+                <Avatar className="border-emerald-500 border-2 w-10 h-10">
+                  <AvatarFallbackText className="font-body ">
+                    {username}
+                  </AvatarFallbackText>
+                </Avatar>
+              </FadeOutScaleDown>
+              {libraryPicker.canPick ? (
                 <FadeOutScaleDown
-                  testID="open-drawer-button"
-                  onPress={() => setShowDrawer(true)}
+                  testID="library-picker-button"
+                  className="shrink"
+                  onPress={() => libraryPickerRef.current?.present()}
                 >
-                  <Avatar className="border-emerald-500 border-2 w-10 h-10">
-                    <AvatarFallbackText className="font-body ">
-                      {username}
-                    </AvatarFallbackText>
-                  </Avatar>
-                </FadeOutScaleDown>
-                {libraryPicker.canPick ? (
-                  <FadeOutScaleDown
-                    testID="library-picker-button"
-                    className="shrink"
-                    onPress={() => libraryPickerRef.current?.present()}
-                  >
-                    <Heading className="text-white" size="2xl">
-                      {t("app.library.title")}
-                    </Heading>
-                    <HStack className="items-center gap-x-1">
-                      <Text
-                        numberOfLines={1}
-                        className={cn("text-sm font-medium shrink", {
-                          "text-emerald-500": libraryPicker.isNarrowed,
-                          "text-primary-100": !libraryPicker.isNarrowed,
-                        })}
-                      >
-                        {libraryPicker.summary}
-                      </Text>
-                      {libraryPicker.summaryExtra && (
-                        <Text className="text-sm font-medium text-emerald-500">
-                          {libraryPicker.summaryExtra}
-                        </Text>
-                      )}
-                      <ChevronDown
-                        size={16}
-                        color={
-                          libraryPicker.isNarrowed ? emerald500 : primary100
-                        }
-                      />
-                    </HStack>
-                  </FadeOutScaleDown>
-                ) : (
                   <Heading className="text-white" size="2xl">
                     {t("app.library.title")}
                   </Heading>
-                )}
-              </HStack>
-              <HStack className="items-center gap-x-4">
-                <FadeOutScaleDown
-                  testID="library-search-button"
-                  onPress={handleSearchPress}
-                >
-                  <Search color={white} />
+                  <HStack className="items-center gap-x-1">
+                    <Text
+                      numberOfLines={1}
+                      className={cn("text-sm font-medium shrink", {
+                        "text-emerald-500": libraryPicker.isNarrowed,
+                        "text-primary-100": !libraryPicker.isNarrowed,
+                      })}
+                    >
+                      {libraryPicker.summary}
+                    </Text>
+                    {libraryPicker.summaryExtra && (
+                      <Text className="text-sm font-medium text-emerald-500">
+                        {libraryPicker.summaryExtra}
+                      </Text>
+                    )}
+                    <ChevronDown
+                      size={16}
+                      color={libraryPicker.isNarrowed ? emerald500 : primary100}
+                    />
+                  </HStack>
                 </FadeOutScaleDown>
-                <FadeOutScaleDown
-                  testID="library-create-button"
-                  onPress={handlePresentModalPress}
-                >
-                  <Plus color={white} />
-                </FadeOutScaleDown>
-              </HStack>
-            </HStack>
-          </AnimatedBox>
-          <Box className="relative mb-6">
-            <ScrollView
-              ref={filterScrollRef}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              className="gap-x-4"
-              contentContainerStyle={{ paddingHorizontal: 24 }}
-            >
-              {orderedFilters.map((option, index) => (
-                <FadeOutScaleDown
-                  key={option}
-                  onPress={() => handleFilterPress(option)}
-                >
-                  <Badge
-                    className={cn("rounded-full bg-primary-500 px-4 py-1", {
-                      "bg-emerald-500 text-primary-800":
-                        filter.includes(option),
-                      "mr-2": index < orderedFilters.length - 1,
-                    })}
-                  >
-                    <BadgeText className="normal-case text-md text-white">
-                      {t(`app.shared.filters.${option}`)}
-                    </BadgeText>
-                  </Badge>
-                </FadeOutScaleDown>
-              ))}
-            </ScrollView>
-            <LinearGradient
-              colors={[fadeTint, fadeTintTransparent]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              pointerEvents="none"
-              style={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: 24,
-              }}
-            />
-            <LinearGradient
-              colors={[fadeTintTransparent, fadeTint]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              pointerEvents="none"
-              style={{
-                position: "absolute",
-                right: 0,
-                top: 0,
-                bottom: 0,
-                width: 24,
-              }}
-            />
-          </Box>
-          <HStack className="px-6 pb-4 items-center justify-between">
-            <FadeOutScaleDown onPress={handlePresentSortModalPress}>
-              <HStack className="items-center gap-x-2">
-                {showSortDirection &&
-                  (activeSortDirection === "desc" ? (
-                    <ArrowDown size={16} color={white} />
-                  ) : (
-                    <ArrowUp size={16} color={white} />
-                  ))}
-                <Text className="text-white font-bold">
-                  {sortFieldLabel(activeSortField)}
-                </Text>
-              </HStack>
-            </FadeOutScaleDown>
-            <FadeOutScaleDown onPress={handleLayoutPress}>
-              {layout === "list" ? (
-                <LayoutGrid size={16} color={white} />
               ) : (
-                <List size={16} color={white} />
+                <Heading className="text-white" size="2xl">
+                  {t("app.library.title")}
+                </Heading>
               )}
-            </FadeOutScaleDown>
+            </HStack>
+            <HStack className="items-center gap-x-4">
+              <FadeOutScaleDown
+                testID="library-search-button"
+                onPress={handleSearchPress}
+              >
+                <Search color={white} />
+              </FadeOutScaleDown>
+              <FadeOutScaleDown
+                testID="library-create-button"
+                onPress={handlePresentModalPress}
+              >
+                <Plus color={white} />
+              </FadeOutScaleDown>
+            </HStack>
           </HStack>
         </AnimatedBox>
-        {/* {(isLoadingPlaylists || isLoadingStarred) && <Spinner size="large" />} */}
-        {error && (
-          <Box style={{ paddingTop: headerHeight }}>
-            <ErrorDisplay error={error} />
-          </Box>
-        )}
-      </>
+        <Box className="relative mb-6">
+          <ScrollView
+            ref={filterScrollRef}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="gap-x-4"
+            contentContainerStyle={{ paddingHorizontal: 24 }}
+          >
+            {orderedFilters.map((option, index) => (
+              <FadeOutScaleDown
+                key={option}
+                onPress={() => handleFilterPress(option)}
+              >
+                <Badge
+                  className={cn("rounded-full bg-primary-500 px-4 py-1", {
+                    "bg-emerald-500 text-primary-800": filter.includes(option),
+                    "mr-2": index < orderedFilters.length - 1,
+                  })}
+                >
+                  <BadgeText className="normal-case text-md text-white">
+                    {t(`app.shared.filters.${option}`)}
+                  </BadgeText>
+                </Badge>
+              </FadeOutScaleDown>
+            ))}
+          </ScrollView>
+          <LinearGradient
+            colors={[fadeTint, fadeTintTransparent]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            pointerEvents="none"
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: 24,
+            }}
+          />
+          <LinearGradient
+            colors={[fadeTintTransparent, fadeTint]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            pointerEvents="none"
+            style={{
+              position: "absolute",
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: 24,
+            }}
+          />
+        </Box>
+        <HStack className="px-6 pb-4 items-center justify-between">
+          <FadeOutScaleDown onPress={handlePresentSortModalPress}>
+            <HStack className="items-center gap-x-2">
+              {showSortDirection &&
+                (activeSortDirection === "desc" ? (
+                  <ArrowDown size={16} color={white} />
+                ) : (
+                  <ArrowUp size={16} color={white} />
+                ))}
+              <Text className="text-white font-bold">
+                {sortFieldLabel(activeSortField)}
+              </Text>
+            </HStack>
+          </FadeOutScaleDown>
+          <FadeOutScaleDown onPress={handleLayoutPress}>
+            {layout === "list" ? (
+              <LayoutGrid size={16} color={white} />
+            ) : (
+              <List size={16} color={white} />
+            )}
+          </FadeOutScaleDown>
+        </HStack>
+      </AnimatedBox>
+      {/* {(isLoadingPlaylists || isLoadingStarred) && <Spinner size="large" />} */}
+      {error && (
+        <Box style={{ paddingTop: headerHeight }}>
+          <ErrorDisplay error={error} />
+        </Box>
+      )}
+
       {!error && (
         <AnimatedLegendList
           recycleItems

@@ -255,7 +255,7 @@ export default function AlbumDetail() {
             ),
           });
         },
-        onError: (error) => {
+        onError: () => {
           queryClient.setQueryData(["album", id], {
             ...data,
             album: {
@@ -308,7 +308,7 @@ export default function AlbumDetail() {
             ),
           });
         },
-        onError: (error) => {
+        onError: () => {
           queryClient.setQueryData(["album", id], {
             ...data,
             album: {
@@ -405,7 +405,7 @@ export default function AlbumDetail() {
             ),
           });
         },
-        onError: (error) => {
+        onError: () => {
           toast.show({
             placement: "top",
             duration: TOAST_DURATION.default,
@@ -1110,9 +1110,9 @@ export default function AlbumDetail() {
                       contentContainerClassName="pl-6 mb-6"
                     >
                       {discoverMoreIsLoading
-                        ? loadingData(4).map((_, index) => (
+                        ? loadingData(4).map((placeholder, index) => (
                             <AlbumListItemSkeleton
-                              key={`discover-more-${index}`}
+                              key={`discover-more-${placeholder.id}`}
                               index={index}
                               layout="horizontal"
                             />

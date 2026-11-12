@@ -70,6 +70,7 @@ export default function DiscoveryScreen() {
   // Previous results now stay on screen while the new ones load, so without
   // this the list keeps its old offset and lands mid-list once they swap,
   // hiding the new top matches.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: debouncedTerm is the trigger: a new query resets the list to the top
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, [debouncedTerm]);

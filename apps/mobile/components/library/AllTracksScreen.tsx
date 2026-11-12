@@ -116,6 +116,7 @@ export default function AllTracksScreen() {
 
   // Editing the query — or the sort — swaps the result set; without this the
   // list keeps its old offset and hides the new top rows.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: debouncedQuery and sortParam are triggers: a new result set resets the list to the top
   useEffect(() => {
     fastScroll.getList()?.scrollToOffset({ offset: 0, animated: false });
   }, [debouncedQuery, sortParam, fastScroll.getList]);

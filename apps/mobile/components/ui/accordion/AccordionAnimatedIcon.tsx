@@ -1,5 +1,6 @@
 import type React from "react";
 import { useEffect } from "react";
+import type { StyleProp, ViewStyle } from "react-native";
 import Animated, {
   interpolate,
   useAnimatedStyle,
@@ -12,7 +13,7 @@ interface AnimatedIconProps {
   children: React.ReactNode;
   duration?: number;
   rotation?: number; // Rotation angle in degrees (default 180)
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const AnimatedIcon: React.FC<AnimatedIconProps> = ({
@@ -26,7 +27,7 @@ export const AnimatedIcon: React.FC<AnimatedIconProps> = ({
 
   useEffect(() => {
     animatedValue.value = withTiming(isExpanded ? 1 : 0, { duration });
-  }, [isExpanded, duration]);
+  }, [isExpanded, duration, animatedValue]);
 
   const animatedStyle = useAnimatedStyle(() => {
     const rotate = interpolate(animatedValue.value, [0, 1], [0, rotation]);

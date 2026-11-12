@@ -14,34 +14,44 @@ jest.mock("@/config/storage", () => {
   };
 });
 
+import type { PodcastChannel } from "@/services/openSubsonic/types";
+import type { Genre, PodcastSeries } from "@/services/taddyPodcasts/types";
 import {
   type PodcastProgressEntry,
   podcastProgressForScope,
   usePodcastsBase,
 } from "@/stores/podcasts";
 
+const genres = (...keys: string[]) => keys as (keyof typeof Genre)[];
+
 const get = () => usePodcastsBase.getState();
 
-const makePodcast = (overrides: Partial<any> = {}): any => ({
-  uuid: "p1",
-  name: "Pod",
-  genres: ["PODCASTSERIES_TECHNOLOGY"],
-  language: "ENGLISH",
-  imageUrl: "img",
-  authorName: "Author",
-  itunesInfo: { country: "UNITED_STATES_OF_AMERICA" },
-  ...overrides,
-});
+type PodcastOverrides = Partial<Omit<PodcastSeries, "itunesInfo">> & {
+  itunesInfo?: Partial<PodcastSeries["itunesInfo"]>;
+};
 
-const makeChannel = (overrides: Partial<any> = {}): any => ({
-  id: "c1",
-  title: "Channel",
-  url: "https://feed.example/rss.xml",
-  coverArt: "cover-1",
-  originalImageUrl: "https://img.example/cover.jpg",
-  status: "completed",
-  ...overrides,
-});
+const makePodcast = (overrides: PodcastOverrides = {}): PodcastSeries =>
+  ({
+    uuid: "p1",
+    name: "Pod",
+    genres: ["PODCASTSERIES_TECHNOLOGY"],
+    language: "ENGLISH",
+    imageUrl: "img",
+    authorName: "Author",
+    itunesInfo: { country: "UNITED_STATES_OF_AMERICA" },
+    ...overrides,
+  }) as PodcastSeries;
+
+const makeChannel = (overrides: Partial<PodcastChannel> = {}): PodcastChannel =>
+  ({
+    id: "c1",
+    title: "Channel",
+    url: "https://feed.example/rss.xml",
+    coverArt: "cover-1",
+    originalImageUrl: "https://img.example/cover.jpg",
+    status: "completed",
+    ...overrides,
+  }) as PodcastChannel;
 
 beforeEach(() => {
   usePodcastsBase.setState(
@@ -67,8 +77,8 @@ describe("podcasts store - config", () => {
   });
 
   it("setTaddyPodcastsCredentials leaves language and country untouched", () => {
-    get().setTaddyPodcastsLanguage("FRENCH" as any);
-    get().setTaddyPodcastsCountry("FRANCE" as any);
+    get().setTaddyPodcastsLanguage("FRENCH");
+    get().setTaddyPodcastsCountry("FRANCE");
     get().setTaddyPodcastsCredentials({ apiKey: "k", userId: "u" });
     const s = get();
     expect(s.taddyPodcastsLanguage).toBe("FRENCH");
@@ -184,7 +194,7 @@ describe("podcasts store - server favorites", () => {
     get().addFavoritePodcast(
       makePodcast({
         uuid: "taddy-1",
-        genres: ["G1"] as any,
+        genres: genres("G1"),
         language: "ENGLISH",
         itunesInfo: { country: "FRANCE" },
       }),
@@ -342,10 +352,10 @@ describe("podcasts store - recommendations", () => {
 
   it("getGenreRotation returns unique genres across favorites", () => {
     get().addFavoritePodcast(
-      makePodcast({ uuid: "a", genres: ["G1", "G2"] as any }),
+      makePodcast({ uuid: "a", genres: genres("G1", "G2") }),
     );
     get().addFavoritePodcast(
-      makePodcast({ uuid: "b", genres: ["G2", "G3"] as any }),
+      makePodcast({ uuid: "b", genres: genres("G2", "G3") }),
     );
     const rotation = get().getGenreRotation();
     expect(rotation.sort()).toEqual(["G1", "G2", "G3"]);
@@ -369,8 +379,8 @@ describe("podcasts store - recommendations", () => {
   });
 
   it("getRecommendationParams excludes favorited uuids without mutating state", () => {
-    get().addFavoritePodcast(makePodcast({ uuid: "a", genres: ["G1"] as any }));
-    get().addFavoritePodcast(makePodcast({ uuid: "b", genres: ["G2"] as any }));
+    get().addFavoritePodcast(makePodcast({ uuid: "a", genres: genres("G1") }));
+    get().addFavoritePodcast(makePodcast({ uuid: "b", genres: genres("G2") }));
     const before = get().lastUsedGenreIndex;
     const params = get().getRecommendationParams();
     expect(params.excludeUuids?.sort()).toEqual(["a", "b"]);
@@ -379,16 +389,16 @@ describe("podcasts store - recommendations", () => {
   });
 
   it("advanceGenreRotation increments the rotation index", () => {
-    get().addFavoritePodcast(makePodcast({ uuid: "a", genres: ["G1"] as any }));
-    get().addFavoritePodcast(makePodcast({ uuid: "b", genres: ["G2"] as any }));
+    get().addFavoritePodcast(makePodcast({ uuid: "a", genres: genres("G1") }));
+    get().addFavoritePodcast(makePodcast({ uuid: "b", genres: genres("G2") }));
     const before = get().lastUsedGenreIndex;
     get().advanceGenreRotation();
     expect(get().lastUsedGenreIndex).not.toBe(before);
   });
 
   it("advanceGenreRotation wraps to 0 at the end of rotation", () => {
-    get().addFavoritePodcast(makePodcast({ uuid: "a", genres: ["G1"] as any }));
-    get().addFavoritePodcast(makePodcast({ uuid: "b", genres: ["G2"] as any }));
+    get().addFavoritePodcast(makePodcast({ uuid: "a", genres: genres("G1") }));
+    get().addFavoritePodcast(makePodcast({ uuid: "b", genres: genres("G2") }));
     // rotation length is 2 (G1, G2)
     get().setLastUsedGenreIndex(1);
     get().advanceGenreRotation();
@@ -397,12 +407,12 @@ describe("podcasts store - recommendations", () => {
 
   it("getTopGenres orders by frequency and respects the limit", () => {
     get().addFavoritePodcast(
-      makePodcast({ uuid: "a", genres: ["G1", "G2"] as any }),
+      makePodcast({ uuid: "a", genres: genres("G1", "G2") }),
     );
     get().addFavoritePodcast(
-      makePodcast({ uuid: "b", genres: ["G2", "G3"] as any }),
+      makePodcast({ uuid: "b", genres: genres("G2", "G3") }),
     );
-    get().addFavoritePodcast(makePodcast({ uuid: "c", genres: ["G2"] as any }));
+    get().addFavoritePodcast(makePodcast({ uuid: "c", genres: genres("G2") }));
     const top3 = get().getTopGenres();
     expect(top3[0]).toBe("G2");
     expect(top3.slice(1).sort()).toEqual(["G1", "G3"]);
@@ -415,7 +425,7 @@ describe("podcasts store - recommendations", () => {
     get().addFavoritePodcast(
       makePodcast({
         uuid: "a",
-        genres: ["G1"] as any,
+        genres: genres("G1"),
         language: "ENGLISH",
         itunesInfo: { country: "FRANCE" },
       }),
@@ -423,7 +433,7 @@ describe("podcasts store - recommendations", () => {
     get().addFavoritePodcast(
       makePodcast({
         uuid: "b",
-        genres: ["G2"] as any,
+        genres: genres("G2"),
         language: "FRENCH",
         itunesInfo: { country: "FRANCE" },
       }),
@@ -431,7 +441,7 @@ describe("podcasts store - recommendations", () => {
     get().addFavoritePodcast(
       makePodcast({
         uuid: "c",
-        genres: ["G3"] as any,
+        genres: genres("G3"),
         language: "FRENCH",
         itunesInfo: { country: "UNITED_STATES_OF_AMERICA" },
       }),
@@ -445,10 +455,9 @@ describe("podcasts store - recommendations", () => {
     get().addFavoritePodcast(
       makePodcast({
         uuid: "a",
-        genres: ["G1"] as any,
+        genres: genres("G1"),
         language: undefined,
         itunesInfo: undefined,
-        country: undefined,
       }),
     );
     // wipe country fallback that addFavoritePodcast applied to keep counts empty
@@ -456,8 +465,8 @@ describe("podcasts store - recommendations", () => {
       favoritePodcasts: [
         {
           ...get().favoritePodcasts[0],
-          language: undefined as any,
-          country: undefined as any,
+          language: undefined,
+          country: undefined,
         },
       ],
     });

@@ -143,7 +143,7 @@ export default function FloatingPlayer() {
       setHidden(false);
       translateY.value = withTiming(0, { duration: 220 });
     }
-  }, [playingTrack?.id, translateY]);
+  }, [playingTrack?.id, translateY, setHidden]);
 
   useEffect(() => () => setHidden(false), [setHidden]);
 

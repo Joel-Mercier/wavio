@@ -1351,6 +1351,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                 )}
                 {track.contributors?.map((contributor, index) => (
                   <VStack
+                    // biome-ignore lint/suspicious/noArrayIndexKey: a contributor can repeat with the same role and artist
                     key={`${contributor.role}-${contributor.artist.id}-${index}`}
                     className="border-b border-primary-600 py-2"
                   >

@@ -291,7 +291,7 @@ export default function ShareListItem({ share }: { share: Share }) {
                 <Text className="text-md text-primary-100 capitalize">
                   {isPlaylist
                     ? t("app.shared.playlist_one")
-                    : hasEntries && share?.entry && share.entry[0].mediaType
+                    : hasEntries && share?.entry?.[0].mediaType
                       ? t(`app.shares.mediaType_${share.entry[0].mediaType}`, {
                           defaultValue: share.entry[0].mediaType,
                         })

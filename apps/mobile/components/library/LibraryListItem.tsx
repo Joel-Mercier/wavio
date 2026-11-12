@@ -211,7 +211,7 @@ export default function LibraryListItem({
   const musicFolderIds = useCurrentMusicFolderIds();
   const { sortParam } = useSongSort();
   const { listParams: albumListParams } = useAlbumSort();
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: i18n.language recomputes the translated labels when the locale changes
   const type = useMemo<{ id: string; label: string; url: Href }>(() => {
     if (item.isFavorites) {
       return {

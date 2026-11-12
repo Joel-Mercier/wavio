@@ -200,8 +200,11 @@ export default function ReorderPlaylistScreen() {
       {error && <ErrorDisplay error={error as Error} />}
       {!error && isLoading && !playlistData && (
         <Box className="px-6">
-          {loadingData(8).map((_, index) => (
-            <TrackListItemSkeleton key={`skeleton-${index}`} index={index} />
+          {loadingData(8).map((placeholder, index) => (
+            <TrackListItemSkeleton
+              key={`skeleton-${placeholder.id}`}
+              index={index}
+            />
           ))}
         </Box>
       )}

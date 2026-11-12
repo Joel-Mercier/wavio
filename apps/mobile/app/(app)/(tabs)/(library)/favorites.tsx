@@ -65,11 +65,7 @@ export default function FavoritesScreen() {
   const insets = useSafeAreaInsets();
   const bottomSheetSortModalRef = useRef<BottomSheetModal>(null);
   const musicFolderIds = useCurrentMusicFolderIds();
-  const {
-    data: starredData,
-    isLoading,
-    error,
-  } = useStarred2({ musicFolderIds });
+  const { data: starredData, error } = useStarred2({ musicFolderIds });
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const offlineModeEnabled = useOfflineModeEnabled();
   const sort = useApp((store) => store.favoritesSort);

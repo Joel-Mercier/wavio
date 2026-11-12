@@ -143,8 +143,10 @@ export default function ArtistDetail() {
         }
       : undefined,
   );
-  const { data: artistInfoData, isLoading: isLoadingArtistInfo } =
-    useArtistInfo2(id, ARTIST_SCREEN_SIMILAR_PARAMS);
+  const { data: artistInfoData } = useArtistInfo2(
+    id,
+    ARTIST_SCREEN_SIMILAR_PARAMS,
+  );
   // Passing the route id lets servers with the `topSongsByArtistId` extension
   // (and Jellyfin / the local library) fetch this in parallel with useArtist
   // instead of waiting on it for a name.
@@ -267,7 +269,7 @@ export default function ArtistDetail() {
             ),
           });
         },
-        onError: (error) => {
+        onError: () => {
           queryClient.setQueryData(["artist", id], {
             ...data,
             artist: {
@@ -320,7 +322,7 @@ export default function ArtistDetail() {
             ),
           });
         },
-        onError: (error) => {
+        onError: () => {
           queryClient.setQueryData(["artist", id], {
             ...data,
             artist: {
@@ -710,20 +712,15 @@ export default function ArtistDetail() {
                   }}
                 >
                   {topSongsError && <ErrorDisplay error={topSongsError} />}
-                  {isLoadingTopSongs ? (
-                    loadingData(6).map((_, index) => (
-                      <TrackListItemSkeleton
-                        key={`top-song-skeleton-${
-                          // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                          index
-                        }`}
-                        index={index}
-                        className="px-6"
-                      />
-                    ))
-                  ) : (
-                    <>
-                      {topSongs?.map((song, index) => (
+                  {isLoadingTopSongs
+                    ? loadingData(6).map((placeholder, index) => (
+                        <TrackListItemSkeleton
+                          key={`top-song-skeleton-${placeholder.id}`}
+                          index={index}
+                          className="px-6"
+                        />
+                      ))
+                    : topSongs?.map((song, index) => (
                         <TrackListItem
                           key={song.id}
                           showIndex
@@ -734,8 +731,6 @@ export default function ArtistDetail() {
                           disableSwipe
                         />
                       ))}
-                    </>
-                  )}
 
                   {!isLoadingTopSongs &&
                     !topSongsError &&

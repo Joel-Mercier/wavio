@@ -11,7 +11,9 @@ import {
   useStyleContext,
   withStyleContext,
 } from "@gluestack-ui/utils/nativewind-utils";
-import DateTimePickerNative from "@react-native-community/datetimepicker";
+import DateTimePickerNative, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import React, { useCallback, useMemo } from "react";
 import {
   Modal,
@@ -94,7 +96,7 @@ const DateTimePicker = React.forwardRef<
   ref,
 ) {
   const handleNativeChange = useCallback(
-    (event: any, selectedDate?: Date) => {
+    (_event: DateTimePickerEvent, selectedDate?: Date) => {
       // The native picker handles its own close
       if (selectedDate) {
         onChange?.(selectedDate);
@@ -194,12 +196,12 @@ function DateTimePickerNativeWrapper({
   maximumDate?: Date;
   timeZoneOffsetInMinutes?: number;
   is24Hour?: boolean;
-  onChange: (event: any, date?: Date) => void;
+  onChange: (event: DateTimePickerEvent, date?: Date) => void;
 }) {
   const { isOpen, setIsOpen } = useDateTimePicker();
 
   const handleChange = useCallback(
-    (event: any, selectedDate?: Date) => {
+    (event: DateTimePickerEvent, selectedDate?: Date) => {
       setIsOpen(false);
       onChange(event, selectedDate);
     },
@@ -254,7 +256,7 @@ function AndroidDateTimePicker({
   maximumDate?: Date;
   is24Hour?: boolean;
   isOpen: boolean;
-  onChange: (event: any, date?: Date) => void;
+  onChange: (event: DateTimePickerEvent, date?: Date) => void;
   setIsOpen: (open: boolean) => void;
 }) {
   const [step, setStep] = React.useState<"date" | "time" | null>(null);
@@ -270,7 +272,7 @@ function AndroidDateTimePicker({
   }, [isOpen, value]);
 
   const handleDateChange = React.useCallback(
-    (event: any, selectedDate?: Date) => {
+    (_event: DateTimePickerEvent, selectedDate?: Date) => {
       if (selectedDate) {
         setTempDate(selectedDate);
         setStep("time");
@@ -282,7 +284,7 @@ function AndroidDateTimePicker({
   );
 
   const handleTimeChange = React.useCallback(
-    (event: any, selectedTime?: Date) => {
+    (event: DateTimePickerEvent, selectedTime?: Date) => {
       setIsOpen(false);
       setStep(null);
       if (selectedTime && tempDate) {
@@ -344,7 +346,7 @@ function IOSDateTimePicker({
   timeZoneOffsetInMinutes?: number;
   is24Hour?: boolean;
   display: "modal" | "inline";
-  onChange: (event: any, date?: Date) => void;
+  onChange: (event: DateTimePickerEvent, date?: Date) => void;
 }) {
   const { isOpen, setIsOpen } = useDateTimePicker();
   const [tempValue, setTempValue] = React.useState(value || new Date());
@@ -357,7 +359,7 @@ function IOSDateTimePicker({
   }, [isOpen, value]);
 
   const handleChange = React.useCallback(
-    (event: any, selectedDate?: Date) => {
+    (event: DateTimePickerEvent, selectedDate?: Date) => {
       if (selectedDate) {
         setTempValue(selectedDate);
         // Update the parent immediately for live feedback
@@ -375,7 +377,16 @@ function IOSDateTimePicker({
     setIsOpen(false);
     // Revert to original value
     if (value) {
-      onChange({ type: "dismissed" }, value);
+      onChange(
+        {
+          type: "dismissed",
+          nativeEvent: {
+            timestamp: value.getTime(),
+            utcOffset: -value.getTimezoneOffset(),
+          },
+        },
+        value,
+      );
     }
   }, [setIsOpen, onChange, value]);
 

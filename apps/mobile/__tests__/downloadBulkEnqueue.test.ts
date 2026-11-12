@@ -78,7 +78,6 @@ jest.mock("expo-file-system", () => ({
   },
   File: class {
     exists = false;
-    constructor(..._args: unknown[]) {}
     delete() {}
     static downloadFileAsync(...args: unknown[]) {
       return mockDownload(...args);

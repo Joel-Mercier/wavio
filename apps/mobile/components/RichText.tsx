@@ -40,10 +40,12 @@ export default function RichText({
   return (
     <VStack className="gap-y-2">
       {paragraphs.map((para, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: parsed paragraphs have no identity and are rebuilt from the string as a whole
         <Text key={i} className={className}>
           {para.map((node, j) =>
             node.type === "link" ? (
               <Text
+                // biome-ignore lint/suspicious/noArrayIndexKey: parsed nodes have no identity and are rebuilt from the string as a whole
                 key={j}
                 className={cn(className, "underline text-emerald-500")}
                 onPress={() => handleLinkPress(node.href)}

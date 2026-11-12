@@ -49,9 +49,9 @@ export default function AudiobookShelfRow({
         contentContainerClassName="mb-6 pl-6"
       >
         {isLoading || !shelf
-          ? loadingData(4).map((_, index) => (
+          ? loadingData(4).map((placeholder, index) => (
               <PodcastSeriesListItemSkeleton
-                key={`${skeletonKey}-${index}`}
+                key={`${skeletonKey}-${placeholder.id}`}
                 index={index}
                 layout="horizontal"
               />

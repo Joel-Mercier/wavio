@@ -92,6 +92,7 @@ export default function LyricsBody({
     karaokeWordFill && visible && !!activeCueLine?.cue?.length;
   const fillPosition = useLyricsClock(offsetMs, fillEnabled);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: lyrics is the trigger: new lyrics invalidate the measured line layouts
   useEffect(() => {
     lineLayoutsRef.current = [];
   }, [lyrics]);
@@ -165,6 +166,7 @@ export default function LyricsBody({
             const translationLines = translationByLine[index] ?? [];
             return (
               <Box
+                // biome-ignore lint/suspicious/noArrayIndexKey: lyric lines repeat and line layouts are tracked by index
                 key={`${index}-${start ?? 0}`}
                 onLayout={(e) => {
                   lineLayoutsRef.current[index] = {

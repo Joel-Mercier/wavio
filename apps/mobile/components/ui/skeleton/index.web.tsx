@@ -68,9 +68,9 @@ const SkeletonText = React.forwardRef<HTMLDivElement, ISkeletonTextProps>(
               gap,
             })}`}
           >
-            {Array.from({ length: _lines }).map((_, index) => (
+            {Array.from({ length: _lines }, (_, line) => line).map((line) => (
               <div
-                key={index}
+                key={line}
                 className={`animate-pulse ${startColor} ${skeletonTextStyle({
                   class: className,
                 })}`}

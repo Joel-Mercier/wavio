@@ -1,5 +1,5 @@
 import React from "react";
-import type { LayoutChangeEvent } from "react-native";
+import type { LayoutChangeEvent, StyleProp, ViewStyle } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -10,7 +10,7 @@ interface AnimatedHeightProps {
   isExpanded: boolean;
   children: React.ReactNode;
   duration?: number;
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const AnimatedHeight: React.FC<AnimatedHeightProps> = ({
@@ -32,7 +32,7 @@ export const AnimatedHeight: React.FC<AnimatedHeightProps> = ({
   // Update progress when isExpanded changes
   React.useEffect(() => {
     progress.value = withTiming(isExpanded ? 1 : 0, { duration });
-  }, [isExpanded, duration]);
+  }, [isExpanded, duration, progress]);
 
   const animatedStyle = useAnimatedStyle(() => {
     const height = progress.value * measuredHeight.value;

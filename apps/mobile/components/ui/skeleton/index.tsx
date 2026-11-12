@@ -73,9 +73,9 @@ const SkeletonText = forwardRef<
           })}`}
           ref={ref}
         >
-          {Array.from({ length: _lines }).map((_, index) => (
+          {Array.from({ length: _lines }, (_, line) => line).map((line) => (
             <Skeleton
-              key={index}
+              key={line}
               className={`${startColor} ${skeletonTextStyle({
                 class: className,
               })}`}

@@ -43,9 +43,9 @@ export default function RadioStationRow({
           contentContainerClassName="mb-6 pl-6"
         >
           {isLoading
-            ? loadingData(skeletonCount).map((_, index) => (
+            ? loadingData(skeletonCount).map((placeholder) => (
                 <InternetRadioStationListItemSkeleton
-                  key={`${skeletonKey}-${index}`}
+                  key={`${skeletonKey}-${placeholder.id}`}
                 />
               ))
             : stations?.map((station, index) => (

@@ -5,7 +5,6 @@ import { getPlaylist, getPlaylists } from "@/services/backend/playlists";
 import type {
   AlbumID3,
   AlbumWithSongsID3,
-  ArtistID3,
   Child,
   Playlist,
   PlaylistWithSongs,
@@ -182,14 +181,6 @@ const playlistNode = (p: Playlist | PlaylistWithSongs): BrowseNode => ({
     ? i18n.t("app.carAuto.songCount", { count: p.songCount })
     : undefined,
   ...covers(p.coverArt),
-  playable: false,
-  contentStyle: "list",
-});
-
-const artistNode = (a: ArtistID3): BrowseNode => ({
-  id: `artist:${a.id}`,
-  title: a.name,
-  ...covers(a.coverArt),
   playable: false,
   contentStyle: "list",
 });

@@ -57,7 +57,7 @@ export default function FavoritesSearch() {
   };
 
   const data = useMemo(() => {
-    if (!starredData || !starredData?.starred2 || !starredData.starred2.song) {
+    if (!starredData?.starred2?.song) {
       return null;
     }
 

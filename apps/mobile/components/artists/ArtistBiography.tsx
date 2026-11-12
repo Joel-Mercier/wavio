@@ -21,7 +21,7 @@ export default function ArtistBiography() {
   const { t } = useTranslation();
   const screenBottomPadding = useScreenBottomPadding();
   const isWideLayout = useApp((s) => s.isWideLayout);
-  const { name, biography, musicBrainzId, lastFmUrl } = useLocalSearchParams<{
+  const { name, biography, musicBrainzId } = useLocalSearchParams<{
     name: string;
     biography: string;
     musicBrainzId: string;

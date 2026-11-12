@@ -488,7 +488,7 @@ export default function PlaylistDetail() {
             ),
           });
         },
-        onError: (error) => {
+        onError: () => {
           toast.show({
             placement: "top",
             duration: TOAST_DURATION.default,
@@ -613,11 +613,7 @@ export default function PlaylistDetail() {
   };
 
   const data = useMemo(() => {
-    if (
-      !playlistData ||
-      !playlistData?.playlist ||
-      !playlistData?.playlist.entry
-    ) {
+    if (!playlistData?.playlist?.entry) {
       return null;
     }
     return playlistTracks(

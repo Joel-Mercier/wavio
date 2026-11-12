@@ -431,7 +431,7 @@ export default function PlayerScreen() {
             ),
           });
         },
-        onError: (error) => {
+        onError: () => {
           toast.show({
             placement: "top",
             duration: TOAST_DURATION.default,
@@ -469,7 +469,7 @@ export default function PlayerScreen() {
             ),
           });
         },
-        onError: (error) => {
+        onError: () => {
           toast.show({
             placement: "top",
             duration: TOAST_DURATION.default,

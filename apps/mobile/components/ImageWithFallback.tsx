@@ -30,6 +30,7 @@ const ImageWithFallback = forwardRef<
 
   // Reset on source change so recycled list rows don't keep a previous
   // item's error state.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: uri is the trigger: a new source clears the previous error
   useEffect(() => {
     setErrored(false);
   }, [uri]);

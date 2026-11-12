@@ -105,7 +105,7 @@ export default function SearchResultsScreen() {
   }, [query, form]);
 
   const searchData = useMemo(() => {
-    if (!data || !data?.searchResult3) {
+    if (!data?.searchResult3) {
       return [];
     }
 

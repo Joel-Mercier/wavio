@@ -72,10 +72,7 @@ type SearchOptions = Partial<Record<CountKey | OffsetKey, number>> & {
 
 type SearchResult = Partial<Record<SectionKey, Array<{ id: string }>>>;
 
-type SearchFn<R extends SearchResult, E> = (
-  query: string,
-  opts: SearchOptions,
-) => Promise<E>;
+type SearchFn<E> = (query: string, opts: SearchOptions) => Promise<E>;
 
 // Wrap a `search2` / `search3`-shaped function so that sections which came
 // back empty on a first page are retried with the kana variants of the query.
@@ -87,10 +84,10 @@ type SearchFn<R extends SearchResult, E> = (
 // sections that were empty; their hits fill those sections in variant order,
 // deduped by id.
 export function withKanaFallback<R extends SearchResult, E>(
-  search: SearchFn<R, E>,
+  search: SearchFn<E>,
   pick: (envelope: E) => R | undefined,
   place: (envelope: E, result: R) => E,
-): SearchFn<R, E> {
+): SearchFn<E> {
   return async (query, opts) => {
     const envelope = await search(query, opts);
     const result = pick(envelope);
