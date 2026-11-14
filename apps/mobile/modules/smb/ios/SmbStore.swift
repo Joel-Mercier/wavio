@@ -60,6 +60,40 @@ actor SmbStore {
     }
   }
 
+  /**
+   Resolves once the file is gone, including when it already was. The server
+   answered every status caught here, so each is raised before `run` would
+   translate it: to the sign-in code for a refusal from a session that is already
+   authenticated (the file is read-only for this user, the password is fine), or
+   to "unreachable" for the rest. Mirrors SmbModule.kt's delete.
+   */
+  func delete(_ target: SmbEndpoint, path: String, timeoutMs: Int) async throws -> Bool {
+    try await run(target, timeoutMs) { client in
+      do {
+        try await client.deleteFile(path: path)
+      } catch let error as ErrorResponse {
+        switch error.header.status {
+        case 0xC000_0034,  // STATUS_OBJECT_NAME_NOT_FOUND
+          0xC000_003A,  // STATUS_OBJECT_PATH_NOT_FOUND
+          0xC000_0056:  // STATUS_DELETE_PENDING
+          break
+        case 0xC000_0022,  // STATUS_ACCESS_DENIED
+          0xC000_0121,  // STATUS_CANNOT_DELETE
+          0xC000_00A2:  // STATUS_MEDIA_WRITE_PROTECTED
+          throw SmbReadOnlyException(error.errorDescription ?? "The share refused the delete")
+        case 0xC000_0043:  // STATUS_SHARING_VIOLATION
+          throw SmbInUseException(error.errorDescription ?? "The file is open elsewhere")
+        default:
+          throw SmbServerException(
+            String(
+              format: "0x%08X: %@", error.header.status,
+              error.errorDescription ?? "The delete failed"))
+        }
+      }
+      return true
+    }
+  }
+
   /// Reachability and credential check in one: `run` connects, authenticates and
   /// attaches to the share before the block ever executes.
   func probe(_ target: SmbEndpoint, timeoutMs: Int) async throws -> Bool {

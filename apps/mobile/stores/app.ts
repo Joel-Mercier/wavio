@@ -278,6 +278,11 @@ interface AppStore {
   // spending someone's data plan is not a decision the app gets to make.
   scanOnWifiOnly: boolean;
   setScanOnWifiOnly: (enabled: boolean) => void;
+  // Offers "Permanently delete" on tracks, albums and artists where the backend
+  // can delete files (capabilities.fileDeletion). Off by default and enabled
+  // behind a confirmation, so nobody meets a delete action they didn't opt into.
+  fileDeletionEnabled: boolean;
+  setFileDeletionEnabled: (enabled: boolean) => void;
   // The Search tab looks through every library even while browsing is narrowed
   // to some of them (issue #259: keep singles out of album browsing, but still
   // find them by name). Off by default, which scopes search like everything else.
@@ -575,6 +580,10 @@ export const useAppBase = create<AppStore>()(
       scanOnWifiOnly: true,
       setScanOnWifiOnly: (enabled: boolean) => {
         set({ scanOnWifiOnly: enabled });
+      },
+      fileDeletionEnabled: false,
+      setFileDeletionEnabled: (enabled: boolean) => {
+        set({ fileDeletionEnabled: enabled });
       },
       searchAllLibraries: false,
       setSearchAllLibraries: (enabled: boolean) => {

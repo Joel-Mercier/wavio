@@ -2435,6 +2435,17 @@ export function togglePlayPause() {
   player.play();
 }
 
+/**
+ * Makes another queue entry current, and starts it only if something was
+ * playing: a track taken out from under a paused player mustn't resume it.
+ */
+export function moveToIndex(index: number) {
+  const queue = useQueue.getState();
+  if (!activeRemoteTarget() && !player.playing) suppressAutoplayOnce = true;
+  queue.setCurrentIndex(index);
+  suppressAutoplayOnce = false;
+}
+
 export function pause() {
   // A manual pause during a sleep fade takes over: drop the ramp and restore
   // volume so a later resume isn't stuck quiet.

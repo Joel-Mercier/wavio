@@ -178,6 +178,62 @@ describe("local library database handles", () => {
     expect(opened[0].name).toBe("local-library-local_local.db");
   });
 
+  it("runs overlapping transactions one after the other", async () => {
+    const db = await getLocalLibraryDb();
+    const events: string[] = [];
+    opened[0].withTransactionAsync.mockImplementation(
+      async (task: () => Promise<void>) => {
+        events.push("BEGIN");
+        try {
+          await task();
+        } finally {
+          events.push("END");
+        }
+      },
+    );
+    let finishFirst = () => {};
+    const first = db.withTransactionAsync(
+      () =>
+        new Promise<void>((resolve) => {
+          finishFirst = resolve;
+        }),
+    );
+    const second = db.withTransactionAsync(async () => {
+      throw new Error("constraint");
+    });
+    const third = db.withTransactionAsync(async () => {});
+
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(events).toEqual(["BEGIN"]);
+
+    finishFirst();
+    await first;
+    await expect(second).rejects.toThrow("constraint");
+    await third;
+    expect(events).toEqual(["BEGIN", "END", "BEGIN", "END", "BEGIN", "END"]);
+  });
+
+  it("waits for a queued transaction before closing", async () => {
+    const db = await getLocalLibraryDb();
+    let finish = () => {};
+    opened[0].withTransactionAsync.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const first = db.withTransactionAsync(async () => {});
+    const queued = db.withTransactionAsync(async () => {});
+    const close = closeLocalLibraryDb();
+
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(opened[0].closeAsync).not.toHaveBeenCalled();
+
+    finish();
+    await Promise.all([first, queued, close]);
+    expect(opened[0].closeAsync).toHaveBeenCalled();
+  });
+
   it("does not memoize a failed open", async () => {
     const sqlite = jest.requireMock("expo-sqlite");
     sqlite.openDatabaseAsync.mockRejectedValueOnce(new Error("disk full"));

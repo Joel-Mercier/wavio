@@ -1,4 +1,5 @@
 import axios from "axios";
+import { LocalNotFoundError } from "@/services/local/notFoundError";
 import {
   isSubsonicDataNotFound,
   isSubsonicNotAuthorized,
@@ -6,13 +7,15 @@ import {
 
 /**
  * "The thing you asked about isn't there", across every backend: Subsonic error
- * code 70, and the HTTP 404 that Jellyfin / WebDAV / SMB answer with.
+ * code 70, the HTTP 404 that Jellyfin / WebDAV / SMB answer with, and an id the
+ * local index no longer has.
  *
  * For a delete it means the requested end state already holds, so callers treat
  * it as success rather than as a failure worth surfacing.
  */
 export const isNotFoundError = (error: unknown): boolean =>
   isSubsonicDataNotFound(error) ||
+  error instanceof LocalNotFoundError ||
   (axios.isAxiosError(error) && error.response?.status === 404);
 
 /**

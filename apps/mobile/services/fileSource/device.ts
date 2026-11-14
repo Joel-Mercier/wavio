@@ -133,6 +133,24 @@ export const deviceFileSource: FileSource = {
     return path;
   },
 
+  // Synchronous native I/O, like the reads above. A SAF document URI deletes
+  // through the folder grant LocalPathsField obtained, which includes write.
+  delete(path: string): Promise<void> {
+    try {
+      const file = new File(path);
+      if (file.exists) file.delete();
+      return Promise.resolve();
+    } catch (error) {
+      return Promise.reject(
+        new FileSourceError(
+          "ERR_FS_SERVER",
+          `delete ${path}: ${error instanceof Error ? error.message : String(error)}`,
+          error,
+        ),
+      );
+    }
+  },
+
   // Nothing to reach: the files are on this device.
   probe(): Promise<boolean> {
     return Promise.resolve(true);

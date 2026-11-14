@@ -1,6 +1,7 @@
 import {
   type SmbTarget,
   smbBridgeUrl,
+  smbDelete,
   smbExists,
   smbList,
   smbProbe,
@@ -172,6 +173,15 @@ export const smbFileSource: FileSource = {
         endpoint: "playableUrl",
       });
       return address;
+    }
+  },
+
+  async delete(address: string): Promise<void> {
+    const path = pathOrThrow(address);
+    try {
+      await smbDelete(activeTarget(), path, REQUEST_TIMEOUT_MS);
+    } catch (error) {
+      throw fromSmbError(error, `delete ${path}`);
     }
   },
 

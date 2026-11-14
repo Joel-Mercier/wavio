@@ -1,6 +1,7 @@
 import {
   type BottomSheetModal,
   BottomSheetScrollView,
+  type BottomSheetScrollViewMethods,
 } from "@gorhom/bottom-sheet";
 import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { LinearGradient } from "expo-linear-gradient";
@@ -10,7 +11,6 @@ import CircleCheck from "lucide-react-native/icons/circle-check";
 import CircleCheckBig from "lucide-react-native/icons/circle-check-big";
 import EllipsisVertical from "lucide-react-native/icons/ellipsis-vertical";
 import Layers from "lucide-react-native/icons/layers";
-import Trash from "lucide-react-native/icons/trash";
 import UserRound from "lucide-react-native/icons/user-round";
 import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -33,6 +33,9 @@ import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import CollapsibleTabs, {
   type CollapsibleSceneProps,
 } from "@/components/CollapsibleTabs";
+import DangerZone, {
+  DangerZoneDeleteRow,
+} from "@/components/deletion/DangerZone";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import PlayPauseButton from "@/components/PlayPauseButton";
@@ -127,6 +130,7 @@ export default function AudiobookDetailScreen() {
   const [starting, setStarting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const menuRef = useRef<BottomSheetModal>(null);
+  const sheetScrollRef = useRef<BottomSheetScrollViewMethods>(null);
 
   const title = item ? absTitle(item) : (snapshot?.title ?? "");
   const author = item ? absAuthorName(item) : (snapshot?.author ?? "");
@@ -576,6 +580,7 @@ export default function AudiobookDetailScreen() {
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
       >
         <BottomSheetScrollView
+          ref={sheetScrollRef}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ alignItems: "center" }}
         >
@@ -652,19 +657,19 @@ export default function AudiobookDetailScreen() {
                 </FadeOutScaleDown>
               ))}
               {canDelete && !!item && (
-                <FadeOutScaleDown
-                  onPress={() => {
-                    menuRef.current?.dismiss();
-                    setDeleteOpen(true);
-                  }}
+                <DangerZone
+                  onReveal={() => sheetScrollRef.current?.scrollToEnd()}
+                  itemId={item.id}
+                  allowed
                 >
-                  <HStack className="items-center">
-                    <Trash size={24} color={white} />
-                    <Text className="ml-4 text-lg text-gray-200">
-                      {t("app.audiobooks.deleteTitle")}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
+                  <DangerZoneDeleteRow
+                    label={t("app.audiobooks.deleteTitle")}
+                    onPress={() => {
+                      menuRef.current?.dismiss();
+                      setDeleteOpen(true);
+                    }}
+                  />
+                </DangerZone>
               )}
             </VStack>
           </Box>

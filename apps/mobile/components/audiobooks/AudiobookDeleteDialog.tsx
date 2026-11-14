@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/toast";
 import { useDeleteAudiobook } from "@/hooks/audiobookshelf/useAudiobookshelf";
 import { removeAudiobookDownload } from "@/services/audiobookshelf/downloads";
+import { parseAudiobookTrackId } from "@/services/audiobookshelf/keys";
+import { removeFromQueueWhere } from "@/services/queuePrune";
 import useAudiobookshelf from "@/stores/audiobookshelf";
 import { TOAST_DURATION } from "@/utils/toastDuration";
 
@@ -52,6 +54,10 @@ export default function AudiobookDeleteDialog({
         onSuccess: () => {
           removeFavorite("book", itemId);
           removeAudiobookDownload(itemId);
+          removeFromQueueWhere(
+            (track) => parseAudiobookTrackId(track.id)?.itemId === itemId,
+            { whenNothingFollows: "stop" },
+          );
           onClose();
           onDeleted();
         },

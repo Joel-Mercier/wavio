@@ -34,6 +34,7 @@ jest.mock("@/services/openSubsonic", () => ({
 }));
 
 import { forgetDeletedPlaylist } from "@/services/forgetPlaylist";
+import { LocalNotFoundError } from "@/services/local/notFoundError";
 import { isNotFoundError, isPermanentWriteRefusal } from "@/services/notFound";
 import useOffline, { type OfflineCollection } from "@/stores/offline";
 import usePlaylists from "@/stores/playlists";
@@ -75,6 +76,13 @@ describe("isNotFoundError", () => {
     expect(
       isNotFoundError({ isAxiosError: true, response: { status: 404 } }),
     ).toBe(true);
+  });
+
+  it("matches an id the local index no longer has", () => {
+    expect(isNotFoundError(new LocalNotFoundError('album "x"'))).toBe(true);
+    const unsupported = new Error("The local library does not support jukebox");
+    unsupported.name = "LocalUnsupportedError";
+    expect(isNotFoundError(unsupported)).toBe(false);
   });
 
   it("ignores other failures", () => {

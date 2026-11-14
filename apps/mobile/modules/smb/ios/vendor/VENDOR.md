@@ -39,9 +39,17 @@ through 3.1.1 with encryption.
 
 ## Local modifications
 
-None. The sources are unmodified upstream. Because the licence is MIT we *can* patch
-in place (adding SMB 3.x signing would be the obvious reason), but anything changed
-must be recorded here so the next re-vendor doesn't silently drop it.
+Because the licence is MIT we can patch in place, but anything changed must be
+recorded here so the next re-vendor doesn't silently drop it.
+
+- **Share access for deletes** (`FileReader.swift` `fileProxy`, `Session.swift`
+  `deleteFile`). Upstream opens a file for reading with `shareAccess: [.read]` and
+  for deleting with `shareAccess: []`, so a delete fails with
+  `STATUS_SHARING_VIOLATION` while any handle on the file is open, including the
+  bridge's own read of the track playing or being prefetched. Reads now share
+  `.delete` and the delete's open shares `[.read, .write, .delete]`, which is what
+  smbj does on Android (`SMB2ShareAccess.ALL`): the delete succeeds and the server
+  removes the file once the last handle closes.
 
 ## Re-vendoring
 

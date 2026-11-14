@@ -1,6 +1,8 @@
 package expo.modules.smb
 
+import com.hierynomus.mserref.NtStatus
 import com.hierynomus.msfscc.FileAttributes
+import com.hierynomus.mssmb2.SMBApiException
 import expo.modules.kotlin.Promise
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -53,6 +55,33 @@ class SmbModule : Module() {
       submit(promise) {
         SmbConnection.withShare(target, timeoutMs.toLong()) { share ->
           share.folderExists(path) || share.fileExists(path)
+        }
+      }
+    }
+
+    // Resolves once the file is gone, including when it already was. The server
+    // answered every status caught here, so none of them is "unreachable", the
+    // catch-all translate() would pick. A refusal from a session that is already
+    // authenticated means the share or the file is read-only for this user, not
+    // that the password is wrong.
+    AsyncFunction("delete") { target: SmbTarget, path: String, timeoutMs: Int, promise: Promise ->
+      submit(promise) {
+        SmbConnection.withShare(target, timeoutMs.toLong()) { share ->
+          try {
+            share.rm(path)
+          } catch (e: SMBApiException) {
+            when {
+              e.status in DELETE_GONE -> Unit
+              e.status in DELETE_REFUSED || e.statusCode == STATUS_MEDIA_WRITE_PROTECTED ->
+                throw SmbReadOnlyException(e.message ?: "The share refused the delete")
+              e.status == NtStatus.STATUS_SHARING_VIOLATION ->
+                throw SmbInUseException(e.message ?: "The file is open elsewhere")
+              else -> throw SmbServerException(
+                "0x%08X: %s".format(e.statusCode, e.message ?: "The delete failed"),
+              )
+            }
+          }
+          true
         }
       }
     }
@@ -137,5 +166,18 @@ class SmbModule : Module() {
     // this pool, so a smaller number here silently serialises the walk and a
     // larger one is threads that never get work.
     const val LIST_THREADS = 4
+
+    val DELETE_GONE = setOf(
+      NtStatus.STATUS_OBJECT_NAME_NOT_FOUND,
+      NtStatus.STATUS_OBJECT_PATH_NOT_FOUND,
+      NtStatus.STATUS_DELETE_PENDING,
+    )
+    val DELETE_REFUSED = setOf(
+      NtStatus.STATUS_ACCESS_DENIED,
+      NtStatus.STATUS_CANNOT_DELETE,
+    )
+
+    // Missing from smbj's NtStatus enum, so it only shows up as the raw code.
+    const val STATUS_MEDIA_WRITE_PROTECTED = 0xC00000A2L
   }
 }

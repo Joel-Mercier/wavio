@@ -22,7 +22,14 @@ jest.mock("@/stores/auth", () => ({
   useAuthBase: { getState: () => ({ url: "u", username: "n" }) },
 }));
 
-jest.mock("@/services/player", () => ({ pause: jest.fn() }));
+jest.mock("@/services/player", () => ({
+  pause: jest.fn(),
+  moveToIndex: (index: number) =>
+    jest
+      .requireActual("@/stores/queue")
+      .default.getState()
+      .setCurrentIndex(index),
+}));
 
 import {
   allowArtist,

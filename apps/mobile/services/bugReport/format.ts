@@ -69,6 +69,7 @@ export const APP_SETTING_RULES: Record<AppSettingKey, FieldRule> = {
   autoBackupFolderUri: "presence",
   autoBackupKeepCount: "value",
   scanOnWifiOnly: "value",
+  fileDeletionEnabled: "value",
   searchAllLibraries: "value",
   autoLibrarySync: "value",
   autoLibrarySyncIntervalMinutes: "value",

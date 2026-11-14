@@ -21,6 +21,7 @@ import {
   getVideos,
 } from "@/services/backend/browsing";
 import type { LastFmSeed } from "@/services/lastFm/recommendations";
+import { isNotFoundError } from "@/services/notFound";
 import { fetchSimilarSongs } from "@/services/similarSongs";
 import { fetchTopSongs } from "@/services/topSongs";
 import { useServerExtensionsBase } from "@/stores/serverExtensions";
@@ -41,6 +42,8 @@ export const useAlbum = (id: string) => {
       return getAlbum(id);
     },
     refetchOnMount: "always",
+    // A deleted album won't come back on a retry; the screen says it's gone.
+    retry: (failureCount, error) => !isNotFoundError(error) && failureCount < 3,
   });
 
   return query;

@@ -1,6 +1,7 @@
 import {
   type BottomSheetModal,
   BottomSheetScrollView,
+  type BottomSheetScrollViewMethods,
 } from "@gorhom/bottom-sheet";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
@@ -47,6 +48,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
+import DangerZone, {
+  DangerZoneDeleteRow,
+} from "@/components/deletion/DangerZone";
+import DeleteFilesDialog, {
+  type DeletionTarget,
+} from "@/components/deletion/DeleteFilesDialog";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import RatingModal from "@/components/RatingModal";
 import ShareOptionsSheet from "@/components/shares/ShareOptionsSheet";
@@ -87,6 +94,7 @@ import {
   useIsTrackAvailableOffline,
 } from "@/hooks/offline";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useFileDeletionAvailable } from "@/hooks/useFileDeletion";
 import { useBlockedArtist, useHiddenReason } from "@/hooks/useHiddenTracks";
 import { useHiddenTracksToast } from "@/hooks/useHiddenTracksToast";
 import { useIsOnline } from "@/hooks/useIsOnline";
@@ -231,10 +239,14 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
+  const fileDeletionAvailable = useFileDeletionAvailable();
+  const [deleteTarget, setDeleteTarget] = useState<DeletionTarget | null>(null);
   const [clipboardText, setClipboardText] = useState("");
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
 
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+
+  const sheetScrollRef = useRef<BottomSheetScrollViewMethods>(null);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetShareOptionsModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetArtistsModalRef = useRef<BottomSheetModal>(null);
@@ -698,6 +710,15 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     setShowInfoModal(true);
   };
 
+  const handleDeleteFilePress = () => {
+    if (!track) return;
+    bottomSheetModalRef.current?.dismiss();
+    setDeleteTarget({
+      kind: "tracks",
+      tracks: [{ id: track.id, title: track.title, albumId: track.albumId }],
+    });
+  };
+
   const handleSimilarSongsPress = () => {
     if (!track) return;
     bottomSheetModalRef.current?.dismiss();
@@ -1053,6 +1074,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
       >
         <BottomSheetScrollView
+          ref={sheetScrollRef}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ alignItems: "center" }}
         >
@@ -1412,6 +1434,17 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                     </HStack>
                   </FadeOutScaleDown>
                 )}
+                {fileDeletionAvailable && (
+                  <DangerZone
+                    onReveal={() => sheetScrollRef.current?.scrollToEnd()}
+                    itemId={track.id}
+                  >
+                    <DangerZoneDeleteRow
+                      label={t("app.fileDeletion.deleteTrack")}
+                      onPress={handleDeleteFilePress}
+                    />
+                  </DangerZone>
+                )}
               </VStack>
             </Box>
           )}
@@ -1425,6 +1458,11 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         onConfirm={handleRatingChange}
         isPending={doSetRating.isPending}
         closeButtonTestID="track-rating-close-button"
+      />
+      <DeleteFilesDialog
+        isOpen={deleteTarget != null}
+        onClose={() => setDeleteTarget(null)}
+        target={deleteTarget}
       />
       <TrackInfoModal
         isOpen={showInfoModal}

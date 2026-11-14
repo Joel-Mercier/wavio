@@ -2,7 +2,12 @@ import axios from "axios";
 import { requestHeadersForUrl } from "@/services/serverHeaders";
 import { useAuthBase } from "@/stores/auth";
 import { normalizeServerUrl } from "@/utils/serverUrl";
-import { FileSourceError, fromHttpStatus, isFileSourceError } from "./errors";
+import {
+  FileSourceError,
+  fromHttpStatus,
+  fromHttpWriteStatus,
+  isFileSourceError,
+} from "./errors";
 import { httpRangeReader } from "./httpRange";
 import type { ByteReader, FileSource, RemoteEntry } from "./types";
 import {
@@ -210,6 +215,44 @@ export const webdavFileSource: FileSource = {
     return path == null ? address : urlFor(path);
   },
 
+  async delete(address: string): Promise<void> {
+    const path = webdavPathOf(address);
+    if (path == null) {
+      throw new FileSourceError(
+        "ERR_FS_NOT_FOUND",
+        `Not a WebDAV address: ${address}`,
+      );
+    }
+    const url = urlFor(path);
+    let status: number;
+    let body: unknown;
+    try {
+      const response = await axios.request({
+        method: "DELETE",
+        url,
+        headers: requestHeadersForUrl(url),
+        timeout: REQUEST_TIMEOUT_MS,
+        responseType: "text",
+        validateStatus: () => true,
+      });
+      status = response.status;
+      body = response.data;
+    } catch (error) {
+      throw fromHttpStatus(undefined, `DELETE ${path}`, error);
+    }
+    if (status === 207) status = multiStatusOutcome(body);
+    if (isGone(status)) return;
+    // Some servers (copyparty) refuse to delete a file that is already gone
+    // with a 400 rather than a 404.
+    if (
+      status === 400 &&
+      !(await webdavFileSource.exists(address).catch(() => true))
+    ) {
+      return;
+    }
+    throw fromHttpWriteStatus(status, `DELETE ${path}`);
+  },
+
   // Reachability is a yes/no by contract, so unlike `exists` this one swallows
   // the reason. Callers that need it (login, the scan gate) go through the
   // throwing paths instead.
@@ -221,3 +264,21 @@ export const webdavFileSource: FileSource = {
     }
   },
 };
+
+const isGone = (status: number) =>
+  (status >= 200 && status < 300) || status === 404 || status === 410;
+
+/**
+ * What a 207 Multi-Status answer to a DELETE really says (RFC 4918 §9.6.1):
+ * the per-resource statuses are in the body, and a server or proxy can report
+ * a refused delete (403, 423) that way. The first status that isn't a success
+ * decides; a body with none to read can't confirm anything, so it fails.
+ */
+function multiStatusOutcome(body: unknown): number {
+  if (typeof body !== "string") return 500;
+  const statuses = [...body.matchAll(/HTTP\/\d(?:\.\d)?\s+(\d{3})/g)].map(
+    (match) => Number(match[1]),
+  );
+  if (statuses.length === 0) return 500;
+  return statuses.find((status) => !isGone(status)) ?? 204;
+}

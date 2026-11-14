@@ -124,7 +124,7 @@ public class FileReader {
       let response = try await session.create(
         desiredAccess: [.genericRead],
         fileAttributes: [],
-        shareAccess: [.read],
+        shareAccess: [.read, .delete],
         createDisposition: .open,
         createOptions: [],
         name: path

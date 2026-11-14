@@ -40,6 +40,13 @@ public class SmbModule: Module {
       }
     }
 
+    AsyncFunction("delete") {
+      (target: SmbTargetRecord, path: String, timeoutMs: Int) async throws -> Bool in
+      try await failing {
+        try await SmbStore.shared.delete(target.endpoint(), path: path, timeoutMs: timeoutMs)
+      }
+    }
+
     /**
      Reachability and credential check in one, used by both the login flow and the
      periodic server probe. Rejects with a coded error so login can tell "wrong

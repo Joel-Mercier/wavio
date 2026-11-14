@@ -521,7 +521,7 @@ public class Session {
       sessionId: sessionId,
       desiredAccess: [.readAttributes, .delete, .synchronize],
       fileAttributes: [.normal],
-      shareAccess: [],
+      shareAccess: [.read, .write, .delete],
       createDisposition: .open,
       createOptions: [],
       name: path

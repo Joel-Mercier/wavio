@@ -2,10 +2,11 @@ import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useQueryClient } from "@tanstack/react-query";
 import { parseISO } from "date-fns/parseISO";
 import { type Href, useRouter } from "expo-router";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { scanErrorKey, scanStepKey } from "@/components/local/scanStep";
 import ArtNamesField from "@/components/settings/ArtNamesField";
+import ConfirmActionDialog from "@/components/settings/ConfirmActionDialog";
 import OptionsBottomSheetModal from "@/components/settings/OptionsBottomSheetModal";
 import {
   SettingsActionRow,
@@ -22,6 +23,7 @@ import {
   useGetScanStatus,
   useStartScan,
 } from "@/hooks/backend/useMediaLibraryScanning";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import useLibraryPicker from "@/hooks/useLibraryPicker";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
 import {
@@ -60,6 +62,12 @@ export default function MusicLibrarySection() {
   const setSearchAllLibraries = useApp((store) => store.setSearchAllLibraries);
   const { canPick: canPickLibrary } = useLibraryPicker();
   const setScanOnWifiOnly = useApp((store) => store.setScanOnWifiOnly);
+  const { fileDeletion } = useCapabilities();
+  const fileDeletionEnabled = useApp((store) => store.fileDeletionEnabled);
+  const setFileDeletionEnabled = useApp(
+    (store) => store.setFileDeletionEnabled,
+  );
+  const [confirmFileDeletion, setConfirmFileDeletion] = useState(false);
   const albumArtNames = useApp((store) => store.albumArtNames);
   const setAlbumArtNames = useApp((store) => store.setAlbumArtNames);
   const artistArtNames = useApp((store) => store.artistArtNames);
@@ -399,6 +407,30 @@ export default function MusicLibrarySection() {
           description={t("app.hiddenTracks.settingsDescription")}
           actionLabel={t("app.hiddenTracks.settingsAction")}
           onPress={() => router.navigate("/hidden-tracks" as Href)}
+        />
+        {fileDeletion && (
+          <SettingsToggleRow
+            label={t("app.fileDeletion.settingsLabel")}
+            description={t("app.fileDeletion.settingsDescription")}
+            value={fileDeletionEnabled}
+            onToggle={(enabled) => {
+              if (enabled) setConfirmFileDeletion(true);
+              else setFileDeletionEnabled(false);
+            }}
+          />
+        )}
+        <ConfirmActionDialog
+          isOpen={confirmFileDeletion}
+          onClose={() => setConfirmFileDeletion(false)}
+          title={t("app.fileDeletion.enableTitle")}
+          description={t("app.fileDeletion.enableDescription")}
+          confirmLabel={t("app.fileDeletion.enableConfirm")}
+          confirmVariant="danger"
+          cancelLabel={t("app.shared.cancel")}
+          onConfirm={() => {
+            setFileDeletionEnabled(true);
+            setConfirmFileDeletion(false);
+          }}
         />
       </VStack>
     </SettingsScreenScaffold>

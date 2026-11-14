@@ -1,6 +1,7 @@
 import {
   type BottomSheetModal,
   BottomSheetScrollView,
+  type BottomSheetScrollViewMethods,
 } from "@gorhom/bottom-sheet";
 import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useQueryClient } from "@tanstack/react-query";
@@ -39,6 +40,10 @@ import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import ArtistCarouselRow from "@/components/artists/ArtistCarouselRow";
 import AudioMuseSimilarArtists from "@/components/artists/AudioMuseSimilarArtists";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
+import DangerZone, {
+  DangerZoneDeleteRow,
+} from "@/components/deletion/DangerZone";
+import DeleteFilesDialog from "@/components/deletion/DeleteFilesDialog";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -78,6 +83,7 @@ import {
 import { useHasPlayableTracks, useOfflineArtist } from "@/hooks/offline";
 import { useIsPlaying } from "@/hooks/player";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useFileDeletionAvailable } from "@/hooks/useFileDeletion";
 import { useIsArtistBlocked } from "@/hooks/useHiddenTracks";
 import { useHiddenTracksToast } from "@/hooks/useHiddenTracksToast";
 import useImageColors from "@/hooks/useImageColors";
@@ -135,6 +141,7 @@ export default function ArtistDetail() {
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const sheetScrollRef = useRef<BottomSheetScrollViewMethods>(null);
   const isArtistBlocked = useIsArtistBlocked(id);
   const showHiddenToast = useHiddenTracksToast();
   const { data: serverData, isLoading, error } = useArtist(id);
@@ -192,6 +199,8 @@ export default function ArtistDetail() {
   const doUnfavorite = useUnstar();
   const doSetRating = useSetRating();
   const capabilities = useCapabilities();
+  const fileDeletionAvailable = useFileDeletionAvailable();
+  const [showDeleteFilesDialog, setShowDeleteFilesDialog] = useState(false);
   const isOnline = useIsOnline();
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
   const colors = useImageColors(
@@ -1043,6 +1052,7 @@ export default function ArtistDetail() {
         }}
       >
         <BottomSheetScrollView
+          ref={sheetScrollRef}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ alignItems: "center" }}
         >
@@ -1155,10 +1165,43 @@ export default function ArtistDetail() {
                   </HStack>
                 </FadeOutScaleDown>
               )}
+              {fileDeletionAvailable && !!data?.artist?.album?.length && (
+                // Asked about the albums rather than the artist: an artist built
+                // from tags is not a deletable item on Jellyfin, but the albums
+                // whose tracks this deletes are, and each can sit in a library
+                // with its own deletion policy.
+                <DangerZone
+                  onReveal={() => sheetScrollRef.current?.scrollToEnd()}
+                  itemId={id}
+                  checkIds={data.artist.album.map((album) => album.id)}
+                >
+                  <DangerZoneDeleteRow
+                    label={t("app.fileDeletion.deleteArtist")}
+                    onPress={() => {
+                      bottomSheetModalRef.current?.dismiss();
+                      setShowDeleteFilesDialog(true);
+                    }}
+                  />
+                </DangerZone>
+              )}
             </VStack>
           </Box>
         </BottomSheetScrollView>
       </CenteredBottomSheetModal>
+      <DeleteFilesDialog
+        isOpen={showDeleteFilesDialog}
+        onClose={() => setShowDeleteFilesDialog(false)}
+        target={
+          data?.artist
+            ? { kind: "artist", id, name: data.artist.name ?? "" }
+            : null
+        }
+        onDeleted={(result) => {
+          if (result.failed.length === 0 && !result.cancelled) {
+            goBackOrHome(router);
+          }
+        }}
+      />
       <RatingModal
         isOpen={showRatingModal}
         onClose={handleCloseRatingModal}

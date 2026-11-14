@@ -27,6 +27,10 @@ export type FileSourceErrorCode =
   | "ERR_FS_UNREACHABLE"
   /** Something answered, but it doesn't speak the protocol we need. */
   | "ERR_FS_NOT_SUPPORTED"
+  /** Signed in fine, but this user may not change the path. */
+  | "ERR_FS_READ_ONLY"
+  /** Another client has the file open in a way that keeps it from changing. */
+  | "ERR_FS_IN_USE"
   /** Reached and understood, but the server refused or failed the operation. */
   | "ERR_FS_SERVER";
 
@@ -82,6 +86,9 @@ const SMB_CODES: Record<string, FileSourceErrorCode> = {
   // iOS only: the vendored Swift client speaks SMB 2.x, so a share requiring
   // SMB 3 is unusable there while it works on Android.
   ERR_SMB_DIALECT: "ERR_FS_NOT_SUPPORTED",
+  ERR_SMB_READ_ONLY: "ERR_FS_READ_ONLY",
+  ERR_SMB_IN_USE: "ERR_FS_IN_USE",
+  ERR_SMB_SERVER: "ERR_FS_SERVER",
 };
 
 const codeOf = (error: unknown): string | undefined => {
@@ -139,4 +146,27 @@ function httpCode(status: number): FileSourceErrorCode {
   // standing in front of the share.
   if (status >= 300 && status < 400) return "ERR_FS_NOT_SUPPORTED";
   return "ERR_FS_SERVER";
+}
+
+/**
+ * Classify a failed WebDAV write.
+ *
+ * Reads keep 403 as a credentials failure, because on a listing it usually is
+ * one. On a write the credentials have just worked for every read before it, so
+ * a 403 — or the 405 a share answers for a method it won't allow, or a 423 lock
+ * — means this user may not change the file.
+ */
+export function fromHttpWriteStatus(
+  status: number | undefined,
+  context: string,
+  cause?: unknown,
+): FileSourceError {
+  if (status === 403 || status === 405 || status === 423) {
+    return new FileSourceError(
+      "ERR_FS_READ_ONLY",
+      `${context}: HTTP ${status}`,
+      cause,
+    );
+  }
+  return fromHttpStatus(status, context, cause);
 }

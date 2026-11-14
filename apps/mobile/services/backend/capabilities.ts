@@ -107,6 +107,11 @@ export type BackendCapabilities = {
   // Subsonic spec takes a single id, and Jellyfin's Items API a single
   // ParentId, so everything else picks one folder or all of them.
   multiMusicFolderSelection: boolean;
+  // Media files can be permanently deleted from here. Jellyfin has DELETE
+  // /Items (allowed per user and per item, see services/jellyfin/deletion.ts);
+  // the index-backed libraries delete through their file source. Subsonic has
+  // no delete endpoint, and Navidrome never writes to the music folder.
+  fileDeletion: boolean;
 };
 
 const SUBSONIC: BackendCapabilities = {
@@ -152,6 +157,7 @@ const SUBSONIC: BackendCapabilities = {
   shareTranscoding: false,
   musicFolderScoping: true,
   multiMusicFolderSelection: false,
+  fileDeletion: false,
 };
 
 const NAVIDROME: BackendCapabilities = {
@@ -224,6 +230,7 @@ const JELLYFIN: BackendCapabilities = {
   shareTranscoding: false,
   musicFolderScoping: true,
   multiMusicFolderSelection: false,
+  fileDeletion: true,
 };
 
 // On-device library: no remote server, everything is derived from files the
@@ -274,6 +281,7 @@ const LOCAL: BackendCapabilities = {
   shareTranscoding: false,
   musicFolderScoping: false,
   multiMusicFolderSelection: false,
+  fileDeletion: true,
 };
 
 // Network file share (WebDAV): the same on-device index as LOCAL — the indexer
