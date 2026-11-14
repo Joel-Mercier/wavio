@@ -2107,6 +2107,36 @@
 				"sleepStopsAt": "La minuterie de mise en veille arrête la lecture à {{time}} · {{remaining}} restant",
 				"sleepStopsAround": "La minuterie de mise en veille arrête la lecture autour de {{time}} · {{remaining}} restant"
 			},
+			"hiddenTracks": {
+				"hideTrack": "Hide song",
+				"unhideTrack": "Unhide song",
+				"allowTrack": "Play this song anyway",
+				"allowArtistNamed": "Allow {{name}}",
+				"blockArtist": "Don't play this artist",
+				"allowArtist": "Allow this artist",
+				"allow": "Allow",
+				"unhide": "Unhide",
+				"trackHiddenMessage": "“{{title}}” is hidden and won't play.",
+				"trackUnhiddenMessage": "“{{title}}” will play again.",
+				"trackAllowedMessage": "“{{title}}” will play even though its artist is blocked.",
+				"artistBlockedMessage": "Songs by {{name}} won't play.",
+				"artistAllowedMessage": "Songs by {{name}} will play again.",
+				"artistBlockedBanner": "You chose not to play {{name}}.",
+				"settingsLabel": "Hidden songs & artists",
+				"settingsDescription": "Review the songs you hid and the artists you chose not to play.",
+				"settingsAction": "Gérer",
+				"screenTitle": "Hidden songs & artists",
+				"empty": "Nothing is hidden",
+				"emptyHint": "Hide a song from its menu, or choose not to play an artist from their page.",
+				"clearAll": "Unhide everything",
+				"clearAllConfirmTitle": "Unhide everything?",
+				"clearAllConfirmDescription": "Every hidden song and blocked artist on this server will play again.",
+				"clearAllSuccessMessage": "Everything will play again.",
+				"blockedArtistsHeading_one": "{{count}} blocked artist",
+				"blockedArtistsHeading_other": "{{count}} blocked artists",
+				"hiddenTracksHeading_one": "{{count}} hidden song",
+				"hiddenTracksHeading_other": "{{count}} hidden songs"
+			},
 			"tracks": {
 				"addToFavorites": "Ajouter aux favoris",
 				"addToPlaylist": "Ajouter à la playlist",
@@ -2202,7 +2232,9 @@
 					"sourceUnavailable": "Impossible de lire ce morceau : le fichier n'était pas accessible. Vérifiez que votre serveur est allumé et qu'il se trouve sur le même réseau.",
 					"formatUnsupported": "Cet appareil ne peut pas lire le format audio de «{{track}}».",
 					"remoteTrackRefused": "{{name}} n'a pas pu jouer «{{track}}». Choisissez un autre titre, ou lancez la lecture  sur cet appareil.",
-					"remoteLost": "Le contact avec {{name}} a été perdu. La lecture se fait désormais sur cet appareil."
+					"remoteLost": "Le contact avec {{name}} a été perdu. La lecture se fait désormais sur cet appareil.",
+					"allTracksHidden": "Every song here is hidden or by an artist you chose not to play.",
+					"trackHidden": "This song is hidden or by an artist you chose not to play."
 				},
 				"original": "Original",
 				"playingFrom": {
