@@ -2107,6 +2107,36 @@
 				"sleepStopsAt": "Der Sleep-Timer stoppt die Wiedergabe bei {{time}} · {{remaining}} verbleibend",
 				"sleepStopsAround": "Der Sleep-Timer beendet die Wiedergabe, wenn noch etwa {{time}} · {{remaining}} übrig sind"
 			},
+			"hiddenTracks": {
+				"hideTrack": "Hide song",
+				"unhideTrack": "Unhide song",
+				"allowTrack": "Play this song anyway",
+				"allowArtistNamed": "Allow {{name}}",
+				"blockArtist": "Don't play this artist",
+				"allowArtist": "Allow this artist",
+				"allow": "Allow",
+				"unhide": "Unhide",
+				"trackHiddenMessage": "“{{title}}” is hidden and won't play.",
+				"trackUnhiddenMessage": "“{{title}}” will play again.",
+				"trackAllowedMessage": "“{{title}}” will play even though its artist is blocked.",
+				"artistBlockedMessage": "Songs by {{name}} won't play.",
+				"artistAllowedMessage": "Songs by {{name}} will play again.",
+				"artistBlockedBanner": "You chose not to play {{name}}.",
+				"settingsLabel": "Hidden songs & artists",
+				"settingsDescription": "Review the songs you hid and the artists you chose not to play.",
+				"settingsAction": "Verwalten",
+				"screenTitle": "Hidden songs & artists",
+				"empty": "Nothing is hidden",
+				"emptyHint": "Hide a song from its menu, or choose not to play an artist from their page.",
+				"clearAll": "Unhide everything",
+				"clearAllConfirmTitle": "Unhide everything?",
+				"clearAllConfirmDescription": "Every hidden song and blocked artist on this server will play again.",
+				"clearAllSuccessMessage": "Everything will play again.",
+				"blockedArtistsHeading_one": "{{count}} blocked artist",
+				"blockedArtistsHeading_other": "{{count}} blocked artists",
+				"hiddenTracksHeading_one": "{{count}} hidden song",
+				"hiddenTracksHeading_other": "{{count}} hidden songs"
+			},
 			"tracks": {
 				"addToFavorites": "Zu den Favoriten hinzufügen",
 				"addToPlaylist": "Zur Wiedergabeliste hinzufügen",
@@ -2202,7 +2232,9 @@
 					"sourceUnavailable": "Der Titel konnte nicht abgespielt werden – die Datei war nicht erreichbar. Bitte überprüfen Sie, ob Ihr Server eingeschaltet ist und sich im selben Netzwerk befindet.",
 					"formatUnsupported": "Dieses Gerät kann das Audioformat „{{track}} “ nicht wiedergeben.",
 					"remoteTrackRefused": "{{name}} „{{track}}“ konnte nicht abgespielt werden. Wähle einen anderen Titel aus oder spiele ihn auf diesem Gerät ab.",
-					"remoteLost": "Der Kontakt zu {{name}}ist unterbrochen. Die Wiedergabe auf diesem Gerät funktioniert wieder."
+					"remoteLost": "Der Kontakt zu {{name}}ist unterbrochen. Die Wiedergabe auf diesem Gerät funktioniert wieder.",
+					"allTracksHidden": "Every song here is hidden or by an artist you chose not to play.",
+					"trackHidden": "This song is hidden or by an artist you chose not to play."
 				},
 				"original": "Original",
 				"playingFrom": {
