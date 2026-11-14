@@ -2107,6 +2107,36 @@
 				"sleepStopsAt": "El temporizador de apagado automático detiene la reproducción cuando quedan {{time}} · {{remaining}} restantes",
 				"sleepStopsAround": "El temporizador de apagado automático detiene la reproducción cuando quedan aproximadamente {{time}} · {{remaining}} restantes"
 			},
+			"hiddenTracks": {
+				"hideTrack": "Hide song",
+				"unhideTrack": "Unhide song",
+				"allowTrack": "Play this song anyway",
+				"allowArtistNamed": "Allow {{name}}",
+				"blockArtist": "Don't play this artist",
+				"allowArtist": "Allow this artist",
+				"allow": "Allow",
+				"unhide": "Unhide",
+				"trackHiddenMessage": "“{{title}}” is hidden and won't play.",
+				"trackUnhiddenMessage": "“{{title}}” will play again.",
+				"trackAllowedMessage": "“{{title}}” will play even though its artist is blocked.",
+				"artistBlockedMessage": "Songs by {{name}} won't play.",
+				"artistAllowedMessage": "Songs by {{name}} will play again.",
+				"artistBlockedBanner": "You chose not to play {{name}}.",
+				"settingsLabel": "Hidden songs & artists",
+				"settingsDescription": "Review the songs you hid and the artists you chose not to play.",
+				"settingsAction": "Gestionar",
+				"screenTitle": "Hidden songs & artists",
+				"empty": "Nothing is hidden",
+				"emptyHint": "Hide a song from its menu, or choose not to play an artist from their page.",
+				"clearAll": "Unhide everything",
+				"clearAllConfirmTitle": "Unhide everything?",
+				"clearAllConfirmDescription": "Every hidden song and blocked artist on this server will play again.",
+				"clearAllSuccessMessage": "Everything will play again.",
+				"blockedArtistsHeading_one": "{{count}} blocked artist",
+				"blockedArtistsHeading_other": "{{count}} blocked artists",
+				"hiddenTracksHeading_one": "{{count}} hidden song",
+				"hiddenTracksHeading_other": "{{count}} hidden songs"
+			},
 			"tracks": {
 				"addToFavorites": "Añadir a favoritos",
 				"addToPlaylist": "Añadir a la lista de reproducción",
@@ -2202,7 +2232,9 @@
 					"sourceUnavailable": "No se ha podido reproducir esa pista: no se ha podido acceder al archivo. Comprueba que tu servidor esté encendido y conectado a la misma red.",
 					"formatUnsupported": "Este dispositivo no puede reproducir el formato de audio «{{track}}».",
 					"remoteTrackRefused": "{{name}} No se ha podido reproducir «{{track}}». Elige otra canción o reprodúcela en este dispositivo.",
-					"remoteLost": "Se ha perdido el contacto con {{name}}. La reproducción vuelve a funcionar en este dispositivo."
+					"remoteLost": "Se ha perdido el contacto con {{name}}. La reproducción vuelve a funcionar en este dispositivo.",
+					"allTracksHidden": "Every song here is hidden or by an artist you chose not to play.",
+					"trackHidden": "This song is hidden or by an artist you chose not to play."
 				},
 				"original": "Original",
 				"playingFrom": {
