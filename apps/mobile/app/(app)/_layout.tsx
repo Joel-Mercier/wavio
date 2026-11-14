@@ -81,6 +81,7 @@ import useAudioMuse from "@/stores/audioMuse";
 import useAuth, { currentAuthScope, useAuthBase } from "@/stores/auth";
 import useBookmarks from "@/stores/bookmarks";
 import useCapabilityOverrides from "@/stores/capabilityOverrides";
+import useHiddenTracks from "@/stores/hiddenTracks";
 import useLastFm from "@/stores/lastFm";
 import useLibrarySync from "@/stores/librarySync";
 import useLidarr from "@/stores/lidarr";
@@ -195,6 +196,7 @@ export default function AppLayout() {
         usePlaylists.getState().__reset();
         useActivity.getState().__reset();
         usePlayHistory.getState().__reset();
+        useHiddenTracks.getState().__reset();
         useQueue.getState().__reset();
         // Mirror cold-start hydration on the player so the new scope's restored
         // queue loads silently instead of auto-playing. Must run after the queue
@@ -272,6 +274,8 @@ export default function AppLayout() {
     useAudiobookshelf.persist.rehydrate();
     useAudiobookProgressBase.persist.rehydrate();
     useAudiobookDownloadsBase.persist.rehydrate();
+    // Ahead of the queue too: a server queue restore filters against it.
+    useHiddenTracks.persist.rehydrate();
     useQueue.persist.rehydrate();
     // The queue bakes absolute URLs, and the session may have cold-started on a
     // different route than the one it was saved under (the active route is

@@ -49,6 +49,7 @@ import { play as playLocal, startTrackRadio } from "@/services/player";
 import { reconcilePlayHistory } from "@/services/playHistory/reconcile";
 import { isSleepTimerActive, useSleepTimer } from "@/services/sleepTimer";
 import useApp from "@/stores/app";
+import { everyTrackHidden } from "@/stores/hiddenTracks";
 import usePlayHistory, { type PlayHistoryEntry } from "@/stores/playHistory";
 import useQueue, { manualLaneEnd, type QueueTrack } from "@/stores/queue";
 import { childToTrack, trackToChild } from "@/utils/childToTrack";
@@ -210,7 +211,9 @@ export default function QueueDetail() {
       // TrackListItem already disables rows that are unavailable offline, but
       // connectivity can flip between render and tap — startTrackRadio then
       // leaves the queue alone, so surface that instead of doing nothing.
-      if (await startTrackRadio(childToTrack(track))) return;
+      const seed = childToTrack(track);
+      if (await startTrackRadio(seed)) return;
+      if (everyTrackHidden([seed])) return;
       toast.show({
         placement: "top",
         duration: TOAST_DURATION.default,

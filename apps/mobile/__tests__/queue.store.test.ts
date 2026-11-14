@@ -23,6 +23,7 @@ jest.mock("@/stores/auth", () => ({
   useAuthBase: { getState: () => ({ url: "u", username: "n" }) },
 }));
 
+import useHiddenTracks from "@/stores/hiddenTracks";
 import useQueue, {
   MAX_QUEUE_TRACKS,
   peekNextTrack,
@@ -1120,5 +1121,66 @@ describe("queue store - manual lane", () => {
     get().removeAtIndices([0]);
     expect(ids()).toEqual(["b", "t2", "t3"]);
     expect(flagged()).toEqual([false, false, false]);
+  });
+});
+
+describe("queue store - hidden tracks", () => {
+  afterEach(() => {
+    useHiddenTracks.getState().clearAll();
+  });
+
+  test("enqueues skip hidden tracks and report what was inserted", () => {
+    get().setQueue(makeTracks(1), 0);
+    useHiddenTracks.getState().hideTrack("x1", {});
+    expect(get().addToQueue(makeTracks(2, "x"))).toBe(1);
+    expect(get().enqueueNext(makeTracks(1, "x"))).toBe(0);
+    expect(get().enqueueEnd(makeTracks(2, "x"))).toBe(1);
+    expect(ids()).toEqual(["t1", "x2", "x2"]);
+  });
+
+  test("a blocked artist's tracks are left out unless allowed", () => {
+    const tracks = [
+      { id: "a", url: "u://a", artistId: "blocked" },
+      { id: "b", url: "u://b", artistId: "other" },
+      { id: "c", url: "u://c", artistId: "blocked" },
+    ];
+    useHiddenTracks.getState().hideArtist("blocked", { name: "B" });
+    useHiddenTracks.getState().allowTrack("c", ["blocked"]);
+    get().setQueue(makeTracks(1), 0);
+    get().addToQueue(tracks);
+    expect(ids()).toEqual(["t1", "b", "c"]);
+  });
+
+  test("lifting an artist block drops the exceptions made against it", () => {
+    useHiddenTracks.getState().hideArtist("blocked", {});
+    useHiddenTracks.getState().allowTrack("c", ["blocked"]);
+    useHiddenTracks.getState().unhideArtist("blocked");
+    expect(useHiddenTracks.getState().allowed).toEqual({});
+  });
+
+  test("lifting one block keeps an exception's other artists", () => {
+    useHiddenTracks.getState().hideArtist("a", {});
+    useHiddenTracks.getState().hideArtist("b", {});
+    useHiddenTracks.getState().allowTrack("x", ["a", "b"]);
+    useHiddenTracks.getState().unhideArtist("a");
+    expect(useHiddenTracks.getState().allowed.x?.artistKeys).toEqual(["b"]);
+  });
+
+  test("hiding an allowed track keeps the exception for when it is unhidden", () => {
+    useHiddenTracks.getState().hideArtist("blocked", {});
+    useHiddenTracks.getState().allowTrack("c", ["blocked"]);
+    useHiddenTracks.getState().hideTrack("c", {});
+    useHiddenTracks.getState().unhideTrack("c");
+    expect(useHiddenTracks.getState().allowed.c?.artistKeys).toEqual([
+      "blocked",
+    ]);
+  });
+
+  test("restorePlayedAt puts a track back behind the cursor", () => {
+    get().setQueue(makeTracks(3), 1);
+    get().restorePlayedAt({ id: "x", url: "u://x", queuedManually: true }, 0);
+    expect(ids()).toEqual(["x", "t1", "t2", "t3"]);
+    expect(get().getCurrent()?.id).toBe("t2");
+    expect(get().queue[0].queuedManually).toBeUndefined();
   });
 });

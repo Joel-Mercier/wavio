@@ -19,7 +19,11 @@ export type PlaybackNoticeCode =
   /** A remote output (renderer, Cast receiver) would not take the track. */
   | "REMOTE_TRACK_REFUSED"
   /** A remote output stopped answering; playback came back to this device. */
-  | "REMOTE_LOST";
+  | "REMOTE_LOST"
+  /** Every track the user asked to play is hidden or by a blocked artist. */
+  | "ALL_TRACKS_HIDDEN"
+  /** The one song the user picked is hidden or by a blocked artist. */
+  | "TRACK_HIDDEN";
 
 export type PlaybackNoticeParams = Record<string, string>;
 

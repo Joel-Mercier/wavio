@@ -21,6 +21,10 @@ jest.mock("@/stores/queue", () => ({
   __esModule: true,
   default: { persist: { rehydrate: mockRehydrate("queue") } },
 }));
+jest.mock("@/stores/hiddenTracks", () => ({
+  __esModule: true,
+  default: { persist: { rehydrate: mockRehydrate("hiddenTracks") } },
+}));
 jest.mock("@/stores/recentPlays", () => ({
   __esModule: true,
   default: { persist: { rehydrate: mockRehydrate("recentPlays") } },
@@ -123,6 +127,7 @@ describe("hydratePlaybackStores", () => {
     await load().hydratePlaybackStores();
     expect(mockOrder[0]).toBe("migration");
     expect(mockOrder.slice(1).sort()).toEqual([
+      "hiddenTracks",
       "lastFm",
       "lastFmScrobblerInit",
       "listenBrainz",

@@ -137,6 +137,7 @@ import {
 } from "@/stores/app";
 import { isAudiobookshelfConnected } from "@/stores/audiobookshelf";
 import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
+import { hiddenReasonNow, withoutHiddenFromStart } from "@/stores/hiddenTracks";
 import useOffline from "@/stores/offline";
 import usePlaybackNotice from "@/stores/playbackNotice";
 import usePlayHistory from "@/stores/playHistory";
@@ -2239,14 +2240,30 @@ export async function beginRecordingSession(): Promise<() => Promise<void>> {
   };
 }
 
+// For a song picked on its own (a search hit, a tap in the car), where
+// playTracks would otherwise start whichever visible track follows it.
+export function refuseHiddenPick(track: QueueTrack | undefined): boolean {
+  if (!track || hiddenReasonNow(track) == null) return false;
+  usePlaybackNotice.getState().raise("TRACK_HIDDEN");
+  return true;
+}
+
 // Returns whether the queue was actually replaced, so callers can tell the user
 // when nothing happened.
 export function playTracks(
-  tracks: QueueTrack[],
-  startIndex = 0,
+  requested: QueueTrack[],
+  requestedStart = 0,
   options?: { shuffleFromRandom?: boolean; source?: QueueSource },
 ): boolean {
-  if (tracks.length === 0) return false;
+  if (requested.length === 0) return false;
+  const { tracks, startIndex } = withoutHiddenFromStart(
+    requested,
+    requestedStart,
+  );
+  if (tracks.length === 0) {
+    usePlaybackNotice.getState().raise("ALL_TRACKS_HIDDEN");
+    return false;
+  }
   const requestedIndex =
     options?.shuffleFromRandom && useQueue.getState().shuffle
       ? Math.floor(Math.random() * tracks.length)
@@ -2323,11 +2340,19 @@ export async function startTrackRadio(seed: QueueTrack): Promise<boolean> {
 // and `positionSeconds`, without auto-playing. Resets playbackInitialized so
 // the user's first play re-loads the track (and applies the seek reliably).
 export function restoreServerQueue(
-  tracks: QueueTrack[],
-  index: number,
-  positionSeconds: number,
+  restored: QueueTrack[],
+  restoredIndex: number,
+  restoredPositionSeconds: number,
 ) {
+  const { tracks, startIndex: index } = withoutHiddenFromStart(
+    restored,
+    restoredIndex,
+  );
   if (tracks.length === 0) return;
+  const positionSeconds =
+    tracks[index]?.id === restored[restoredIndex]?.id
+      ? restoredPositionSeconds
+      : 0;
   suppressAutoplayOnce = true;
   playbackInitialized = false;
   // Explicit null: the server queue carries no "Playing from …" context.

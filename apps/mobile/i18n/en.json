@@ -2107,6 +2107,36 @@
 				"sleepStopsAt": "Sleep timer stops playback at {{time}} · {{remaining}} left",
 				"sleepStopsAround": "Sleep timer stops playback around {{time}} · {{remaining}} left"
 			},
+			"hiddenTracks": {
+				"hideTrack": "Hide song",
+				"unhideTrack": "Unhide song",
+				"allowTrack": "Play this song anyway",
+				"allowArtistNamed": "Allow {{name}}",
+				"blockArtist": "Don't play this artist",
+				"allowArtist": "Allow this artist",
+				"allow": "Allow",
+				"unhide": "Unhide",
+				"trackHiddenMessage": "“{{title}}” is hidden and won't play.",
+				"trackUnhiddenMessage": "“{{title}}” will play again.",
+				"trackAllowedMessage": "“{{title}}” will play even though its artist is blocked.",
+				"artistBlockedMessage": "Songs by {{name}} won't play.",
+				"artistAllowedMessage": "Songs by {{name}} will play again.",
+				"artistBlockedBanner": "You chose not to play {{name}}.",
+				"settingsLabel": "Hidden songs & artists",
+				"settingsDescription": "Review the songs you hid and the artists you chose not to play.",
+				"settingsAction": "Manage",
+				"screenTitle": "Hidden songs & artists",
+				"blockedArtistsHeading_one": "{{count}} blocked artist",
+				"blockedArtistsHeading_other": "{{count}} blocked artists",
+				"hiddenTracksHeading_one": "{{count}} hidden song",
+				"hiddenTracksHeading_other": "{{count}} hidden songs",
+				"empty": "Nothing is hidden",
+				"emptyHint": "Hide a song from its menu, or choose not to play an artist from their page.",
+				"clearAll": "Unhide everything",
+				"clearAllConfirmTitle": "Unhide everything?",
+				"clearAllConfirmDescription": "Every hidden song and blocked artist on this server will play again.",
+				"clearAllSuccessMessage": "Everything will play again."
+			},
 			"tracks": {
 				"addToFavorites": "Add to favorites",
 				"addToPlaylist": "Add to playlist",
@@ -2203,7 +2233,9 @@
 					"sourceUnavailable": "Couldn't play that track — the file wasn't reachable. Check that your server is switched on and on the same network.",
 					"formatUnsupported": "This device can't play the audio format of “{{track}}”.",
 					"remoteTrackRefused": "{{name}} couldn't play “{{track}}”. Pick another track, or play on this device.",
-					"remoteLost": "Lost contact with {{name}}. Playback is back on this device."
+					"remoteLost": "Lost contact with {{name}}. Playback is back on this device.",
+					"allTracksHidden": "Every song here is hidden or by an artist you chose not to play.",
+					"trackHidden": "This song is hidden or by an artist you chose not to play."
 				},
 				"original": "Original",
 				"playingFrom": {

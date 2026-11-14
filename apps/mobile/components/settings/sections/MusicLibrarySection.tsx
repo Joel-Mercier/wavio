@@ -1,6 +1,7 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useQueryClient } from "@tanstack/react-query";
 import { parseISO } from "date-fns/parseISO";
+import { type Href, useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { scanErrorKey, scanStepKey } from "@/components/local/scanStep";
@@ -44,6 +45,7 @@ const autoSyncIntervalOptions = [15, 30, 60, 360, 1440];
 
 export default function MusicLibrarySection() {
   const { t } = useTranslation();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { showSuccessToast, showErrorToast } = useSettingsToast();
   const indexBacked = useAuthBase((store) =>
@@ -392,6 +394,12 @@ export default function MusicLibrarySection() {
             )}
           </>
         )}
+        <SettingsActionRow
+          label={t("app.hiddenTracks.settingsLabel")}
+          description={t("app.hiddenTracks.settingsDescription")}
+          actionLabel={t("app.hiddenTracks.settingsAction")}
+          onPress={() => router.navigate("/hidden-tracks" as Href)}
+        />
       </VStack>
     </SettingsScreenScaffold>
   );

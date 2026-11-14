@@ -1,5 +1,6 @@
 import useActivity from "@/stores/activity";
 import useBookmarks from "@/stores/bookmarks";
+import useHiddenTracks from "@/stores/hiddenTracks";
 import useLibrarySync from "@/stores/librarySync";
 import useLrclibPicks from "@/stores/lrclibPicks";
 import useOffline from "@/stores/offline";
@@ -69,6 +70,9 @@ export function probeCandidates(): string[] {
   )) {
     for (const trackId of order) consider(trackId);
   }
+  const hidden = useHiddenTracks.getState();
+  for (const id of Object.keys(hidden.tracks)) consider(id);
+  for (const id of Object.keys(hidden.allowed)) consider(id);
   for (const mutation of useOfflineMutations.getState().queue) {
     const action = mutation.action;
     if (action.type === "star" && action.target.kind === "song") {
@@ -101,6 +105,10 @@ export function hasLocalData(): boolean {
   if (useOfflineMutations.getState().queue.length > 0) return true;
   if (Object.keys(useBookmarks.getState().bookmarks).length > 0) return true;
   if (Object.keys(useLrclibPicks.getState().picks).length > 0) return true;
+  const hidden = useHiddenTracks.getState();
+  if (Object.keys(hidden.tracks).length > 0) return true;
+  if (Object.keys(hidden.artists).length > 0) return true;
+  if (Object.keys(hidden.allowed).length > 0) return true;
   const playlists = usePlaylists.getState();
   if (Object.keys(playlists.playlistTrackOrders).length > 0) return true;
   if (Object.keys(playlists.playlistSorts).length > 0) return true;

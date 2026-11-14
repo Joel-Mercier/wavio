@@ -14,6 +14,8 @@ import ClipboardIcon from "lucide-react-native/icons/clipboard";
 import ClipboardCheck from "lucide-react-native/icons/clipboard-check";
 import Disc3 from "lucide-react-native/icons/disc-3";
 import Download from "lucide-react-native/icons/download";
+import Eye from "lucide-react-native/icons/eye";
+import EyeOff from "lucide-react-native/icons/eye-off";
 import Heart from "lucide-react-native/icons/heart";
 import Info from "lucide-react-native/icons/info";
 import ListChecks from "lucide-react-native/icons/list-checks";
@@ -26,6 +28,7 @@ import Share2 from "lucide-react-native/icons/share-2";
 import Sparkles from "lucide-react-native/icons/sparkles";
 import Star from "lucide-react-native/icons/star";
 import User from "lucide-react-native/icons/user";
+import UserCheck from "lucide-react-native/icons/user-check";
 import Waypoints from "lucide-react-native/icons/waypoints";
 import X from "lucide-react-native/icons/x";
 import {
@@ -84,10 +87,19 @@ import {
   useIsTrackAvailableOffline,
 } from "@/hooks/offline";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useBlockedArtist, useHiddenReason } from "@/hooks/useHiddenTracks";
+import { useHiddenTracksToast } from "@/hooks/useHiddenTracksToast";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useQueueRemovalToast } from "@/hooks/useQueueRemovalToast";
 import type { ShareLinkOptions } from "@/services/backend/sharing";
 import { isTlsTrustFailure } from "@/services/errorReporting";
+import {
+  allowArtist,
+  allowTrack,
+  hideTrack,
+  restoreToQueue,
+  unhideTrack,
+} from "@/services/hiddenTracks";
 import { isPermanentWriteRefusal } from "@/services/notFound";
 import { offlineDownloadService } from "@/services/offline";
 import type { Child, PlaylistWithSongs } from "@/services/openSubsonic/types";
@@ -173,6 +185,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   const audioMuseSongPathAvailable = useAudioMuse(selectSongPathAvailable);
   const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
   const showRemovalToast = useQueueRemovalToast();
+  const showHiddenToast = useHiddenTracksToast();
 
   // Only `mutate` is referentially stable on a mutation result, and the
   // memoized `api` below reaches every track row through context — depend on
@@ -202,6 +215,9 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     downloadProgress?.status === "downloading" ||
     downloadProgress?.status === "pending";
   const [ctx, setCtx] = useState<TrackActionsContextValue>({});
+  const hiddenReason = useHiddenReason(track);
+  const blockedArtist = useBlockedArtist(track);
+  const isTrackHidden = hiddenReason != null;
   const isUpcomingInQueue = useQueue((state) =>
     track
       ? removableQueueIndices(
@@ -481,6 +497,49 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     const removed = indices.map((index) => ({ track: queue[index], index }));
     removeAtIndices(indices);
     showRemovalToast(removed);
+  };
+
+  const handleHidePress = () => {
+    if (!track) return;
+    bottomSheetModalRef.current?.dismiss();
+    const hidden = track;
+    const removed = hideTrack(hidden);
+    showHiddenToast(
+      t("app.hiddenTracks.trackHiddenMessage", { title: hidden.title }),
+      () => {
+        unhideTrack(hidden.id);
+        restoreToQueue(removed);
+      },
+    );
+  };
+
+  const handleUnhidePress = () => {
+    if (!track) return;
+    bottomSheetModalRef.current?.dismiss();
+    unhideTrack(track.id);
+    showHiddenToast(
+      t("app.hiddenTracks.trackUnhiddenMessage", { title: track.title }),
+    );
+  };
+
+  const handleAllowTrackPress = () => {
+    if (!track) return;
+    bottomSheetModalRef.current?.dismiss();
+    allowTrack(track);
+    showHiddenToast(
+      t("app.hiddenTracks.trackAllowedMessage", { title: track.title }),
+    );
+  };
+
+  const handleAllowArtistPress = () => {
+    if (!blockedArtist) return;
+    bottomSheetModalRef.current?.dismiss();
+    allowArtist(blockedArtist.id);
+    showHiddenToast(
+      t("app.hiddenTracks.artistAllowedMessage", {
+        name: blockedArtist.name || t("app.shared.unknownArtist"),
+      }),
+    );
   };
 
   const createShareLink = (options?: ShareLinkOptions) => {
@@ -1102,22 +1161,26 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                     </HStack>
                   </FadeOutScaleDown>
                 )}
-                <FadeOutScaleDown onPress={handlePlayNextPress}>
-                  <HStack className="items-center">
-                    <ListStart size={24} color={gray200} />
-                    <Text className="ml-4 text-lg text-gray-200">
-                      {t("app.tracks.playNext")}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={handleAddToQueuePress}>
-                  <HStack className="items-center">
-                    <ListPlus size={24} color={gray200} />
-                    <Text className="ml-4 text-lg text-gray-200">
-                      {t("app.tracks.addToQueue")}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
+                {!isTrackHidden && (
+                  <FadeOutScaleDown onPress={handlePlayNextPress}>
+                    <HStack className="items-center">
+                      <ListStart size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.tracks.playNext")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
+                {!isTrackHidden && (
+                  <FadeOutScaleDown onPress={handleAddToQueuePress}>
+                    <HStack className="items-center">
+                      <ListPlus size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.tracks.addToQueue")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
                 {isUpcomingInQueue && (
                   <FadeOutScaleDown
                     testID="track-remove-from-queue-button"
@@ -1127,6 +1190,64 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                       <ListX size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
                         {t("app.queue.removeFromQueue")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
+                {hiddenReason === null && (
+                  <FadeOutScaleDown
+                    testID="track-hide-button"
+                    onPress={handleHidePress}
+                  >
+                    <HStack className="items-center">
+                      <EyeOff size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.hiddenTracks.hideTrack")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
+                {hiddenReason === "track" && (
+                  <FadeOutScaleDown
+                    testID="track-unhide-button"
+                    onPress={handleUnhidePress}
+                  >
+                    <HStack className="items-center">
+                      <Eye size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.hiddenTracks.unhideTrack")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
+                {hiddenReason === "artist" && (
+                  <FadeOutScaleDown
+                    testID="track-allow-button"
+                    onPress={handleAllowTrackPress}
+                  >
+                    <HStack className="items-center">
+                      <Eye size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.hiddenTracks.allowTrack")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
+                {hiddenReason === "artist" && blockedArtist && (
+                  <FadeOutScaleDown
+                    testID="track-allow-artist-button"
+                    onPress={handleAllowArtistPress}
+                  >
+                    <HStack className="items-center">
+                      <UserCheck size={24} color={gray200} />
+                      <Text
+                        className="ml-4 text-lg text-gray-200 flex-1"
+                        numberOfLines={1}
+                      >
+                        {t("app.hiddenTracks.allowArtistNamed", {
+                          name:
+                            blockedArtist.name || t("app.shared.unknownArtist"),
+                        })}
                       </Text>
                     </HStack>
                   </FadeOutScaleDown>

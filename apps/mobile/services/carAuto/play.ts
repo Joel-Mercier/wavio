@@ -1,12 +1,16 @@
 import { getAlbum, getArtist, getSong } from "@/services/backend/browsing";
 import { getStarred2 } from "@/services/backend/lists";
 import { getPlaylist } from "@/services/backend/playlists";
-import { playTracks } from "@/services/player";
+import { playTracks, refuseHiddenPick } from "@/services/player";
 import { fetchTopSongs, supportsTopSongsById } from "@/services/topSongs";
 import type { QueueTrack } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { childToTrack } from "@/utils/childToTrack";
 import { getSnapshot } from "./tree";
+
+// A tapped track that is hidden: the head unit is told nothing played, and no
+// fallback below gets to start a neighbour in its place.
+const HIDDEN = "hidden" as const;
 
 // Track mediaIds carry their parent inline (`track|<parentId>|<songId>`) so
 // the play resolver doesn't have to guess which collection the user was in.
@@ -35,6 +39,7 @@ export async function handleBrowsePlay(
     const effectiveParent = parsed?.parentId ?? parentId;
     if (parsed && effectiveParent) {
       const enqueued = await playFromParent(mediaId, effectiveParent);
+      if (enqueued === HIDDEN) return false;
       if (enqueued) return true;
       // Snapshot miss. Android Auto can browse a tree the native side restored
       // from disk into a process where JS has only just booted, so the tap
@@ -44,6 +49,7 @@ export async function handleBrowsePlay(
         parsed.songId,
         effectiveParent,
       );
+      if (fromServer === HIDDEN) return false;
       if (fromServer) return true;
     }
     const tracks = await resolveTracksForMediaId(mediaId);
@@ -64,10 +70,11 @@ export async function handleBrowsePlay(
 async function playParentFromServer(
   songId: string,
   parentId: string,
-): Promise<boolean> {
+): Promise<boolean | typeof HIDDEN> {
   const tracks = await resolveTracksForMediaId(parentId).catch(() => null);
   if (!tracks || tracks.length === 0) return false;
   const index = tracks.findIndex((t) => t.id === songId);
+  if (index >= 0 && refuseHiddenPick(tracks[index])) return HIDDEN;
   return playTracks(tracks, Math.max(0, index));
 }
 
@@ -92,11 +99,12 @@ async function playSongById(songId: string): Promise<boolean> {
 async function playFromParent(
   trackMediaId: string,
   parentId: string,
-): Promise<boolean> {
+): Promise<boolean | typeof HIDDEN> {
   const snap = getSnapshot();
   const ids = snap.parentTracks.get(parentId);
   if (!ids || ids.length === 0) return false;
-  const startIndex = Math.max(0, ids.indexOf(trackMediaId));
+  const tapped = ids.indexOf(trackMediaId);
+  const startIndex = Math.max(0, tapped);
   const tracks: QueueTrack[] = [];
   for (const id of ids) {
     const resolved = await resolveTracksForMediaId(id);
@@ -106,7 +114,9 @@ async function playFromParent(
   // ids may include non-track entries (e.g. artist children mix songs +
   // albums). The startIndex from the id list still points at the right entry
   // because non-playables are filtered at recordParentTracks.
-  return playTracks(tracks, Math.min(startIndex, tracks.length - 1));
+  const start = Math.min(startIndex, tracks.length - 1);
+  if (tapped >= 0 && refuseHiddenPick(tracks[start])) return HIDDEN;
+  return playTracks(tracks, start);
 }
 
 // Resolve a leaf (or "play whole thing") mediaId to a QueueTrack[].

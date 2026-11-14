@@ -22,6 +22,7 @@ import { useSettingsToast } from "@/hooks/useSettingsToast";
 import { getPlaylist } from "@/services/backend/playlists";
 import type { Playlist } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
+import { everyTrackHidden } from "@/stores/hiddenTracks";
 import useQueue, { MAX_QUEUE_TRACKS, type QueueSource } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
@@ -111,7 +112,10 @@ export default function YourPlaylistsDetail() {
       if (tracks.length === 0) return;
       // Offline none of these may be downloaded, in which case playTracks
       // leaves the queue alone rather than stranding the player.
-      if (!playTracks(tracks, 0, { shuffleFromRandom: true, source })) {
+      if (
+        !playTracks(tracks, 0, { shuffleFromRandom: true, source }) &&
+        !everyTrackHidden(tracks)
+      ) {
         showErrorToast(t("app.home.playErrorMessage"));
       }
     } catch {

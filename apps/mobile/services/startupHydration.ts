@@ -10,6 +10,7 @@ import { initOfflineMutationReplay } from "@/services/offlineMutations/replay";
 import { runStorageScopeMigration } from "@/services/storageScopeMigration";
 import useApp from "@/stores/app";
 import { useAuthBase } from "@/stores/auth";
+import useHiddenTracks from "@/stores/hiddenTracks";
 import useLastFm from "@/stores/lastFm";
 import useListenBrainz from "@/stores/listenBrainz";
 import useOffline from "@/stores/offline";
@@ -74,6 +75,9 @@ export function hydratePlaybackStores(): Promise<void> {
   scopedHydration ??= Promise.all([
     Promise.resolve(useRecentPlays.persist.rehydrate()),
     Promise.resolve(useOffline.persist.rehydrate()),
+    // A play from the car filters hidden tracks; an unhydrated store would
+    // let them all through.
+    Promise.resolve(useHiddenTracks.persist.rehydrate()),
     Promise.resolve(useQueue.persist.rehydrate()),
     // Playback in the car scrobbles like any other playback, and nothing under
     // app/ mounts here to hydrate this store or start the drain loop.

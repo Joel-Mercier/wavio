@@ -10,10 +10,13 @@ import ArrowLeft from "lucide-react-native/icons/arrow-left";
 import ChevronRight from "lucide-react-native/icons/chevron-right";
 import Disc3 from "lucide-react-native/icons/disc-3";
 import EllipsisVertical from "lucide-react-native/icons/ellipsis-vertical";
+import EyeOff from "lucide-react-native/icons/eye-off";
 import Heart from "lucide-react-native/icons/heart";
 import ListMusic from "lucide-react-native/icons/list-music";
 import Star from "lucide-react-native/icons/star";
 import User from "lucide-react-native/icons/user";
+import UserCheck from "lucide-react-native/icons/user-check";
+import UserX from "lucide-react-native/icons/user-x";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking, ScrollView } from "react-native";
@@ -75,6 +78,8 @@ import {
 import { useHasPlayableTracks, useOfflineArtist } from "@/hooks/offline";
 import { useIsPlaying } from "@/hooks/player";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useIsArtistBlocked } from "@/hooks/useHiddenTracks";
+import { useHiddenTracksToast } from "@/hooks/useHiddenTracksToast";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useRefreshRecentPlay } from "@/hooks/useRefreshRecentPlay";
@@ -82,6 +87,11 @@ import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { SIMILAR_ARTISTS_DEFAULT_RESULTS } from "@/services/audioMuse/artists";
 import { getAlbum } from "@/services/backend/browsing";
+import {
+  allowArtist,
+  blockArtist,
+  restoreToQueue,
+} from "@/services/hiddenTracks";
 import { ARTIST_SCREEN_SIMILAR_PARAMS } from "@/services/mixes/artistMix";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
@@ -125,6 +135,8 @@ export default function ArtistDetail() {
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const isArtistBlocked = useIsArtistBlocked(id);
+  const showHiddenToast = useHiddenTracksToast();
   const { data: serverData, isLoading, error } = useArtist(id);
   // Offline (or before the server query resolves) fall back to the artist
   // derived from downloaded album collections so extended-offline libraries
@@ -424,6 +436,33 @@ export default function ArtistDetail() {
     }
   };
 
+  const artistDisplayName = () =>
+    data?.artist?.name || t("app.shared.unknownArtist");
+
+  const handleBlockArtistPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    const removed = blockArtist({
+      id,
+      name: data?.artist?.name,
+      coverArt: data?.artist?.coverArt,
+    });
+    showHiddenToast(
+      t("app.hiddenTracks.artistBlockedMessage", { name: artistDisplayName() }),
+      () => {
+        allowArtist(id);
+        restoreToQueue(removed);
+      },
+    );
+  };
+
+  const handleAllowArtistPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    allowArtist(id);
+    showHiddenToast(
+      t("app.hiddenTracks.artistAllowedMessage", { name: artistDisplayName() }),
+    );
+  };
+
   const shuffle = useQueue((store) => store.shuffle);
   const setShuffle = useQueue((store) => store.setShuffle);
   const handleShufflePress = () => {
@@ -622,6 +661,7 @@ export default function ArtistDetail() {
                   <ShuffleToggle
                     active={shuffle}
                     onPress={handleShufflePress}
+                    disabled={isArtistBlocked}
                   />
                   <PlayPauseButton
                     isPlaying={isActiveSource && isPlaying}
@@ -630,10 +670,34 @@ export default function ArtistDetail() {
                     iconSize={24}
                     color={white}
                     className="bg-emerald-500"
-                    disabled={!isActiveSource && !hasPlayableTracks}
+                    disabled={
+                      !isActiveSource && (!hasPlayableTracks || isArtistBlocked)
+                    }
                   />
                 </HStack>
               </HStack>
+              {isArtistBlocked && (
+                <HStack
+                  testID="artist-blocked-banner"
+                  className="items-center gap-x-4 mb-6 p-4 rounded-xl bg-primary-800"
+                >
+                  <EyeOff size={20} color={gray200} />
+                  <Text className="flex-1 text-primary-100">
+                    {t("app.hiddenTracks.artistBlockedBanner", {
+                      name: artistDisplayName(),
+                    })}
+                  </Text>
+                  <FadeOutScaleDown
+                    testID="artist-blocked-allow-button"
+                    onPress={handleAllowArtistPress}
+                    className="py-2 px-4 rounded-full border border-white"
+                  >
+                    <Text className="text-white font-bold">
+                      {t("app.hiddenTracks.allow")}
+                    </Text>
+                  </FadeOutScaleDown>
+                </HStack>
+              )}
               {(likedSongs.length > 0 || likedAlbums.length > 0) && (
                 <FadeOutScaleDown
                   href={{
@@ -1011,12 +1075,37 @@ export default function ArtistDetail() {
               {data?.artist?.id && (
                 <FadeOutScaleDown
                   onPress={handleCreateMixPress}
-                  disabled={!isOnline}
+                  disabled={!isOnline || isArtistBlocked}
                 >
                   <HStack className="items-center">
                     <Disc3 size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
                       {t("app.mixes.createArtistMix")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
+              {isArtistBlocked ? (
+                <FadeOutScaleDown
+                  testID="artist-allow-button"
+                  onPress={handleAllowArtistPress}
+                >
+                  <HStack className="items-center">
+                    <UserCheck size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.hiddenTracks.allowArtist")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              ) : (
+                <FadeOutScaleDown
+                  testID="artist-block-button"
+                  onPress={handleBlockArtistPress}
+                >
+                  <HStack className="items-center">
+                    <UserX size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.hiddenTracks.blockArtist")}
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>

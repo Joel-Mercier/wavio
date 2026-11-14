@@ -43,6 +43,7 @@ import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import { createSearchMatcher, toSearchHaystack } from "@/services/searchText";
 import useApp from "@/stores/app";
+import { everyTrackHidden } from "@/stores/hiddenTracks";
 import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import useQueue, { MAX_QUEUE_TRACKS, type QueueSource } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
@@ -310,11 +311,10 @@ export default function AllTracksScreen() {
       }
       // Offline none of these may be downloaded, in which case playTracks
       // leaves the queue alone rather than stranding the player.
+      const queueTracks = tracks.map(childToTrack);
       if (
-        !playTracks(tracks.map(childToTrack), 0, {
-          shuffleFromRandom: true,
-          source,
-        })
+        !playTracks(queueTracks, 0, { shuffleFromRandom: true, source }) &&
+        !everyTrackHidden(queueTracks)
       ) {
         showErrorToast(t("app.home.playErrorMessage"));
       }

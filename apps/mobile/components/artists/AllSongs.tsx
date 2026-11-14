@@ -37,6 +37,7 @@ import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { artistTracksFromDownloads } from "@/services/offline/collections";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
+import { everyTrackHidden } from "@/stores/hiddenTracks";
 import useQueue, { MAX_QUEUE_TRACKS, type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
@@ -178,13 +179,16 @@ export default function AllSongs() {
     try {
       const tracks = await loadPlayWindow();
       if (tracks.length === 0) return;
+      const queueTracks = tracks.map(childToTrack);
       if (
-        !playTracks(tracks.map(childToTrack), 0, {
+        !playTracks(queueTracks, 0, {
           shuffleFromRandom: true,
           source: songsSource,
         })
       ) {
-        showErrorToast(t("app.home.playErrorMessage"));
+        if (!everyTrackHidden(queueTracks)) {
+          showErrorToast(t("app.home.playErrorMessage"));
+        }
         return;
       }
       handleTrackPressCallback();

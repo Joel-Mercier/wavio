@@ -42,6 +42,7 @@ export default function HomeLayout() {
       <Stack.Screen name="downloaders/tidarr/artist/[id]" />
       <Stack.Screen name="downloaders/tidarr/album/[id]" />
       <Stack.Screen name="trusted-certificates" />
+      <Stack.Screen name="hidden-tracks" />
       <Stack.Screen name="offline-downloads" />
       <Stack.Screen name="pending-changes" />
       <Stack.Screen name="servers" />

@@ -1,6 +1,7 @@
 import type { Child } from "@/services/openSubsonic/types";
 import { fetchSimilarSongs } from "@/services/similarSongs";
 import { fetchTopSongs } from "@/services/topSongs";
+import { withoutHidden } from "@/stores/hiddenTracks";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 
@@ -45,7 +46,7 @@ export async function fetchEndlessExtension(
 
   const existingIds = new Set(useQueue.getState().queue.map((t) => t.id));
   return (
-    songs
+    withoutHidden(songs)
       .filter((s) => !existingIds.has(s.id))
       // Marked as picked by the app rather than by the listener. Last.fm's
       // track.scrobble takes this as `chosenByUser` and weights its

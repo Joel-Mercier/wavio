@@ -7,6 +7,7 @@ const mockGetSong = jest.fn();
 const mockGetPlaylist = jest.fn();
 const mockGetStarred2 = jest.fn();
 const mockPlayTracks = jest.fn();
+const mockRefuseHiddenPick = jest.fn();
 let mockRecentPlays: Record<string, unknown>[] = [];
 
 const emptySnapshot = () => ({
@@ -34,6 +35,7 @@ jest.mock("@/services/backend/lists", () => ({
 
 jest.mock("@/services/player", () => ({
   playTracks: (...args: unknown[]) => mockPlayTracks(...args),
+  refuseHiddenPick: (...args: unknown[]) => mockRefuseHiddenPick(...args),
 }));
 
 jest.mock("@/services/topSongs", () => ({
@@ -64,6 +66,7 @@ beforeEach(() => {
   mockGetPlaylist.mockReset();
   mockGetStarred2.mockReset();
   mockPlayTracks.mockReset().mockReturnValue(true);
+  mockRefuseHiddenPick.mockReset().mockReturnValue(false);
   mockRecentPlays = [];
   mockSnapshot = emptySnapshot();
 });
@@ -82,6 +85,18 @@ describe("handleBrowsePlay with a cold snapshot", () => {
       [song("s1"), song("s2"), song("s3")],
       1,
     );
+  });
+
+  it("plays nothing when the tapped track is hidden", async () => {
+    mockGetAlbum.mockResolvedValue({
+      album: { song: [song("s1"), song("s2"), song("s3")] },
+    });
+    mockRefuseHiddenPick.mockImplementation(
+      (track: { id: string }) => track.id === "s2",
+    );
+
+    await expect(handleBrowsePlay("track|album:a1|s2")).resolves.toBe(false);
+    expect(mockPlayTracks).not.toHaveBeenCalled();
   });
 
   it("fetches the playlist and starts at the tapped track", async () => {

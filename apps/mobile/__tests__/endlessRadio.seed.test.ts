@@ -14,6 +14,9 @@ jest.mock("@/services/topSongs", () => ({
   fetchTopSongs: (...args: unknown[]) => mockFetchTopSongs(...args),
 }));
 
+jest.mock("@/stores/hiddenTracks", () => ({
+  withoutHidden: <T>(tracks: T[]) => tracks,
+}));
 jest.mock("@/stores/queue", () => ({
   __esModule: true,
   default: { getState: () => ({ queue: mockQueue }) },

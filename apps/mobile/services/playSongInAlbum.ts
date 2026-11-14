@@ -2,7 +2,7 @@ import { queryClient } from "@/config/queryClient";
 import { getAlbum } from "@/services/backend/browsing";
 import { getIsEffectivelyOnline } from "@/services/network";
 import type { AlbumWithSongsID3, Child } from "@/services/openSubsonic/types";
-import { playTracks } from "@/services/player";
+import { playTracks, refuseHiddenPick } from "@/services/player";
 import type { QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { childToTrack } from "@/utils/childToTrack";
@@ -32,7 +32,8 @@ async function resolveAlbum(
 // Plays `songId` with its whole album as the queue context, starting at that
 // song — the same queue tapping it inside the album screen builds. False when
 // the album can't be resolved (offline without a cached copy, or a song the
-// album no longer lists) so the caller can pick its own fallback.
+// album no longer lists) so the caller can pick its own fallback. A hidden song
+// counts as handled: the user is told, and nothing else plays in its place.
 export async function playAlbumFromSong(
   songId: string,
   albumId: string | undefined,
@@ -41,13 +42,15 @@ export async function playAlbumFromSong(
   const songs = album?.song ?? [];
   const index = songs.findIndex((s) => s.id === songId);
   if (!album || index < 0) return false;
+  const tracks = songs.map(childToTrack);
+  if (refuseHiddenPick(tracks[index])) return true;
   const source: QueueSource = {
     type: "album",
     id: album.id,
     name: album.name,
     coverArt: album.coverArt,
   };
-  const started = playTracks(songs.map(childToTrack), index, { source });
+  const started = playTracks(tracks, index, { source });
   if (started) {
     useRecentPlays.getState().addRecentPlay({
       id: album.id,
@@ -61,5 +64,7 @@ export async function playAlbumFromSong(
 
 export async function playSongInAlbum(song: Child): Promise<boolean> {
   if (await playAlbumFromSong(song.id, song.albumId)) return true;
-  return playTracks([childToTrack(song)], 0);
+  const track = childToTrack(song);
+  if (refuseHiddenPick(track)) return true;
+  return playTracks([track], 0);
 }

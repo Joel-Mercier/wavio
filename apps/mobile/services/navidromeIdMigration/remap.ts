@@ -10,6 +10,7 @@ import {
 import useActivity from "@/stores/activity";
 import { currentAuthScope } from "@/stores/auth";
 import useBookmarks from "@/stores/bookmarks";
+import useHiddenTracks from "@/stores/hiddenTracks";
 import useLibrarySync from "@/stores/librarySync";
 import useLrclibPicks from "@/stores/lrclibPicks";
 import useOffline from "@/stores/offline";
@@ -180,6 +181,21 @@ function collectIds(): Set<string> {
   for (const key of Object.keys(useBookmarks.getState().bookmarks)) add(key);
 
   for (const key of Object.keys(useLrclibPicks.getState().picks)) add(key);
+
+  const hidden = useHiddenTracks.getState();
+  for (const [key, entry] of Object.entries(hidden.tracks)) {
+    add(key);
+    add(entry.albumId);
+    addArtwork(entry.coverArt);
+  }
+  for (const [key, entry] of Object.entries(hidden.artists)) {
+    add(key);
+    addArtwork(entry.coverArt);
+  }
+  for (const [key, entry] of Object.entries(hidden.allowed)) {
+    add(key);
+    for (const artistKey of entry.artistKeys) add(artistKey);
+  }
 
   const playlists = usePlaylists.getState();
   for (const key of Object.keys(playlists.playlistSorts)) add(key);
@@ -423,6 +439,32 @@ function applyRemap(remap: Remap): void {
 
   useLrclibPicks.setState({
     picks: remapKeys(useLrclibPicks.getState().picks, remap),
+  });
+
+  const hidden = useHiddenTracks.getState();
+  useHiddenTracks.setState({
+    tracks: Object.fromEntries(
+      Object.entries(hidden.tracks).map(([key, entry]) => [
+        remap(key),
+        {
+          ...entry,
+          albumId: remapOptional(entry.albumId, remap),
+          coverArt: remapArtworkId(entry.coverArt, remap),
+        },
+      ]),
+    ),
+    artists: Object.fromEntries(
+      Object.entries(hidden.artists).map(([key, entry]) => [
+        remap(key),
+        { ...entry, coverArt: remapArtworkId(entry.coverArt, remap) },
+      ]),
+    ),
+    allowed: Object.fromEntries(
+      Object.entries(hidden.allowed).map(([key, entry]) => [
+        remap(key),
+        { ...entry, artistKeys: entry.artistKeys.map(remap) },
+      ]),
+    ),
   });
 
   const playlists = usePlaylists.getState();
