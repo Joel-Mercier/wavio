@@ -2049,6 +2049,34 @@
 				"sleepStopsAt": "睡眠定时器将在剩余时间 {{time}} · {{remaining}} 时停止播放",
 				"sleepStopsAround": "睡眠定时器将在剩余时间约为 {{time}} · {{remaining}} 时停止播放"
 			},
+			"hiddenTracks": {
+				"hideTrack": "Hide song",
+				"unhideTrack": "Unhide song",
+				"allowTrack": "Play this song anyway",
+				"allowArtistNamed": "Allow {{name}}",
+				"blockArtist": "Don't play this artist",
+				"allowArtist": "Allow this artist",
+				"allow": "Allow",
+				"unhide": "Unhide",
+				"trackHiddenMessage": "“{{title}}” is hidden and won't play.",
+				"trackUnhiddenMessage": "“{{title}}” will play again.",
+				"trackAllowedMessage": "“{{title}}” will play even though its artist is blocked.",
+				"artistBlockedMessage": "Songs by {{name}} won't play.",
+				"artistAllowedMessage": "Songs by {{name}} will play again.",
+				"artistBlockedBanner": "You chose not to play {{name}}.",
+				"settingsLabel": "Hidden songs & artists",
+				"settingsDescription": "Review the songs you hid and the artists you chose not to play.",
+				"settingsAction": "管理",
+				"screenTitle": "Hidden songs & artists",
+				"empty": "Nothing is hidden",
+				"emptyHint": "Hide a song from its menu, or choose not to play an artist from their page.",
+				"clearAll": "Unhide everything",
+				"clearAllConfirmTitle": "Unhide everything?",
+				"clearAllConfirmDescription": "Every hidden song and blocked artist on this server will play again.",
+				"clearAllSuccessMessage": "Everything will play again.",
+				"blockedArtistsHeading_other": "{{count}} blocked artists",
+				"hiddenTracksHeading_other": "{{count}} hidden songs"
+			},
 			"tracks": {
 				"addToFavorites": "加入收藏",
 				"addToPlaylist": "加入歌单",
@@ -2142,7 +2170,9 @@
 					"sourceUnavailable": "无法播放该音轨——无法访问该文件。请检查您的服务器是否已开启，并且是否处于同一网络中。",
 					"formatUnsupported": "该设备无法播放“{{track}} ”格式的音频。",
 					"remoteTrackRefused": "{{name}} 无法播放“{{track}}”。请选择另一首歌曲，或在此设备上播放。",
-					"remoteLost": "已与 {{name}}失去联系。该设备已恢复播放功能。"
+					"remoteLost": "已与 {{name}}失去联系。该设备已恢复播放功能。",
+					"allTracksHidden": "Every song here is hidden or by an artist you chose not to play.",
+					"trackHidden": "This song is hidden or by an artist you chose not to play."
 				},
 				"original": "原始",
 				"playingFrom": {
