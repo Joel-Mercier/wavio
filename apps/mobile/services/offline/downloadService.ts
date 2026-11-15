@@ -100,6 +100,14 @@ const FAILURE_CIRCUIT_BREAK = 3;
 
 const QUEUE_RETRY_BACKOFF_STEPS_MS = [5_000, 15_000, 60_000, 300_000];
 
+// Navidrome 0.62+ can cap concurrent transcodes (Transcoding.MaxConcurrent /
+// MaxConcurrentPerUser) and answers the excess with 429 and `Retry-After: 5`.
+// The native downloader doesn't surface the header, so its value is assumed. A
+// 429 lowers the concurrency to what the server was serving, and each quiet
+// THROTTLE_RECOVERY_MS raises it back by one.
+const THROTTLE_RETRY_MS = 5_000;
+const THROTTLE_RECOVERY_MS = 60_000;
+
 // How long the queue stays parked after the device reports no free space.
 // Without it, a full disk fails every remaining track in seconds and the whole
 // queue lands in "failed" — a state the user can only recover by re-queuing
@@ -162,6 +170,7 @@ type DownloadFailureKind =
   | "missing-file"
   | "server-error"
   | "tls"
+  | "throttled"
   | "unknown";
 
 function downloadFailureKind(error: unknown): DownloadFailureKind {
@@ -177,6 +186,7 @@ function downloadFailureKind(error: unknown): DownloadFailureKind {
   // connectivity, it's a certificate the device won't trust. Only a fresh sign-in
   // can re-trust it, so it gets its own kind, message and queue park.
   if (isTlsTrustFailure(error)) return "tls";
+  if (/response has status:? 429\b/.test(message)) return "throttled";
   // Kept in lockstep with NATIVE_ENVIRONMENT_RE in services/errorReporting.ts.
   // An HTTP/2 `StreamResetException: stream was reset` is the same connectivity
   // class as a reset connection, phrased differently by okhttp.
@@ -227,6 +237,10 @@ export class OfflineDownloadService {
   private storageFullUntil = 0;
   // Same, for a server certificate the device won't trust.
   private tlsBlockedUntil = 0;
+  private concurrencyCap = MAX_CONCURRENT_DOWNLOADS;
+  private capChangedAt = 0;
+  private throttledUntil = 0;
+  private throttleTimer: BackgroundTimer | null = null;
   private removingCollections: Set<string> = new Set();
   private removingListeners: Set<() => void> = new Set();
 
@@ -275,6 +289,27 @@ export class OfflineDownloadService {
       this.consecutiveFailures = 0;
       this.processQueue();
     }, delay);
+  }
+
+  private scheduleThrottleRetry(): void {
+    if (this.throttleTimer) return;
+    this.throttleTimer = setBackgroundTimeout(
+      () => {
+        this.throttleTimer = null;
+        this.processQueue();
+      },
+      Math.max(0, this.throttledUntil - Date.now()),
+    );
+  }
+
+  private resetThrottle(): void {
+    this.concurrencyCap = MAX_CONCURRENT_DOWNLOADS;
+    this.capChangedAt = 0;
+    this.throttledUntil = 0;
+    if (this.throttleTimer) {
+      clearBackgroundTimer(this.throttleTimer);
+      this.throttleTimer = null;
+    }
   }
 
   private scheduleQueueRetry(): void {
@@ -438,6 +473,7 @@ export class OfflineDownloadService {
     this.consecutiveFailures = 0;
     this.storageFullUntil = 0;
     this.tlsBlockedUntil = 0;
+    this.resetThrottle();
     if (this.retryTimer) {
       clearBackgroundTimer(this.retryTimer);
       this.retryTimer = null;
@@ -528,7 +564,12 @@ export class OfflineDownloadService {
       return;
     }
 
-    while (this.activeIds.size < MAX_CONCURRENT_DOWNLOADS) {
+    if (Date.now() < this.throttledUntil) {
+      this.scheduleThrottleRetry();
+      return;
+    }
+
+    while (this.activeIds.size < this.concurrencyCap) {
       const next = offlineStore.downloadQueue.find(
         (t) => !this.isInFlight(t.id),
       );
@@ -609,6 +650,13 @@ export class OfflineDownloadService {
       this.land(await this.writeTrackToDisk(track, generation));
       this.attempts.delete(track.id);
       this.consecutiveFailures = 0;
+      if (
+        this.concurrencyCap < MAX_CONCURRENT_DOWNLOADS &&
+        Date.now() - this.capChangedAt >= THROTTLE_RECOVERY_MS
+      ) {
+        this.concurrencyCap++;
+        this.capChangedAt = Date.now();
+      }
       // A file landed, so there is space again — unless one of the downloads
       // running alongside this one hit ENOSPC while it wrote. This one started
       // before that park, so a small file squeezing onto an almost-full disk
@@ -623,10 +671,20 @@ export class OfflineDownloadService {
         this.tlsBlockedUntil = 0;
       }
     } catch (error) {
+      const kind = downloadFailureKind(error);
       const attempts = (this.attempts.get(track.id) ?? 0) + 1;
       this.attempts.set(track.id, attempts);
-      this.consecutiveFailures++;
-      const kind = downloadFailureKind(error);
+      // The server is busy, not broken: this track is fine and the circuit
+      // breaker would only stack its own backoff on top of the server's.
+      if (kind === "throttled") {
+        this.attempts.set(track.id, attempts - 1);
+        // Still counted in activeIds, so the others are what the server serves.
+        this.concurrencyCap = Math.max(1, this.activeIds.size - 1);
+        this.capChangedAt = Date.now();
+        this.throttledUntil = Date.now() + THROTTLE_RETRY_MS;
+      } else {
+        this.consecutiveFailures++;
+      }
       // A full device says nothing about *this* track and won't empty itself
       // between attempts — retrying would burn the track's attempts and then
       // every other queued track's, turning the whole queue into failures the
@@ -646,6 +704,7 @@ export class OfflineDownloadService {
       const retryable =
         kind === "disk-full" ||
         kind === "tls" ||
+        kind === "throttled" ||
         error instanceof DownloadCancelledError ||
         !getIsEffectivelyOnline() ||
         attempts < MAX_TRACK_ATTEMPTS;

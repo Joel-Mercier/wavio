@@ -1,5 +1,5 @@
 diff --git a/android/src/main/java/expo/modules/filesystem/FileSystemDownload.kt b/android/src/main/java/expo/modules/filesystem/FileSystemDownload.kt
-index 0222bdc1bf39968fc4ecc43fa81c8fd0bd1326c5..95a499ab5b26602c6d201b6e6029e011a808db52 100644
+index 0222bdc1bf39968fc4ecc43fa81c8fd0bd1326c5..886de3270b4567d89f780b7a5664bf3f6c4a9b78 100644
 --- a/android/src/main/java/expo/modules/filesystem/FileSystemDownload.kt
 +++ b/android/src/main/java/expo/modules/filesystem/FileSystemDownload.kt
 @@ -1,6 +1,7 @@
@@ -60,6 +60,30 @@ index 0222bdc1bf39968fc4ecc43fa81c8fd0bd1326c5..95a499ab5b26602c6d201b6e6029e011
  
  /**
   * Executes a file download with optional progress reporting.
+@@ -93,12 +117,17 @@ suspend fun downloadFileWithStore(
+       }
+ 
+       val body = activeResponse.body ?: throw UnableToDownloadException("response body is null")
+-      body.byteStream().use { input ->
+-        FileOutputStream(destination).use { output ->
+-          if (downloadUUID != null) {
+-            streamWithProgress(input, output, body.contentLength(), downloadUUID, emitProgress)
+-          } else {
+-            input.copyTo(output)
++      // This coroutine resumes on the AsyncFunction queue, one thread shared by every
++      // Expo module. A blocking copy there turned concurrent downloads into one transfer
++      // at a time and stalled every other module's async calls for the whole download.
++      withContext(Dispatchers.IO) {
++        body.byteStream().use { input ->
++          FileOutputStream(destination).use { output ->
++            if (downloadUUID != null) {
++              streamWithProgress(input, output, body.contentLength(), downloadUUID, emitProgress)
++            } else {
++              input.copyTo(output)
++            }
+           }
+         }
+       }
 diff --git a/android/src/main/java/expo/modules/filesystem/FileSystemDownloadTask.kt b/android/src/main/java/expo/modules/filesystem/FileSystemDownloadTask.kt
 index bbf971218a9624c4f0c8619f3f245b7caa347bd3..e39cc8ef7610d61414ee4c2d85374bdc56fc5ded 100644
 --- a/android/src/main/java/expo/modules/filesystem/FileSystemDownloadTask.kt
