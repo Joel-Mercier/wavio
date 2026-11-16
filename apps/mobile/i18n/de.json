@@ -274,19 +274,102 @@
 				}
 			},
 			"carAuto": {
-				"home": "Start",
-				"recentlyPlayed": "Zuletzt gehört",
+				"unknownTitle": "Unbekannter Titel",
+				"offlineNotice": "Server kann nicht erreicht werden",
+				"offlineNoticeSubtitle": "Downloads durchsuchen",
+				"sections": {
+					"home": "Start",
+					"library": "Bibliothek",
+					"downloads": "Downloads",
+					"recent": "Aktuell",
+					"favorites": "Favoriten",
+					"playlists": "Wiedergabelisten",
+					"albums": "Alben",
+					"artists": "Interpreten",
+					"genres": "Genres",
+					"radio": "Radio",
+					"mixes": "Mischungen",
+					"podcasts": "Podcasts",
+					"audiobooks": "Hörbücher"
+				},
+				"rows": {
+					"recentlyPlayed": "Zuletzt gespielt",
+					"newest": "Zuletzt hinzugefügt",
+					"frequent": "Meistgehört",
+					"highest": "Am besten bewertet",
+					"random": "Zufällig",
+					"leastPlayed": "Am wenigsten gespielt",
+					"starredAlbums": "Lieblingsalben",
+					"mixes": "Mixe für dich"
+				},
+				"favorites": {
+					"songs": "Lieblingslieder",
+					"albums": "Lieblingsalben",
+					"artists": "Lieblings-Künstler"
+				},
+				"downloads": {
+					"albums": "Alben",
+					"playlists": "Wiedergabelisten",
+					"songs": "Lieder"
+				},
+				"topSongs": "Top-Titel",
+				"artistMix": "Interpretenmix",
+				"artistMixOf": "{{artist}} Mix",
+				"artistMixes": "Interpretenmixe",
+				"genreMixOf": "{{genre}} Mix",
+				"genreMixes": "Genre-Mixe",
+				"shuffleAll": "Meine Bibliothek mischen",
+				"shuffleGenre": "{{genre}} mischen",
+				"continueListening": "Hören fortsetzen",
 				"recentlyAdded": "Kürzlich hinzugefügt",
-				"mostPlayed": "Am häufigsten gehört",
-				"topRated": "Am besten bewertet",
-				"random": "Zufällig",
-				"library": "Bibliothek",
-				"playlists": "Wiedergabelisten",
-				"albums": "Alben",
-				"podcasts": "Podcasts",
-				"favorites": "Favoriten",
+				"search": {
+					"songs": "Lieder",
+					"albums": "Alben",
+					"artists": "Interpreten",
+					"playlists": "Wiedergabelisten"
+				},
+				"actions": {
+					"favorited": "Zu Favoriten hinzugefügt",
+					"unfavorited": "Aus Favoriten entfernt",
+					"failed": "Es ist ein Fehler aufgetreten",
+					"playingNext_one": "{{count}} Song spielt als nächstes",
+					"playingNext_other": "{{count}} Lieder spielen als nächstes",
+					"addedToQueue_one": "{{count}} Titel zur Warteschlange hinzugefügt",
+					"addedToQueue_other": "{{count}} Zur Warteschlange hinzugefügte Titel",
+					"downloading_one": "Lade {{count}} Song herunter",
+					"downloading_other": "Lade {{count}} Lieder herunter"
+				},
+				"errors": {
+					"signedOut": "Melden Sie sich bei Wavio auf Ihrem Telefon an, wenn dies sicher ist",
+					"offline": "Kann den Server nicht erreichen und nichts wird heruntergeladen",
+					"noResults": "Nichts für \"{{query}} \" gefunden",
+					"radioUnavailable": "Keine ähnlichen Titel für diesen Titel gefunden"
+				},
+				"buttons": {
+					"favoriteAdd": "Zu den Favoriten hinzufügen",
+					"favoriteRemove": "Aus den Favoriten entfernen",
+					"shuffleOn": "Shuffle einschalten",
+					"shuffleOff": "Shuffle aus",
+					"repeatAll": "Alle wiederholen",
+					"repeatOne": "Wiederholen",
+					"repeatOff": "Wiederholung beenden",
+					"radio": "Radio starten",
+					"seekBack": "Zurück 30 Sekunden",
+					"seekForward": "30 Sekunden weiterleiten"
+				},
+				"itemActions": {
+					"favoriteAdd": "Zu den Favoriten hinzufügen",
+					"favoriteRemove": "Aus den Favoriten entfernen",
+					"radio": "Radio starten",
+					"playNext": "Als Nächstes wiedergeben",
+					"addToQueue": "Zur Warteschlange hinzufügen",
+					"shuffle": "Zufallswiedergabe",
+					"download": "Herunterladen"
+				},
 				"songCount_one": "{{count}} Titel",
-				"songCount_other": "{{count}} Titel"
+				"songCount_other": "{{count}} Titel",
+				"albumCount_one": "{{count}} Album",
+				"albumCount_other": "{{count}} Alben"
 			},
 			"albums": {
 				"goneMessage": "Dieses Album ist nicht mehr in deiner Bibliothek.",
@@ -314,7 +397,7 @@
 				"addAllToFavoritesErrorMessage": "Beim Hinzufügen von Titeln zu den Favoriten ist ein Fehler aufgetreten",
 				"typeAlbum": "Album",
 				"typeCompilation": "Zusammenstellung",
-				"reissued": "Reissued {{year}}",
+				"reissued": "{{year}} neu ausgegeben",
 				"releaseTypeUntagged": "Ohne Tag",
 				"releaseTypes": {
 					"album": "Album",
@@ -830,6 +913,10 @@
 					"playback": {
 						"title": "Wiedergabe & Audio",
 						"description": "Audioqualität, Replay Gain, Equalizer"
+					},
+					"androidAuto": {
+						"title": "Android Auto",
+						"description": "Tabs, Home-Zeilen, Player-Tasten"
 					},
 					"library": {
 						"title": "Musikbibliothek",
@@ -1799,7 +1886,7 @@
 					"queueSyncOptions": {
 						"server": {
 							"label": "Server priorisieren",
-							"description": "Stelle beim Start die auf dem Server gespeicherte Warteschlange wieder her. Deine Warteschlange wird ebenfalls hochgeladen, sodass andere Geräte darauf zugreifen können."
+							"description": "Beim Start die Warteschlange wiederherstellen, die auf dem Server gespeichert wurde, es sei denn, dieses Gerät hat seine Warteschlange kürzlich geändert, ohne sie hochzuladen. Ihre Warteschlange wurde ebenfalls hochgeladen, so dass andere Geräte sie abholen können."
 						},
 						"local": {
 							"label": "Dieses Gerät priorisieren",
@@ -1916,6 +2003,53 @@
 					"autoBackupKeepLabel": "Sicherungen zum behalten",
 					"autoBackupKeepDescription": "Ältere automatische Sicherungen werden nach jedem Backup aus dem Ordner gelöscht.",
 					"autoBackupPrivacyNotice": "Sicherungen enthalten niemals Passwörter, Token oder API-Schlüssel. Sie beinhalten Ihre Server, Benutzernamen und den Verlauf des Abrufs. Wählen Sie also einen Ordner, auf den nur Sie zugreifen können."
+				},
+				"androidAutoSettings": {
+					"tabsTitle": "Tabs",
+					"tabsDescription": "Die meisten Autos werden bis zu 4 Registerkarten angezeigt. Tabs über das Limit des Fahrzeugs werden nicht angezeigt.",
+					"homeRowsTitle": "Hauptzeilen",
+					"libraryTitle": "Bibliothek",
+					"displayTitle": "Anzeige",
+					"displayDescription": "Tippen, um zwischen Liste und Raster zu wechseln",
+					"display": {
+						"list": "Liste",
+						"grid": "Raster"
+					},
+					"collectionTap": {
+						"label": "Tippen eines Albums oder Wiedergabeliste",
+						"description": "Öffne es, um einen Song auszuwählen oder sofort mit dem Abspielen zu beginnen. Gleiches gilt für Künstler, Genres, Favoriten und Downloads.",
+						"open": "Öffnet es",
+						"play": "Spielt es"
+					},
+					"playerButtonsTitle": "Player-Tasten",
+					"playerButtons": {
+						"favorite": {
+							"label": "Favorit",
+							"description": "Ein Herzen, das den aktuellen Track zu Ihren Favoriten hinzufügt oder ihn entfernt."
+						},
+						"shuffle": {
+							"label": "Zufallswiedergabe",
+							"description": "Schaltet Shuffle ein und aus."
+						},
+						"repeat": {
+							"label": "Wiederholen",
+							"description": "Wechselt durch alles wiederholen, wiederholen Sie eins und aus."
+						},
+						"radio": {
+							"label": "Radio",
+							"description": "Ersetzt das Kommende mit Liedern ähnlich dem aktuellen Titel."
+						}
+					},
+					"itemActionsTitle": "Aktionen auflisten",
+					"itemActionsDescription": "Shortcuts auf Songs, Alben und Wiedergabelisten, wo das Auto sie unterstützt.",
+					"itemActions": {
+						"favoriteAdd": "Favorit",
+						"radio": "Radio starten",
+						"playNext": "Als Nächstes wiedergeben",
+						"addToQueue": "Zur Warteschlange hinzufügen",
+						"shuffle": "Zufallswiedergabe",
+						"download": "Herunterladen"
+					}
 				},
 				"securitySettings": {
 					"title": "Sicherheit",
