@@ -314,6 +314,7 @@
 				"addAllToFavoritesErrorMessage": "Si è verificato un errore durante l'aggiunta dei brani ai preferiti",
 				"typeAlbum": "Album",
 				"typeCompilation": "Raccolta",
+				"reissued": "Reissued {{year}}",
 				"releaseTypeUntagged": "Senza tag",
 				"releaseTypes": {
 					"album": "Album",
