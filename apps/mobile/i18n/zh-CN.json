@@ -270,18 +270,97 @@
 				}
 			},
 			"carAuto": {
-				"home": "首页",
-				"recentlyPlayed": "最近播放",
+				"unknownTitle": "未知标题",
+				"offlineNotice": "无法连接到服务器",
+				"offlineNoticeSubtitle": "浏览您的下载",
+				"sections": {
+					"home": "首页",
+					"library": "音乐库",
+					"downloads": "下载",
+					"recent": "最近",
+					"favorites": "已收藏",
+					"playlists": "歌单",
+					"albums": "专辑",
+					"artists": "艺人",
+					"genres": "分类",
+					"radio": "电台",
+					"mixes": "混音器",
+					"podcasts": "播客",
+					"audiobooks": "音频书"
+				},
+				"rows": {
+					"recentlyPlayed": "最近播放",
+					"newest": "最近添加",
+					"frequent": "最常播放",
+					"highest": "最受好评",
+					"random": "随机",
+					"leastPlayed": "最少播放",
+					"starredAlbums": "最喜欢的专辑",
+					"mixes": "你的混音器"
+				},
+				"favorites": {
+					"songs": "最喜欢的歌曲",
+					"albums": "最喜欢的专辑",
+					"artists": "最喜欢的艺人"
+				},
+				"downloads": {
+					"albums": "专辑",
+					"playlists": "歌单",
+					"songs": "歌曲"
+				},
+				"topSongs": "热门歌曲",
+				"artistMix": "小艺术家组合",
+				"artistMixOf": "{{artist}} mix",
+				"artistMixes": "小艺术家混合物",
+				"genreMixOf": "{{genre}} mix",
+				"genreMixes": "流派混合物",
+				"shuffleAll": "随机播放我的库",
+				"shuffleGenre": "Shuffle {{genre}}",
+				"continueListening": "继续监听",
 				"recentlyAdded": "最近添加",
-				"mostPlayed": "最常播放",
-				"topRated": "最受好评",
-				"random": "随机",
-				"library": "音乐库",
-				"playlists": "歌单",
-				"albums": "专辑",
-				"podcasts": "播客",
-				"favorites": "收藏",
-				"songCount_other": "{{count}} 首歌曲"
+				"search": {
+					"songs": "歌曲",
+					"albums": "专辑",
+					"artists": "艺人",
+					"playlists": "歌单"
+				},
+				"actions": {
+					"favorited": "已添加到收藏夹",
+					"unfavorited": "已从收藏夹移除",
+					"failed": "出了点问题",
+					"playingNext_other": "{{count}} songs play next",
+					"addedToQueue_other": "{{count}} 已添加到播放列表中的歌曲",
+					"downloading_other": "Downloading {{count}} songs"
+				},
+				"errors": {
+					"signedOut": "当您的手机安全登录Wavio",
+					"offline": "无法连接到服务器，没有下载任何内容",
+					"noResults": "Nothing found for \"{{query}}\"",
+					"radioUnavailable": "没有找到与此曲目的相似的歌曲"
+				},
+				"buttons": {
+					"favoriteAdd": "加入收藏",
+					"favoriteRemove": "从收藏中移除",
+					"shuffleOn": "开启随机播放",
+					"shuffleOff": "关闭随机播放",
+					"repeatAll": "全部重复",
+					"repeatOne": "重复一个",
+					"repeatOff": "关闭重复",
+					"radio": "开始广播",
+					"seekBack": "30秒后后",
+					"seekForward": "轉發30秒"
+				},
+				"itemActions": {
+					"favoriteAdd": "加入收藏",
+					"favoriteRemove": "从收藏中移除",
+					"radio": "开始广播",
+					"playNext": "下一首播放",
+					"addToQueue": "加入播放队列",
+					"shuffle": "随机播放",
+					"download": "下载"
+				},
+				"songCount_other": "{{count}} 首歌曲",
+				"albumCount_other": "{{count}} 张专辑"
 			},
 			"albums": {
 				"goneMessage": "此相册不再在您的书库中。",
@@ -818,6 +897,10 @@
 					"playback": {
 						"title": "播放与音频",
 						"description": "音质、回放增益、均衡器"
+					},
+					"androidAuto": {
+						"title": "Android Auto",
+						"description": "标签、主行、播放器按钮"
 					},
 					"library": {
 						"title": "音乐库",
@@ -1748,7 +1831,7 @@
 					"queueSyncOptions": {
 						"server": {
 							"label": "优先使用服务器队列",
-							"description": "启动时恢复服务器上保存的队列，同时将当前队列上传，以便其他设备接续。"
+							"description": "启动时，恢复服务器上保存的队列，除非此设备最近更改了队列而不上传。 您的队列也已上传，因此其他设备也可以上传。"
 						},
 						"local": {
 							"label": "优先使用本设备队列",
@@ -1865,6 +1948,53 @@
 					"autoBackupKeepLabel": "备份以保留",
 					"autoBackupKeepDescription": "每次备份后从文件夹中删除旧的自动备份。那里的其他文件不会被触摸。",
 					"autoBackupPrivacyNotice": "备份从不包含密码、令牌或 API 密钥。它们包括您的服务器，用户名和监听历史，因此只能选择一个文件夹。"
+				},
+				"androidAutoSettings": {
+					"tabsTitle": "Tabs",
+					"tabsDescription": "大多数汽车最多显示4个标签。超过汽车限制的标签被排除在外。",
+					"homeRowsTitle": "主行",
+					"libraryTitle": "音乐库",
+					"displayTitle": "显示",
+					"displayDescription": "点击切换列表和网格",
+					"display": {
+						"list": "列表",
+						"grid": "网格"
+					},
+					"collectionTap": {
+						"label": "触摸相册或播放列表",
+						"description": "打开它来挑选一首歌曲，或立即开始播放。也适用于艺术家、基因、收藏和下载。",
+						"open": "打开它",
+						"play": "播放它"
+					},
+					"playerButtonsTitle": "播放器按钮",
+					"playerButtons": {
+						"favorite": {
+							"label": "收藏",
+							"description": "将当前曲目添加到收藏夹或删除它的心脏。"
+						},
+						"shuffle": {
+							"label": "随机播放",
+							"description": "打开或关闭打乱顺序。"
+						},
+						"repeat": {
+							"label": "重复",
+							"description": "循环遍历重复，重复一个或一个关闭。"
+						},
+						"radio": {
+							"label": "电台",
+							"description": "替换与当前曲目相似的歌曲。"
+						}
+					},
+					"itemActionsTitle": "操作列表",
+					"itemActionsDescription": "汽车支持歌曲、专辑和播放列表的快捷键。",
+					"itemActions": {
+						"favoriteAdd": "收藏",
+						"radio": "开始广播",
+						"playNext": "下一首播放",
+						"addToQueue": "加入播放队列",
+						"shuffle": "随机播放",
+						"download": "下载"
+					}
 				},
 				"securitySettings": {
 					"title": "安全",
