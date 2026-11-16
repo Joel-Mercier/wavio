@@ -314,6 +314,7 @@
 				"addAllToFavoritesErrorMessage": "Se ha producido un error al añadir canciones a los favoritos",
 				"typeAlbum": "Álbum",
 				"typeCompilation": "Recopilación",
+				"reissued": "Reissued {{year}}",
 				"releaseTypeUntagged": "Sin etiquetar",
 				"releaseTypes": {
 					"album": "Álbum",
