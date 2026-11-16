@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * *process* but no Activity — and the React host is only started by
  * `ReactActivityDelegate`. Without this, a cold Android Auto session has no JS
  * at all: the browse tree still renders (it is restored from disk by
- * `BrowseTreeCache`), but every play/transport event is dropped because
+ * `BrowseStore`), but every play/transport event is dropped because
  * `CarAutoModule.instance` is null.
  *
  * Same approach Expo uses for headless tasks (see `RNHeadlessAppLoader` in

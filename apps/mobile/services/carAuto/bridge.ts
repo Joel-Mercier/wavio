@@ -1,25 +1,30 @@
 import { requireOptionalNativeModule } from "expo";
 import { Platform } from "react-native";
 import { backgroundSleep } from "@/services/backgroundTimer";
-import type { BrowseNode, BrowseTree } from "./types";
+import { artFallbackFor } from "./mediaId";
+import type { BrowseNode, ItemAction } from "./types";
 
-// The Android native module is provided by `modules/car-auto` (registered as
-// CarAuto via Expo Modules). On iOS the bridge is a no-op; CarPlay is handled
-// in services/carAuto/carplay.ts via react-native-carplay.
+type Listener = (event: Record<string, unknown>) => void;
+
 type CarAutoNative = {
-  setNodes: (json: string) => void;
   setChildren: (parentId: string, json: string | null) => void;
+  invalidateChildren: (json: string | null) => void;
+  clearChildren: () => void;
+  setSearchResults: (query: string, json: string | null) => void;
+  answerAction: (requestId: number, json: string) => void;
   setNowPlaying: (json: string | null) => void;
   setQueue: (json: string) => void;
   setQueueIndex: (index: number) => void;
   setPlaybackState: (json: string) => void;
+  setPlayerButtons: (json: string) => void;
+  setLabels: (json: string) => void;
+  setError: (json: string | null) => void;
+  setArtworkHeaders: (json: string) => void;
+  clearArtworkCache: () => void;
   notifyReady: () => void;
   setVerbose: (enabled: boolean) => void;
   isCarConnected: () => boolean;
-  addListener: (
-    event: "play" | "transport" | "carConnection" | "childrenRequest",
-    listener: (e: Record<string, unknown>) => void,
-  ) => { remove: () => void };
+  addListener: (event: string, listener: Listener) => { remove: () => void };
 };
 
 const NativeCarAuto: CarAutoNative | null =
@@ -34,163 +39,242 @@ export type NowPlayingPayload = {
   album?: string;
   artworkUrl?: string;
   durationMs: number;
+  artistMediaId?: string;
+  explicit?: boolean;
+  downloaded?: boolean;
 };
 
 export type PlaybackStatePayload = {
   isPlaying: boolean;
+  buffering: boolean;
   positionMs: number;
+  speed: number;
   shuffle: boolean;
   repeatMode: "off" | "all" | "one";
 };
 
+export type QueuePayload = {
+  tracks: NowPlayingPayload[];
+  currentIndex: number;
+  offset: number;
+};
+
+export type PlayerButtonsPayload = {
+  favorite: boolean | null;
+  shuffle: boolean;
+  repeat: boolean;
+  radio: boolean;
+  longForm: boolean;
+};
+
+export type CarErrorPayload = {
+  code: "authentication" | "network" | "setup";
+  message: string;
+  transient?: boolean;
+} | null;
+
+export type ActionAnswer = {
+  ok: boolean;
+  message?: string;
+  refreshItem?: string;
+  showPlaying?: boolean;
+};
+
+export type VoiceRequest = {
+  query: string;
+  artist?: string;
+  album?: string;
+  genre?: string;
+  playlist?: string;
+  title?: string;
+};
+
 export type TransportEvent =
   | { action: "play" | "pause" | "next" | "previous" }
+  | { action: "favorite" | "radio" | "seekBack" | "seekForward" }
   | { action: "seek"; value: number }
   | { action: "seekToIndex"; value: number }
   | { action: "shuffle"; value: number }
   | { action: "repeat"; value: "off" | "all" | "one" };
 
-export type QueuePayload = {
-  tracks: NowPlayingPayload[];
-  currentIndex: number;
+const call = (name: string, run: (native: CarAutoNative) => void) => {
+  if (!NativeCarAuto) return;
+  try {
+    run(NativeCarAuto);
+  } catch (e) {
+    if (__DEV__) console.log(`[carauto] ${name} threw`, e);
+  }
 };
+
+const listen = (event: string, handler: Listener): (() => void) => {
+  if (!NativeCarAuto) return () => {};
+  const sub = NativeCarAuto.addListener(event, handler);
+  return () => sub.remove();
+};
+
+const serializeNodes = (nodes: BrowseNode[]) =>
+  JSON.stringify(
+    nodes.map((node) =>
+      node.icon ? node : { ...node, artFallback: artFallbackFor(node.id) },
+    ),
+  );
+
+const str = (value: unknown) =>
+  typeof value === "string" && value ? value : undefined;
 
 export const CarAutoBridge = {
   available: NativeCarAuto != null,
 
-  setNodes(tree: BrowseTree) {
-    if (!NativeCarAuto) return;
-    try {
-      const json = JSON.stringify({ nodes: tree });
-      NativeCarAuto.setNodes(json);
-    } catch (e) {
-      if (__DEV__) console.log("[carauto] setNodes threw", e);
-    }
+  setChildren(parentId: string, nodes: BrowseNode[] | null) {
+    call("setChildren", (native) =>
+      native.setChildren(parentId, nodes ? serializeNodes(nodes) : null),
+    );
   },
 
-  // Answers a childrenRequest. Null means the fetch failed: native releases the
-  // waiting host with an empty page but keeps nothing, so the next open retries.
-  setChildren(parentId: string, nodes: BrowseNode[] | null) {
-    if (!NativeCarAuto) return;
-    try {
-      NativeCarAuto.setChildren(parentId, nodes ? JSON.stringify(nodes) : null);
-    } catch (e) {
-      if (__DEV__) console.log("[carauto] setChildren threw", e);
-    }
+  invalidateChildren(parentIds: string[] | null) {
+    call("invalidateChildren", (native) =>
+      native.invalidateChildren(parentIds ? JSON.stringify(parentIds) : null),
+    );
+  },
+
+  clearChildren() {
+    call("clearChildren", (native) => native.clearChildren());
+  },
+
+  setSearchResults(query: string, nodes: BrowseNode[] | null) {
+    call("setSearchResults", (native) =>
+      native.setSearchResults(query, nodes ? serializeNodes(nodes) : null),
+    );
+  },
+
+  answerAction(requestId: number, answer: ActionAnswer) {
+    call("answerAction", (native) =>
+      native.answerAction(requestId, JSON.stringify(answer)),
+    );
   },
 
   setNowPlaying(track: NowPlayingPayload | null) {
-    if (!NativeCarAuto) return;
-    try {
-      NativeCarAuto.setNowPlaying(track ? JSON.stringify(track) : null);
-    } catch (e) {
-      if (__DEV__) console.log("[carauto] setNowPlaying threw", e);
-    }
+    call("setNowPlaying", (native) =>
+      native.setNowPlaying(track ? JSON.stringify(track) : null),
+    );
   },
 
   setQueue(payload: QueuePayload) {
-    if (!NativeCarAuto) return;
-    try {
-      NativeCarAuto.setQueue(JSON.stringify(payload));
-    } catch (e) {
-      if (__DEV__) console.log("[carauto] setQueue threw", e);
-    }
+    call("setQueue", (native) => native.setQueue(JSON.stringify(payload)));
   },
 
   setQueueIndex(index: number) {
-    if (!NativeCarAuto) return;
-    try {
-      NativeCarAuto.setQueueIndex(index);
-    } catch (e) {
-      if (__DEV__) console.log("[carauto] setQueueIndex threw", e);
-    }
+    call("setQueueIndex", (native) => native.setQueueIndex(index));
   },
 
   setPlaybackState(state: PlaybackStatePayload) {
-    if (!NativeCarAuto) return;
-    try {
-      NativeCarAuto.setPlaybackState(JSON.stringify(state));
-    } catch (e) {
-      if (__DEV__) console.log("[carauto] setPlaybackState threw", e);
-    }
+    call("setPlaybackState", (native) =>
+      native.setPlaybackState(JSON.stringify(state)),
+    );
   },
 
-  // Tell native the car listeners are live. Android Auto can bind the media
-  // service with the app never having been opened, in which case the tap that
-  // started the JS runtime is parked natively and replayed on this call.
+  setPlayerButtons(buttons: PlayerButtonsPayload) {
+    call("setPlayerButtons", (native) =>
+      native.setPlayerButtons(JSON.stringify(buttons)),
+    );
+  },
+
+  setLabels(labels: Record<string, string>) {
+    call("setLabels", (native) => native.setLabels(JSON.stringify(labels)));
+  },
+
+  setError(error: CarErrorPayload) {
+    call("setError", (native) =>
+      native.setError(error ? JSON.stringify(error) : null),
+    );
+  },
+
+  setArtworkHeaders(headers: Record<string, Record<string, string>>) {
+    call("setArtworkHeaders", (native) =>
+      native.setArtworkHeaders(JSON.stringify(headers)),
+    );
+  },
+
+  clearArtworkCache() {
+    call("clearArtworkCache", (native) => native.clearArtworkCache());
+  },
+
   notifyReady() {
-    if (!NativeCarAuto) return;
-    try {
-      NativeCarAuto.notifyReady();
-    } catch (e) {
-      if (__DEV__) console.log("[carauto] notifyReady threw", e);
-    }
+    call("notifyReady", (native) => native.notifyReady());
   },
 
-  // The native side's Logcat tracing is off by default. Mirror the JS logger's
-  // gate so a dev build traces both halves of the browse flow under `adb logcat
-  // -s CarAuto`, and a release build stays quiet.
   setVerbose(enabled: boolean) {
-    if (!NativeCarAuto) return;
-    try {
-      NativeCarAuto.setVerbose(enabled);
-    } catch (e) {
-      if (__DEV__) console.log("[carauto] setVerbose threw", e);
-    }
+    call("setVerbose", (native) => native.setVerbose(enabled));
   },
 
-  // setTimeout for car code, which runs with the phone UI in the background
-  // where JS timers never fire (see services/backgroundTimer.ts).
   delay: backgroundSleep,
 
-  // Whether an Android Auto host is bound to the browse service right now.
   isCarConnected(): boolean {
     if (!NativeCarAuto) return false;
     try {
       return NativeCarAuto.isCarConnected();
-    } catch (e) {
-      if (__DEV__) console.log("[carauto] isCarConnected threw", e);
+    } catch {
       return false;
     }
   },
 
-  onCarConnection(handler: (connected: boolean) => void): () => void {
-    if (!NativeCarAuto) return () => {};
-    const sub = NativeCarAuto.addListener("carConnection", (event) => {
-      handler(event?.connected === true);
-    });
-    return () => sub.remove();
+  onCarConnection(handler: (connected: boolean) => void) {
+    return listen("carConnection", (event) =>
+      handler(event?.connected === true),
+    );
   },
 
-  onPlay(handler: (mediaId: string, parentId?: string) => void): () => void {
-    if (!NativeCarAuto) return () => {};
-    const sub = NativeCarAuto.addListener("play", (event) => {
-      const id = event?.mediaId;
-      if (typeof id !== "string" || !id) return;
-      const parent = event?.parentId;
-      handler(id, typeof parent === "string" && parent ? parent : undefined);
+  onPlay(handler: (mediaId: string) => void) {
+    return listen("play", (event) => {
+      const id = str(event?.mediaId);
+      if (id) handler(id);
     });
-    return () => sub.remove();
   },
 
-  // The car opened a parent the pushed tree doesn't hold (see
-  // loadOnDemandChildren in tree.ts).
-  onChildrenRequest(handler: (parentId: string) => void): () => void {
-    if (!NativeCarAuto) return () => {};
-    const sub = NativeCarAuto.addListener("childrenRequest", (event) => {
-      const id = event?.parentId;
-      if (typeof id === "string" && id) handler(id);
-    });
-    return () => sub.remove();
+  onPlaySearch(handler: (request: VoiceRequest) => void) {
+    return listen("playSearch", (event) =>
+      handler({
+        query: typeof event?.query === "string" ? event.query : "",
+        artist: str(event?.artist),
+        album: str(event?.album),
+        genre: str(event?.genre),
+        playlist: str(event?.playlist),
+        title: str(event?.title),
+      }),
+    );
   },
 
-  onTransport(handler: (event: TransportEvent) => void): () => void {
-    if (!NativeCarAuto) return () => {};
-    const sub = NativeCarAuto.addListener("transport", (event) => {
-      const action = event?.action;
-      if (typeof action !== "string") return;
-      handler(event as unknown as TransportEvent);
+  onChildrenRequest(handler: (parentId: string) => void) {
+    return listen("childrenRequest", (event) => {
+      const id = str(event?.parentId);
+      if (id) handler(id);
     });
-    return () => sub.remove();
+  },
+
+  onSearchRequest(handler: (query: string) => void) {
+    return listen("searchRequest", (event) => {
+      if (typeof event?.query === "string") handler(event.query);
+    });
+  },
+
+  onItemAction(
+    handler: (requestId: number, action: ItemAction, mediaId: string) => void,
+  ) {
+    return listen("itemAction", (event) => {
+      const requestId = event?.requestId;
+      const action = str(event?.action) as ItemAction | undefined;
+      const mediaId = str(event?.mediaId);
+      if (typeof requestId === "number" && action && mediaId) {
+        handler(requestId, action, mediaId);
+      }
+    });
+  },
+
+  onTransport(handler: (event: TransportEvent) => void) {
+    return listen("transport", (event) => {
+      if (typeof event?.action === "string") {
+        handler(event as unknown as TransportEvent);
+      }
+    });
   },
 };

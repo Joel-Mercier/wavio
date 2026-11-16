@@ -103,3 +103,17 @@ describe("fetchEndlessExtension", () => {
     expect(mockFetchTopSongs).not.toHaveBeenCalled();
   });
 });
+
+describe("tracks kept around the extension", () => {
+  it("only leaves out the tracks that stay, so upcoming ones being replaced can come back", async () => {
+    mockQueue = [{ id: "t1" }, { id: "up1" }, { id: "up2" }];
+    mockFetchSimilarSongs.mockResolvedValue([]);
+    mockFetchTopSongs.mockResolvedValue([{ id: "up1" }, { id: "t1" }]);
+
+    const extras = await fetchEndlessExtension(seed({}), {
+      kept: [{ id: "t1" } as QueueTrack],
+    });
+
+    expect(extras.map((track) => track.id)).toEqual(["up1"]);
+  });
+});

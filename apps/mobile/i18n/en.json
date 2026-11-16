@@ -274,19 +274,102 @@
 				}
 			},
 			"carAuto": {
-				"home": "Home",
-				"recentlyPlayed": "Recently played",
-				"recentlyAdded": "Recently added",
-				"mostPlayed": "Most played",
-				"topRated": "Top rated",
-				"random": "Random",
-				"library": "Library",
-				"playlists": "Playlists",
-				"albums": "Albums",
-				"podcasts": "Podcasts",
-				"favorites": "Favorites",
+				"unknownTitle": "Unknown title",
 				"songCount_one": "{{count}} song",
-				"songCount_other": "{{count}} songs"
+				"songCount_other": "{{count}} songs",
+				"albumCount_one": "{{count}} album",
+				"albumCount_other": "{{count}} albums",
+				"offlineNotice": "Can't reach the server",
+				"offlineNoticeSubtitle": "Browse your downloads",
+				"sections": {
+					"home": "Home",
+					"library": "Library",
+					"downloads": "Downloads",
+					"recent": "Recent",
+					"favorites": "Favorites",
+					"playlists": "Playlists",
+					"albums": "Albums",
+					"artists": "Artists",
+					"genres": "Genres",
+					"radio": "Radio",
+					"mixes": "Mixes",
+					"podcasts": "Podcasts",
+					"audiobooks": "Audiobooks"
+				},
+				"rows": {
+					"recentlyPlayed": "Recently played",
+					"newest": "Recently added",
+					"frequent": "Most played",
+					"highest": "Top rated",
+					"random": "Random",
+					"leastPlayed": "Least played",
+					"starredAlbums": "Favorite albums",
+					"mixes": "Mixes for you"
+				},
+				"favorites": {
+					"songs": "Favorite songs",
+					"albums": "Favorite albums",
+					"artists": "Favorite artists"
+				},
+				"downloads": {
+					"albums": "Albums",
+					"playlists": "Playlists",
+					"songs": "Songs"
+				},
+				"topSongs": "Top songs",
+				"artistMix": "Artist mix",
+				"artistMixOf": "{{artist}} mix",
+				"artistMixes": "Artist mixes",
+				"genreMixOf": "{{genre}} mix",
+				"genreMixes": "Genre mixes",
+				"shuffleAll": "Shuffle my library",
+				"shuffleGenre": "Shuffle {{genre}}",
+				"continueListening": "Continue listening",
+				"recentlyAdded": "Recently added",
+				"search": {
+					"songs": "Songs",
+					"albums": "Albums",
+					"artists": "Artists",
+					"playlists": "Playlists"
+				},
+				"actions": {
+					"favorited": "Added to favorites",
+					"unfavorited": "Removed from favorites",
+					"playingNext_one": "{{count}} song plays next",
+					"playingNext_other": "{{count}} songs play next",
+					"addedToQueue_one": "{{count}} song added to the queue",
+					"addedToQueue_other": "{{count}} songs added to the queue",
+					"downloading_one": "Downloading {{count}} song",
+					"downloading_other": "Downloading {{count}} songs",
+					"failed": "Something went wrong"
+				},
+				"errors": {
+					"signedOut": "Sign in to Wavio on your phone when it's safe to do so",
+					"offline": "Can't reach the server and nothing is downloaded",
+					"noResults": "Nothing found for \"{{query}}\"",
+					"radioUnavailable": "No similar songs found for this track"
+				},
+				"buttons": {
+					"favoriteAdd": "Add to favorites",
+					"favoriteRemove": "Remove from favorites",
+					"shuffleOn": "Turn shuffle on",
+					"shuffleOff": "Turn shuffle off",
+					"repeatAll": "Repeat all",
+					"repeatOne": "Repeat one",
+					"repeatOff": "Turn repeat off",
+					"radio": "Start radio",
+					"seekBack": "Back 30 seconds",
+					"seekForward": "Forward 30 seconds"
+				},
+				"itemActions": {
+					"favoriteAdd": "Add to favorites",
+					"favoriteRemove": "Remove from favorites",
+					"radio": "Start radio",
+					"playNext": "Play next",
+					"addToQueue": "Add to queue",
+					"shuffle": "Shuffle",
+					"download": "Download"
+				}
 			},
 			"albums": {
 				"goneMessage": "This album is no longer in your library.",
@@ -830,6 +913,10 @@
 					"playback": {
 						"title": "Playback & audio",
 						"description": "Audio quality, replay gain, equalizer"
+					},
+					"androidAuto": {
+						"title": "Android Auto",
+						"description": "Tabs, home rows, player buttons"
 					},
 					"library": {
 						"title": "Music library",
@@ -1799,7 +1886,7 @@
 					"queueSyncOptions": {
 						"server": {
 							"label": "Prioritize server",
-							"description": "On launch, restore the queue saved on the server. Your queue is also uploaded so other devices can pick it up."
+							"description": "On launch, restore the queue saved on the server, unless this device changed its queue more recently without uploading it. Your queue is also uploaded so other devices can pick it up."
 						},
 						"local": {
 							"label": "Prioritize this device",
@@ -1916,6 +2003,53 @@
 					"autoBackupKeepLabel": "Backups to keep",
 					"autoBackupKeepDescription": "Older automatic backups are deleted from the folder after each backup. Other files there are never touched.",
 					"autoBackupPrivacyNotice": "Backups never include passwords, tokens or API keys. They do include your servers, usernames and listening history, so choose a folder only you can access."
+				},
+				"androidAutoSettings": {
+					"tabsTitle": "Tabs",
+					"tabsDescription": "Most cars show up to 4 tabs. Tabs past the car's limit are left out.",
+					"homeRowsTitle": "Home rows",
+					"libraryTitle": "Library",
+					"displayTitle": "Display",
+					"displayDescription": "Tap to switch between list and grid",
+					"display": {
+						"list": "List",
+						"grid": "Grid"
+					},
+					"collectionTap": {
+						"label": "Tapping an album or playlist",
+						"description": "Open it to pick a song, or start playing it right away. Also applies to artists, genres, favorites and downloads.",
+						"open": "Opens it",
+						"play": "Plays it"
+					},
+					"playerButtonsTitle": "Player buttons",
+					"playerButtons": {
+						"favorite": {
+							"label": "Favorite",
+							"description": "A heart that adds the current track to your favorites, or removes it."
+						},
+						"shuffle": {
+							"label": "Shuffle",
+							"description": "Turns shuffle on and off."
+						},
+						"repeat": {
+							"label": "Repeat",
+							"description": "Cycles through repeat all, repeat one and off."
+						},
+						"radio": {
+							"label": "Radio",
+							"description": "Replaces what's coming up with songs similar to the current track."
+						}
+					},
+					"itemActionsTitle": "List actions",
+					"itemActionsDescription": "Shortcuts on songs, albums and playlists, where the car supports them.",
+					"itemActions": {
+						"favoriteAdd": "Favorite",
+						"radio": "Start radio",
+						"playNext": "Play next",
+						"addToQueue": "Add to queue",
+						"shuffle": "Shuffle",
+						"download": "Download"
+					}
 				},
 				"securitySettings": {
 					"title": "Security",

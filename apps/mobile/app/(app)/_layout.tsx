@@ -57,7 +57,10 @@ import {
   resetOfflineMutationReplay,
   stopOfflineMutationReplay,
 } from "@/services/offlineMutations/replay";
-import { resetPlayerForScopeChange } from "@/services/player";
+import {
+  resetPlayerForScopeChange,
+  savePlaybackPosition,
+} from "@/services/player";
 import {
   flushPlayQueue,
   initPlayQueueSync,
@@ -81,6 +84,7 @@ import useAudioMuse from "@/stores/audioMuse";
 import useAuth, { currentAuthScope, useAuthBase } from "@/stores/auth";
 import useBookmarks from "@/stores/bookmarks";
 import useCapabilityOverrides from "@/stores/capabilityOverrides";
+import useCarAuto from "@/stores/carAuto";
 import useHiddenTracks from "@/stores/hiddenTracks";
 import useLastFm from "@/stores/lastFm";
 import useLibrarySync from "@/stores/librarySync";
@@ -213,6 +217,7 @@ export default function AppLayout() {
         useLocalLibrary.getState().__reset();
         useBookmarks.getState().__reset();
         useLrclibPicks.getState().__reset();
+        useCarAuto.getState().__reset();
         useCapabilityOverrides.getState().__reset();
         useLidarr.getState().__reset();
         useSoulSync.getState().__reset();
@@ -305,6 +310,7 @@ export default function AppLayout() {
     useLibrarySync.persist.rehydrate();
     useBookmarks.persist.rehydrate();
     useLrclibPicks.persist.rehydrate();
+    useCarAuto.persist.rehydrate();
     useCapabilityOverrides.persist.rehydrate();
     useLidarr.persist.rehydrate();
     useSoulSync.persist.rehydrate();
@@ -355,12 +361,13 @@ export default function AppLayout() {
     void probeServer();
   }, [isAuthenticated]);
 
-  // Persist the play queue to the server, and the in-flight podcast position to
-  // storage, promptly when leaving the app.
+  // Persist the play queue to the server, and the in-flight track and podcast
+  // positions to storage, promptly when leaving the app.
   useEffect(() => {
     if (!isAuthenticated) return;
     const onChange = (status: AppStateStatus) => {
       if (status === "background" || status === "inactive") {
+        savePlaybackPosition();
         flushPlayQueue();
         flushPodcastProgress();
       }

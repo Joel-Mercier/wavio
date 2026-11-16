@@ -30,6 +30,7 @@ jest.mock("@/hooks/useCapabilities", () => ({
 }));
 jest.mock("lucide-react-native/icons/archive", () => () => null);
 jest.mock("lucide-react-native/icons/audio-lines", () => () => null);
+jest.mock("lucide-react-native/icons/car", () => () => null);
 jest.mock("lucide-react-native/icons/cloud-download", () => () => null);
 jest.mock("lucide-react-native/icons/download", () => () => null);
 jest.mock("lucide-react-native/icons/hard-drive", () => () => null);

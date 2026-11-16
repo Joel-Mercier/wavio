@@ -1,29 +1,44 @@
 package expo.modules.carauto
 
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import androidx.annotation.OptIn
-import androidx.media3.common.Player
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.session.SessionError
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
+import org.json.JSONArray
 import org.json.JSONObject
 
 @OptIn(UnstableApi::class)
 class CarAutoModule : Module() {
   private val mainHandler = Handler(Looper.getMainLooper())
-  // Only touched on the main thread.
   private val pendingDelays = HashMap<Int, Runnable>()
 
   override fun definition() = ModuleDefinition {
     Name("CarAuto")
 
-    Events("play", "transport", "carConnection", "delayElapsed", "childrenRequest")
+    Events(
+      "play",
+      "playSearch",
+      "transport",
+      "carConnection",
+      "delayElapsed",
+      "childrenRequest",
+      "searchRequest",
+      "itemAction",
+    )
 
     OnCreate {
       instance = this@CarAutoModule
       jsReady = false
+      appContext.reactContext?.let {
+        BrowseStore.loadFromDiskIfNeeded(it)
+        CarLabels.load(it)
+      }
     }
 
     OnDestroy {
@@ -36,27 +51,18 @@ class CarAutoModule : Module() {
       }
     }
 
-    // Called by services/carAuto/session.ts once its `play` / `transport`
-    // listeners are registered. The module instance exists as soon as the React
-    // context is created — a few hundred ms before the bundle finishes
-    // evaluating — so events emitted in that window would land nowhere. Anything
-    // the car did while JS was booting is replayed here.
+    // Called once JS has registered its car listeners; anything the car did
+    // while the runtime was booting is replayed here.
     Function("notifyReady") {
       markJsReady()
     }
 
-    // Read by JS at boot as well as observed through `carConnection`: on a
-    // headless boot the car host binds before the runtime exists, so the event
-    // announcing it has already been missed.
     Function("isCarConnected") {
       carConnected
     }
 
-    // Backs services/backgroundTimer.ts. RN timers fire from Choreographer frame
-    // callbacks and stop once the Activity is backgrounded — measured on MIUI
-    // with audio playing, and even with CarTimerHold's headless task held — so
-    // any JS wait that has to run in the background goes through a main-thread
-    // Handler message instead, which still arrives.
+    // Backs services/backgroundTimer.ts: RN timers stop once the Activity is
+    // backgrounded, a main-thread Handler message still arrives.
     Function("postDelayed") { id: Int, delayMs: Double ->
       val runnable = Runnable {
         pendingDelays.remove(id)
@@ -80,58 +86,60 @@ class CarAutoModule : Module() {
       CarAutoLog.verbose = enabled
     }
 
-    Function("setNodes") { json: String ->
-      val context = appContext.reactContext ?: return@Function
-      val changed = BrowseTreeCache.setFromJson(context, json)
-      CarAutoLog.d("setNodes ${BrowseTreeCache.debugSummary()} changed=${changed.size}")
-      this@CarAutoModule.notifyChildrenChanged(changed)
-    }
-
-    // Answers a `childrenRequest` (see PendingChildren). A null json means JS
-    // couldn't fetch it: the waiting browse gets an empty page and nothing is
-    // stored, so opening the parent again asks again.
+    // Answers a childrenRequest, or pushes fresher children for a parent the
+    // host may be showing. Null means JS couldn't fetch it: the waiting browse
+    // is released with what is stored, and the parent is asked for again the
+    // next time the host opens it.
     Function("setChildren") { parentId: String, json: String? ->
-      val changed = json != null && BrowseTreeCache.putChildren(parentId, json)
+      if (json == null) BrowseStore.invalidate(listOf(parentId))
+      val changed = json != null && BrowseStore.put(parentId, json)
       CarAutoLog.d("setChildren $parentId stored=${json != null} changed=$changed")
       mainHandler.post {
-        PendingChildren.release(parentId)
-        // For a browse that already timed out on an empty page.
-        if (changed) this@CarAutoModule.notifyChildrenChanged(mapOf(parentId to BrowseTreeCache.childCount(parentId)))
+        PendingRequests.releaseChildren(parentId)
+        if (changed) notifyChildrenChanged(listOf(parentId))
       }
     }
 
-    // Every mirror push below records into CarPlaybackMirror *before* touching
-    // the player, and keeps going when there is no player: the browser service
-    // is only created once a car host binds it, so playback that started earlier
-    // would otherwise never reach the session at all — see CarPlaybackMirror.
-    Function("setNowPlaying") { json: String? ->
-      val player = WavioCarBrowserService.activePlayer
-      if (json.isNullOrEmpty() || json == "null") {
-        CarPlaybackMirror.setNowPlaying(null)
-        player?.applyNowPlaying(null)
-        return@Function
+    Function("invalidateChildren") { json: String? ->
+      val ids = json?.let { raw ->
+        runCatching {
+          val array = JSONArray(raw)
+          (0 until array.length()).map { array.getString(it) }
+        }.getOrNull()
       }
-      val np = runCatching { parseNowPlaying(json) }.getOrNull() ?: return@Function
+      BrowseStore.invalidate(ids)
+    }
+
+    // The account changed: nothing stored may be shown again. The host is told
+    // every parent changed, so an open list is asked for anew and waits on JS.
+    Function("clearChildren") {
+      notifyChildrenChanged(BrowseStore.clear())
+    }
+
+    Function("setSearchResults") { query: String, json: String? ->
+      BrowseStore.putSearch(query, json)
+      mainHandler.post {
+        val waited = PendingRequests.hasPendingSearch(query)
+        PendingRequests.releaseSearch(query)
+        if (!waited) notifySearchChanged(query)
+      }
+    }
+
+    Function("answerAction") { requestId: Int, json: String ->
+      mainHandler.post { PendingRequests.answerAction(requestId, json) }
+    }
+
+    Function("setNowPlaying") { json: String? ->
+      val np = json?.takeIf { it != "null" }?.let { runCatching { parseNowPlaying(JSONObject(it)) }.getOrNull() }
       CarPlaybackMirror.setNowPlaying(np)
-      player?.applyNowPlaying(np)
+      WavioCarBrowserService.activePlayer?.applyNowPlaying(np)
     }
 
     Function("setQueue") { json: String ->
-      val o = runCatching { JSONObject(json) }.getOrNull() ?: return@Function
-      val arr = o.optJSONArray("tracks") ?: return@Function
-      val items = ArrayList<JsProxyPlayer.NowPlaying>(arr.length())
-      for (i in 0 until arr.length()) {
-        val t = arr.optJSONObject(i) ?: continue
-        items.add(
-          JsProxyPlayer.NowPlaying(
-            id = t.optString("id"),
-            title = t.optString("title").takeIf { it.isNotEmpty() },
-            artist = t.optString("artist").takeIf { it.isNotEmpty() },
-            album = t.optString("album").takeIf { it.isNotEmpty() },
-            artworkUrl = t.optString("artworkUrl").takeIf { it.isNotEmpty() },
-            durationMs = t.optLong("durationMs", 0L),
-          ),
-        )
+      val o = runCatching { JSONObject(json) }.getOrNull() ?: return@Function Unit
+      val arr = o.optJSONArray("tracks") ?: return@Function Unit
+      val items = (0 until arr.length()).mapNotNull { i ->
+        arr.optJSONObject(i)?.let { runCatching { parseNowPlaying(it) }.getOrNull() }
       }
       val index = o.optInt("currentIndex", 0)
       CarPlaybackMirror.setQueue(items, index)
@@ -144,102 +152,108 @@ class CarAutoModule : Module() {
     }
 
     Function("setPlaybackState") { json: String ->
-      val o = runCatching { JSONObject(json) }.getOrNull() ?: return@Function
-      val isPlaying = o.optBoolean("isPlaying", false)
-      val posMs = o.optLong("positionMs", 0L)
-      val shuf = o.optBoolean("shuffle", false)
-      val repeat = when (o.optString("repeatMode")) {
-        "one" -> Player.REPEAT_MODE_ONE
-        "all" -> Player.REPEAT_MODE_ALL
-        else -> Player.REPEAT_MODE_OFF
-      }
-      CarPlaybackMirror.setPlaybackState(isPlaying, posMs, shuf, repeat)
-      WavioCarBrowserService.activePlayer?.applyPlaybackState(isPlaying, posMs, shuf, repeat)
+      val o = runCatching { JSONObject(json) }.getOrNull() ?: return@Function Unit
+      val state = JsProxyPlayer.PlaybackState(
+        playing = o.optBoolean("isPlaying", false),
+        buffering = o.optBoolean("buffering", false),
+        positionMs = o.optLong("positionMs", 0L),
+        speed = o.optDouble("speed", 1.0).toFloat().takeIf { it > 0f } ?: 1f,
+        shuffle = o.optBoolean("shuffle", false),
+        repeatMode = CarPlaybackMirror.repeatModeOf(o.optString("repeatMode")),
+      )
+      CarPlaybackMirror.setPlaybackState(state)
+      WavioCarBrowserService.activePlayer?.applyPlaybackState(state)
     }
-  }
 
-  /**
-   * Tell subscribed browsers to re-read the parents a freshly pushed tree
-   * changed. Without this a new tree only reaches the car when the user
-   * navigates somewhere — so the screen they are already looking at (very much
-   * including the top-level list a cold session opens on) keeps rendering the
-   * children it fetched before JS had even built the tree, artwork and all.
-   *
-   * media3 requires session calls on the application thread; `setNodes` arrives
-   * on the JS thread. Same hop as JsProxyPlayer's `runOnMain`.
-   */
-  private fun notifyChildrenChanged(changed: Map<String, Int>) {
-    if (changed.isEmpty()) return
-    val post = {
-      val session = WavioCarBrowserService.activeSession
-      if (session == null) {
-        CarAutoLog.d("notify skipped: no session (${changed.size} parents)")
-      } else {
-        val browsers = session.connectedControllers.size
-        CarAutoLog.d("notify ${changed.size} parents, $browsers controller(s)")
-        for ((parentId, count) in changed) {
-          runCatching { session.notifyChildrenChanged(parentId, count, null) }
-            .onFailure { CarAutoLog.w("notify failed for $parentId", it) }
+    Function("setPlayerButtons") { json: String ->
+      val o = runCatching { JSONObject(json) }.getOrNull() ?: return@Function Unit
+      CarPlaybackMirror.setButtons(
+        CarPlaybackMirror.Buttons(
+          favorite = if (o.isNull("favorite")) null else o.optBoolean("favorite"),
+          shuffle = o.optBoolean("shuffle", true),
+          repeat = o.optBoolean("repeat", true),
+          radio = o.optBoolean("radio", false),
+          longForm = o.optBoolean("longForm", false),
+        ),
+      )
+      mainHandler.post { WavioCarBrowserService.refreshMediaButtons() }
+    }
+
+    Function("setLabels") { json: String ->
+      appContext.reactContext?.let { CarLabels.set(it, json) }
+      mainHandler.post { WavioCarBrowserService.refreshMediaButtons() }
+    }
+
+    Function("setError") { json: String? ->
+      val o = json?.let { runCatching { JSONObject(it) }.getOrNull() }
+      val message = o?.optStringOrNull("message")
+      if (o != null && o.optBoolean("transient", false) && message != null) {
+        mainHandler.post {
+          WavioCarBrowserService.activeSession?.sendError(
+            SessionError(SessionError.ERROR_UNKNOWN, message),
+          )
         }
+        return@Function Unit
       }
+      val error = if (o != null && message != null) {
+        PlaybackException(message, null, playbackErrorCode(o.optString("code")))
+      } else {
+        null
+      }
+      val cleared = error == null && CarPlaybackMirror.error != null
+      CarPlaybackMirror.setError(error)
+      WavioCarBrowserService.activePlayer?.applyError(error)
+      // media3 only republishes the platform playback state when an error is
+      // set, never when it clears, so the car would keep showing it until some
+      // other state change. Re-sending the buttons republishes it.
+      if (cleared) mainHandler.post { WavioCarBrowserService.refreshMediaButtons() }
     }
-    if (Looper.myLooper() == Looper.getMainLooper()) post() else mainHandler.post(post)
+
+    Function("setArtworkHeaders") { json: String ->
+      CarArtworkProvider.setHeaders(json)
+    }
+
+    Function("clearArtworkCache") {
+      CarArtworkProvider.clear()
+    }
   }
 
-  fun emitPlayEvent(mediaId: String, parentId: String? = null) {
-    val payload = HashMap<String, Any>(2)
-    payload["mediaId"] = mediaId
-    if (parentId != null) payload["parentId"] = parentId
-    sendEvent("play", payload)
+  fun emitPlayEvent(mediaId: String) {
+    sendEvent("play", mapOf("mediaId" to mediaId))
   }
 
-  fun emitChildrenRequest(parentId: String) {
-    sendEvent("childrenRequest", mapOf("parentId" to parentId))
+  fun emitPlaySearch(query: Bundle) {
+    sendEvent("playSearch", query)
   }
 
-  fun emitTransport(action: String, value: Double?) {
+  fun emitTransport(action: String, value: Double?, stringValue: String?) {
     val payload = HashMap<String, Any>(2)
     payload["action"] = action
-    if (value != null) payload["value"] = value
+    when {
+      stringValue != null -> payload["value"] = stringValue
+      value != null -> payload["value"] = value
+    }
     sendEvent("transport", payload)
-  }
-
-  fun emitTransportString(action: String, value: String) {
-    sendEvent("transport", mapOf("action" to action, "value" to value))
   }
 
   companion object {
     @Volatile var instance: CarAutoModule? = null
       private set
 
-    // Whether JS has registered its car listeners. `instance != null` is not
-    // enough — see the `notifyReady` comment above.
     @Volatile var jsReady: Boolean = false
       private set
 
-    // A tap that arrived while the runtime was still booting is replayed on
-    // notifyReady, but only for as long as it plausibly reflects what the user
-    // still wants to hear.
     private const val PENDING_TTL_MS = 60_000L
 
-    private data class PendingPlay(
-      val mediaId: String,
-      val parentId: String?,
-      val atMs: Long,
-    )
+    private sealed class Pending(val atMs: Long) {
+      class Play(val mediaId: String, atMs: Long) : Pending(atMs)
+      class Search(val query: Bundle, atMs: Long) : Pending(atMs)
+      class Transport(val action: String, val value: Double?, val stringValue: String?, atMs: Long) : Pending(atMs)
+    }
 
-    private data class PendingTransport(
-      val action: String,
-      val value: Double?,
-      val stringValue: String?,
-      val atMs: Long,
-    )
-
-    private var pendingPlay: PendingPlay? = null
-    // Browses the car made while JS was booting. No TTL: PendingChildren has
-    // already released the host by then, and a late answer is still a useful one.
+    private var pendingPlay: Pending? = null
     private val pendingChildren = LinkedHashSet<String>()
-    private var pendingTransport: PendingTransport? = null
+    private val pendingSearches = LinkedHashSet<String>()
 
     @Volatile var carConnected: Boolean = false
       private set
@@ -248,13 +262,11 @@ class CarAutoModule : Module() {
       if (carConnected == connected) return
       carConnected = connected
       CarAutoLog.d("car connected=$connected")
+      if (connected) BrowseStore.invalidate(null)
       instance?.sendEvent("carConnection", mapOf("connected" to connected))
       syncTimerHold()
     }
 
-    // Held only once JS is ready, because that is when the task it runs has
-    // been registered — started any earlier, AppRegistry finds no task and
-    // finishes it on the spot.
     private fun syncTimerHold() {
       CarTimerHold.update {
         val context = instance?.let { it.appContext.reactContext }
@@ -263,114 +275,138 @@ class CarAutoModule : Module() {
       }
     }
 
-    // Deciding "deliver or park" and flipping jsReady have to be one atomic step.
-    // They run on different threads — car intents arrive on a binder thread,
-    // notifyReady on the JS thread — and interleaved they lose the intent: the
-    // binder side reads jsReady == false, JS then flips it and finds nothing
-    // pending, and the binder side parks a tap that nothing will ever flush.
+    // Deciding "deliver or park" and flipping jsReady are one atomic step: car
+    // intents arrive on binder threads, notifyReady on the JS thread.
     private val gate = Any()
 
-    // Hands the car's tap to JS, or parks it for notifyReady to replay.
-    // Returns false when it was parked, i.e. the caller should boot the runtime.
-    fun deliverPlay(mediaId: String, parentId: String?): Boolean = synchronized(gate) {
-      val module = instance
-      if (module != null && jsReady) {
-        module.emitPlayEvent(mediaId, parentId)
+    private fun readyModule(): CarAutoModule? = instance?.takeIf { jsReady }
+
+    /** Returns false when parked, i.e. the caller should boot the runtime. */
+    fun deliverPlay(mediaId: String): Boolean = synchronized(gate) {
+      readyModule()?.let {
+        it.emitPlayEvent(mediaId)
         return@synchronized true
       }
-      pendingPlay = PendingPlay(mediaId, parentId, SystemClock.elapsedRealtime())
-      // A newer tap supersedes a bare transport command.
-      pendingTransport = null
+      pendingPlay = Pending.Play(mediaId, SystemClock.elapsedRealtime())
       false
     }
 
-    // Same for transport commands. `parkWhenCold` is for the ones that still
-    // mean something against the queue JS restores on boot (play, next,
-    // previous); a seek or a shuffle toggle targets state the cold process
-    // doesn't have yet and is dropped instead.
+    fun deliverPlaySearch(query: Bundle): Boolean = synchronized(gate) {
+      readyModule()?.let {
+        it.emitPlaySearch(query)
+        return@synchronized true
+      }
+      pendingPlay = Pending.Search(query, SystemClock.elapsedRealtime())
+      false
+    }
+
+    // Only play / next / previous are parked: they still mean something
+    // against the queue JS restores on boot. A parked tap always wins.
     fun deliverTransport(
       action: String,
       value: Double? = null,
       stringValue: String? = null,
       parkWhenCold: Boolean = false,
     ): Boolean = synchronized(gate) {
-      val module = instance
-      if (module != null && jsReady) {
-        if (stringValue != null) {
-          module.emitTransportString(action, stringValue)
-        } else {
-          module.emitTransport(action, value)
-        }
+      readyModule()?.let {
+        it.emitTransport(action, value, stringValue)
         return@synchronized true
       }
-      // Never let a transport command override a parked tap: the tap carries
-      // what to play, "play" only says to start whatever is loaded.
-      if (parkWhenCold && pendingPlay == null) {
-        pendingTransport =
-          PendingTransport(action, value, stringValue, SystemClock.elapsedRealtime())
+      if (parkWhenCold && pendingPlay !is Pending.Play && pendingPlay !is Pending.Search) {
+        pendingPlay = Pending.Transport(action, value, stringValue, SystemClock.elapsedRealtime())
       }
       false
     }
 
-    fun deliverChildrenRequest(parentId: String) {
-      synchronized(gate) {
-        val module = instance
-        if (module != null && jsReady) {
-          module.emitChildrenRequest(parentId)
-        } else {
-          pendingChildren.add(parentId)
-        }
+    fun deliverChildrenRequest(parentId: String) = synchronized(gate) {
+      val module = readyModule()
+      if (module != null) {
+        module.sendEvent("childrenRequest", mapOf("parentId" to parentId))
+      } else {
+        pendingChildren.add(parentId)
       }
     }
+
+    fun deliverSearchRequest(query: String) = synchronized(gate) {
+      val module = readyModule()
+      if (module != null) {
+        module.sendEvent("searchRequest", mapOf("query" to query))
+      } else {
+        pendingSearches.add(query)
+      }
+    }
+
+    fun deliverItemAction(requestId: Int, action: String, mediaId: String): Boolean =
+      synchronized(gate) {
+        val module = readyModule() ?: return@synchronized false
+        module.sendEvent(
+          "itemAction",
+          mapOf("requestId" to requestId, "action" to action, "mediaId" to mediaId),
+        )
+        true
+      }
 
     fun markJsReady() {
       synchronized(gate) {
         jsReady = true
         syncTimerHold()
         val module = instance ?: return
-        pendingChildren.forEach(module::emitChildrenRequest)
+        pendingChildren.forEach { module.sendEvent("childrenRequest", mapOf("parentId" to it)) }
         pendingChildren.clear()
-        val play = takePendingPlay()
-        if (play != null) {
-          CarAutoLog.d("flushing pending play ${play.mediaId}")
-          module.emitPlayEvent(play.mediaId, play.parentId)
-          return
-        }
-        val transport = takePendingTransport() ?: return
-        CarAutoLog.d("flushing pending transport ${transport.action}")
-        if (transport.stringValue != null) {
-          module.emitTransportString(transport.action, transport.stringValue)
-        } else {
-          module.emitTransport(transport.action, transport.value)
+        pendingSearches.forEach { module.sendEvent("searchRequest", mapOf("query" to it)) }
+        pendingSearches.clear()
+        val pending = pendingPlay ?: return
+        pendingPlay = null
+        if (SystemClock.elapsedRealtime() - pending.atMs > PENDING_TTL_MS) return
+        CarAutoLog.d("flushing parked ${pending::class.simpleName}")
+        when (pending) {
+          is Pending.Play -> module.emitPlayEvent(pending.mediaId)
+          is Pending.Search -> module.emitPlaySearch(pending.query)
+          is Pending.Transport -> module.emitTransport(pending.action, pending.value, pending.stringValue)
         }
       }
     }
 
-    private fun takePendingPlay(): PendingPlay? {
-      val p = pendingPlay ?: return null
-      pendingPlay = null
-      if (SystemClock.elapsedRealtime() - p.atMs > PENDING_TTL_MS) return null
-      return p
+    fun notifyChildrenChanged(parentIds: List<String>) {
+      val post = {
+        val session = WavioCarBrowserService.activeSession
+        if (session != null) {
+          for (parentId in parentIds) {
+            runCatching { session.notifyChildrenChanged(parentId, BrowseStore.childCount(parentId), null) }
+              .onFailure { CarAutoLog.w("notify failed for $parentId", it) }
+          }
+        }
+      }
+      if (Looper.myLooper() == Looper.getMainLooper()) post() else Handler(Looper.getMainLooper()).post(post)
     }
 
-    private fun takePendingTransport(): PendingTransport? {
-      val t = pendingTransport ?: return null
-      pendingTransport = null
-      if (SystemClock.elapsedRealtime() - t.atMs > PENDING_TTL_MS) return null
-      return t
+    private fun notifySearchChanged(query: String) {
+      val session = WavioCarBrowserService.activeSession ?: return
+      val count = BrowseStore.getSearch(query)?.size ?: 0
+      for (controller in session.connectedControllers) {
+        runCatching { session.notifySearchResultChanged(controller, query, count, null) }
+      }
+    }
+
+    private fun playbackErrorCode(code: String): Int = when (code) {
+      "authentication" -> PlaybackException.ERROR_CODE_AUTHENTICATION_EXPIRED
+      "network" -> PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED
+      "setup" -> PlaybackException.ERROR_CODE_SETUP_REQUIRED
+      else -> PlaybackException.ERROR_CODE_UNSPECIFIED
     }
   }
 }
 
 @OptIn(UnstableApi::class)
-private fun parseNowPlaying(json: String): JsProxyPlayer.NowPlaying {
-  val o = JSONObject(json)
-  return JsProxyPlayer.NowPlaying(
+private fun parseNowPlaying(o: JSONObject): JsProxyPlayer.NowPlaying =
+  JsProxyPlayer.NowPlaying(
     id = o.optString("id"),
-    title = o.optString("title").takeIf { it.isNotEmpty() },
-    artist = o.optString("artist").takeIf { it.isNotEmpty() },
-    album = o.optString("album").takeIf { it.isNotEmpty() },
-    artworkUrl = o.optString("artworkUrl").takeIf { it.isNotEmpty() },
+    title = o.optStringOrNull("title"),
+    artist = o.optStringOrNull("artist"),
+    album = o.optStringOrNull("album"),
+    artworkUrl = o.optStringOrNull("artworkUrl"),
     durationMs = o.optLong("durationMs", 0L),
+    artistMediaId = o.optStringOrNull("artistMediaId"),
+    explicit = o.optBoolean("explicit", false),
+    downloaded = o.optBoolean("downloaded", false),
   )
-}

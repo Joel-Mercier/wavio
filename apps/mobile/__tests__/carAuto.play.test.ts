@@ -1,187 +1,185 @@
-// Android Auto can browse a tree the native side restored from disk into a
-// process where JS has only just booted (issue #144), so a tap routinely
-// arrives before buildBrowseTree() has populated the in-memory snapshot. The
-// resolver has to fall back to the server instead of dropping the tap.
-const mockGetAlbum = jest.fn();
-const mockGetSong = jest.fn();
-const mockGetPlaylist = jest.fn();
-const mockGetStarred2 = jest.fn();
-const mockPlayTracks = jest.fn();
-const mockRefuseHiddenPick = jest.fn();
-let mockRecentPlays: Record<string, unknown>[] = [];
+const mockGetListing = jest.fn();
+const mockGetArtistSongs = jest.fn();
+const mockPlayTracks = jest.fn((..._args: unknown[]) => true);
+const mockRefuseHiddenPick = jest.fn((..._args: unknown[]) => false);
+const mockGetTracks = jest.fn();
+const mockAddRecentPlay = jest.fn();
+const mockRadioStationTrack = jest.fn();
+let mockQueueState: { source: unknown; current: unknown } = {
+  source: null,
+  current: null,
+};
 
-const emptySnapshot = () => ({
-  tracks: new Map(),
-  playlists: new Map(),
-  albums: new Map(),
-  artistTopSongs: new Map(),
-  parentTracks: new Map<string, string[]>(),
-});
-let mockSnapshot = emptySnapshot();
-
+jest.mock("@/services/audiobookshelf/play", () => ({
+  playAudiobook: jest.fn(),
+}));
 jest.mock("@/services/backend/browsing", () => ({
-  getAlbum: (...args: unknown[]) => mockGetAlbum(...args),
-  getArtist: jest.fn(),
-  getSong: (...args: unknown[]) => mockGetSong(...args),
+  getArtistSongs: (...args: unknown[]) => mockGetArtistSongs(...args),
+  getSong: jest.fn(),
 }));
-
-jest.mock("@/services/backend/playlists", () => ({
-  getPlaylist: (...args: unknown[]) => mockGetPlaylist(...args),
-}));
-
-jest.mock("@/services/backend/lists", () => ({
-  getStarred2: (...args: unknown[]) => mockGetStarred2(...args),
-}));
-
 jest.mock("@/services/player", () => ({
   playTracks: (...args: unknown[]) => mockPlayTracks(...args),
   refuseHiddenPick: (...args: unknown[]) => mockRefuseHiddenPick(...args),
 }));
-
-jest.mock("@/services/topSongs", () => ({
-  fetchTopSongs: jest.fn(),
-  supportsTopSongsById: () => false,
+jest.mock("@/services/carAuto/browse", () => ({
+  getListing: (...args: unknown[]) => mockGetListing(...args),
+  getTracks: (...args: unknown[]) => mockGetTracks(...args),
 }));
-
+jest.mock("@/services/carAuto/providers/mixes", () => ({
+  mixTracks: jest.fn(),
+}));
+jest.mock("@/services/carAuto/providers/radio", () => ({
+  radioStationTrack: (...args: unknown[]) => mockRadioStationTrack(...args),
+}));
+jest.mock("@/stores/queue", () => ({
+  __esModule: true,
+  default: {
+    getState: () => ({
+      source: mockQueueState.source,
+      getCurrent: () => mockQueueState.current,
+    }),
+  },
+}));
 jest.mock("@/stores/recentPlays", () => ({
   __esModule: true,
-  default: { getState: () => ({ recentPlays: mockRecentPlays }) },
+  default: {
+    getState: () => ({ addRecentPlay: mockAddRecentPlay }),
+  },
 }));
-
 jest.mock("@/utils/childToTrack", () => ({
   childToTrack: (child: { id: string }) => child,
 }));
 
-jest.mock("@/services/carAuto/tree", () => ({
-  getSnapshot: () => mockSnapshot,
-}));
+import { playMediaId } from "@/services/carAuto/play";
 
-import { handleBrowsePlay } from "@/services/carAuto/play";
-
-const song = (id: string) => ({ id, title: id });
+const source = { type: "artist", id: "ar1", name: "Bicep" };
 
 beforeEach(() => {
-  mockGetAlbum.mockReset();
-  mockGetSong.mockReset();
-  mockGetPlaylist.mockReset();
-  mockGetStarred2.mockReset();
-  mockPlayTracks.mockReset().mockReturnValue(true);
-  mockRefuseHiddenPick.mockReset().mockReturnValue(false);
-  mockRecentPlays = [];
-  mockSnapshot = emptySnapshot();
+  jest.clearAllMocks();
+  mockQueueState = { source: null, current: null };
 });
 
-describe("handleBrowsePlay with a cold snapshot", () => {
-  it("fetches the album and starts at the tapped track", async () => {
-    mockGetAlbum.mockResolvedValue({
-      album: { song: [song("s1"), song("s2"), song("s3")] },
+describe("playing an artist", () => {
+  it("plays the top songs when the server has them", async () => {
+    mockGetListing.mockResolvedValue({
+      nodes: [],
+      tracks: [{ id: "top1" }],
+      source,
     });
 
-    const played = await handleBrowsePlay("track|album:a1|s2");
+    expect(await playMediaId("artist:ar1")).toBe(true);
 
-    expect(played).toBe(true);
-    expect(mockGetAlbum).toHaveBeenCalledWith("a1");
+    expect(mockGetArtistSongs).not.toHaveBeenCalled();
+    expect(mockPlayTracks).toHaveBeenCalledWith([{ id: "top1" }], 0, {
+      source,
+    });
+  });
+
+  it("falls back to the artist's own songs when there are no top songs", async () => {
+    mockGetListing.mockResolvedValue({ nodes: [], tracks: [], source });
+    mockGetArtistSongs.mockResolvedValue({
+      artistSongs: { song: [{ id: "s1" }, { id: "s2" }] },
+    });
+
+    expect(await playMediaId("artist:ar1")).toBe(true);
+
+    expect(mockGetArtistSongs).toHaveBeenCalledWith("ar1");
     expect(mockPlayTracks).toHaveBeenCalledWith(
-      [song("s1"), song("s2"), song("s3")],
-      1,
+      [{ id: "s1" }, { id: "s2" }],
+      0,
+      { source },
     );
+  });
+
+  it("reports failure when the artist has no songs at all", async () => {
+    mockGetListing.mockResolvedValue({ nodes: [], tracks: [], source });
+    mockGetArtistSongs.mockResolvedValue({ artistSongs: { song: [] } });
+
+    expect(await playMediaId("artist:ar1")).toBe(false);
+    expect(mockPlayTracks).not.toHaveBeenCalled();
+  });
+});
+
+describe("playing a tapped track", () => {
+  const album = { tracks: [{ id: "s1" }, { id: "s2" }, { id: "s3" }] };
+
+  it("starts the collection at the tapped track", async () => {
+    mockGetTracks.mockResolvedValue(album);
+
+    expect(await playMediaId("track|album:a1|s2")).toBe(true);
+
+    expect(mockPlayTracks).toHaveBeenCalledWith(album.tracks, 1, {
+      source: undefined,
+    });
   });
 
   it("plays nothing when the tapped track is hidden", async () => {
-    mockGetAlbum.mockResolvedValue({
-      album: { song: [song("s1"), song("s2"), song("s3")] },
-    });
-    mockRefuseHiddenPick.mockImplementation(
-      (track: { id: string }) => track.id === "s2",
-    );
+    mockGetTracks.mockResolvedValue(album);
+    mockRefuseHiddenPick.mockReturnValueOnce(true);
 
-    await expect(handleBrowsePlay("track|album:a1|s2")).resolves.toBe(false);
+    expect(await playMediaId("track|album:a1|s2")).toBe(false);
+    expect(mockRefuseHiddenPick).toHaveBeenCalledWith({ id: "s2" });
     expect(mockPlayTracks).not.toHaveBeenCalled();
-  });
-
-  it("fetches the playlist and starts at the tapped track", async () => {
-    mockGetPlaylist.mockResolvedValue({
-      playlist: { entry: [song("s1"), song("s2")] },
-    });
-
-    await handleBrowsePlay("track|playlist:p1|s2");
-
-    expect(mockPlayTracks).toHaveBeenCalledWith([song("s1"), song("s2")], 1);
-  });
-
-  it("falls back to the favorites list from the server", async () => {
-    mockGetStarred2.mockResolvedValue({
-      starred2: { song: [song("s1"), song("s2")] },
-    });
-
-    await handleBrowsePlay("track|favorites|s2");
-
-    expect(mockPlayTracks).toHaveBeenCalledWith([song("s1"), song("s2")], 1);
-  });
-
-  it("plays the tapped song alone when its parent isn't a tracklist", async () => {
-    mockGetSong.mockResolvedValue({ song: song("s9") });
-
-    const played = await handleBrowsePlay("track|home:section:recent|s9");
-
-    expect(played).toBe(true);
-    expect(mockGetSong).toHaveBeenCalledWith("s9");
-    expect(mockPlayTracks).toHaveBeenCalledWith([song("s9")], 0);
-  });
-
-  it("fetches a legacy parentless track id", async () => {
-    mockGetSong.mockResolvedValue({ song: song("s7") });
-
-    await handleBrowsePlay("track:s7");
-
-    expect(mockGetSong).toHaveBeenCalledWith("s7");
-    expect(mockPlayTracks).toHaveBeenCalledWith([song("s7")], 0);
-  });
-
-  it("gives up rather than replacing the queue when nothing resolves", async () => {
-    mockGetAlbum.mockRejectedValue(new Error("offline"));
-    mockGetSong.mockRejectedValue(new Error("offline"));
-
-    const played = await handleBrowsePlay("track|album:a1|s2");
-
-    expect(played).toBe(false);
-    expect(mockPlayTracks).not.toHaveBeenCalled();
-  });
-
-  it("plays a recently played radio station", async () => {
-    mockRecentPlays = [
-      {
-        id: "st1",
-        type: "internetRadioStation",
-        title: "FIP",
-        streamUrl: "http://stream/fip",
-        coverArt: "http://img/fip",
-        source: "radioBrowser",
-      },
-    ];
-
-    const played = await handleBrowsePlay("radio:st1");
-
-    expect(played).toBe(true);
-    expect(mockPlayTracks).toHaveBeenCalledWith(
-      [expect.objectContaining({ id: "st1", url: "http://stream/fip" })],
-      0,
-    );
   });
 });
 
-describe("handleBrowsePlay with a warm snapshot", () => {
-  it("enqueues the cached collection without hitting the server", async () => {
-    mockSnapshot.tracks.set("s1", song("s1"));
-    mockSnapshot.tracks.set("s2", song("s2"));
-    mockSnapshot.parentTracks.set("album:a1", [
-      "track|album:a1|s1",
-      "track|album:a1|s2",
-    ]);
+describe("recent plays", () => {
+  it("records the album a track was played from", async () => {
+    const album = { type: "album", id: "al1", name: "Isles", coverArt: "c1" };
+    mockGetTracks.mockResolvedValue({ tracks: [{ id: "t1" }], source: album });
+    mockQueueState = { source: album, current: { id: "t1" } };
 
-    await handleBrowsePlay("track|album:a1|s2");
+    expect(await playMediaId("track|album:al1|t1")).toBe(true);
 
-    expect(mockGetAlbum).not.toHaveBeenCalled();
-    expect(mockPlayTracks).toHaveBeenCalledWith([song("s1"), song("s2")], 1);
+    expect(mockAddRecentPlay).toHaveBeenCalledWith({
+      id: "al1",
+      title: "Isles",
+      type: "album",
+      coverArt: "c1",
+    });
+  });
+
+  it("records a radio station with what its shortcut needs to reopen it", async () => {
+    const station = {
+      id: "st1",
+      title: "Radio Nova",
+      artwork: "https://nova/logo.png",
+      homePageUrl: "https://nova",
+      streamUrl: "https://nova/stream",
+      source: "radioBrowser",
+      isRadio: true,
+    };
+    mockRadioStationTrack.mockResolvedValue(station);
+    mockQueueState = { source: null, current: station };
+
+    expect(await playMediaId("radio:st1")).toBe(true);
+
+    expect(mockAddRecentPlay).toHaveBeenCalledWith({
+      id: "st1",
+      title: "Radio Nova",
+      type: "internetRadioStation",
+      coverArt: "https://nova/logo.png",
+      homePageUrl: "https://nova",
+      streamUrl: "https://nova/stream",
+      source: "radioBrowser",
+    });
+  });
+
+  it("leaves generated lists and failed plays out", async () => {
+    mockGetTracks.mockResolvedValue({ tracks: [{ id: "t1" }] });
+    mockQueueState = {
+      source: { type: "mix", name: "Shuffle" },
+      current: { id: "t1" },
+    };
+    await playMediaId("downloads:songs");
+
+    mockPlayTracks.mockReturnValueOnce(false);
+    mockQueueState = {
+      source: { type: "album", id: "al1", name: "Isles" },
+      current: null,
+    };
+    await playMediaId("track|album:al1|t1");
+
+    expect(mockAddRecentPlay).not.toHaveBeenCalled();
   });
 });

@@ -104,11 +104,14 @@ import {
 } from "@/services/podcastProgress";
 import {
   armResume,
+  armResumeAt,
   clearResumePosition,
   getResumePosition,
   loadResumePositions,
+  noteFreshStart,
   notePlaybackTrack,
   recordResumePosition,
+  settleResume,
 } from "@/services/resumePositions";
 import { maybeRequestReview, noteCountedPlay } from "@/services/reviewPrompt";
 import { isActiveServerUrl, rewriteQueueRoutes } from "@/services/routeSwap";
@@ -202,6 +205,10 @@ let endlessResumeWhenReady = false;
 // reports the track is ready, clearing it after the first application.
 let pendingResumeId: string | null = null;
 let pendingResumeAt = 0;
+// The track the engine last reported playing, so its position is known. Cleared
+// on every load: a pause reported after a skip or a server switch carries the
+// outgoing source's position, which must not be saved against the new track.
+let positionTrackId: string | null = null;
 
 export function getActivePlayer(): AudioPlayer {
   return player;
@@ -1076,6 +1083,31 @@ const REPEAT_MEDIA_BUTTONS = {
 let pendingFavorite: { id: string; starred: boolean } | null = null;
 let pushedMediaButtons: string | null = null;
 
+// The same heart for controls that draw their own (the Android Auto player):
+// null when the current track can't be favorited.
+let currentFavorite: boolean | null = null;
+const favoriteListeners = new Set<(favorite: boolean | null) => void>();
+
+export function getCurrentFavorite(): boolean | null {
+  return currentFavorite;
+}
+
+export function subscribeCurrentFavorite(
+  listener: (favorite: boolean | null) => void,
+): () => void {
+  favoriteListeners.add(listener);
+  return () => {
+    favoriteListeners.delete(listener);
+  };
+}
+
+function publishCurrentFavorite(track: QueueTrack | null) {
+  const heart = isLibraryTrack(track) ? isTrackFavorite(track) : null;
+  if (heart === currentFavorite) return;
+  currentFavorite = heart;
+  for (const listener of favoriteListeners) listener(heart);
+}
+
 function isTrackFavorite(track: QueueTrack): boolean {
   return pendingFavorite?.id === track.id
     ? pendingFavorite.starred
@@ -1101,6 +1133,7 @@ function nativeMediaButton(
 
 function syncMediaButtons() {
   const track = useQueue.getState().getCurrent();
+  publishCurrentFavorite(track);
   const { mediaControlsLeft, mediaControlsRight } = useAppBase.getState();
   const left = nativeMediaButton(mediaControlsLeft, track);
   const right = nativeMediaButton(mediaControlsRight, track);
@@ -1114,7 +1147,7 @@ function syncMediaButtons() {
   }
 }
 
-async function toggleCurrentTrackFavorite() {
+export async function toggleCurrentTrackFavorite() {
   const track = useQueue.getState().getCurrent();
   if (!isLibraryTrack(track) || pendingFavorite?.id === track.id) return;
   const starred = !track.starred;
@@ -1144,6 +1177,7 @@ export function pushLockScreenMetadata(track: QueueTrack | null) {
 }
 
 function loadTrack(track: QueueTrack | null, autoplay: boolean) {
+  positionTrackId = null;
   if (!track) {
     player.pause();
     clearLockScreen(player);
@@ -1167,6 +1201,8 @@ function loadTrack(track: QueueTrack | null, autoplay: boolean) {
     : isPodcastTrack(track)
       ? getPodcastResumePosition(track)
       : getResumePosition(track);
+  // Only a play starts a track over: a silent load at 0 is no listening.
+  if (resumeAt == null && autoplay) noteFreshStart(track.id);
   const transcodeResume =
     resumeAt != null && resumeAt > 0 && isTranscodedStream(track);
   streamStartOffset = transcodeResume ? resumeAt : 0;
@@ -1679,6 +1715,7 @@ function handlePlaybackStatus(status: AudioStatus) {
     if (checkSleepTimerExpiry()) return;
     const cur = useQueue.getState().getCurrent();
     if (cur) {
+      positionTrackId = cur.id;
       reportNowPlaying(cur);
       if (isAudiobookTrack(cur)) {
         recordAudiobookProgress(cur, status.currentTime ?? 0, {
@@ -1699,7 +1736,8 @@ function handlePlaybackStatus(status: AudioStatus) {
         recordPodcastProgress(cur, effectivePosition(status.currentTime ?? 0), {
           duration: status.duration,
         });
-      } else {
+      } else if (pendingResumeId !== cur.id) {
+        settleResume(cur.id);
         recordResumePosition(cur, effectivePosition(status.currentTime ?? 0));
       }
     }
@@ -1716,6 +1754,15 @@ function handlePlaybackStatus(status: AudioStatus) {
     if (isAudiobookTrack(paused)) {
       recordAudiobookProgress(paused, status.currentTime ?? 0, {
         playing: false,
+        force: true,
+      });
+    } else if (
+      paused &&
+      paused.id === positionTrackId &&
+      pendingResumeId !== paused.id &&
+      !isPodcastTrack(paused)
+    ) {
+      recordResumePosition(paused, effectivePosition(status.currentTime ?? 0), {
         force: true,
       });
     }
@@ -2017,8 +2064,10 @@ const queueUnsub = useQueue.subscribe((state) => {
     if (!hasHydrated) {
       // Persist rehydration emits a state change before onFinishHydration
       // fires; load the restored track silently so reopening the app does
-      // not auto-resume playback.
+      // not auto-resume playback. It is the launch track, so armed first: this
+      // load is the one that has to start it at its saved position.
       resetScrobbleState();
+      armResume(id);
       loadTrack(current, false);
       return;
     }
@@ -2072,8 +2121,10 @@ function hydratePlayerFromQueue() {
   // Bookmarks load asynchronously, so the loadTrack above usually runs before
   // the resume map is populated. Once it lands, arm the resume seek for the
   // restored (and not-yet-played) track so reopening the app lands at the saved
-  // position instead of the start.
-  if (current && !playbackInitialized) {
+  // position instead of the start. A position saved on the device was already
+  // applied by that loadTrack, offset into the URL for a transcoded stream,
+  // where seeking to it again would land twice as far in.
+  if (current && !playbackInitialized && getResumePosition(current) == null) {
     void loadResumePositions().then(() => {
       if (loadedTrackId !== current.id) return;
       if (playbackInitialized || player.playing) return;
@@ -2122,6 +2173,7 @@ export function resetPlayerForScopeChange() {
   lastTrackId = null;
   lastTrack = null;
   pendingResumeId = null;
+  positionTrackId = null;
   if (useQueue.persist.hasHydrated()) {
     hydratePlayerFromQueue();
   } else {
@@ -2152,6 +2204,7 @@ export function stopPlayback() {
   lastTrackId = null;
   lastTrack = null;
   pendingResumeId = null;
+  positionTrackId = null;
   useQueue.getState().clearQueue();
 }
 
@@ -2353,26 +2406,36 @@ export function restoreServerQueue(
     tracks[index]?.id === restored[restoredIndex]?.id
       ? restoredPositionSeconds
       : 0;
+  const target = tracks[index];
+  const sameTrack = target != null && lastTrackId === target.id;
+  // Saved as the track's resume position, so the load below and the reload of
+  // the first play both start there, through the same path as a launch resume:
+  // offset into the URL for a transcoded stream, armed and seeked otherwise.
+  if (target && positionSeconds > 0) armResumeAt(target, positionSeconds);
   suppressAutoplayOnce = true;
   playbackInitialized = false;
   // Explicit null: the server queue carries no "Playing from …" context.
   useQueue.getState().setQueue(tracks, index, null);
-  if (positionSeconds > 0) {
-    // setQueue fired the queue subscription synchronously, so loadTrack has
-    // already armed pendingResumeAt from whatever the track's own resume source
-    // says. Arm the restored position over it (as takeOverFromRemote does)
-    // rather than only raw-seeking: the status listener re-applies the armed
-    // value once the media is ready and would otherwise undo this seek.
-    const current = useQueue.getState().getCurrent();
-    if (current) {
-      pendingResumeId = current.id;
-      pendingResumeAt = positionSeconds;
-    }
-    try {
-      player.seekTo(positionSeconds);
-    } catch (error) {
-      logSwallowed("seek to restored position", error);
-    }
+  // The subscription only consumes it on a track change.
+  suppressAutoplayOnce = false;
+  if (positionSeconds <= 0) return;
+  const current = useQueue.getState().getCurrent();
+  if (!current) return;
+  // Nothing was reloaded for the same track, whose source may still start at
+  // the position saved on the device. A remote target (the jukebox) owns
+  // playback meanwhile, and taking over from it loads the track afresh.
+  if (sameTrack && !activeRemoteTarget()) loadTrack(current, false);
+  if (getResumePosition(current) != null) return;
+  // Not one that resumes from the device (or too close to the start for it).
+  // Arm the restored position rather than only raw-seeking: the status listener
+  // re-applies the armed value once the media is ready and would otherwise undo
+  // this seek.
+  pendingResumeId = current.id;
+  pendingResumeAt = positionSeconds;
+  try {
+    player.seekTo(positionSeconds);
+  } catch (error) {
+    logSwallowed("seek to restored position", error);
   }
 }
 
@@ -2397,6 +2460,9 @@ export function enqueueWithoutAutoplay(tracks: QueueTrack[]): number {
 export function takeOverFromRemote(positionSeconds: number, shouldPlay = true) {
   const current = useQueue.getState().getCurrent();
   if (!current) return;
+  // The remote's position replaces the one saved on the device, which loadTrack
+  // would otherwise bake into a transcoded stream's URL under the seek below.
+  settleResume(current.id);
   if (shouldPlay) {
     // The play the remote announced (and may already have counted) carries on
     // here; starting it over would count it twice.
@@ -2540,9 +2606,27 @@ export function play() {
   player.play();
 }
 
+// Saves where the current track is, for a restart to resume from. Pauses and
+// the playing tick already do; this covers leaving while it plays.
+export function savePlaybackPosition() {
+  if (activeRemoteTarget() || !playbackInitialized) return;
+  const current = useQueue.getState().getCurrent();
+  if (!current || loadedTrackId !== current.id) return;
+  if (pendingResumeId === current.id) return;
+  if (isAudiobookTrack(current) || isPodcastTrack(current)) return;
+  recordResumePosition(current, effectivePosition(player.currentTime ?? 0), {
+    force: true,
+  });
+}
+
 export function getCurrentTime() {
   const remote = activeRemoteTarget();
   if (remote) return remote.getCurrentTime();
+  // A resume seek armed on a source that isn't prepared yet (a restored track
+  // loaded without playing) leaves the engine at 0 until the first play.
+  if (pendingResumeId != null && pendingResumeId === loadedTrackId) {
+    return pendingResumeAt;
+  }
   return effectivePosition(player.currentTime ?? 0);
 }
 

@@ -82,6 +82,7 @@ export const SCOPED_STORE_NAMES = [
   "lastFmStore",
   "lrclibPicksStore",
   "trackCacheStore",
+  "carAutoStore",
   "hiddenTracksStore",
 ] as const;
 

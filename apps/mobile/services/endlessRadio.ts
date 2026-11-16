@@ -7,8 +7,11 @@ import { childToTrack } from "@/utils/childToTrack";
 
 const FETCH_COUNT = 20;
 
+// `kept` is what stays in the queue around the extension; its tracks are left
+// out of it. It defaults to the whole queue, which is right when appending.
 export async function fetchEndlessExtension(
   seed: QueueTrack,
+  { kept }: { kept?: QueueTrack[] } = {},
 ): Promise<QueueTrack[]> {
   let songs: Child[] = [];
 
@@ -44,7 +47,9 @@ export async function fetchEndlessExtension(
 
   if (songs.length === 0) return [];
 
-  const existingIds = new Set(useQueue.getState().queue.map((t) => t.id));
+  const existingIds = new Set(
+    (kept ?? useQueue.getState().queue).map((t) => t.id),
+  );
   return (
     withoutHidden(songs)
       .filter((s) => !existingIds.has(s.id))
