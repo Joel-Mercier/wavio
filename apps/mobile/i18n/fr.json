@@ -274,19 +274,102 @@
 				}
 			},
 			"carAuto": {
-				"home": "Accueil",
-				"recentlyPlayed": "Écoutés récemment",
+				"unknownTitle": "Titre inconnu",
+				"offlineNotice": "Serveur inaccessible",
+				"offlineNoticeSubtitle": "Parcourir vos téléchargements",
+				"sections": {
+					"home": "Accueil",
+					"library": "Bibliothèque",
+					"downloads": "Téléchargements",
+					"recent": "Récent",
+					"favorites": "Favoris",
+					"playlists": "Playlists",
+					"albums": "Albums",
+					"artists": "Artistes",
+					"genres": "Genres",
+					"radio": "Radio",
+					"mixes": "Compilations",
+					"podcasts": "Podcasts",
+					"audiobooks": "Livres audio"
+				},
+				"rows": {
+					"recentlyPlayed": "Joués récemment",
+					"newest": "Ajoutés récemment",
+					"frequent": "Les plus joués",
+					"highest": "Les mieux notés",
+					"random": "Au hasard",
+					"leastPlayed": "Les moins jouées",
+					"starredAlbums": "Albums favoris",
+					"mixes": "Des compilations rien que pour vous"
+				},
+				"favorites": {
+					"songs": "Titres favoris",
+					"albums": "Albums favoris",
+					"artists": "Artistes favoris"
+				},
+				"downloads": {
+					"albums": "Albums",
+					"playlists": "Playlists",
+					"songs": "Titres"
+				},
+				"topSongs": "Chansons les plus écoutées",
+				"artistMix": "Compilation d'artistes",
+				"artistMixOf": "Compilation {{artist}}",
+				"artistMixes": "Compilations d'artistes",
+				"genreMixOf": "Compilation {{genre}}",
+				"genreMixes": "Compilations de genres",
+				"shuffleAll": "Lecture aléatoire de la bibliothèque",
+				"shuffleGenre": "Lecture aléatoire {{genre}}",
+				"continueListening": "Continuer d'écouter",
 				"recentlyAdded": "Ajoutés récemment",
-				"mostPlayed": "Les plus écoutés",
-				"topRated": "Les mieux notés",
-				"random": "Aléatoire",
-				"library": "Bibliothèque",
-				"playlists": "Playlists",
-				"albums": "Albums",
-				"podcasts": "Podcasts",
-				"favorites": "Favoris",
+				"search": {
+					"songs": "Titres",
+					"albums": "Albums",
+					"artists": "Artistes",
+					"playlists": "Playlists"
+				},
+				"actions": {
+					"favorited": "Ajouté aux favoris",
+					"unfavorited": "Supprimé des favoris",
+					"failed": "Une erreur est survenue",
+					"playingNext_one": "{{count}} titre joue ensuite",
+					"playingNext_other": "{{count}} titres jouent ensuite",
+					"addedToQueue_one": "{{count}} titre ajouté à la file d'attente",
+					"addedToQueue_other": "{{count}} titres ajoutés à la file d'attente",
+					"downloading_one": "Téléchargement d'un titre",
+					"downloading_other": "Téléchargement de {{count}} titres"
+				},
+				"errors": {
+					"signedOut": "Connectez-vous à Wavio depuis votre téléphone lorsque vous pouvez le faire en toute sécurité",
+					"offline": "Impossible d'accéder au serveur et rien n'est téléchargé",
+					"noResults": "Aucun résultat trouvé pour «{{query}}»",
+					"radioUnavailable": "Aucun titre similaire n'a été trouvé pour ce titre"
+				},
+				"buttons": {
+					"favoriteAdd": "Ajouter aux favoris",
+					"favoriteRemove": "Retirer des favoris",
+					"shuffleOn": "Activer la lecture aléatoire",
+					"shuffleOff": "Désactiver la lecture aléatoire",
+					"repeatAll": "Tout lire en boucle",
+					"repeatOne": "Répéter une fois",
+					"repeatOff": "Désactiver la répétition",
+					"radio": "Démarrer la radio",
+					"seekBack": "Retour de 30 secondes",
+					"seekForward": "Avancer de 30 secondes"
+				},
+				"itemActions": {
+					"favoriteAdd": "Ajouter aux favoris",
+					"favoriteRemove": "Retirer des favoris",
+					"radio": "Démarrer la radio",
+					"playNext": "Ajouter à la file d'attente",
+					"addToQueue": "Ajouter à la fin de la file d'attente",
+					"shuffle": "Lecture aléatoire",
+					"download": "Téléchargement"
+				},
 				"songCount_one": "{{count}} titre",
-				"songCount_other": "{{count}} titres"
+				"songCount_other": "{{count}} titres",
+				"albumCount_one": "{{count}} album",
+				"albumCount_other": "{{count}} albums"
 			},
 			"albums": {
 				"goneMessage": "Cet album ne figure plus dans votre bibliothèque.",
@@ -314,7 +397,7 @@
 				"addAllToFavoritesErrorMessage": "Une erreur s'est produite lors de l'ajout des chansons aux favoris",
 				"typeAlbum": "Album",
 				"typeCompilation": "Compilation",
-				"reissued": "Reissued {{year}}",
+				"reissued": "Réédition {{year}}",
 				"releaseTypeUntagged": "Sans étiquette",
 				"releaseTypes": {
 					"album": "Album",
@@ -830,6 +913,10 @@
 					"playback": {
 						"title": "Lecture et audio",
 						"description": "Qualité audio, normalisation du volume, égaliseur"
+					},
+					"androidAuto": {
+						"title": "Android Auto",
+						"description": "Onglets, rangées d'accueil, boutons de lecture"
 					},
 					"library": {
 						"title": "Bibliothèque musicale",
@@ -1799,7 +1886,7 @@
 					"queueSyncOptions": {
 						"server": {
 							"label": "Prioriser le serveur",
-							"description": "Au démarrage, restaure la file enregistrée sur le serveur. Votre file est aussi envoyée pour que vos autres appareils puissent la reprendre."
+							"description": "Au démarrage, restaurez la file d'attente enregistrée sur le serveur, sauf si cet appareil a modifié sa file d'attente plus récemment sans l'avoir téléchargée. Votre file d'attente est également téléchargée afin que d'autres appareils puissent la récupérer."
 						},
 						"local": {
 							"label": "Prioriser cet appareil",
@@ -1916,6 +2003,53 @@
 					"autoBackupKeepLabel": "Sauvegardes à conserver",
 					"autoBackupKeepDescription": "Les sauvegardes automatiques les plus anciennes sont supprimées du dossier après chaque sauvegarde. Les autres fichiers qui s'y trouvent ne sont jamais modifiés.",
 					"autoBackupPrivacyNotice": "Les sauvegardes ne contiennent jamais de mots de passe, de jetons ni de clés API. Elles contiennent en revanche vos serveurs, vos noms d'utilisateur et l'historique de vos écoutes ; veillez donc à choisir un dossier auquel vous seul avez accès."
+				},
+				"androidAutoSettings": {
+					"tabsTitle": "Onglets",
+					"tabsDescription": "La plupart des voitures affichent jusqu'à 4 onglets. Les onglets dépassant la limite de la voiture ne sont pas affichés.",
+					"homeRowsTitle": "Rangées de l'accueil",
+					"libraryTitle": "Bibliothèque",
+					"displayTitle": "Affichage",
+					"displayDescription": "Appuyez pour basculer entre l'affichage sous forme de liste et celui sous forme de grille",
+					"display": {
+						"list": "Liste",
+						"grid": "Grille"
+					},
+					"collectionTap": {
+						"label": "Appuyer sur un album ou une playlist",
+						"description": "Ouvrez-le pour choisir un morceau ou lancez-le directement. Cela vaut également pour les artistes, les genres, les favoris et les téléchargements.",
+						"open": "L'ouvre",
+						"play": "Le joue"
+					},
+					"playerButtonsTitle": "Boutons du lecteur",
+					"playerButtons": {
+						"favorite": {
+							"label": "Favoris",
+							"description": "Un cœur qui permet d'ajouter le morceau en cours à vos favoris ou de le supprimer de ceux-ci."
+						},
+						"shuffle": {
+							"label": "Lecture aléatoire",
+							"description": "Active/désactive la lecture aléatoire."
+						},
+						"repeat": {
+							"label": "Répéter",
+							"description": "Permet de basculer entre les modes « Répéter tout », « Répéter une fois » et « Arrêt »."
+						},
+						"radio": {
+							"label": "Radio",
+							"description": "Remplace le morceau à venir par des titres similaires à celui en cours de lecture."
+						}
+					},
+					"itemActionsTitle": "Actions de la liste",
+					"itemActionsDescription": "Raccourcis vers des titres, des albums et des listes de lecture, lorsque le véhicule prend en charge cette fonctionnalité.",
+					"itemActions": {
+						"favoriteAdd": "Favoris",
+						"radio": "Démarrer la radio",
+						"playNext": "Ajouter à la file d'attente",
+						"addToQueue": "Ajouter à la fin de la file d'attente",
+						"shuffle": "Lecture aléatoire",
+						"download": "Téléchargement"
+					}
 				},
 				"securitySettings": {
 					"title": "Sécurité",
