@@ -274,19 +274,102 @@
 				}
 			},
 			"carAuto": {
-				"home": "Home",
-				"recentlyPlayed": "Giocati di recente",
+				"unknownTitle": "Titolo sconosciuto",
+				"offlineNotice": "Impossibile raggiungere il server",
+				"offlineNoticeSubtitle": "Sfoglia i tuoi download",
+				"sections": {
+					"home": "Home",
+					"library": "Libreria",
+					"downloads": "Download",
+					"recent": "Recenti",
+					"favorites": "Preferiti",
+					"playlists": "Playlist",
+					"albums": "Album",
+					"artists": "Artisti",
+					"genres": "Generi",
+					"radio": "Radio",
+					"mixes": "Miscele",
+					"podcasts": "Podcast",
+					"audiobooks": "Audiolibri"
+				},
+				"rows": {
+					"recentlyPlayed": "Ascoltati di recente",
+					"newest": "Aggiunti di recente",
+					"frequent": "I più ascoltati",
+					"highest": "I più apprezzati",
+					"random": "Casuali",
+					"leastPlayed": "Meno giocato",
+					"starredAlbums": "Album preferiti",
+					"mixes": "Miscele per te"
+				},
+				"favorites": {
+					"songs": "Canzoni preferite",
+					"albums": "Album preferiti",
+					"artists": "Artisti preferiti"
+				},
+				"downloads": {
+					"albums": "Album",
+					"playlists": "Playlist",
+					"songs": "Canzoni"
+				},
+				"topSongs": "Brani più ascoltati",
+				"artistMix": "Miscela di artisti",
+				"artistMixOf": "{{artist}} mix",
+				"artistMixes": "Miscele di artisti",
+				"genreMixOf": "{{genre}} mix",
+				"genreMixes": "Miscele di genere",
+				"shuffleAll": "Mischia la mia libreria",
+				"shuffleGenre": "Mischia {{genre}}",
+				"continueListening": "Continua ad ascoltare",
 				"recentlyAdded": "Aggiunti di recente",
-				"mostPlayed": "I più ascoltati",
-				"topRated": "I più apprezzati",
-				"random": "Casuale",
-				"library": "Libreria",
-				"playlists": "Playlist",
-				"albums": "Album",
-				"podcasts": "Podcast",
-				"favorites": "Preferiti",
+				"search": {
+					"songs": "Canzoni",
+					"albums": "Album",
+					"artists": "Artisti",
+					"playlists": "Playlist"
+				},
+				"actions": {
+					"favorited": "Aggiunto ai preferiti",
+					"unfavorited": "Rimosso dai preferiti",
+					"failed": "Si è verificato un errore",
+					"playingNext_one": "{{count}} canzone riproduce il prossimo",
+					"playingNext_other": "{{count}} canzoni riprodurre il prossimo",
+					"addedToQueue_one": "{{count}} brano aggiunto alla coda",
+					"addedToQueue_other": "{{count}} brani aggiunti alla coda",
+					"downloading_one": "Scaricamento canzone {{count}}",
+					"downloading_other": "Scaricamento brani {{count}}"
+				},
+				"errors": {
+					"signedOut": "Accedi a Wavio sul tuo telefono quando è sicuro farlo",
+					"offline": "Impossibile raggiungere il server e non viene scaricato nulla",
+					"noResults": "Niente trovato per \"{{query}}\"",
+					"radioUnavailable": "Non sono stati trovati brani simili per questa traccia"
+				},
+				"buttons": {
+					"favoriteAdd": "Aggiungi ai preferiti",
+					"favoriteRemove": "Rimuovi dai preferiti",
+					"shuffleOn": "Attiva casuale",
+					"shuffleOff": "Disattiva casuale",
+					"repeatAll": "Ripeti tutto",
+					"repeatOne": "Ripeti uno",
+					"repeatOff": "Disattiva ripetizione",
+					"radio": "Avvia radio",
+					"seekBack": "Indietro 30 secondi",
+					"seekForward": "Avanti 30 secondi"
+				},
+				"itemActions": {
+					"favoriteAdd": "Aggiungi ai preferiti",
+					"favoriteRemove": "Rimuovi dai preferiti",
+					"radio": "Avvia radio",
+					"playNext": "Riproduci successivo",
+					"addToQueue": "Aggiungi alla coda",
+					"shuffle": "Riproduzione casuale",
+					"download": "Scarica"
+				},
 				"songCount_one": "{{count}} canzone",
-				"songCount_other": "{{count}} canzoni"
+				"songCount_other": "{{count}} canzoni",
+				"albumCount_one": "{{count}} album",
+				"albumCount_other": "{{count}} album"
 			},
 			"albums": {
 				"goneMessage": "Questo album non è più nella tua biblioteca.",
@@ -314,7 +397,7 @@
 				"addAllToFavoritesErrorMessage": "Si è verificato un errore durante l'aggiunta dei brani ai preferiti",
 				"typeAlbum": "Album",
 				"typeCompilation": "Raccolta",
-				"reissued": "Reissued {{year}}",
+				"reissued": "Riemessa {{year}}",
 				"releaseTypeUntagged": "Senza tag",
 				"releaseTypes": {
 					"album": "Album",
@@ -830,6 +913,10 @@
 					"playback": {
 						"title": "Riproduzione & audio",
 						"description": "Qualità audio, replay gain, equalizzatore"
+					},
+					"androidAuto": {
+						"title": "Android Auto",
+						"description": "Schede, righe iniziali, pulsanti del giocatore"
 					},
 					"library": {
 						"title": "Libreria musicale",
@@ -1799,7 +1886,7 @@
 					"queueSyncOptions": {
 						"server": {
 							"label": "Dare priorità al server",
-							"description": "All'avvio, ripristina la coda salvata sul server. La tua coda viene inoltre caricata in modo che altri dispositivi possano accedervi."
+							"description": "Al momento del lancio, ripristinare la coda salvata sul server, a meno che questo dispositivo abbia cambiato la sua coda più di recente senza caricarla. La coda è stata caricata in modo che altri dispositivi possano prenderla."
 						},
 						"local": {
 							"label": "Assegna la priorità a questo dispositivo",
@@ -1916,6 +2003,53 @@
 					"autoBackupKeepLabel": "Backup da mantenere",
 					"autoBackupKeepDescription": "I backup automatici più vecchi vengono eliminati dalla cartella dopo ogni backup. Altri file non vengono mai toccati.",
 					"autoBackupPrivacyNotice": "I backup non includono mai password, token o chiavi API. Essi includono i server, i nomi utente e la cronologia dell'ascolto, quindi scegli una cartella che puoi accedere."
+				},
+				"androidAutoSettings": {
+					"tabsTitle": "Tabs",
+					"tabsDescription": "La maggior parte delle auto mostrano fino a 4 schede. Le schede oltre il limite dell'auto sono lasciate fuori.",
+					"homeRowsTitle": "Righe home",
+					"libraryTitle": "Libreria",
+					"displayTitle": "Visualizzazione",
+					"displayDescription": "Tocca per passare dalla lista alla griglia",
+					"display": {
+						"list": "Elenco",
+						"grid": "Griglia"
+					},
+					"collectionTap": {
+						"label": "Toccando un album o una scaletta",
+						"description": "Aprilo per scegliere una canzone, o iniziare a suonarla subito. Si applica anche a artisti, generi, preferiti e download.",
+						"open": "Aprilo",
+						"play": "Riproduci"
+					},
+					"playerButtonsTitle": "Pulsanti giocatore",
+					"playerButtons": {
+						"favorite": {
+							"label": "Preferiti",
+							"description": "Un cuore che aggiunge la traccia corrente ai tuoi preferiti, o la rimuove."
+						},
+						"shuffle": {
+							"label": "Riproduzione casuale",
+							"description": "Attiva e disattiva mescola."
+						},
+						"repeat": {
+							"label": "Ripeti",
+							"description": "Cicli attraverso ripetere tutto, ripeterne uno e fuori."
+						},
+						"radio": {
+							"label": "Radio",
+							"description": "Sostituisce quello che sta arrivando con canzoni simili alla traccia corrente."
+						}
+					},
+					"itemActionsTitle": "Elenca azioni",
+					"itemActionsDescription": "Scorciatoie su canzoni, album e playlist, dove l'auto li supporta.",
+					"itemActions": {
+						"favoriteAdd": "Preferiti",
+						"radio": "Avvia radio",
+						"playNext": "Riproduci successivo",
+						"addToQueue": "Aggiungi alla coda",
+						"shuffle": "Riproduzione casuale",
+						"download": "Scarica"
+					}
 				},
 				"securitySettings": {
 					"title": "Sicurezza",
