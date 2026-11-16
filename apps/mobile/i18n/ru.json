@@ -282,21 +282,112 @@
 				}
 			},
 			"carAuto": {
-				"home": "Главная",
-				"recentlyPlayed": "Недавние",
+				"unknownTitle": "Неизвестное название",
+				"offlineNotice": "Не удается подключиться к серверу",
+				"offlineNoticeSubtitle": "Просмотр загрузок",
+				"sections": {
+					"home": "Главная",
+					"library": "Моя медиатека",
+					"downloads": "Загрузки",
+					"recent": "Недавние",
+					"favorites": "Избранные",
+					"playlists": "Плейлисты",
+					"albums": "Альбомы",
+					"artists": "Исполнители",
+					"genres": "Жанры",
+					"radio": "Радио",
+					"mixes": "Миксы",
+					"podcasts": "Подкасты",
+					"audiobooks": "Аудиокниги"
+				},
+				"rows": {
+					"recentlyPlayed": "Недавние",
+					"newest": "Новые",
+					"frequent": "Популярные",
+					"highest": "Лучшие",
+					"random": "Вперемешку",
+					"leastPlayed": "Меньше всего сыграно",
+					"starredAlbums": "Избранные альбомы",
+					"mixes": "Миксы для вас"
+				},
+				"favorites": {
+					"songs": "Избранные песни",
+					"albums": "Избранные альбомы",
+					"artists": "Избранные исполнители"
+				},
+				"downloads": {
+					"albums": "Альбомы",
+					"playlists": "Плейлисты",
+					"songs": "Треки"
+				},
+				"topSongs": "Популярное",
+				"artistMix": "Художник: смесь",
+				"artistMixOf": "Смесь {{artist}}",
+				"artistMixes": "Художники миксы",
+				"genreMixOf": "Смесь {{genre}}",
+				"genreMixes": "Жанрные смеси",
+				"shuffleAll": "Перемешать библиотеку",
+				"shuffleGenre": "Перемешать {{genre}}",
+				"continueListening": "Продолжить прослушивание",
 				"recentlyAdded": "Новые",
-				"mostPlayed": "Популярные",
-				"topRated": "Лучшие",
-				"random": "Вперемешку",
-				"library": "Моя медиатека",
-				"playlists": "Плейлисты",
-				"albums": "Альбомы",
-				"podcasts": "Подкасты",
-				"favorites": "Любимые треки",
+				"search": {
+					"songs": "Треки",
+					"albums": "Альбомы",
+					"artists": "Исполнители",
+					"playlists": "Плейлисты"
+				},
+				"actions": {
+					"favorited": "Добавлено в избранное",
+					"unfavorited": "Удалено из избранного",
+					"failed": "Что-то пошло не так",
+					"playingNext_one": "Следующее воспроизведение песни {{count}}",
+					"playingNext_few": "Следующие треки проигрываются {{count}}",
+					"playingNext_many": "Следующие треки проигрываются {{count}}",
+					"playingNext_other": "Следующие треки проигрываются {{count}}",
+					"addedToQueue_one": "{{count}} песня добавлена в очередь",
+					"addedToQueue_few": "{{count}} песни, добавленные в очередь",
+					"addedToQueue_many": "{{count}} песни, добавленные в очередь",
+					"addedToQueue_other": "{{count}} песни, добавленные в очередь",
+					"downloading_one": "Загрузка песни {{count}}",
+					"downloading_few": "Загрузка песен {{count}}",
+					"downloading_many": "Загрузка песен {{count}}",
+					"downloading_other": "Загрузка песен {{count}}"
+				},
+				"errors": {
+					"signedOut": "Войдите в Wavio на телефоне, когда безопасно, чтобы сделать это",
+					"offline": "Не удается подключиться к серверу и ничего не загружено",
+					"noResults": "Ничего не найдено для \"{{query}}\"",
+					"radioUnavailable": "Для этого трека не найдено похожих песен"
+				},
+				"buttons": {
+					"favoriteAdd": "Добавить в медиатеку",
+					"favoriteRemove": "Убрать из медиатеки",
+					"shuffleOn": "Включить перемешивание",
+					"shuffleOff": "Выключить перемешивание",
+					"repeatAll": "Повторить все",
+					"repeatOne": "Повторить один",
+					"repeatOff": "Выключить повтор",
+					"radio": "Запустить радио",
+					"seekBack": "Назад за 30 секунд",
+					"seekForward": "Переслать на 30 секунд"
+				},
+				"itemActions": {
+					"favoriteAdd": "Добавить в медиатеку",
+					"favoriteRemove": "Убрать из медиатеки",
+					"radio": "Запустить радио",
+					"playNext": "Включить следующим",
+					"addToQueue": "Добавить в очередь",
+					"shuffle": "Перемешать",
+					"download": "Скачивание"
+				},
 				"songCount_one": "{{count}} трек",
 				"songCount_few": "{{count}} трека",
 				"songCount_many": "{{count}} треков",
-				"songCount_other": "{{count}} треков"
+				"songCount_other": "{{count}} треков",
+				"albumCount_one": "{{count}} релиз",
+				"albumCount_few": "{{count}} релиза",
+				"albumCount_many": "{{count}} релизов",
+				"albumCount_other": "{{count}} релизов"
 			},
 			"albums": {
 				"goneMessage": "Этот альбом больше не в вашей библиотеке.",
@@ -324,7 +415,7 @@
 				"addAllToFavoritesErrorMessage": "Не удалось добавить песни в избранное",
 				"typeAlbum": "Альбом",
 				"typeCompilation": "Сборник",
-				"reissued": "Reissued {{year}}",
+				"reissued": "Переиздано {{year}}",
 				"releaseTypeUntagged": "Без тегов",
 				"releaseTypes": {
 					"album": "По альбому",
@@ -854,6 +945,10 @@
 					"playback": {
 						"title": "Воспроизведение и звук",
 						"description": "Качество звука, выравнивание громкости, эквалайзер"
+					},
+					"androidAuto": {
+						"title": "Android Auto",
+						"description": "Вкладки, строки, кнопки игрока"
 					},
 					"library": {
 						"title": "Медиатека",
@@ -1901,7 +1996,7 @@
 					"queueSyncOptions": {
 						"server": {
 							"label": "Приоритет сервера",
-							"description": "При запуске восстанавливать очередь с сервера. Твоя очередь также загружается на сервер, чтобы другие устройства могли ее синхронизировать."
+							"description": "При запуске восстановить очередь сохранена на сервере, если только это устройство не изменило свою очередь совсем недавно, не загружая её. Ваша очередь также загружается, чтобы другие устройства могли его взять."
 						},
 						"local": {
 							"label": "Приоритет этого устройства",
@@ -2018,6 +2113,53 @@
 					"autoBackupKeepLabel": "Резервные копии для сохранения",
 					"autoBackupKeepDescription": "Старые автоматические резервные копии удаляются из папки после каждой резервной копии. Остальные файлы никогда не трогаются.",
 					"autoBackupPrivacyNotice": "Резервные копии никогда не включают в себя пароли, токены или API ключи. Они включают в себя ваши серверы, имена пользователей и историю прослушивания, поэтому выберите папку только вы можете получить доступ."
+				},
+				"androidAutoSettings": {
+					"tabsTitle": "Tabs",
+					"tabsDescription": "Большинство автомобилей появляются до 4 табов. Табы за пределом автомобиля остаются.",
+					"homeRowsTitle": "Домашние строки",
+					"libraryTitle": "Моя медиатека",
+					"displayTitle": "Отображение",
+					"displayDescription": "Нажмите, чтобы переключиться между списком и сеткой",
+					"display": {
+						"list": "Список",
+						"grid": "Сетка"
+					},
+					"collectionTap": {
+						"label": "Нажатие альбома или плейлиста",
+						"description": "Откройте его, чтобы выбрать песню или начать играть прямо сейчас. Также применимы к исполнителям, жанрам, любимым и загрузкам.",
+						"open": "Открывает",
+						"play": "Воспроизведение"
+					},
+					"playerButtonsTitle": "Кнопки плеера",
+					"playerButtons": {
+						"favorite": {
+							"label": "Избранное",
+							"description": "Сердце, которое добавляет текущий трек в избранное, или удаляет его."
+						},
+						"shuffle": {
+							"label": "Перемешать",
+							"description": "Включает и выключает перемешивание."
+						},
+						"repeat": {
+							"label": "Повторить",
+							"description": "Циклы через повтор всего, повторять одно и выкл."
+						},
+						"radio": {
+							"label": "Радио",
+							"description": "Заменяет то, что происходит с песнями, похожими на текущую композицию."
+						}
+					},
+					"itemActionsTitle": "Список действий",
+					"itemActionsDescription": "Ярлыки на песни, альбомы и плейлисты, где их поддерживает.",
+					"itemActions": {
+						"favoriteAdd": "Избранное",
+						"radio": "Запустить радио",
+						"playNext": "Включить следующим",
+						"addToQueue": "Добавить в очередь",
+						"shuffle": "Перемешать",
+						"download": "Скачивание"
+					}
 				},
 				"securitySettings": {
 					"title": "Безопасность",
