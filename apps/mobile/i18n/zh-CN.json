@@ -309,6 +309,7 @@
 				"addAllToFavoritesErrorMessage": "全部收藏时发生错误",
 				"typeAlbum": "专辑",
 				"typeCompilation": "合辑",
+				"reissued": "Reissued {{year}}",
 				"releaseTypeUntagged": "未标记",
 				"releaseTypes": {
 					"album": "专辑",
