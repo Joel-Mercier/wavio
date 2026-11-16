@@ -274,19 +274,102 @@
 				}
 			},
 			"carAuto": {
-				"home": "Página inicial",
-				"recentlyPlayed": "Jogados recentemente",
+				"unknownTitle": "Título desconhecido",
+				"offlineNotice": "Não foi possível acessar o servidor",
+				"offlineNoticeSubtitle": "Procure seus downloads",
+				"sections": {
+					"home": "Página inicial",
+					"library": "Biblioteca",
+					"downloads": "Downloads",
+					"recent": "Recentes",
+					"favorites": "Favoritos",
+					"playlists": "Listas de reprodução",
+					"albums": "Álbuns",
+					"artists": "Artistas",
+					"genres": "Gêneros",
+					"radio": "Rádio",
+					"mixes": "Misturar",
+					"podcasts": "Podcasts",
+					"audiobooks": "Audiolivros"
+				},
+				"rows": {
+					"recentlyPlayed": "Jogados recentemente",
+					"newest": "Adicionado recentemente",
+					"frequent": "Mais tocados",
+					"highest": "Mais bem avaliados",
+					"random": "Aleatório",
+					"leastPlayed": "Menos reproduzidas",
+					"starredAlbums": "Álbuns favoritos",
+					"mixes": "Mistura para você"
+				},
+				"favorites": {
+					"songs": "Músicas favoritas",
+					"albums": "Álbuns favoritos",
+					"artists": "Artistas favoritos"
+				},
+				"downloads": {
+					"albums": "Álbuns",
+					"playlists": "Listas de reprodução",
+					"songs": "Músicas"
+				},
+				"topSongs": "Músicas mais tocadas",
+				"artistMix": "Mistura do artista",
+				"artistMixOf": "Mistura de {{artist}}",
+				"artistMixes": "Misturas do artista",
+				"genreMixOf": "Mistura de {{genre}}",
+				"genreMixes": "Misturas do gênero",
+				"shuffleAll": "Misturar minha biblioteca",
+				"shuffleGenre": "Misturar {{genre}}",
+				"continueListening": "Continuar escutando",
 				"recentlyAdded": "Adicionado recentemente",
-				"mostPlayed": "Mais tocados",
-				"topRated": "Mais bem avaliados",
-				"random": "Aleatório",
-				"library": "Biblioteca",
-				"playlists": "Listas de reprodução",
-				"albums": "Álbuns",
-				"podcasts": "Podcasts",
-				"favorites": "Favoritos",
+				"search": {
+					"songs": "Músicas",
+					"albums": "Álbuns",
+					"artists": "Artistas",
+					"playlists": "Listas de reprodução"
+				},
+				"actions": {
+					"favorited": "Adicionado aos Favoritos",
+					"unfavorited": "Removido dos favoritos",
+					"failed": "Ocorreu um erro",
+					"playingNext_one": "{{count}} música reproduz a seguir",
+					"playingNext_other": "Músicas {{count}} tocam em seguida",
+					"addedToQueue_one": "{{count}} música adicionada à fila",
+					"addedToQueue_other": "{{count}} músicas adicionadas à fila",
+					"downloading_one": "Baixando música de {{count}}",
+					"downloading_other": "Baixando músicas do {{count}}"
+				},
+				"errors": {
+					"signedOut": "Entre no Wavio em seu telefone quando for seguro fazer isso",
+					"offline": "Não foi possível encontrar o servidor e nada foi baixado",
+					"noResults": "Nada foi encontrado para \"{{query}}\"",
+					"radioUnavailable": "Não foram encontradas músicas semelhantes para esta faixa"
+				},
+				"buttons": {
+					"favoriteAdd": "Adicionar aos favoritos",
+					"favoriteRemove": "Remover dos favoritos",
+					"shuffleOn": "Ligar modo aleatório",
+					"shuffleOff": "Desligar modo aleatório",
+					"repeatAll": "Repetir todos",
+					"repeatOne": "Repetir uma",
+					"repeatOff": "Desativar repetição",
+					"radio": "Iniciar rádio",
+					"seekBack": "Voltar 30 segundos",
+					"seekForward": "Avançar 30 segundos"
+				},
+				"itemActions": {
+					"favoriteAdd": "Adicionar aos favoritos",
+					"favoriteRemove": "Remover dos favoritos",
+					"radio": "Iniciar rádio",
+					"playNext": "Reproduzir a próxima",
+					"addToQueue": "Adicionar à fila",
+					"shuffle": "Reproduzir aleatoriamente",
+					"download": "Baixar"
+				},
 				"songCount_one": "{{count}} música",
-				"songCount_other": "{{count}} músicas"
+				"songCount_other": "{{count}} músicas",
+				"albumCount_one": "{{count}} álbum",
+				"albumCount_other": "{{count}} álbuns"
 			},
 			"albums": {
 				"goneMessage": "Este álbum não está mais em sua biblioteca.",
@@ -314,7 +397,7 @@
 				"addAllToFavoritesErrorMessage": "Ocorreu um erro ao adicionar músicas aos favoritos",
 				"typeAlbum": "Álbum",
 				"typeCompilation": "Compilação",
-				"reissued": "Reissued {{year}}",
+				"reissued": "Renovado {{year}}",
 				"releaseTypeUntagged": "Sem tags",
 				"releaseTypes": {
 					"album": "Álbum",
@@ -830,6 +913,10 @@
 					"playback": {
 						"title": "Reprodução e áudio",
 						"description": "Qualidade de áudio, ganho de reprodução, equalizador"
+					},
+					"androidAuto": {
+						"title": "Android Auto",
+						"description": "Guias, linhas iniciais, botões do reprodutor"
 					},
 					"library": {
 						"title": "Biblioteca musical",
@@ -1799,7 +1886,7 @@
 					"queueSyncOptions": {
 						"server": {
 							"label": "Priorizar o servidor",
-							"description": "Ao iniciar o aplicativo, recupere a fila salva no servidor. Sua fila também é enviada para que outros dispositivos possam acessá-la."
+							"description": "Ao iniciar, restaure a fila salva no servidor, a menos que este dispositivo tenha mudado sua fila mais recentemente sem carregá-lo. Sua fila também é carregada para que outros dispositivos possam pegá-la."
 						},
 						"local": {
 							"label": "Priorizar este dispositivo",
@@ -1916,6 +2003,53 @@
 					"autoBackupKeepLabel": "Backups para manter",
 					"autoBackupKeepDescription": "Os backups automáticos antigos são excluídos da pasta após cada backup. Outros arquivos nunca são tocados.",
 					"autoBackupPrivacyNotice": "Os backups nunca incluem senhas, tokens ou chaves API. Eles incluem seus servidores, nomes de usuário e histórico de escutas, então escolha uma pasta somente que você pode acessar."
+				},
+				"androidAutoSettings": {
+					"tabsTitle": "Tabs",
+					"tabsDescription": "A maioria dos carros aparecem até 4 abas. As abas além do limite do carro são deixadas de fora.",
+					"homeRowsTitle": "Linhas iniciais",
+					"libraryTitle": "Biblioteca",
+					"displayTitle": "Visualização",
+					"displayDescription": "Toque para alternar entre lista e grade",
+					"display": {
+						"list": "Lista",
+						"grid": "Grade"
+					},
+					"collectionTap": {
+						"label": "Tocando em um álbum ou playlist",
+						"description": "Abra para escolher uma música, ou comece a tocar-a imediatamente. Também se aplica a artistas, gêneros, favoritos e downloads.",
+						"open": "Abre em",
+						"play": "Toca isso"
+					},
+					"playerButtonsTitle": "Botões do player",
+					"playerButtons": {
+						"favorite": {
+							"label": "Favorito",
+							"description": "Um coração que adiciona a faixa atual aos seus favoritos, ou a remove."
+						},
+						"shuffle": {
+							"label": "Reproduzir aleatoriamente",
+							"description": "Ativa o modo aleatório ativado e desativado."
+						},
+						"repeat": {
+							"label": "Repetir",
+							"description": "Ciclos através de repetições, repita um e desliga."
+						},
+						"radio": {
+							"label": "Rádio",
+							"description": "Substitui o que vem com músicas semelhantes à faixa atual."
+						}
+					},
+					"itemActionsTitle": "Listar ações",
+					"itemActionsDescription": "Atalhos em músicas, álbuns e listas de reprodução, onde o carro as suporta.",
+					"itemActions": {
+						"favoriteAdd": "Favorito",
+						"radio": "Iniciar rádio",
+						"playNext": "Reproduzir a próxima",
+						"addToQueue": "Adicionar à fila",
+						"shuffle": "Reproduzir aleatoriamente",
+						"download": "Baixar"
+					}
 				},
 				"securitySettings": {
 					"title": "Segurança",
