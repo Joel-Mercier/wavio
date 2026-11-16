@@ -110,6 +110,7 @@ import useApp from "@/stores/app";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import useTrackSelection from "@/stores/trackSelection";
+import { laterReleaseYear } from "@/utils/albumDates";
 import type { AlbumListRow } from "@/utils/albumDiscRows";
 import { buildAlbumListRows } from "@/utils/albumDiscRows";
 import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
@@ -165,6 +166,7 @@ export default function AlbumDetail() {
   // collection so a saved album stays browsable after a logout clears the React
   // Query cache.
   const data = isGone ? undefined : (serverData ?? offlineAlbumData);
+  const reissueYear = laterReleaseYear(data?.album);
   // A rename or new cover on the server reaches the home shortcut from here.
   useRefreshRecentPlay(
     serverData?.album
@@ -997,6 +999,9 @@ export default function AlbumDetail() {
                         "dd MMM yyyy",
                       )
                     : data?.album?.year}
+                  {reissueYear
+                    ? ` ⦁ ${t("app.albums.reissued", { year: reissueYear })}`
+                    : null}
                 </Text>
               </HStack>
               <HStack className="mt-4 items-center justify-between">
