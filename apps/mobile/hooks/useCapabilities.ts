@@ -13,13 +13,14 @@ import {
 export function useCapabilities(): BackendCapabilities {
   const serverType = useAuth((s) => s.serverType);
   const authMethod = useAuth((s) => s.authMethod);
+  const isAdmin = useAuth((s) => s.isAdmin);
   const disabledAt = useCapabilityOverridesBase((s) => s.disabledAt);
   return useMemo(
     () => ({
       ...getCapabilities(serverType),
-      ...sessionCapabilityOverrides(authMethod),
+      ...sessionCapabilityOverrides({ serverType, authMethod, isAdmin }),
       ...activeOverrides(disabledAt),
     }),
-    [serverType, authMethod, disabledAt],
+    [serverType, authMethod, isAdmin, disabledAt],
   );
 }

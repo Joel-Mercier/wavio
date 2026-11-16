@@ -772,10 +772,7 @@ export async function initUpnpOnLaunch(): Promise<void> {
     !Native ||
     store.connected ||
     useJukebox.getState().active ||
-    !sessionCapabilities(
-      useAuthBase.getState().serverType,
-      useAuthBase.getState().authMethod,
-    ).remoteStreamableUrl
+    !sessionCapabilities(useAuthBase.getState()).remoteStreamableUrl
   ) {
     forgetSession(session);
     return;

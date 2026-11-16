@@ -349,27 +349,43 @@ export function getCapabilities(serverType: ServerType): BackendCapabilities {
   }
 }
 
+export type CapabilitySession = {
+  serverType: ServerType;
+  authMethod: AuthMethod;
+  isAdmin: boolean;
+};
+
 /**
- * What the *session*, rather than the server type, rules out.
+ * What the *session*, rather than the server type, rules in or out.
  *
  * A single-sign-on session reaches its server only with the proxy's bearer
  * token in a header, and a Chromecast or UPnP renderer fetches the bare stream
  * URL itself — it would be turned away at the proxy, so casting isn't offered.
  * The jukebox is unaffected: the server plays the audio itself.
+ *
+ * Jellyfin keeps a playlist's description in the item's Overview, which only
+ * the admin-only item update (POST /Items/{id}) can write: the playlist
+ * endpoint ignores it and a non-admin gets 403, even on their own playlist.
  */
-export function sessionCapabilityOverrides(
-  authMethod: AuthMethod,
-): Partial<BackendCapabilities> {
-  return authMethod === "oidc" ? { remoteStreamableUrl: false } : {};
+export function sessionCapabilityOverrides({
+  serverType,
+  authMethod,
+  isAdmin,
+}: CapabilitySession): Partial<BackendCapabilities> {
+  return {
+    ...(authMethod === "oidc" ? { remoteStreamableUrl: false } : {}),
+    ...(serverType === "jellyfin" && isAdmin
+      ? { playlistDescription: true }
+      : {}),
+  };
 }
 
 /** The active session's capabilities, outside React. */
 export function sessionCapabilities(
-  serverType: ServerType,
-  authMethod: AuthMethod,
+  session: CapabilitySession,
 ): BackendCapabilities {
   return {
-    ...getCapabilities(serverType),
-    ...sessionCapabilityOverrides(authMethod),
+    ...getCapabilities(session.serverType),
+    ...sessionCapabilityOverrides(session),
   };
 }

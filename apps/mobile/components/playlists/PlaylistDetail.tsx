@@ -53,6 +53,7 @@ import RemoveDownloadsDialog from "@/components/offline/RemoveDownloadsDialog";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import MoveToFolderSheet from "@/components/playlistFolders/MoveToFolderSheet";
 import SaveGeneratedPlaylistDialog from "@/components/playlists/SaveGeneratedPlaylistDialog";
+import RichText from "@/components/RichText";
 import ShuffleToggle from "@/components/ShuffleToggle";
 import SortOptionsSheet, {
   useSortFieldLabel,
@@ -941,11 +942,14 @@ export default function PlaylistDetail() {
                 <Heading numberOfLines={2} className="text-white" size="2xl">
                   {playlistData?.playlist.name}
                 </Heading>
-                {playlistData?.playlist.comment && (
-                  <Text className="text-md text-primary-100 mt-2">
-                    {playlistData?.playlist.comment}
-                  </Text>
-                )}
+                <RichText
+                  className="text-md text-primary-100"
+                  containerClassName="mt-2"
+                  collapsedLines={3}
+                  openLinksExternally
+                >
+                  {playlistData?.playlist.comment}
+                </RichText>
               </VStack>
               {owner && (
                 <FadeOutScaleDown

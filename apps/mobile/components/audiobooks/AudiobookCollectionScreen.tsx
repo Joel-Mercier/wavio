@@ -46,7 +46,11 @@ export default function AudiobookCollectionScreen() {
           )}
           ListHeaderComponent={
             data?.description ? (
-              <RichText className="text-md text-primary-50 px-6 mb-4">
+              <RichText
+                className="text-md text-primary-50"
+                containerClassName="px-6 mb-4"
+                collapsedLines={3}
+              >
                 {data.description}
               </RichText>
             ) : null

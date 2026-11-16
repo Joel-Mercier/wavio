@@ -60,7 +60,11 @@ export default function AudiobookAuthorScreen() {
               size="lg"
             />
             {!!author?.description && (
-              <RichText className="text-md text-primary-50">
+              <RichText
+                className="text-md text-primary-50"
+                containerClassName="self-stretch"
+                collapsedLines={3}
+              >
                 {author.description}
               </RichText>
             )}

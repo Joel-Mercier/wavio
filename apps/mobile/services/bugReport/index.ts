@@ -206,13 +206,13 @@ function serverSection(): ReportSection {
 }
 
 function capabilitiesSection(): ReportSection {
-  const { serverType, authMethod } = useAuthBase.getState();
+  const { serverType, authMethod, isAdmin } = useAuthBase.getState();
   const overrides = activeOverrides(
     useCapabilityOverrides.getState().disabledAt,
   );
   const capabilities = {
     ...getCapabilities(serverType),
-    ...sessionCapabilityOverrides(authMethod),
+    ...sessionCapabilityOverrides({ serverType, authMethod, isAdmin }),
     ...overrides,
   };
   const entries = Object.entries(capabilities);
