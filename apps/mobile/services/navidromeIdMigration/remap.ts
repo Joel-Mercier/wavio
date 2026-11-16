@@ -3,6 +3,7 @@ import { removePersistedQueries } from "@/config/queryPersister";
 import { streamUrl } from "@/services/backend/streaming";
 import { artworkCacheService } from "@/services/offline/artworkCacheService";
 import { offlineDownloadService } from "@/services/offline/downloadService";
+import { forgetScopes as forgetPlaylistArtistIndex } from "@/services/playlistArtistIndex/storage";
 import {
   clearTrackCache,
   discardInFlightCacheWrites,
@@ -582,6 +583,8 @@ export async function applyCanonicalIdRemap(): Promise<number> {
   // stale. Same pair the Storage settings screen uses.
   queryClient.clear();
   removePersistedQueries();
+  const scope = currentAuthScope();
+  forgetPlaylistArtistIndex((indexScope) => indexScope === scope);
 
   return changed;
 }

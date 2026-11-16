@@ -49,6 +49,7 @@ import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import PlayPauseButton from "@/components/PlayPauseButton";
+import PlaylistListItem from "@/components/playlists/PlaylistListItem";
 import RatingModal from "@/components/RatingModal";
 import RichText from "@/components/RichText";
 import ShuffleToggle from "@/components/ShuffleToggle";
@@ -80,6 +81,7 @@ import {
   useStar,
   useUnstar,
 } from "@/hooks/backend/useMediaAnnotation";
+import { useArtistPlaylists } from "@/hooks/backend/usePlaylists";
 import { useHasPlayableTracks, useOfflineArtist } from "@/hooks/offline";
 import { useIsPlaying } from "@/hooks/player";
 import { useCapabilities } from "@/hooks/useCapabilities";
@@ -118,6 +120,7 @@ const AnimatedBox = Animated.createAnimatedComponent(Box);
 // count rather than keeping a second number in sync by hand. It doubles as the
 // getArtistInfo2 `count` param, which is what decides how many the server sends.
 const SIMILAR_ARTISTS_LIMIT = SIMILAR_ARTISTS_DEFAULT_RESULTS;
+const FEATURED_PLAYLISTS_LIMIT = 12;
 
 export default function ArtistDetail() {
   const [black, white, emerald500, gray200] = Uniwind.getCSSVariable([
@@ -189,6 +192,10 @@ export default function ArtistDetail() {
   });
   const appearsOnAlbums: AlbumID3[] =
     appearancesData?.artistAppearances?.album ?? [];
+  const { data: artistPlaylistsData } = useArtistPlaylists(id);
+  const featuredInPlaylists = (
+    artistPlaylistsData?.artistPlaylists?.playlist ?? []
+  ).slice(0, FEATURED_PLAYLISTS_LIMIT);
   const { data: starredData } = useStarred2({ musicFolderIds });
   const likedSongs =
     starredData?.starred2?.song?.filter((song) => song.artistId === id) ?? [];
@@ -960,6 +967,27 @@ export default function ArtistDetail() {
                     <AlbumListItem
                       key={album.id}
                       album={album}
+                      index={index}
+                      layout="horizontal"
+                    />
+                  ))}
+                </ScrollView>
+              </VStack>
+            )}
+            {featuredInPlaylists.length > 0 && (
+              <VStack className="bg-black pb-6">
+                <Heading className="text-white mb-4 px-6">
+                  {t("app.artists.featuredInPlaylists")}
+                </Heading>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerClassName="pl-6"
+                >
+                  {featuredInPlaylists.map((playlist, index) => (
+                    <PlaylistListItem
+                      key={playlist.id}
+                      playlist={playlist}
                       index={index}
                       layout="horizontal"
                     />

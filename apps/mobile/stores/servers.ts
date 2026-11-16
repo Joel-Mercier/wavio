@@ -9,6 +9,7 @@ import {
   isSingletonServerType,
   usesSubsonicAuthType,
 } from "@/services/backend/serverTraits";
+import { forgetScopes as forgetPlaylistArtistIndex } from "@/services/playlistArtistIndex/storage";
 import { oidcSessionKey, useOidcBase } from "@/stores/oidc";
 import { usePodcastPlayedBase } from "@/stores/podcastPlayed";
 import createSelectors from "@/utils/createSelectors";
@@ -632,13 +633,12 @@ const useServersBase = create<ServersStore>()(
         const server = get().getServerById(id);
         if (server) {
           const prefix = authScopePrefix(id);
-          usePodcastPlayedBase
-            .getState()
-            .forgetBuckets((bucket) =>
-              isSingletonServerType(server.type)
-                ? bucket === LOCAL_AUTH_SCOPE
-                : bucket.startsWith(prefix),
-            );
+          const ownsScope = (scope: string) =>
+            isSingletonServerType(server.type)
+              ? scope === LOCAL_AUTH_SCOPE
+              : scope.startsWith(prefix);
+          usePodcastPlayedBase.getState().forgetBuckets(ownsScope);
+          forgetPlaylistArtistIndex(ownsScope);
         }
         set((state) => ({
           servers: state.servers.filter((s) => s.id !== id),

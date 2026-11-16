@@ -34,6 +34,10 @@ jest.mock("@/config/storage", () => {
         mem.delete(key);
       },
     },
+    getNoBackupStorage: () => ({
+      getAllKeys: () => [],
+      remove: () => {},
+    }),
   };
 });
 

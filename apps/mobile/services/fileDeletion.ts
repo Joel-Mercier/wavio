@@ -340,6 +340,7 @@ const LIBRARY_QUERY_PREFIXES = new Set([
   "albumList2:infinite",
   "artist",
   "artistAppearances",
+  "artistPlaylists",
   "artistSongs:infinite",
   "artists",
   "genres",

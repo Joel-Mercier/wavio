@@ -136,6 +136,16 @@ All persisted state is zustand with `react-native-mmkv` as the backing store (`c
 
 `utils/createSelectors.ts` auto-generates typed selector hooks for a store.
 
+**Playlist ↔ artist index** (`services/playlistArtistIndex/`, the artist screen's "Featured in playlists" row). No server can answer "which playlists contain this artist", so on Subsonic / Navidrome / Jellyfin the app keeps a per-scope index (no-backup MMKV) of each playlist's artist ids. Index-backed servers skip it and answer with one live SQL query.
+- **Never write to it from code that edits playlists.** It stays correct because it is derived from the server's playlist listing:
+  - a playlist is refetched when its `changed|songCount|duration` signature moves, and dropped when it stops being listed;
+  - unchanged entries are re-verified after 7 days;
+  - smart playlists refresh daily, or at once when their rules change;
+  - the backend `getPlaylist` refreshes an already-indexed entry whenever it fetches a playlist, keeping the listing's signature, never the detail's;
+  - a refresh fetches at most `MAX_FETCH_PER_REFRESH` playlists, outdated entries first, and skips its cooldown while a backlog remains; a failed fetch backs off from 5 min up to 6 h.
+- Forget a scope only through `forgetScopes` in `storage.ts`: it bumps the scope's generation, which drops any refresh or read still running and resets the cooldown.
+- A staleness bug is fixed in that logic, not at a mutation site. `__tests__/playlistArtistIndex.imports.test.ts` fails if a new file imports the index.
+
 ### Backups
 
 `services/backup.ts` builds the export (`GLOBAL_KEYS` + every scoped store, minus the exclusions listed in `services/backupStoreKeys.ts`). Write files with `writeBackupFile`, which streams compact JSON a chunk at a time through async native writes. Never `JSON.stringify(buildBackup())` on a path that can run during use: on a big library that is a long stall on the JS thread.

@@ -1,7 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useRef } from "react";
 import {
   createPlaylist,
   deletePlaylist,
+  getArtistPlaylists,
+  getCachedArtistPlaylists,
   getPlaylist,
   getPlaylists,
   updatePlaylist,
@@ -34,6 +38,43 @@ export const usePlaylists = (
     },
     enabled: options?.enabled,
   });
+};
+
+export const useArtistPlaylists = (id: string) => {
+  // The index only learns about a delete on its next listing, which the
+  // refresh cooldown can hold back, so a playlist deleted here is hidden now.
+  const deletedPlaylists = usePlaylistsStore((state) => state.deletedPlaylists);
+  const query = useQuery({
+    queryKey: ["artistPlaylists", id],
+    queryFn: () => getArtistPlaylists(id),
+    placeholderData: () => {
+      const playlist = getCachedArtistPlaylists(id);
+      return playlist && { artistPlaylists: { playlist } };
+    },
+    select: (data) => ({
+      ...data,
+      artistPlaylists: {
+        ...data.artistPlaylists,
+        playlist: (data.artistPlaylists?.playlist ?? []).filter(
+          (playlist) => !deletedPlaylists[playlist.id],
+        ),
+      },
+    }),
+    enabled: !!id,
+    staleTime: 0,
+    refetchOnMount: "always",
+  });
+  // Playlists are edited on screens pushed above the artist, which stays
+  // mounted, so coming back to it has to ask again.
+  const { refetch } = query;
+  const focusedBefore = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (focusedBefore.current) void refetch();
+      focusedBefore.current = true;
+    }, [refetch]),
+  );
+  return query;
 };
 
 export const useCreatePlaylist = () => {
