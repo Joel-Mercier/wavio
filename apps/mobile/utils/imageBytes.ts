@@ -16,3 +16,35 @@ export function looksLikeImage(bytes: Uint8Array): boolean {
     magic.every((byte, index) => bytes[index] === byte),
   );
 }
+
+const HEIF_BRANDS = new Set([
+  "avif",
+  "avis",
+  "heic",
+  "heix",
+  "heim",
+  "heis",
+  "hevc",
+  "hevx",
+  "mif1",
+  "msf1",
+]);
+
+const ascii = (bytes: Uint8Array, from: number, to: number) =>
+  String.fromCharCode(...bytes.subarray(from, to));
+
+// Wider than looksLikeImage, which guards what expo-image renders: this is what
+// the OS decoders (BitmapFactory, UIImage) read too. Radio station favicons are
+// often ICO or BMP.
+export function looksLikePlatformImage(bytes: Uint8Array): boolean {
+  if (looksLikeImage(bytes)) return true;
+  if (bytes[0] === 0 && bytes[1] === 0 && bytes[2] === 1 && bytes[3] === 0) {
+    return true;
+  }
+  if (bytes[0] === 0x42 && bytes[1] === 0x4d) return true;
+  return (
+    bytes.length >= 12 &&
+    ascii(bytes, 4, 8) === "ftyp" &&
+    HEIF_BRANDS.has(ascii(bytes, 8, 12))
+  );
+}

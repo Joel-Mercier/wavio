@@ -9,6 +9,7 @@ import { File } from "expo-file-system";
 import { Platform } from "react-native";
 import { queryClient } from "@/config/queryClient";
 import { setStarred } from "@/hooks/backend/useMediaAnnotation";
+import { isRemoteArtwork } from "@/services/artworkMirror";
 import {
   audiobookChapterEndAt,
   audiobookPlaybackUrl,
@@ -50,6 +51,7 @@ import {
   cachedArtworkUri,
   clearArtworkCache,
   ensureArtworkCached,
+  lockScreenPlaceholderUri,
 } from "@/services/lockScreenArtwork";
 import {
   getIsEffectivelyOnline,
@@ -999,16 +1001,26 @@ function lockScreenArtworkUrl(track: QueueTrack): string | undefined {
 
 // Mirror the cover locally and hand the OS controls the file, replacing whatever
 // artwork the initial metadata carried. See services/lockScreenArtwork.ts for
-// why the native fetch can't be authenticated.
+// why the native fetch can't be authenticated. A cover the mirror can't get is
+// one the native fetch couldn't show either, so it gets the placeholder.
 async function upgradeLockScreenArtwork(
   p: AudioPlayer,
   track: QueueTrack,
   remoteUrl: string,
+  shownArtwork: string | undefined,
 ) {
-  const local = await ensureArtworkCached(remoteUrl);
+  const local =
+    (await ensureArtworkCached(remoteUrl)) ?? lockScreenPlaceholderUri();
   // The download outlived the track it was for, or the controls were torn down
   // while it ran — either way this metadata is no longer the current one.
-  if (!local || lockScreenTrackId !== track.id || !lockScreenActive) return;
+  if (
+    !local ||
+    local === shownArtwork ||
+    lockScreenTrackId !== track.id ||
+    !lockScreenActive
+  ) {
+    return;
+  }
   try {
     p.updateLockScreenMetadata(toLockScreenMetadata(track, local));
   } catch (error) {
@@ -1016,21 +1028,30 @@ async function upgradeLockScreenArtwork(
   }
 }
 
+function nativeCanFetchArtwork(url: string): boolean {
+  return (
+    getIsEffectivelyOnline() &&
+    !customHeadersForUrl(url) &&
+    !authHeadersForUrl(url)
+  );
+}
+
 function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
   lockScreenTrackId = track.id;
-  const remoteArtwork = lockScreenArtworkUrl(track);
+  const artwork = lockScreenArtworkUrl(track);
+  const remoteArtwork = isRemoteArtwork(artwork) ? artwork : undefined;
+  const localArtwork = artwork && /^file:/i.test(artwork) ? artwork : undefined;
   const cached = cachedArtworkUri(remoteArtwork, { verify: true });
   // Prefer the mirrored file. Failing that, pass the remote URL only when it
-  // would actually load — when the server needs headers (configured ones, or a
-  // single-sign-on session's bearer token) the bare native fetch is guaranteed
-  // to be refused, so sending it just burns a request and logs a failure.
-  // A local (file://) artwork needs no mirroring and passes straight through.
+  // would actually load: the bare native fetch carries no headers or bearer
+  // token, and can't reach a server we can't. Anything else (no cover, or one
+  // the native URL parser rejects) gets the placeholder.
   const initialArtwork =
     cached ??
-    (remoteArtwork &&
-    (customHeadersForUrl(remoteArtwork) || authHeadersForUrl(remoteArtwork))
-      ? undefined
-      : remoteArtwork);
+    localArtwork ??
+    (remoteArtwork && nativeCanFetchArtwork(remoteArtwork)
+      ? remoteArtwork
+      : lockScreenPlaceholderUri());
   const metadata = toLockScreenMetadata(track, initialArtwork);
   // try/catch keeps a rejected metadata update from aborting playback.
   try {
@@ -1056,7 +1077,7 @@ function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
   // lands a moment later. Skipped when the cover is already mirrored (the
   // metadata above carries it) or isn't a remote URL to begin with.
   if (remoteArtwork && !cached) {
-    void upgradeLockScreenArtwork(p, track, remoteArtwork);
+    void upgradeLockScreenArtwork(p, track, remoteArtwork, initialArtwork);
   }
 }
 

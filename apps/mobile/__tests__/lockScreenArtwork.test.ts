@@ -29,8 +29,8 @@ jest.mock("expo-file-system", () => {
   class MockFile {
     uri: string;
     name: string;
-    constructor(dir: { uri: string }, name: string) {
-      this.uri = `${dir.uri}/${name}`;
+    constructor(dir: { uri: string } | string, name: string) {
+      this.uri = `${typeof dir === "string" ? dir : dir.uri}/${name}`;
       this.name = name;
     }
     get exists() {
@@ -42,11 +42,23 @@ jest.mock("expo-file-system", () => {
     create() {
       mockFs.files.set(this.uri, new Uint8Array());
     }
-    writeSync(bytes: Uint8Array) {
-      mockFs.files.set(this.uri, bytes);
+    writeSync(bytes: Uint8Array | string, options?: { encoding?: string }) {
+      mockFs.files.set(
+        this.uri,
+        typeof bytes === "string"
+          ? new Uint8Array(Buffer.from(bytes, options?.encoding as never))
+          : bytes,
+      );
     }
     delete() {
       mockFs.files.delete(this.uri);
+    }
+    moveSync(destination: { uri: string }) {
+      const bytes = mockFs.files.get(this.uri);
+      if (!bytes) throw new Error("missing");
+      mockFs.files.delete(this.uri);
+      mockFs.files.set(destination.uri, bytes);
+      this.uri = destination.uri;
     }
   }
   return {
@@ -84,6 +96,7 @@ import {
   cachedArtworkUri,
   clearArtworkCache,
   ensureArtworkCached,
+  lockScreenPlaceholderUri,
   refreshArtworkIndex,
 } from "@/services/lockScreenArtwork";
 
@@ -204,6 +217,25 @@ describe("ensureArtworkCached", () => {
     expect(result).toBeUndefined();
   });
 
+  it.each([
+    ["a small PNG favicon", bodyWith([0x89, 0x50, 0x4e, 0x47], 300)],
+    ["an ICO favicon", bodyWith([0x00, 0x00, 0x01, 0x00])],
+    ["a BMP", bodyWith([0x42, 0x4d])],
+    ["an AVIF", bodyWith([0, 0, 0, 0x1c, ...Buffer.from("ftypavif")])],
+  ])("keeps %s, which the OS decoders read", async (_, body) => {
+    mockNet.body = body;
+    expect(
+      await ensureArtworkCached("https://radio.example.com/favicon"),
+    ).toBeDefined();
+  });
+
+  it("discards an MP4 that isn't an image", async () => {
+    mockNet.body = bodyWith([0, 0, 0, 0x1c, ...Buffer.from("ftypM4A ")]);
+    expect(
+      await ensureArtworkCached("https://radio.example.com/favicon"),
+    ).toBeUndefined();
+  });
+
   it("writes nothing when the server refuses the request", async () => {
     mockNet.ok = false;
     mockNet.status = 403;
@@ -304,5 +336,38 @@ describe("cachedArtworkUri", () => {
     }
     expect(exists).not.toHaveBeenCalled();
     exists.mockRestore();
+  });
+});
+
+describe("lockScreenPlaceholderUri", () => {
+  const PNG = [0x89, 0x50, 0x4e, 0x47];
+
+  it("writes a PNG to the cache and hands out its file URL", () => {
+    const uri = lockScreenPlaceholderUri();
+
+    expect(uri).toMatch(/^file:\/\/\//);
+    expect(
+      Array.from(mockFs.files.get(uri as string)?.subarray(0, 4) ?? []),
+    ).toEqual(PNG);
+  });
+
+  it("writes it again once the OS has cleared the cache", () => {
+    const uri = lockScreenPlaceholderUri() as string;
+    mockFs.files.delete(uri);
+
+    expect(lockScreenPlaceholderUri()).toBe(uri);
+    expect(mockFs.files.get(uri)?.byteLength).toBeGreaterThan(512);
+  });
+
+  it("replaces a write a killed process left half done", () => {
+    const uri = lockScreenPlaceholderUri() as string;
+    const full = mockFs.files.get(uri);
+    mockFs.files.delete(uri);
+    mockFs.files.set(`${uri}.tmp`, new Uint8Array([0x89, 0x50]));
+
+    lockScreenPlaceholderUri();
+
+    expect(mockFs.files.get(uri)).toEqual(full);
+    expect(mockFs.files.has(`${uri}.tmp`)).toBe(false);
   });
 });
