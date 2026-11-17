@@ -274,21 +274,105 @@
 				}
 			},
 			"carAuto": {
-				"home": "Start",
-				"recentlyPlayed": "Zuletzt gehört",
+				"unknownTitle": "Unbekannter Titel",
+				"offlineNotice": "Server kann nicht erreicht werden",
+				"offlineNoticeSubtitle": "Downloads durchsuchen",
+				"sections": {
+					"home": "Start",
+					"library": "Bibliothek",
+					"downloads": "Downloads",
+					"recent": "Aktuell",
+					"favorites": "Favoriten",
+					"playlists": "Wiedergabelisten",
+					"albums": "Alben",
+					"artists": "Interpreten",
+					"genres": "Genres",
+					"radio": "Radio",
+					"mixes": "Mischungen",
+					"podcasts": "Podcasts",
+					"audiobooks": "Hörbücher"
+				},
+				"rows": {
+					"recentlyPlayed": "Zuletzt gespielt",
+					"newest": "Zuletzt hinzugefügt",
+					"frequent": "Meistgehört",
+					"highest": "Am besten bewertet",
+					"random": "Zufällig",
+					"leastPlayed": "Am wenigsten gespielt",
+					"starredAlbums": "Lieblingsalben",
+					"mixes": "Mixe für dich"
+				},
+				"favorites": {
+					"songs": "Lieblingslieder",
+					"albums": "Lieblingsalben",
+					"artists": "Lieblings-Künstler"
+				},
+				"downloads": {
+					"albums": "Alben",
+					"playlists": "Wiedergabelisten",
+					"songs": "Lieder"
+				},
+				"topSongs": "Top-Titel",
+				"artistMix": "Interpretenmix",
+				"artistMixOf": "{{artist}} Mix",
+				"artistMixes": "Interpretenmixe",
+				"genreMixOf": "{{genre}} Mix",
+				"genreMixes": "Genre-Mixe",
+				"shuffleAll": "Meine Bibliothek mischen",
+				"shuffleGenre": "{{genre}} mischen",
+				"continueListening": "Hören fortsetzen",
 				"recentlyAdded": "Kürzlich hinzugefügt",
-				"mostPlayed": "Am häufigsten gehört",
-				"topRated": "Am besten bewertet",
-				"random": "Zufällig",
-				"library": "Bibliothek",
-				"playlists": "Wiedergabelisten",
-				"albums": "Alben",
-				"podcasts": "Podcasts",
-				"favorites": "Favoriten",
+				"search": {
+					"songs": "Lieder",
+					"albums": "Alben",
+					"artists": "Interpreten",
+					"playlists": "Wiedergabelisten"
+				},
+				"actions": {
+					"favorited": "Zu Favoriten hinzugefügt",
+					"unfavorited": "Aus Favoriten entfernt",
+					"failed": "Es ist ein Fehler aufgetreten",
+					"playingNext_one": "{{count}} Song spielt als nächstes",
+					"playingNext_other": "{{count}} Lieder spielen als nächstes",
+					"addedToQueue_one": "{{count}} Titel zur Warteschlange hinzugefügt",
+					"addedToQueue_other": "{{count}} Zur Warteschlange hinzugefügte Titel",
+					"downloading_one": "Lade {{count}} Song herunter",
+					"downloading_other": "Lade {{count}} Lieder herunter"
+				},
+				"errors": {
+					"signedOut": "Melden Sie sich bei Wavio auf Ihrem Telefon an, wenn dies sicher ist",
+					"offline": "Kann den Server nicht erreichen und nichts wird heruntergeladen",
+					"noResults": "Nichts für \"{{query}} \" gefunden",
+					"radioUnavailable": "Keine ähnlichen Titel für diesen Titel gefunden"
+				},
+				"buttons": {
+					"favoriteAdd": "Zu den Favoriten hinzufügen",
+					"favoriteRemove": "Aus den Favoriten entfernen",
+					"shuffleOn": "Shuffle einschalten",
+					"shuffleOff": "Shuffle aus",
+					"repeatAll": "Alle wiederholen",
+					"repeatOne": "Wiederholen",
+					"repeatOff": "Wiederholung beenden",
+					"radio": "Radio starten",
+					"seekBack": "Zurück 30 Sekunden",
+					"seekForward": "30 Sekunden weiterleiten"
+				},
+				"itemActions": {
+					"favoriteAdd": "Zu den Favoriten hinzufügen",
+					"favoriteRemove": "Aus den Favoriten entfernen",
+					"radio": "Radio starten",
+					"playNext": "Als Nächstes wiedergeben",
+					"addToQueue": "Zur Warteschlange hinzufügen",
+					"shuffle": "Zufallswiedergabe",
+					"download": "Herunterladen"
+				},
 				"songCount_one": "{{count}} Titel",
-				"songCount_other": "{{count}} Titel"
+				"songCount_other": "{{count}} Titel",
+				"albumCount_one": "{{count}} Album",
+				"albumCount_other": "{{count}} Alben"
 			},
 			"albums": {
+				"goneMessage": "Dieses Album ist nicht mehr in deiner Bibliothek.",
 				"addToPlaylist": "Zur Wiedergabeliste hinzufügen",
 				"playNext": "Als Nächstes wiedergeben",
 				"addToQueue": "Zur Warteschlange hinzufügen",
@@ -313,6 +397,7 @@
 				"addAllToFavoritesErrorMessage": "Beim Hinzufügen von Titeln zu den Favoriten ist ein Fehler aufgetreten",
 				"typeAlbum": "Album",
 				"typeCompilation": "Zusammenstellung",
+				"reissued": "{{year}} neu ausgegeben",
 				"releaseTypeUntagged": "Ohne Tag",
 				"releaseTypes": {
 					"album": "Album",
@@ -343,6 +428,7 @@
 				"topSongs": "Top-Titel",
 				"discography": "Diskografie",
 				"appearsOn": "Erscheint auf",
+				"featuredInPlaylists": "Vorgestellt in Wiedergabelisten",
 				"soundsLike": "Das klingt nach",
 				"poweredByAudioMuse": "Unterstützt von AudioMuse-AI",
 				"similarArtists": "Ähnliche Künstler",
@@ -829,6 +915,10 @@
 						"title": "Wiedergabe & Audio",
 						"description": "Audioqualität, Replay Gain, Equalizer"
 					},
+					"androidAuto": {
+						"title": "Android Auto",
+						"description": "Tabs, Home-Zeilen, Player-Tasten"
+					},
 					"library": {
 						"title": "Musikbibliothek",
 						"description": "Durchsuchen Sie Ihre Bibliothek und zeigen Sie deren Status an"
@@ -872,6 +962,10 @@
 					"updates": {
 						"title": "Aktualisierungen",
 						"description": "Nach App-Updates suchen und diese installieren"
+					},
+					"support": {
+						"title": "Hilfe & Feedback",
+						"description": "Melde einen Bug, schlage ein Feature vor oder stelle eine Frage"
 					}
 				},
 				"integrations": {
@@ -1471,34 +1565,34 @@
 				},
 				"offlineSettings": {
 					"title": "Offline-Modus",
-					"autoDownloadsTitle": "Automatic downloads",
-					"autoDownloadsDescription": "Keep these downloaded and up to date on this device. Turning one off deletes what it downloaded; anything you saved yourself is kept.",
-					"downloadSettingsTitle": "Download settings",
+					"autoDownloadsTitle": "Automatische Downloads",
+					"autoDownloadsDescription": "Behalten Sie diese heruntergeladenen Dateien auf dem neuesten Stand auf diesem Gerät. Deaktivieren löscht das, was heruntergeladen wurde; alles, was Sie selbst gespeichert haben, wird beibehalten.",
+					"downloadSettingsTitle": "Download-Einstellungen",
 					"autoDownloadLikedSongsLabel": "Gefallene Titel",
-					"autoDownloadLikedSongsDescription": "Download every song you like. Unliking a song deletes its download.",
+					"autoDownloadLikedSongsDescription": "Laden Sie jeden Song herunter, der Ihnen gefällt. Ein Lied löscht den Download.",
 					"autoDownloadLikedAlbumsLabel": "Gefallene Alben",
-					"autoDownloadLikedAlbumsDescription": "Download every album you like. Unliking an album deletes its download.",
+					"autoDownloadLikedAlbumsDescription": "Laden Sie jedes Album herunter, das Ihnen gefällt. Unliken eines Albums löscht den Download.",
 					"autoDownloadPlaylistsLabel": "Wiedergabelisten",
-					"autoDownloadPlaylistsDescription": "Download your playlists and keep them in step with the server. Smart playlists are left out unless you pick them.",
-					"autoDownloadChoosePlaylistsLabel": "Choose playlists",
-					"autoDownloadChoosePlaylistsDescription": "Pick which of your playlists are downloaded",
+					"autoDownloadPlaylistsDescription": "Laden Sie Ihre Wiedergabelisten herunter und halten Sie sie Schritt mit dem Server. Intelligente Wiedergabelisten werden ausgelassen, wenn Sie sie nicht aussuchen.",
+					"autoDownloadChoosePlaylistsLabel": "Wiedergabelisten auswählen",
+					"autoDownloadChoosePlaylistsDescription": "Wähle aus, welche Wiedergabelisten heruntergeladen werden",
 					"autoDownloadChoosePlaylistsAction": "Wählen Sie",
-					"autoDownloadPlaylistsSheetTitle": "Playlists to download",
-					"autoDownloadPlaylistsSheetDescription": "Only your own playlists are listed. Smart playlists can change every time they refresh, so they stay off unless you turn them on.",
-					"autoDownloadPlaylistsEmpty": "You don't have any playlists yet",
-					"autoDownloadPlaylistsError": "Couldn't load your playlists",
-					"autoDownloadExclusionsLabel": "Excluded items",
+					"autoDownloadPlaylistsSheetTitle": "Playlists zum Herunterladen",
+					"autoDownloadPlaylistsSheetDescription": "Es werden nur Ihre eigenen Wiedergabelisten aufgelistet. Intelligente Wiedergabelisten können sich jedes Mal ändern, wenn sie sich aktualisieren, so dass sie ausgeschaltet bleiben, es sei denn, Sie aktivieren sie.",
+					"autoDownloadPlaylistsEmpty": "Du hast noch keine Wiedergabelisten",
+					"autoDownloadPlaylistsError": "Playlist konnte nicht geladen werden",
+					"autoDownloadExclusionsLabel": "Ausgeschlossene Elemente",
 					"autoDownloadExclusionsAction": "Verwalten",
-					"autoDownloadExclusionsSheetTitle": "Excluded from automatic downloads",
-					"autoDownloadExclusionsSheetDescription": "Albums and songs you removed from your downloads. Include one again to download it.",
+					"autoDownloadExclusionsSheetTitle": "Von automatischen Downloads ausgeschlossen",
+					"autoDownloadExclusionsSheetDescription": "Alben und Lieder, die Sie aus Ihren Downloads entfernt haben. Fügen Sie ein weiteres hinzu, um es herunterzuladen.",
 					"autoDownloadExclusionAlbum": "Album",
 					"autoDownloadExclusionSong": "Titel",
-					"autoDownloadIncludeAgain": "Include",
-					"autoDownloadIncludeAll": "Include all",
-					"autoDownloadDisableConfirmTitle": "Delete these downloads?",
-					"autoDownloadLikedSongsDisableConfirmDescription": "Songs downloaded because you liked them will be deleted from this device. Songs you saved yourself, or that belong to another download, are kept.",
-					"autoDownloadLikedAlbumsDisableConfirmDescription": "Albums downloaded because you liked them will be deleted from this device. Anything you saved yourself is kept.",
-					"autoDownloadPlaylistsDisableConfirmDescription": "Playlists downloaded automatically will be deleted from this device. Anything you saved yourself is kept.",
+					"autoDownloadIncludeAgain": "Einschließen",
+					"autoDownloadIncludeAll": "Alle einbeziehen",
+					"autoDownloadDisableConfirmTitle": "Diese Downloads löschen?",
+					"autoDownloadLikedSongsDisableConfirmDescription": "Lieder heruntergeladen, weil Sie sie mögen werden von diesem Gerät gelöscht. Lieder die Sie selbst gespeichert haben oder zu einem anderen Download gehören, werden beibehalten.",
+					"autoDownloadLikedAlbumsDisableConfirmDescription": "heruntergeladene Alben, weil du sie magst, werden von diesem Gerät gelöscht. Alles, was du selbst gespeichert hast, wird beibehalten.",
+					"autoDownloadPlaylistsDisableConfirmDescription": "automatisch heruntergeladene Wiedergabelisten werden von diesem Gerät gelöscht. Alles, was du selbst gespeichert hast, wird beibehalten.",
 					"clearDownloadsLabel": "Downloads löschen",
 					"clearDownloadsDescription": "Alle heruntergeladenen Titel vom Gerät löschen",
 					"clearDownloadsSuccessMessage": "Alle Downloads wurden erfolgreich gelöscht",
@@ -1536,6 +1630,14 @@
 					"downloadLocationUnwritable": "In diesen Ordner kann nicht geschrieben werden. Wählen Sie einen anderen aus.",
 					"autoSignOutLabel": "Abmelden, wenn der Server nicht erreichbar ist",
 					"autoSignOutDescription": "Automatisch abmelden, wenn Dein Server nicht erreichbar ist, das Internet jedoch funktioniert. Deaktiviere diese Option, um angemeldet zu bleiben und weiterhin Deine heruntergeladenen Titel anzusehen.",
+					"http3Label": "HTTP/3 verwenden, wenn verfügbar",
+					"http3Description": "Steadiere Verbindungen bei schwachen oder wechselnden Mobilfunknetzen, falls Ihr Server oder dessen Proxy HTTP/3 unterstützt. Deaktivieren Sie dies, wenn etwas nicht mehr geladen wird.",
+					"http3StatusActive": "Mit diesem Server über HTTP/3 verbunden.",
+					"http3StatusInactive": "Dieser Server verwendet noch keine HTTP/3. Er benötigt einen Proxy wie Caddy, nginx oder Cloudflare mit aktiviertem HTTP/3.",
+					"http3StatusCleartext": "HTTP/3 benötigt eine sichere Server-Adresse. Dieser Server verwendet http://, so dass er auf einer regulären Verbindung bleibt.",
+					"http3StatusCustomTls": "HTTP/3 kann nicht mit einem selbstsignierten Zertifikat verwendet werden, dem Sie vertrauen, oder mit einem Client-Zertifikat, so dass dieser Server auf einer regulären Verbindung bleibt.",
+					"http3StatusTlsFallback": "Ein sicherer Verbindungsfehler ist über HTTP/3 aufgetreten, daher ist dieser Server für ein paar Minuten auf einer regulären Verbindung.",
+					"http3StatusUnavailable": "HTTP/3 ist auf diesem Gerät nicht verfügbar.",
 					"pendingChangesLabel": "Ausstehende Änderungen",
 					"pendingChangesAction": "Anzeigen",
 					"extendedOfflineLabel": "Gesamte Bibliothek zwischenspeichern",
@@ -1552,16 +1654,16 @@
 					"downloadFormatDescription": "Format, in dem Offline-Downloads gespeichert werden. Bei „Original“ wird die Datei genau so vom Server beibehalten; andere Formate werden aus Platzgründen transkodiert.",
 					"downloadBitRateLabel": "Download-Qualität",
 					"downloadBitRateDescription": "Maximale Bitrate für transkodierte Downloads",
-					"autoDownloadLikedAlbumsStatus_one": "{{count}} album downloaded",
-					"autoDownloadLikedAlbumsStatus_other": "{{count}} albums downloaded",
-					"autoDownloadPlaylistsStatus_one": "{{count}} playlist downloaded",
-					"autoDownloadPlaylistsStatus_other": "{{count}} playlists downloaded",
+					"autoDownloadLikedAlbumsStatus_one": "{{count}} Album heruntergeladen",
+					"autoDownloadLikedAlbumsStatus_other": "{{count}} Alben heruntergeladen",
+					"autoDownloadPlaylistsStatus_one": "{{count}} Playlist heruntergeladen",
+					"autoDownloadPlaylistsStatus_other": "{{count}} Wiedergabelisten heruntergeladen",
 					"autoDownloadPlaylistSongs_one": "{{count}} Titel",
 					"autoDownloadPlaylistSongs_other": "{{count}} Titel",
-					"autoDownloadSmartPlaylistSongs_one": "Smart playlist · {{count}} song",
-					"autoDownloadSmartPlaylistSongs_other": "Smart playlist · {{count}} songs",
-					"autoDownloadExclusionsDescription_one": "{{count}} album or song you removed won't be downloaded again",
-					"autoDownloadExclusionsDescription_other": "{{count}} albums or songs you removed won't be downloaded again",
+					"autoDownloadSmartPlaylistSongs_one": "Intelligente Playlist · {{count}} Song",
+					"autoDownloadSmartPlaylistSongs_other": "Intelligente Wiedergabeliste · {{count}} Titel",
+					"autoDownloadExclusionsDescription_one": "{{count}} Album oder Lied, das Sie entfernt haben, wird nicht erneut heruntergeladen werden",
+					"autoDownloadExclusionsDescription_other": "{{count}} Alben oder von Ihnen entfernte Lieder werden nicht erneut heruntergeladen",
 					"downloadedTracksProgress_one": "{{done}}/{{count}} Titel heruntergeladen ({{size}})",
 					"downloadedTracksProgress_other": "{{done}}/{{count}} heruntergeladene Titel ({{size}})",
 					"trackCacheUsage_one": "{{count}} Titel vorab geladen · {{size}}",
@@ -1595,6 +1697,32 @@
 					"rateDescription": "Gefällt dir Wavio? Eine Bewertung bei Google Play hilft anderen Nutzern, die App zu finden.",
 					"rateAction": "Bewertung",
 					"currentVersionLabel": "Aktuelle Version"
+				},
+				"supportSettings": {
+					"openIssueLabel": "Ein Problem auf GitHub öffnen",
+					"openIssueDescription": "Melden Sie einen Fehler, fordern Sie eine Funktion an oder stellen Sie eine Frage. Der Diagnosebericht wird zuerst kopiert, bereit zum Einfügen in einen Fehlerbericht.",
+					"openIssueAction": "Öffnen",
+					"copyLabel": "Diagnosebericht kopieren",
+					"copyDescription": "Ihre App-Version, Ihr Gerätemodell und alle Einstellungen, um in einen Fehlerbericht einzufügen",
+					"copyAction": "Kopieren",
+					"previewLabel": "Vorschau des Berichts",
+					"previewDescription": "Sieh genau was kopiert wird, bevor du es teilst",
+					"previewShow": "Zeigen",
+					"previewHide": "Verstecken",
+					"privacyNotice": "GitHub Probleme sind öffentlich, daher ist der Bericht anonymisiert: Er enthält niemals Serveradressen, Benutzernamen, Passwörter, Token, Server- oder Bibliotheksnamen, Ordnerpfade oder irgendetwas was Sie hören. Diese werden ausgelassen oder darauf reduziert, ob sie festgelegt sind.",
+					"copySuccess": "Diagnosebericht in die Zwischenablage kopiert",
+					"copySuccessOpening": "Diagnosebericht kopiert. Wenn Sie einen Fehler melden, fügen Sie ihn in das Feld Diagnostik ein.",
+					"copyError": "Konnte den Diagnosebericht nicht erstellen",
+					"castingLogLabel": "Gib ein Casting-Log ein",
+					"castingLogDescription": "Temporär, für das Debuggen von Lautsprechern und TVs (UPnP/DLNA, Sonos). Starten Sie es, reproduzieren Sie das Problem und teilen Sie das Protokoll. Es wird durch Abstürze aufgezeichnet und neu gestartet, bis Sie es beenden.",
+					"castingLogStart": "Start",
+					"castingLogStop": "Stoppen",
+					"castingLogStarted": "Das Casting-Log wird aufgezeichnet. Wiederholen Sie das Problem und teilen Sie es wieder.",
+					"castingLogStopped": "Casting Log gestoppt. Du kannst es jetzt teilen.",
+					"castingLogShareLabel": "Teile das Casting-Log",
+					"castingLogShareDescription": "Sendet das Protokoll mit dem angehängten Diagnosebericht. Es hat keine Passwörter oder Token, aber es enthält die Adresse des Servers und die Netzwerkadressen der Lautsprecher, so schicken Sie es privat statt öffentlich zu veröffentlichen.",
+					"castingLogShareAction": "Teilen",
+					"castingLogEmpty": "Noch nichts aufgezeichnet. Beginne das Casting-Log und reproduzieren das Problem zuerst."
 				},
 				"storageSettings": {
 					"title": "Speicher",
@@ -1759,7 +1887,7 @@
 					"queueSyncOptions": {
 						"server": {
 							"label": "Server priorisieren",
-							"description": "Stelle beim Start die auf dem Server gespeicherte Warteschlange wieder her. Deine Warteschlange wird ebenfalls hochgeladen, sodass andere Geräte darauf zugreifen können."
+							"description": "Beim Start die Warteschlange wiederherstellen, die auf dem Server gespeichert wurde, es sei denn, dieses Gerät hat seine Warteschlange kürzlich geändert, ohne sie hochzuladen. Ihre Warteschlange wurde ebenfalls hochgeladen, so dass andere Geräte sie abholen können."
 						},
 						"local": {
 							"label": "Dieses Gerät priorisieren",
@@ -1799,7 +1927,7 @@
 					"cellularAudioQualityLabel": "Audioqualität (Mobilfunk)",
 					"cellularAudioQualityDescription": "Begrenze die Bitrate bei der Nutzung über Mobilfunk, um Datenvolumen zu sparen. Es gilt der niedrigere Wert aus dieser Begrenzung und der WLAN-Begrenzung.",
 					"streamingFormatLabel": "Streaming-Format",
-					"streamingFormatDescription": "Bitte den Server, die Streams in dieses Format zu konvertieren. Wähle „Original beibehalten“ für eine bitgenaue Wiedergabe; wähle ein Format aus, falls einige Dateien nicht abgespielt werden können (z. B. ALAC).",
+					"streamingFormatDescription": "Bitten Sie den Server, Streams in dieses Format umzuwandeln. Behalten Sie Original für bit-perfekte Wiedergabe; wählen Sie ein Format, falls einige Dateien nicht wiedergegeben werden.",
 					"cellularStreamingFormatLabel": "Streaming-Format (Mobilfunk)",
 					"cellularStreamingFormatDescription": "Bei Nutzung des Mobilfunknetzes in ein anderes Format transkodieren. Bei der Einstellung „Wie bei WLAN“ wird ein Original-Stream weiterhin entsprechend der Bitratenbegrenzung des Mobilfunknetzes heruntergerechnet, wobei das von Ihrem Server bevorzugte Format verwendet wird.",
 					"streamingFormatOptions": {
@@ -1876,6 +2004,53 @@
 					"autoBackupKeepLabel": "Sicherungen zum behalten",
 					"autoBackupKeepDescription": "Ältere automatische Sicherungen werden nach jedem Backup aus dem Ordner gelöscht.",
 					"autoBackupPrivacyNotice": "Sicherungen enthalten niemals Passwörter, Token oder API-Schlüssel. Sie beinhalten Ihre Server, Benutzernamen und den Verlauf des Abrufs. Wählen Sie also einen Ordner, auf den nur Sie zugreifen können."
+				},
+				"androidAutoSettings": {
+					"tabsTitle": "Tabs",
+					"tabsDescription": "Die meisten Autos werden bis zu 4 Registerkarten angezeigt. Tabs über das Limit des Fahrzeugs werden nicht angezeigt.",
+					"homeRowsTitle": "Hauptzeilen",
+					"libraryTitle": "Bibliothek",
+					"displayTitle": "Anzeige",
+					"displayDescription": "Tippen, um zwischen Liste und Raster zu wechseln",
+					"display": {
+						"list": "Liste",
+						"grid": "Raster"
+					},
+					"collectionTap": {
+						"label": "Tippen eines Albums oder Wiedergabeliste",
+						"description": "Öffne es, um einen Song auszuwählen oder sofort mit dem Abspielen zu beginnen. Gleiches gilt für Künstler, Genres, Favoriten und Downloads.",
+						"open": "Öffnet es",
+						"play": "Spielt es"
+					},
+					"playerButtonsTitle": "Player-Tasten",
+					"playerButtons": {
+						"favorite": {
+							"label": "Favorit",
+							"description": "Ein Herzen, das den aktuellen Track zu Ihren Favoriten hinzufügt oder ihn entfernt."
+						},
+						"shuffle": {
+							"label": "Zufallswiedergabe",
+							"description": "Schaltet Shuffle ein und aus."
+						},
+						"repeat": {
+							"label": "Wiederholen",
+							"description": "Wechselt durch alles wiederholen, wiederholen Sie eins und aus."
+						},
+						"radio": {
+							"label": "Radio",
+							"description": "Ersetzt das Kommende mit Liedern ähnlich dem aktuellen Titel."
+						}
+					},
+					"itemActionsTitle": "Aktionen auflisten",
+					"itemActionsDescription": "Shortcuts auf Songs, Alben und Wiedergabelisten, wo das Auto sie unterstützt.",
+					"itemActions": {
+						"favoriteAdd": "Favorit",
+						"radio": "Radio starten",
+						"playNext": "Als Nächstes wiedergeben",
+						"addToQueue": "Zur Warteschlange hinzufügen",
+						"shuffle": "Zufallswiedergabe",
+						"download": "Herunterladen"
+					}
 				},
 				"securitySettings": {
 					"title": "Sicherheit",
@@ -2069,6 +2244,86 @@
 				"sleepStopsAt": "Der Sleep-Timer stoppt die Wiedergabe bei {{time}} · {{remaining}} verbleibend",
 				"sleepStopsAround": "Der Sleep-Timer beendet die Wiedergabe, wenn noch etwa {{time}} · {{remaining}} übrig sind"
 			},
+			"fileDeletion": {
+				"dangerZone": "Gefährliche Aktionen",
+				"deleteTrack": "Datei dauerhaft löschen",
+				"deleteAlbum": "Album Dateien dauerhaft löschen",
+				"deleteArtist": "Interpretendateien dauerhaft löschen",
+				"deleteSelected": "Dateien löschen",
+				"offline": "Das Löschen von Dateien erfordert eine Verbindung zum Server.",
+				"notAllowed": "Dein Konto darf dies nicht auf dem Server löschen.",
+				"permissionCheckFailed": "Konnte nicht überprüfen, ob Sie dies löschen können. Versuchen Sie es später erneut.",
+				"titleOne": "Diese Datei dauerhaft löschen?",
+				"titleMany": "Diese Dateien dauerhaft löschen?",
+				"trackDescription": "“{{title}}” wird dauerhaft aus {{where}} gelöscht.",
+				"tracksDescription": "Die ausgewählten Lieder werden dauerhaft von {{where}} gelöscht.",
+				"albumDescription": "Jeder Song auf “{{name}}” wird dauerhaft von {{where}} gelöscht.",
+				"artistDescription": "Jeder Song auf den Alben von “{{name}}” wird dauerhaft aus {{where}} gelöscht.",
+				"where": {
+					"server": "die Festplatte des Servers",
+					"device": "dieses Gerät",
+					"share": "die Netzwerkfreigabe"
+				},
+				"cannotBeUndone": "Dies kann nicht rückgängig gemacht werden.",
+				"loadFailed": "Konnte die zu löschenden Lieder nicht laden.",
+				"nothingToDelete": "Es gibt keine zu löschenden Songs.",
+				"confirmIn": "Löschen ({{seconds}})",
+				"progress": "Lösche {{done}} von {{total}}…",
+				"stop": "Stoppen",
+				"stopping": "Stoppe…",
+				"partialMessage": "{{deleted}} von {{total}} Dateien gelöscht.",
+				"failedMessage": "Konnte die Dateien nicht löschen.",
+				"reasons": {
+					"notAllowed": "Sie haben keine Berechtigung, sie zu löschen, oder sie sind auf einer schreibgeschützten Freigabe.",
+					"inUse": "Sie sind in einer anderen App oder einem anderen Gerät geöffnet. Versuchen Sie es erneut, sobald sie geschlossen sind.",
+					"unreachable": "Der Server konnte nicht erreicht werden.",
+					"serverError": "Überprüfen Sie, ob der Server in Ihren Musikordner schreiben darf.",
+					"other": "Beim Löschen ist etwas schief gelaufen."
+				},
+				"settingsLabel": "Löschen von Dateien erlauben",
+				"settingsDescription": "Fügt einen Abschnitt „Gefährliche Aktionen“ zu Song-, Album- und Künstlermenüs hinzu, um ihre Dateien dauerhaft zu löschen.",
+				"enableTitle": "Löschen von Dateien erlauben?",
+				"enableDescription": "Gelöschte Dateien werden endgültig von der Festplatte entfernt. Wavio bittet um Bestätigung vor jedem Löschen aber es kann keine Dateien zurückbringen.",
+				"enableConfirm": "Erlauben",
+				"songCount_one": "{{count}} Titel",
+				"songCount_other": "{{count}} Titel",
+				"albumCount_one": "{{count}} Album",
+				"albumCount_other": "{{count}} Alben",
+				"deletedMessage_one": "{{count}} Datei gelöscht.",
+				"deletedMessage_other": "{{count}} Dateien gelöscht.",
+				"stoppedMessage_one": "Nach dem Löschen der {{count}} Datei gestoppt.",
+				"stoppedMessage_other": "Nach dem Löschen von {{count}} Dateien gestoppt."
+			},
+			"hiddenTracks": {
+				"hideTrack": "Lied ausblenden",
+				"unhideTrack": "Lied anzeigen",
+				"allowTrack": "Diesen Song trotzdem abspielen",
+				"allowArtistNamed": "{{name}} erlauben",
+				"blockArtist": "Diesen Künstler nicht abspielen",
+				"allowArtist": "Diesen Interpreten erlauben",
+				"allow": "Erlauben",
+				"unhide": "Unhide",
+				"trackHiddenMessage": "“{{title}}” ist versteckt und wird nicht spielen.",
+				"trackUnhiddenMessage": "“{{title}}” wird wieder gespielt.",
+				"trackAllowedMessage": "“{{title}}” wird spielen, auch wenn sein Künstler blockiert ist.",
+				"artistBlockedMessage": "Songs von {{name}} werden nicht abgespielt.",
+				"artistAllowedMessage": "Songs von {{name}} werden wieder abgespielt.",
+				"artistBlockedBanner": "Sie haben sich entschieden, {{name}} nicht zu spielen.",
+				"settingsLabel": "Versteckte Songs & Künstler",
+				"settingsDescription": "Überprüfen Sie die Lieder die Sie versteckt haben und die Künstler, die Sie ausgewählt haben, nicht zu spielen.",
+				"settingsAction": "Verwalten",
+				"screenTitle": "Versteckte Songs & Künstler",
+				"empty": "Nichts ist versteckt",
+				"emptyHint": "Verstecke einen Song aus dem Menü oder wähle nicht, einen Künstler von ihrer Seite zu spielen.",
+				"clearAll": "Alles anzeigen",
+				"clearAllConfirmTitle": "Alles enthüllen?",
+				"clearAllConfirmDescription": "Jeder versteckte Song und Künstler auf diesem Server wird wieder abgespielt.",
+				"clearAllSuccessMessage": "Alles wird wieder spielen.",
+				"blockedArtistsHeading_one": "{{count}} blockierte Künstler",
+				"blockedArtistsHeading_other": "{{count}} blockierte Künstler",
+				"hiddenTracksHeading_one": "{{count}} versteckter Song",
+				"hiddenTracksHeading_other": "{{count}} versteckte Lieder"
+			},
 			"tracks": {
 				"addToFavorites": "Zu den Favoriten hinzufügen",
 				"addToPlaylist": "Zur Wiedergabeliste hinzufügen",
@@ -2164,7 +2419,9 @@
 					"sourceUnavailable": "Der Titel konnte nicht abgespielt werden – die Datei war nicht erreichbar. Bitte überprüfen Sie, ob Ihr Server eingeschaltet ist und sich im selben Netzwerk befindet.",
 					"formatUnsupported": "Dieses Gerät kann das Audioformat „{{track}} “ nicht wiedergeben.",
 					"remoteTrackRefused": "{{name}} „{{track}}“ konnte nicht abgespielt werden. Wähle einen anderen Titel aus oder spiele ihn auf diesem Gerät ab.",
-					"remoteLost": "Der Kontakt zu {{name}}ist unterbrochen. Die Wiedergabe auf diesem Gerät funktioniert wieder."
+					"remoteLost": "Der Kontakt zu {{name}}ist unterbrochen. Die Wiedergabe auf diesem Gerät funktioniert wieder.",
+					"allTracksHidden": "Jedes Lied hier ist versteckt oder von einem Künstler, den Sie nicht spielen wollen.",
+					"trackHidden": "Dieses Lied ist versteckt oder von einem Künstler, den Sie nicht spielen möchten."
 				},
 				"original": "Original",
 				"playingFrom": {

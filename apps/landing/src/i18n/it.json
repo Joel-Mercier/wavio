@@ -30,6 +30,13 @@
 		"googlePlay": "Google Play",
 		"githubRelease": "Scaricalo da GitHub"
 	},
+	"video": {
+		"watch": "Guarda il trailer",
+		"title": "Rimorchio Wavio",
+		"play": "Riprendi",
+		"replay": "Riproduci",
+		"close": "Chiudi"
+	},
 	"versions": {
 		"github": "GitHub",
 		"playStore": "Play Store",

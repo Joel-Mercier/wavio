@@ -30,6 +30,13 @@
 		"googlePlay": "Google Play",
 		"githubRelease": "Pobierz na GitHub"
 	},
+	"video": {
+		"watch": "Oglądaj przyczepę",
+		"title": "Przyczepa Wavio",
+		"play": "Wznów",
+		"replay": "Powtórz",
+		"close": "Zamknij"
+	},
 	"versions": {
 		"github": "GitHub",
 		"playStore": "Sklep Play",

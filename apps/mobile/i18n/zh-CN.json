@@ -270,20 +270,100 @@
 				}
 			},
 			"carAuto": {
-				"home": "首页",
-				"recentlyPlayed": "最近播放",
+				"unknownTitle": "未知标题",
+				"offlineNotice": "无法连接到服务器",
+				"offlineNoticeSubtitle": "浏览您的下载",
+				"sections": {
+					"home": "首页",
+					"library": "音乐库",
+					"downloads": "下载",
+					"recent": "最近",
+					"favorites": "已收藏",
+					"playlists": "歌单",
+					"albums": "专辑",
+					"artists": "艺人",
+					"genres": "分类",
+					"radio": "电台",
+					"mixes": "混音器",
+					"podcasts": "播客",
+					"audiobooks": "音频书"
+				},
+				"rows": {
+					"recentlyPlayed": "最近播放",
+					"newest": "最近添加",
+					"frequent": "最常播放",
+					"highest": "最受好评",
+					"random": "随机",
+					"leastPlayed": "最少播放",
+					"starredAlbums": "最喜欢的专辑",
+					"mixes": "你的混音器"
+				},
+				"favorites": {
+					"songs": "最喜欢的歌曲",
+					"albums": "最喜欢的专辑",
+					"artists": "最喜欢的艺人"
+				},
+				"downloads": {
+					"albums": "专辑",
+					"playlists": "歌单",
+					"songs": "歌曲"
+				},
+				"topSongs": "热门歌曲",
+				"artistMix": "小艺术家组合",
+				"artistMixOf": "{{artist}} mix",
+				"artistMixes": "小艺术家混合物",
+				"genreMixOf": "{{genre}} mix",
+				"genreMixes": "流派混合物",
+				"shuffleAll": "随机播放我的库",
+				"shuffleGenre": "Shuffle {{genre}}",
+				"continueListening": "继续监听",
 				"recentlyAdded": "最近添加",
-				"mostPlayed": "最常播放",
-				"topRated": "最受好评",
-				"random": "随机",
-				"library": "音乐库",
-				"playlists": "歌单",
-				"albums": "专辑",
-				"podcasts": "播客",
-				"favorites": "收藏",
-				"songCount_other": "{{count}} 首歌曲"
+				"search": {
+					"songs": "歌曲",
+					"albums": "专辑",
+					"artists": "艺人",
+					"playlists": "歌单"
+				},
+				"actions": {
+					"favorited": "已添加到收藏夹",
+					"unfavorited": "已从收藏夹移除",
+					"failed": "出了点问题",
+					"playingNext_other": "{{count}} songs play next",
+					"addedToQueue_other": "{{count}} 已添加到播放列表中的歌曲",
+					"downloading_other": "Downloading {{count}} songs"
+				},
+				"errors": {
+					"signedOut": "当您的手机安全登录Wavio",
+					"offline": "无法连接到服务器，没有下载任何内容",
+					"noResults": "Nothing found for \"{{query}}\"",
+					"radioUnavailable": "没有找到与此曲目的相似的歌曲"
+				},
+				"buttons": {
+					"favoriteAdd": "加入收藏",
+					"favoriteRemove": "从收藏中移除",
+					"shuffleOn": "开启随机播放",
+					"shuffleOff": "关闭随机播放",
+					"repeatAll": "全部重复",
+					"repeatOne": "重复一个",
+					"repeatOff": "关闭重复",
+					"radio": "开始广播",
+					"seekBack": "30秒后后",
+					"seekForward": "轉發30秒"
+				},
+				"itemActions": {
+					"favoriteAdd": "加入收藏",
+					"favoriteRemove": "从收藏中移除",
+					"radio": "开始广播",
+					"playNext": "下一首播放",
+					"addToQueue": "加入播放队列",
+					"shuffle": "随机播放",
+					"download": "下载"
+				},
+				"songCount_other": "{{count}} 首歌曲",
+				"albumCount_other": "{{count}} 张专辑"
 			},
 			"albums": {
+				"goneMessage": "此相册不再在您的书库中。",
 				"addToPlaylist": "加入歌单",
 				"playNext": "下一首播放",
 				"addToQueue": "加入播放队列",
@@ -308,6 +388,7 @@
 				"addAllToFavoritesErrorMessage": "全部收藏时发生错误",
 				"typeAlbum": "专辑",
 				"typeCompilation": "合辑",
+				"reissued": "Reissued {{year}}",
 				"releaseTypeUntagged": "未标记",
 				"releaseTypes": {
 					"album": "专辑",
@@ -338,6 +419,7 @@
 				"topSongs": "热门歌曲",
 				"discography": "作品集",
 				"appearsOn": "参与作品",
+				"featuredInPlaylists": "在播放列表中精选",
 				"soundsLike": "听起来像是",
 				"poweredByAudioMuse": "由 AudioMuse-AI 提供支持",
 				"similarArtists": "类似的艺术家",
@@ -817,6 +899,10 @@
 						"title": "播放与音频",
 						"description": "音质、回放增益、均衡器"
 					},
+					"androidAuto": {
+						"title": "Android Auto",
+						"description": "标签、主行、播放器按钮"
+					},
 					"library": {
 						"title": "音乐库",
 						"description": "扫描您的书库并查看其状态"
@@ -860,6 +946,10 @@
 					"updates": {
 						"title": "更新",
 						"description": "检查并安装应用更新"
+					},
+					"support": {
+						"title": "帮助与反馈",
+						"description": "报告一个错误，建议一个功能或提出一个问题"
 					}
 				},
 				"integrations": {
@@ -1436,34 +1526,34 @@
 				},
 				"offlineSettings": {
 					"title": "离线模式",
-					"autoDownloadsTitle": "Automatic downloads",
-					"autoDownloadsDescription": "Keep these downloaded and up to date on this device. Turning one off deletes what it downloaded; anything you saved yourself is kept.",
-					"downloadSettingsTitle": "Download settings",
+					"autoDownloadsTitle": "自动下载",
+					"autoDownloadsDescription": "在此设备上保持这些下载并更新。关闭一个设备将删除它下载的内容；保存您保存的任何内容。",
+					"downloadSettingsTitle": "下载设置",
 					"autoDownloadLikedSongsLabel": "喜欢的歌曲",
-					"autoDownloadLikedSongsDescription": "Download every song you like. Unliking a song deletes its download.",
+					"autoDownloadLikedSongsDescription": "下载你喜欢的每一首歌。取消喜欢的歌曲会删除它的下载。",
 					"autoDownloadLikedAlbumsLabel": "喜欢的专辑",
-					"autoDownloadLikedAlbumsDescription": "Download every album you like. Unliking an album deletes its download.",
+					"autoDownloadLikedAlbumsDescription": "下载您喜欢的相册。取消喜欢一个相册删除其下载。",
 					"autoDownloadPlaylistsLabel": "歌单",
-					"autoDownloadPlaylistsDescription": "Download your playlists and keep them in step with the server. Smart playlists are left out unless you pick them.",
-					"autoDownloadChoosePlaylistsLabel": "Choose playlists",
-					"autoDownloadChoosePlaylistsDescription": "Pick which of your playlists are downloaded",
+					"autoDownloadPlaylistsDescription": "下载您的播放列表并与服务器保持同步。智能播放列表除非您挑选它们。",
+					"autoDownloadChoosePlaylistsLabel": "选择播放列表",
+					"autoDownloadChoosePlaylistsDescription": "选择您的播放列表中哪些已下载",
 					"autoDownloadChoosePlaylistsAction": "选择",
-					"autoDownloadPlaylistsSheetTitle": "Playlists to download",
-					"autoDownloadPlaylistsSheetDescription": "Only your own playlists are listed. Smart playlists can change every time they refresh, so they stay off unless you turn them on.",
-					"autoDownloadPlaylistsEmpty": "You don't have any playlists yet",
-					"autoDownloadPlaylistsError": "Couldn't load your playlists",
-					"autoDownloadExclusionsLabel": "Excluded items",
+					"autoDownloadPlaylistsSheetTitle": "要下载的播放列表",
+					"autoDownloadPlaylistsSheetDescription": "只列出您自己的播放列表。智能播放列表每次刷新时都可以更改，所以除非您开启它们，否则它们将继续关闭。",
+					"autoDownloadPlaylistsEmpty": "您还没有任何播放列表",
+					"autoDownloadPlaylistsError": "无法加载您的播放列表",
+					"autoDownloadExclusionsLabel": "排除的项目",
 					"autoDownloadExclusionsAction": "管理",
-					"autoDownloadExclusionsSheetTitle": "Excluded from automatic downloads",
-					"autoDownloadExclusionsSheetDescription": "Albums and songs you removed from your downloads. Include one again to download it.",
+					"autoDownloadExclusionsSheetTitle": "排除自动下载",
+					"autoDownloadExclusionsSheetDescription": "您从下载中删除的专辑和歌曲。请重新下载。",
 					"autoDownloadExclusionAlbum": "专辑",
 					"autoDownloadExclusionSong": "歌曲",
-					"autoDownloadIncludeAgain": "Include",
-					"autoDownloadIncludeAll": "Include all",
-					"autoDownloadDisableConfirmTitle": "Delete these downloads?",
-					"autoDownloadLikedSongsDisableConfirmDescription": "Songs downloaded because you liked them will be deleted from this device. Songs you saved yourself, or that belong to another download, are kept.",
-					"autoDownloadLikedAlbumsDisableConfirmDescription": "Albums downloaded because you liked them will be deleted from this device. Anything you saved yourself is kept.",
-					"autoDownloadPlaylistsDisableConfirmDescription": "Playlists downloaded automatically will be deleted from this device. Anything you saved yourself is kept.",
+					"autoDownloadIncludeAgain": "包含",
+					"autoDownloadIncludeAll": "包括所有",
+					"autoDownloadDisableConfirmTitle": "删除这些下载？",
+					"autoDownloadLikedSongsDisableConfirmDescription": "您喜欢的歌曲将从此设备上删除。您自己保存的歌曲或属于另一个下载的歌曲将被保存。",
+					"autoDownloadLikedAlbumsDisableConfirmDescription": "您喜欢的相册将从此设备上删除已下载的相册。您保存的任何内容都将被保存。",
+					"autoDownloadPlaylistsDisableConfirmDescription": "自动下载的播放列表将从此设备上删除。您保存的任何内容都将被保存。",
 					"clearDownloadsLabel": "清除下载",
 					"clearDownloadsDescription": "从设备中移除所有已下载的曲目",
 					"clearDownloadsSuccessMessage": "已清除所有下载",
@@ -1501,6 +1591,14 @@
 					"downloadLocationUnwritable": "该文件夹无法写入。请选择另一个文件夹。",
 					"autoSignOutLabel": "服务器无法访问时退出登录",
 					"autoSignOutDescription": "当网络正常但无法访问服务器时自动退出登录。关闭后可保持登录状态并继续浏览已下载的曲目。",
+					"http3Label": "在可用时使用 HTTP/3",
+					"http3Description": "如果您的服务器或代理服务器支持 HTTP/3，请在虚弱或不断变化的移动网络上稳固连接。如果某些东西停止加载，请关闭。",
+					"http3StatusActive": "通过 HTTP/3连接到此服务器。",
+					"http3StatusInactive": "此服务器尚未使用 HTTP/3 。它需要使用 Caddy, nginx 或 Cloudflare 等代理，并启用 HTTP3 。",
+					"http3StatusCleartext": "HTTP/3 需要一个安全的服务器地址。此服务器使用 http://，所以它保持正常连接。",
+					"http3StatusCustomTls": "HTTP/3 不能与您信任的自签名证书或客户端证书一起使用，所以此服务器保持正常连接。",
+					"http3StatusTlsFallback": "HTTP-3发生了安全连接错误，所以该服务器已经正常连接了几分钟。",
+					"http3StatusUnavailable": "HTTP/3 在此设备上不可用。",
 					"pendingChangesLabel": "待同步的更改",
 					"pendingChangesAction": "查看",
 					"extendedOfflineLabel": "缓存整个库",
@@ -1546,6 +1644,32 @@
 					"rateDescription": "喜欢 Wavio 吗？在 Google Play 上给它评分，能帮助其他人发现这款应用",
 					"rateAction": "评分",
 					"currentVersionLabel": "当前版本"
+				},
+				"supportSettings": {
+					"openIssueLabel": "在 GitHub 上打开一个问题",
+					"openIssueDescription": "报告错误，请求功能或提问。诊断报告先复制，准备粘贴到错误报告中。",
+					"openIssueAction": "打开",
+					"copyLabel": "复制诊断报告",
+					"copyDescription": "您的应用版本、设备模型和每个设置都要粘贴到错误报告",
+					"copyAction": "复制",
+					"previewLabel": "预览报告",
+					"previewDescription": "查看您分享之前复制的内容",
+					"previewShow": "显示",
+					"previewHide": "隐藏",
+					"privacyNotice": "GitHub 问题是公开的，所以报告是匿名的：它绝不包括服务器地址、用户名， 密码、令牌、服务器或库名、文件夹路径或任何关于您聆听的内容。 它们被排除在外，或被排除在外，或被排除在是否确定的范围之外。",
+					"copySuccess": "诊断报告已复制到剪贴板",
+					"copySuccessOpening": "诊断报告已复制。如果您报告了一个bug，请将其粘贴到诊断报告字段。",
+					"copyError": "无法生成诊断报告",
+					"castingLogLabel": "记录投影日志",
+					"castingLogDescription": "用于调试扬声器和电视的时间(UPnP/DLNA, Sonos)。启动它，复制问题，然后共享日志。 它一直通过崩溃进行录制并重新启动直到你停止它。",
+					"castingLogStart": "开始",
+					"castingLogStop": "停止",
+					"castingLogStarted": "录制连铸日志。复制问题，然后再回来分享它。",
+					"castingLogStopped": "连铸日志已停止。您现在可以分享它。",
+					"castingLogShareLabel": "分享投影日志",
+					"castingLogShareDescription": "随附诊断报告发送日志。 它没有密码或令牌，但它确实包括您的服务器地址和您的扬声器网络地址， 因此，私下发送而不是公开张贴。",
+					"castingLogShareAction": "分享",
+					"castingLogEmpty": "没有任何记录。请先开始投射日志并重现问题。"
 				},
 				"storageSettings": {
 					"title": "存储空间",
@@ -1708,7 +1832,7 @@
 					"queueSyncOptions": {
 						"server": {
 							"label": "优先使用服务器队列",
-							"description": "启动时恢复服务器上保存的队列，同时将当前队列上传，以便其他设备接续。"
+							"description": "启动时，恢复服务器上保存的队列，除非此设备最近更改了队列而不上传。 您的队列也已上传，因此其他设备也可以上传。"
 						},
 						"local": {
 							"label": "优先使用本设备队列",
@@ -1748,7 +1872,7 @@
 					"cellularAudioQualityLabel": "音质（移动网络）",
 					"cellularAudioQualityDescription": "限制移动网络下的比特率以节省流量。实际使用 Wi-Fi 和移动网络两者中的较低值。",
 					"streamingFormatLabel": "流媒体格式",
-					"streamingFormatDescription": "请求服务器将音频流转码为此格式。选择“原始”以获得无损原音；如果部分文件（如 ALAC）无法播放，可选择其他格式。",
+					"streamingFormatDescription": "要求服务器转码流到此格式。保留原始的比特完美播放；如果某些文件不会播放，请选择格式。",
 					"cellularStreamingFormatLabel": "流媒体格式（移动网络）",
 					"cellularStreamingFormatDescription": "在使用蜂窝网络时转码为其他格式。如果选择“与 Wi-Fi 相同”，原始流仍会根据蜂窝网络的比特率上限进行降采样，并采用服务器首选的格式。",
 					"streamingFormatOptions": {
@@ -1825,6 +1949,53 @@
 					"autoBackupKeepLabel": "备份以保留",
 					"autoBackupKeepDescription": "每次备份后从文件夹中删除旧的自动备份。那里的其他文件不会被触摸。",
 					"autoBackupPrivacyNotice": "备份从不包含密码、令牌或 API 密钥。它们包括您的服务器，用户名和监听历史，因此只能选择一个文件夹。"
+				},
+				"androidAutoSettings": {
+					"tabsTitle": "Tabs",
+					"tabsDescription": "大多数汽车最多显示4个标签。超过汽车限制的标签被排除在外。",
+					"homeRowsTitle": "主行",
+					"libraryTitle": "音乐库",
+					"displayTitle": "显示",
+					"displayDescription": "点击切换列表和网格",
+					"display": {
+						"list": "列表",
+						"grid": "网格"
+					},
+					"collectionTap": {
+						"label": "触摸相册或播放列表",
+						"description": "打开它来挑选一首歌曲，或立即开始播放。也适用于艺术家、基因、收藏和下载。",
+						"open": "打开它",
+						"play": "播放它"
+					},
+					"playerButtonsTitle": "播放器按钮",
+					"playerButtons": {
+						"favorite": {
+							"label": "收藏",
+							"description": "将当前曲目添加到收藏夹或删除它的心脏。"
+						},
+						"shuffle": {
+							"label": "随机播放",
+							"description": "打开或关闭打乱顺序。"
+						},
+						"repeat": {
+							"label": "重复",
+							"description": "循环遍历重复，重复一个或一个关闭。"
+						},
+						"radio": {
+							"label": "电台",
+							"description": "替换与当前曲目相似的歌曲。"
+						}
+					},
+					"itemActionsTitle": "操作列表",
+					"itemActionsDescription": "汽车支持歌曲、专辑和播放列表的快捷键。",
+					"itemActions": {
+						"favoriteAdd": "收藏",
+						"radio": "开始广播",
+						"playNext": "下一首播放",
+						"addToQueue": "加入播放队列",
+						"shuffle": "随机播放",
+						"download": "下载"
+					}
 				},
 				"securitySettings": {
 					"title": "安全",
@@ -2011,6 +2182,80 @@
 				"sleepStopsAt": "睡眠定时器将在剩余时间 {{time}} · {{remaining}} 时停止播放",
 				"sleepStopsAround": "睡眠定时器将在剩余时间约为 {{time}} · {{remaining}} 时停止播放"
 			},
+			"fileDeletion": {
+				"dangerZone": "危险行动",
+				"deleteTrack": "永久删除文件",
+				"deleteAlbum": "永久删除相册文件",
+				"deleteArtist": "永久删除艺人的文件",
+				"deleteSelected": "删除文件",
+				"offline": "删除文件需要连接到服务器。",
+				"notAllowed": "您的帐户不允许在服务器上删除这个。",
+				"permissionCheckFailed": "无法检查您是否可以删除此操作。请稍后再试。",
+				"titleOne": "永久删除此文件？",
+				"titleMany": "是否永久删除这些文件？",
+				"trackDescription": "“{{title}}” will be permanently deleted from {{where}}.",
+				"tracksDescription": "The selected songs will be permanently deleted from {{where}}.",
+				"albumDescription": "Every song on “{{name}}” will be permanently deleted from {{where}}.",
+				"artistDescription": "Every song on the albums of “{{name}}” will be permanently deleted from {{where}}.",
+				"where": {
+					"server": "服务器的磁盘",
+					"device": "此设备",
+					"share": "网络共享"
+				},
+				"cannotBeUndone": "无法撤消。",
+				"loadFailed": "无法加载歌曲以删除。",
+				"nothingToDelete": "没有要删除的歌曲。",
+				"confirmIn": "Delete ({{seconds}})",
+				"progress": "Deleting {{done}} of {{total}}…",
+				"stop": "停止",
+				"stopping": "Stopping…",
+				"partialMessage": "Deleted {{deleted}} of {{total}} files.",
+				"failedMessage": "无法删除文件。",
+				"reasons": {
+					"notAllowed": "您没有权限删除他们，或者他们在只读共享。",
+					"inUse": "他们正在另一个应用程序或另一个设备上打开。一旦他们被关闭，请重试。",
+					"unreachable": "无法连接到服务器。",
+					"serverError": "请检查服务器是否允许写入您的音乐文件夹。",
+					"other": "删除时出了错。"
+				},
+				"settingsLabel": "允许删除文件",
+				"settingsDescription": "添加“危险动作”部分到歌曲、专辑和艺术家菜单以永久删除他们的文件。",
+				"enableTitle": "是否允许删除文件？",
+				"enableDescription": "已删除的文件很好地从磁盘中删除。Wavio在每次删除之前请求确认，但它不能将文件归还。",
+				"enableConfirm": "允许",
+				"songCount_other": "{{count}} 首歌曲",
+				"albumCount_other": "{{count}} 张专辑",
+				"deletedMessage_other": "Deleted {{count}} files.",
+				"stoppedMessage_other": "Stopped after deleting {{count}} files."
+			},
+			"hiddenTracks": {
+				"hideTrack": "隐藏歌曲",
+				"unhideTrack": "取消隐藏歌曲",
+				"allowTrack": "继续播放这首歌曲",
+				"allowArtistNamed": "Allow {{name}}",
+				"blockArtist": "不要播放此艺人",
+				"allowArtist": "允许此艺人",
+				"allow": "允许",
+				"unhide": "Unhide",
+				"trackHiddenMessage": "“{{title}}” is hidden and won't play.",
+				"trackUnhiddenMessage": "“{{title}}” will play again.",
+				"trackAllowedMessage": "“{{title}}” will play even though its artist is blocked.",
+				"artistBlockedMessage": "Songs by {{name}} won't play.",
+				"artistAllowedMessage": "Songs by {{name}} will play again.",
+				"artistBlockedBanner": "You chose not to play {{name}}.",
+				"settingsLabel": "隐藏歌曲和艺人",
+				"settingsDescription": "查看您隐藏的歌曲和您选择不播放的艺人。",
+				"settingsAction": "管理",
+				"screenTitle": "隐藏歌曲和艺人",
+				"empty": "没有隐藏",
+				"emptyHint": "从菜单中隐藏歌曲，或选择不从其页面播放艺术家。",
+				"clearAll": "取消隐藏所有内容",
+				"clearAllConfirmTitle": "取消隐藏所有东西？",
+				"clearAllConfirmDescription": "此服务器上的每一首隐藏歌曲和被屏蔽的艺术家都会再次播放。",
+				"clearAllSuccessMessage": "一切都将再次播放。",
+				"blockedArtistsHeading_other": "{{count}} blocked artists",
+				"hiddenTracksHeading_other": "{{count}} hidden songs"
+			},
 			"tracks": {
 				"addToFavorites": "加入收藏",
 				"addToPlaylist": "加入歌单",
@@ -2104,7 +2349,9 @@
 					"sourceUnavailable": "无法播放该音轨——无法访问该文件。请检查您的服务器是否已开启，并且是否处于同一网络中。",
 					"formatUnsupported": "该设备无法播放“{{track}} ”格式的音频。",
 					"remoteTrackRefused": "{{name}} 无法播放“{{track}}”。请选择另一首歌曲，或在此设备上播放。",
-					"remoteLost": "已与 {{name}}失去联系。该设备已恢复播放功能。"
+					"remoteLost": "已与 {{name}}失去联系。该设备已恢复播放功能。",
+					"allTracksHidden": "这里的每一首歌都是隐藏的，或者是您选择不播放的艺术家。",
+					"trackHidden": "这首歌是隐藏的，或者是由您选择不播放的艺术家隐藏的。"
 				},
 				"original": "原始",
 				"playingFrom": {
