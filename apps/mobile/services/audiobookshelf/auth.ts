@@ -1,7 +1,7 @@
 import axios from "axios";
 import absApiInstance, {
   absRequest,
-  normalizeServerUrl,
+  normalizeAbsServerUrl,
 } from "@/services/audiobookshelf/index";
 import type {
   AbsLibrary,
@@ -79,7 +79,7 @@ export async function signIn(input: {
   username: string;
   password: string;
 }): Promise<AbsSignInResult> {
-  const serverUrl = normalizeServerUrl(input.serverUrl);
+  const serverUrl = normalizeAbsServerUrl(input.serverUrl);
   const status = await getServerStatus(serverUrl);
   if (!isSupportedVersion(status.serverVersion)) {
     throw new AudiobookshelfUnsupportedVersionError(status.serverVersion);

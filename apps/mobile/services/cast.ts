@@ -639,6 +639,14 @@ function castSeek(seconds: number) {
 
 export function castSetVolume(volume: number) {
   useCastBase.getState().setVolume(volume);
+  castScrubVolume(volume);
+}
+
+/**
+ * Mid-drag: the receiver only. Writing the store on every frame re-renders the
+ * output sheet under the gesture, which React aborts as an update loop.
+ */
+export function castScrubVolume(volume: number) {
   try {
     session?.setVolume(Math.max(0, Math.min(1, volume)));
   } catch (error) {

@@ -82,6 +82,8 @@ export const SCOPED_STORE_NAMES = [
   "lastFmStore",
   "lrclibPicksStore",
   "trackCacheStore",
+  "carAutoStore",
+  "hiddenTracksStore",
 ] as const;
 
 // The ListenBrainz store is deliberately *not* excluded even though it also

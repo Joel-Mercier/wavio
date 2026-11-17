@@ -112,6 +112,7 @@ function CoverSlot({
     <ImageWithFallback
       size="none"
       source={artwork ? { uri: artwork } : undefined}
+      recyclingKey={null}
       style={{ width: size, height: size, borderRadius: 6 }}
       contentFit={track?.isRadio ? "contain" : "cover"}
       alt="Track cover"
@@ -430,7 +431,7 @@ export default function PlayerScreen() {
             ),
           });
         },
-        onError: (error) => {
+        onError: () => {
           toast.show({
             placement: "top",
             duration: TOAST_DURATION.default,
@@ -468,7 +469,7 @@ export default function PlayerScreen() {
             ),
           });
         },
-        onError: (error) => {
+        onError: () => {
           toast.show({
             placement: "top",
             duration: TOAST_DURATION.default,

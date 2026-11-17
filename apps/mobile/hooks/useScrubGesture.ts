@@ -10,6 +10,7 @@ import {
 import { scheduleOnRN } from "react-native-worklets";
 
 const DEFAULT_SETTLE_EPSILON = 0.01;
+const DEFAULT_HIT_SLOP = { top: 16, bottom: 16 };
 
 export type ScrubGestureOptions = {
   // Current position as a 0..1 fraction. Pass `progress` (a shared value, for a
@@ -55,7 +56,7 @@ export default function useScrubGesture({
   resetKey,
   onScrub,
   onComplete,
-  hitSlop = { top: 16, bottom: 16 },
+  hitSlop = DEFAULT_HIT_SLOP,
 }: ScrubGestureOptions): ScrubGesture {
   const [width, setWidth] = useState(0);
   const widthSV = useSharedValue(0);

@@ -5,6 +5,7 @@ import {
 import type { AlbumID3, Genre } from "@/services/openSubsonic/types";
 import type { ServerType } from "@/stores/servers";
 import {
+  albumsInYearRange,
   availableHomeSections,
   buildHomeFeed,
   HOME_SECTION_CATALOG,
@@ -517,5 +518,36 @@ describe("reorderHomeSectionKeys", () => {
       "c",
       "d",
     ]);
+  });
+});
+
+describe("albumsInYearRange", () => {
+  const album = (id: string, year?: number) =>
+    ({ id, name: id, year }) as unknown as AlbumID3;
+
+  it("drops albums whose year falls outside the decade", () => {
+    const albums = [
+      album("reissue", 1970),
+      album("in", 2014),
+      album("edge-low", 2010),
+      album("edge-high", 2019),
+      album("after", 2020),
+      album("unknown"),
+    ];
+    expect(albumsInYearRange(albums, 2010, 2019)?.map((a) => a.id)).toEqual([
+      "in",
+      "edge-low",
+      "edge-high",
+    ]);
+  });
+
+  it("accepts reversed bounds", () => {
+    expect(
+      albumsInYearRange([album("in", 1995)], 1999, 1990)?.map((a) => a.id),
+    ).toEqual(["in"]);
+  });
+
+  it("passes undefined through", () => {
+    expect(albumsInYearRange(undefined, 1990, 1999)).toBeUndefined();
   });
 });

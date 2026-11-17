@@ -10,7 +10,7 @@ import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import type { Child } from "@/services/openSubsonic/types";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 
 export const PLAYLIST_EDIT_ITEM_HEIGHT = 70;
@@ -47,7 +47,7 @@ export default function PlaylistEditSongListItem({
         {item.coverArt ? (
           <Image
             source={{
-              uri: artworkUrl(item.coverArt),
+              uri: artworkUrl(item.coverArt, ARTWORK_THUMB_SIZE),
             }}
             className="w-16 h-16 rounded-md aspect-square"
             alt="Track cover"

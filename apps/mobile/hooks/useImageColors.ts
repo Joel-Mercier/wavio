@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { getColors, type ImageColorsResult } from "react-native-image-colors";
-import { requestHeadersForUrl } from "@/services/serverHeaders";
+import {
+  imageCacheKeyForUrl,
+  requestHeadersForUrl,
+} from "@/services/serverHeaders";
 
 const extract = (url: string, key: string) =>
   getColors(url, {
@@ -17,8 +20,9 @@ const extract = (url: string, key: string) =>
 // it an HTML body. RN's fetch (OkHttp) does follow it, so resolve the final
 // address and retry there. Only after a failure: working images pay nothing.
 export async function loadImageColors(url: string): Promise<ImageColorsResult> {
+  const key = imageCacheKeyForUrl(url) ?? url;
   try {
-    return await extract(url, url);
+    return await extract(url, key);
   } catch (error) {
     if (!/^http:\/\//i.test(url)) throw error;
     const response = await fetch(url, {
@@ -27,7 +31,7 @@ export async function loadImageColors(url: string): Promise<ImageColorsResult> {
     }).catch(() => null);
     const resolved = response?.url;
     if (!resolved || resolved === url) throw error;
-    return extract(resolved, url);
+    return extract(resolved, key);
   }
 }
 

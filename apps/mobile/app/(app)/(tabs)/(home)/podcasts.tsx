@@ -68,11 +68,9 @@ export default function PodcastsScreen() {
     [serverData],
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: getRecommendationParams reads favorites and lastUsedGenreIndex from the store, so they are listed to refresh the memo
   const recommandationParams = useMemo(
     () => getRecommendationParams(),
-    // getRecommendationParams reads favoritePodcasts and lastUsedGenreIndex
-    // from the store; subscribe via these deps so the memo refreshes.
-    // biome-ignore lint/correctness/useExhaustiveDependencies: store getter deps
     [getRecommendationParams, favorites, lastUsedGenreIndex],
   );
   const genreRows = (recommandationParams.genres ?? []).slice(

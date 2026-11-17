@@ -13,6 +13,7 @@ import CircleMinus from "lucide-react-native/icons/circle-minus";
 import PlusCircle from "lucide-react-native/icons/circle-plus";
 import Disc3 from "lucide-react-native/icons/disc-3";
 import Download from "lucide-react-native/icons/download";
+import EyeOff from "lucide-react-native/icons/eye-off";
 import Gauge from "lucide-react-native/icons/gauge";
 import Info from "lucide-react-native/icons/info";
 import ListPlus from "lucide-react-native/icons/list-plus";
@@ -61,9 +62,16 @@ import {
 } from "@/hooks/offline";
 import { usePlaybackProgress } from "@/hooks/player";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useHiddenTracksToast } from "@/hooks/useHiddenTracksToast";
 import { useIsOnline } from "@/hooks/useIsOnline";
+import { useTrackArtwork } from "@/hooks/useTrackArtwork";
 import type { ShareLinkOptions } from "@/services/backend/sharing";
 import { isTlsTrustFailure } from "@/services/errorReporting";
+import {
+  hideTrack,
+  restoreToQueue,
+  unhideTrack,
+} from "@/services/hiddenTracks";
 import { getCurrentTime } from "@/services/player";
 import { saveTrackToDevice } from "@/services/saveTrackToDevice";
 import useApp, { PODCAST_PLAYBACK_RATES } from "@/stores/app";
@@ -127,6 +135,7 @@ export default function PlayerSheets({
   const { t } = useTranslation();
   const capabilities = useCapabilities();
   const isOnline = useIsOnline();
+  const artwork = useTrackArtwork(playingTrack);
   const audioMuseSimilarAvailable = useAudioMuse(selectSimilarTracksAvailable);
   const audioMuseSongPathAvailable = useAudioMuse(selectSongPathAvailable);
   const lyricsSource = useApp((s) => s.lyricsSource);
@@ -137,6 +146,7 @@ export default function PlayerSheets({
   const router = useRouter();
   const queryClient = useQueryClient();
   const toast = useToast();
+  const showHiddenToast = useHiddenTracksToast();
   const [shareUrl, setShareUrl] = useState("");
   const [showInfoModal, setShowInfoModal] = useState(false);
   const ownLyricsPickerSheetRef = useRef<BottomSheetModal>(null);
@@ -328,6 +338,20 @@ export default function PlayerSheets({
         </Toast>
       ),
     });
+  };
+
+  const handleHidePress = () => {
+    if (!playingTrack) return;
+    actionsSheetRef.current?.dismiss();
+    const hidden = playingTrack;
+    const removed = hideTrack(hidden);
+    showHiddenToast(
+      t("app.hiddenTracks.trackHiddenMessage", { title: hidden.title ?? "" }),
+      () => {
+        unhideTrack(hidden.id);
+        restoreToQueue(removed);
+      },
+    );
   };
 
   const sleepTimerRow = (
@@ -542,11 +566,8 @@ export default function PlayerSheets({
           <Box className="p-6 w-full mb-12">
             <HStack className="items-center">
               <ImageWithFallback
-                source={
-                  playingTrack?.artwork
-                    ? { uri: playingTrack.artwork }
-                    : undefined
-                }
+                source={artwork ? { uri: artwork } : undefined}
+                recyclingKey={null}
                 className="w-16 h-16 rounded-md aspect-square"
                 alt="Track cover"
                 contentFit={isRadio ? "contain" : "cover"}
@@ -720,6 +741,19 @@ export default function PlayerSheets({
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
+                {isLibraryTrack(playingTrack) && (
+                  <FadeOutScaleDown
+                    testID="player-hide-track-button"
+                    onPress={handleHidePress}
+                  >
+                    <HStack className="items-center">
+                      <EyeOff size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.hiddenTracks.hideTrack")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
                 <FadeOutScaleDown onPress={handleSetBookmarkPress}>
                   <HStack className="items-center">
                     <BookmarkPlus size={24} color={gray200} />

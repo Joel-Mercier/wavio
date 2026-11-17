@@ -17,5 +17,6 @@ jobs:
         with:
           bun-version-file: .bun-version
       - run: bun install --frozen-lockfile
+      - run: bun run mobile:lint --error-on-warnings
       - run: bun run mobile:test
       - run: bun run mobile:typecheck

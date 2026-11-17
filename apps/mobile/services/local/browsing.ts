@@ -11,6 +11,7 @@ import {
   mapGenreRow,
   mapRowToChild,
 } from "@/services/local/mappers";
+import { LocalNotFoundError } from "@/services/local/notFoundError";
 import { folderLabel, localFolders } from "@/services/local/paths";
 import {
   queryAlbumByKey,
@@ -179,8 +180,7 @@ export const getAlbum = async (id: string) => {
     queryAlbumByKey(key),
     queryAlbumTracksByKey(key),
   ]);
-  if (!aggregate)
-    throw new LocalUnsupportedError(`album "${id}" (not indexed)`);
+  if (!aggregate) throw new LocalNotFoundError(`album "${id}"`);
   const album: AlbumWithSongsID3 = {
     ...mapAggToAlbum(aggregate),
     song: tracks.map(mapRowToChild),
@@ -190,7 +190,7 @@ export const getAlbum = async (id: string) => {
 
 export const getSong = async (id: string) => {
   const row = await queryTrackById(id);
-  if (!row) throw new LocalUnsupportedError(`song "${id}" (not indexed)`);
+  if (!row) throw new LocalNotFoundError(`song "${id}"`);
   return localEnvelope({ song: mapRowToChild(row) });
 };
 

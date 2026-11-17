@@ -74,9 +74,29 @@ describe("willDirectPlay", () => {
 
   it("matches container|codec pairs on both parts", () => {
     expect(willDirectPlay(aacM4a, raw)).toBe(true);
-    expect(willDirectPlay(alacM4a, raw)).toBe(false);
+    expect(willDirectPlay(alacM4a, raw)).toBe(true);
+    expect(
+      willDirectPlay(track({ suffix: "m4a", contentType: "audio/mp3" }), raw),
+    ).toBe(false);
     // Unknown codec can't satisfy a paired entry.
     expect(willDirectPlay(track({ suffix: "m4a" }), raw)).toBe(false);
+  });
+
+  // Jellyfin matches entries against ffprobe's `mov,mp4,m4a,3gp,3g2,mj2` for any
+  // MP4-family file, and lists a .m4b as `mov` (measured on 12.4).
+  it("treats every MP4-family container like m4a", () => {
+    const movAlac = track({ suffix: "mov", contentType: "audio/alac" });
+    expect(willDirectPlay(movAlac, raw)).toBe(true);
+    expect(
+      willDirectPlay(track({ suffix: "mov", contentType: "audio/aac" }), raw),
+    ).toBe(true);
+    expect(
+      willDirectPlay(track({ suffix: "m4b", contentType: "audio/alac" }), raw),
+    ).toBe(true);
+    expect(
+      willDirectPlay(track({ suffix: "mov", contentType: "audio/mp3" }), raw),
+    ).toBe(false);
+    expect(willDirectPlay(movAlac, "aac")).toBe(false);
   });
 
   it("transcodes unlisted or unknown containers", () => {
@@ -102,7 +122,15 @@ describe("trackTranscodeInfo", () => {
     netState.isCellular = false;
   });
 
-  it("predicts the Jellyfin transcode of a raw-mode ALAC m4a (issue #84)", () => {
+  it("predicts direct play of a raw-mode ALAC m4a on Jellyfin", () => {
+    const info = trackTranscodeInfo(
+      track({ suffix: "m4a", contentType: "audio/alac", bitRate: 640 }),
+    );
+    expect(info.active).toBe(false);
+  });
+
+  it("predicts the transcode of an ALAC m4a under format=aac on Jellyfin", () => {
+    appState.streamingFormat = "aac";
     const info = trackTranscodeInfo(
       track({ suffix: "m4a", contentType: "audio/alac", bitRate: 640 }),
     );

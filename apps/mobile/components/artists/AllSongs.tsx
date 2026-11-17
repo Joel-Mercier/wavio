@@ -37,9 +37,10 @@ import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { artistTracksFromDownloads } from "@/services/offline/collections";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
+import { everyTrackHidden } from "@/stores/hiddenTracks";
 import useQueue, { MAX_QUEUE_TRACKS, type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
@@ -103,7 +104,11 @@ export default function AllSongs() {
       ? Math.max(discographySongCount, songs.length)
       : songs.length;
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
-  const colors = useImageColors(artworkUrl(data?.artist?.coverArt));
+  const colors = useImageColors(
+    data?.artist?.coverArt
+      ? artworkUrl(data?.artist?.coverArt, ARTWORK_THUMB_SIZE)
+      : undefined,
+  );
   const topColor =
     (colors?.platform === "ios"
       ? colors.primary
@@ -174,13 +179,16 @@ export default function AllSongs() {
     try {
       const tracks = await loadPlayWindow();
       if (tracks.length === 0) return;
+      const queueTracks = tracks.map(childToTrack);
       if (
-        !playTracks(tracks.map(childToTrack), 0, {
+        !playTracks(queueTracks, 0, {
           shuffleFromRandom: true,
           source: songsSource,
         })
       ) {
-        showErrorToast(t("app.home.playErrorMessage"));
+        if (!everyTrackHidden(queueTracks)) {
+          showErrorToast(t("app.home.playErrorMessage"));
+        }
         return;
       }
       handleTrackPressCallback();

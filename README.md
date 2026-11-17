@@ -16,7 +16,7 @@
 <a href="https://crowdin.com/?utm_term=click-badge-add-on"><img src="https://badges.crowdin.net/badge/light/crowdin-on-dark.png" srcset="https://badges.crowdin.net/badge/light/crowdin-on-dark@2x.png 2x" alt="Crowdin | Agile localization for tech companies" height="28"></a>
 <a href="https://sentry.io"><img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/sentry-badge.svg" alt="Sentry" height="28"></a>
 
-[Presentation website](https://wavio-app.vercel.app) · [Get it on Google Play](https://play.google.com/store/apps/details?id=com.jmercier.wavio) · [Get it on Github](https://github.com/Joel-Mercier/wavio/releases/latest)
+[Presentation website](https://wavio-app.vercel.app) · [Presentation video](https://www.youtube.com/watch?v=VwLAz1QfZBg) · [Get it on Google Play](https://play.google.com/store/apps/details?id=com.jmercier.wavio) · [Get it on Github](https://github.com/Joel-Mercier/wavio/releases/latest)
 
 ## Table of contents
 - [How to install](#how-to-install)
@@ -148,7 +148,7 @@ A single `bun install` at the repo root installs both. Most scripts are exposed 
 - **Android SDK** with platform 37 and the build tools, usually via Android Studio, with `ANDROID_HOME` (or `ANDROID_SDK_ROOT`) exported and `platform-tools` on your `PATH`
 - An Android device with USB debugging on, or an emulator
 
-You do **not** need an NDK or CMake: the only C++ in the repo (TagLib, in `apps/mobile/modules/audio-tagger`) ships as prebuilt `.so` files committed under `jniLibs/`, and Gradle only packages them.
+You do **not** need an NDK or CMake: the only C++ in the repo (TagLib in `apps/mobile/modules/audio-tagger`, FFmpeg's ALAC decoder in `apps/mobile/modules/alac-decoder`) ships as prebuilt `.so` files committed under `jniLibs/`, and Gradle only packages them.
 
 You also do **not** need a Sentry account to develop the app — Sentry is disabled in `__DEV__` and only matters for release builds. An Expo account is optional too: it's needed for EAS builds and for the `bun run mobile:start`/`android`/`ios`/`web` scripts, but not for the `bunx expo …` workflow below. See [Using your own Expo account](#using-your-own-expo-account).
 
@@ -308,6 +308,7 @@ If you like the app and absolutely want to support its development, you can dona
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/artist-en.jpg" alt="Artist screen" width="200">
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/album-en.jpg" alt="Album screen" width="200">
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/player-en.jpg" alt="Player screen" width="200">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/lyrics-en.jpg" alt="Lyrics screen" width="200">
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/queue-en.jpg" alt="Queue screen" width="200">
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/library-en.jpg" alt="Library screen" width="200">
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/landing/src/assets/search-en.jpg" alt="Search screen" width="200">

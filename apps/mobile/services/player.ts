@@ -9,6 +9,7 @@ import { File } from "expo-file-system";
 import { Platform } from "react-native";
 import { queryClient } from "@/config/queryClient";
 import { setStarred } from "@/hooks/backend/useMediaAnnotation";
+import { isRemoteArtwork } from "@/services/artworkMirror";
 import {
   audiobookChapterEndAt,
   audiobookPlaybackUrl,
@@ -50,12 +51,14 @@ import {
   cachedArtworkUri,
   clearArtworkCache,
   ensureArtworkCached,
+  lockScreenPlaceholderUri,
 } from "@/services/lockScreenArtwork";
 import {
   getIsEffectivelyOnline,
   getIsOnline,
   getServerReachable,
   probeServer,
+  subscribeRouteSwap,
   USER_AGENT,
 } from "@/services/network";
 import { downloadedFileIsReadable } from "@/services/offline/downloadDestination";
@@ -103,11 +106,14 @@ import {
 } from "@/services/podcastProgress";
 import {
   armResume,
+  armResumeAt,
   clearResumePosition,
   getResumePosition,
   loadResumePositions,
+  noteFreshStart,
   notePlaybackTrack,
   recordResumePosition,
+  settleResume,
 } from "@/services/resumePositions";
 import { maybeRequestReview, noteCountedPlay } from "@/services/reviewPrompt";
 import { isActiveServerUrl, rewriteQueueRoutes } from "@/services/routeSwap";
@@ -136,6 +142,7 @@ import {
 } from "@/stores/app";
 import { isAudiobookshelfConnected } from "@/stores/audiobookshelf";
 import { registerLogoutHandler, useAuthBase } from "@/stores/auth";
+import { hiddenReasonNow, withoutHiddenFromStart } from "@/stores/hiddenTracks";
 import useOffline from "@/stores/offline";
 import usePlaybackNotice from "@/stores/playbackNotice";
 import usePlayHistory from "@/stores/playHistory";
@@ -200,6 +207,10 @@ let endlessResumeWhenReady = false;
 // reports the track is ready, clearing it after the first application.
 let pendingResumeId: string | null = null;
 let pendingResumeAt = 0;
+// The track the engine last reported playing, so its position is known. Cleared
+// on every load: a pause reported after a skip or a server switch carries the
+// outgoing source's position, which must not be saved against the new track.
+let positionTrackId: string | null = null;
 
 export function getActivePlayer(): AudioPlayer {
   return player;
@@ -662,12 +673,12 @@ function applyPlaybackRate(track: QueueTrack | null) {
   }
 }
 
-// Only Subsonic/Navidrome honour the `format=` transcode the fallback relies
-// on. Jellyfin negotiates its own profile and local files play off disk, so a
-// retry there would just reload the identical URL.
+// Every media server can be asked for the fallback transcode: Subsonic/Navidrome
+// through `format=`, Jellyfin through a forced opus profile on the universal
+// endpoint (services/jellyfin/streaming.ts). Index-backed libraries play the
+// file itself, so a retry there would just reload the same bytes.
 function canTranscodeFallback(): boolean {
-  const type = useAuthBase.getState().serverType;
-  return type === "opensubsonic" || type === "navidrome";
+  return isServerTranscodeBackend();
 }
 
 // Distinguish a device codec/decoder failure (recoverable by transcoding) from
@@ -692,8 +703,8 @@ const ENGINE_GENERIC_FAILURE_RE =
   /source error|unexpected runtime error|renderer error/i;
 
 // Raised by the expo-audio patch when the device has no decoder for the source's
-// audio at all (ALAC on most non-Qualcomm phones). media3 itself stays silent in
-// that case: it skips the track, plays nothing, and reports no error.
+// audio at all. media3 itself stays silent in that case: it skips the track,
+// plays nothing, and reports no error.
 function isUnsupportedFormatError(message: string): boolean {
   return /^unsupported audio format/i.test(message);
 }
@@ -799,9 +810,21 @@ function syncSessionStreamOffset(offsetSeconds: number | null) {
 // the rest of the app moves on to refreshed tokens — see retryAfterTokenRefresh.
 let loadedSourceAuthorization: string | undefined;
 
+// The server route the loaded source streams from, or null when it isn't on the
+// active server (a file, a radio stream, a third-party enclosure).
+let loadedSourceRoute: string | null = null;
+
+// `playing` as of the last status from a live source. A failed engine reports
+// not playing whatever the user asked for, while a buffering one reports what
+// they asked for, so this is what a recovery should restore.
+let playingBeforeError = false;
+
 function audioSource(uri: string) {
   const headers = mergeCustomHeaders(uri, { "User-Agent": USER_AGENT });
   loadedSourceAuthorization = headers.Authorization;
+  loadedSourceRoute = isActiveServerUrl(uri)
+    ? useAuthBase.getState().url
+    : null;
   return { uri, headers };
 }
 
@@ -978,16 +1001,26 @@ function lockScreenArtworkUrl(track: QueueTrack): string | undefined {
 
 // Mirror the cover locally and hand the OS controls the file, replacing whatever
 // artwork the initial metadata carried. See services/lockScreenArtwork.ts for
-// why the native fetch can't be authenticated.
+// why the native fetch can't be authenticated. A cover the mirror can't get is
+// one the native fetch couldn't show either, so it gets the placeholder.
 async function upgradeLockScreenArtwork(
   p: AudioPlayer,
   track: QueueTrack,
   remoteUrl: string,
+  shownArtwork: string | undefined,
 ) {
-  const local = await ensureArtworkCached(remoteUrl);
+  const local =
+    (await ensureArtworkCached(remoteUrl)) ?? lockScreenPlaceholderUri();
   // The download outlived the track it was for, or the controls were torn down
   // while it ran — either way this metadata is no longer the current one.
-  if (!local || lockScreenTrackId !== track.id || !lockScreenActive) return;
+  if (
+    !local ||
+    local === shownArtwork ||
+    lockScreenTrackId !== track.id ||
+    !lockScreenActive
+  ) {
+    return;
+  }
   try {
     p.updateLockScreenMetadata(toLockScreenMetadata(track, local));
   } catch (error) {
@@ -995,21 +1028,30 @@ async function upgradeLockScreenArtwork(
   }
 }
 
+function nativeCanFetchArtwork(url: string): boolean {
+  return (
+    getIsEffectivelyOnline() &&
+    !customHeadersForUrl(url) &&
+    !authHeadersForUrl(url)
+  );
+}
+
 function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
   lockScreenTrackId = track.id;
-  const remoteArtwork = lockScreenArtworkUrl(track);
+  const artwork = lockScreenArtworkUrl(track);
+  const remoteArtwork = isRemoteArtwork(artwork) ? artwork : undefined;
+  const localArtwork = artwork && /^file:/i.test(artwork) ? artwork : undefined;
   const cached = cachedArtworkUri(remoteArtwork, { verify: true });
   // Prefer the mirrored file. Failing that, pass the remote URL only when it
-  // would actually load — when the server needs headers (configured ones, or a
-  // single-sign-on session's bearer token) the bare native fetch is guaranteed
-  // to be refused, so sending it just burns a request and logs a failure.
-  // A local (file://) artwork needs no mirroring and passes straight through.
+  // would actually load: the bare native fetch carries no headers or bearer
+  // token, and can't reach a server we can't. Anything else (no cover, or one
+  // the native URL parser rejects) gets the placeholder.
   const initialArtwork =
     cached ??
-    (remoteArtwork &&
-    (customHeadersForUrl(remoteArtwork) || authHeadersForUrl(remoteArtwork))
-      ? undefined
-      : remoteArtwork);
+    localArtwork ??
+    (remoteArtwork && nativeCanFetchArtwork(remoteArtwork)
+      ? remoteArtwork
+      : lockScreenPlaceholderUri());
   const metadata = toLockScreenMetadata(track, initialArtwork);
   // try/catch keeps a rejected metadata update from aborting playback.
   try {
@@ -1035,7 +1077,7 @@ function applyLockScreen(p: AudioPlayer, track: QueueTrack) {
   // lands a moment later. Skipped when the cover is already mirrored (the
   // metadata above carries it) or isn't a remote URL to begin with.
   if (remoteArtwork && !cached) {
-    void upgradeLockScreenArtwork(p, track, remoteArtwork);
+    void upgradeLockScreenArtwork(p, track, remoteArtwork, initialArtwork);
   }
 }
 
@@ -1062,6 +1104,31 @@ const REPEAT_MEDIA_BUTTONS = {
 let pendingFavorite: { id: string; starred: boolean } | null = null;
 let pushedMediaButtons: string | null = null;
 
+// The same heart for controls that draw their own (the Android Auto player):
+// null when the current track can't be favorited.
+let currentFavorite: boolean | null = null;
+const favoriteListeners = new Set<(favorite: boolean | null) => void>();
+
+export function getCurrentFavorite(): boolean | null {
+  return currentFavorite;
+}
+
+export function subscribeCurrentFavorite(
+  listener: (favorite: boolean | null) => void,
+): () => void {
+  favoriteListeners.add(listener);
+  return () => {
+    favoriteListeners.delete(listener);
+  };
+}
+
+function publishCurrentFavorite(track: QueueTrack | null) {
+  const heart = isLibraryTrack(track) ? isTrackFavorite(track) : null;
+  if (heart === currentFavorite) return;
+  currentFavorite = heart;
+  for (const listener of favoriteListeners) listener(heart);
+}
+
 function isTrackFavorite(track: QueueTrack): boolean {
   return pendingFavorite?.id === track.id
     ? pendingFavorite.starred
@@ -1087,6 +1154,7 @@ function nativeMediaButton(
 
 function syncMediaButtons() {
   const track = useQueue.getState().getCurrent();
+  publishCurrentFavorite(track);
   const { mediaControlsLeft, mediaControlsRight } = useAppBase.getState();
   const left = nativeMediaButton(mediaControlsLeft, track);
   const right = nativeMediaButton(mediaControlsRight, track);
@@ -1100,7 +1168,7 @@ function syncMediaButtons() {
   }
 }
 
-async function toggleCurrentTrackFavorite() {
+export async function toggleCurrentTrackFavorite() {
   const track = useQueue.getState().getCurrent();
   if (!isLibraryTrack(track) || pendingFavorite?.id === track.id) return;
   const starred = !track.starred;
@@ -1130,6 +1198,7 @@ export function pushLockScreenMetadata(track: QueueTrack | null) {
 }
 
 function loadTrack(track: QueueTrack | null, autoplay: boolean) {
+  positionTrackId = null;
   if (!track) {
     player.pause();
     clearLockScreen(player);
@@ -1153,6 +1222,8 @@ function loadTrack(track: QueueTrack | null, autoplay: boolean) {
     : isPodcastTrack(track)
       ? getPodcastResumePosition(track)
       : getResumePosition(track);
+  // Only a play starts a track over: a silent load at 0 is no listening.
+  if (resumeAt == null && autoplay) noteFreshStart(track.id);
   const transcodeResume =
     resumeAt != null && resumeAt > 0 && isTranscodedStream(track);
   streamStartOffset = transcodeResume ? resumeAt : 0;
@@ -1358,23 +1429,7 @@ async function describeFailedSource(resolved: {
 // Pick a track back up where it failed, on a source rebuilt with the current
 // headers.
 function reloadInPlace(track: QueueTrack, seconds: number) {
-  if (isTranscodedStream(track)) {
-    reloadAtOffset(track, seconds);
-    player.play();
-    return;
-  }
-  const { url } = resolveTrackUrl(track);
-  syncSessionStreamOffset(null);
-  player.replace(audioSource(url));
-  player.volume = getReplayGainFactor(track);
-  applyPlaybackRate(track);
-  pendingResumeId = track.id;
-  pendingResumeAt = seconds;
-  try {
-    player.seekTo(seconds);
-  } catch (error) {
-    logSwallowed("seek after token refresh", error);
-  }
+  reloadAt(track, seconds);
   player.play();
 }
 
@@ -1445,6 +1500,9 @@ function canRetryAfterTokenRefresh(trackId: string): boolean {
 }
 
 function handlePlaybackStatus(status: AudioStatus) {
+  if (!status.error && status.playbackState !== "idle") {
+    playingBeforeError = status.playing;
+  }
   // A genuine engine-level playback failure (decode error, dead stream URL,
   // unreadable offline file). expo-audio clears `error` on a fresh load /
   // successful resume, so dedupe on the message to report each failure once.
@@ -1453,6 +1511,18 @@ function handlePlaybackStatus(status: AudioStatus) {
     const current = useQueue.getState().getCurrent();
     const resolved = current ? resolveTrackUrl(current) : null;
     const needsNetwork = resolved ? !resolved.isOffline : true;
+    if (
+      current &&
+      resolved &&
+      !resolved.isOffline &&
+      loadedSourceRoute &&
+      loadedSourceRoute !== useAuthBase.getState().url
+    ) {
+      reportBreadcrumb("player", "stale-route-reload", { trackId: current.id });
+      reloadAt(current, effectivePosition(player.currentTime ?? 0));
+      if (playingBeforeError) player.play();
+      return;
+    }
     if (
       current &&
       resolved &&
@@ -1484,13 +1554,13 @@ function handlePlaybackStatus(status: AudioStatus) {
       );
       return;
     }
-    // A device that can't decode the source (e.g. ALAC ExoPlayer advertises but
-    // fails to decode) — re-arm this track to stream through a server transcode
-    // and reload it once, before treating it as a failure. A downloaded file
-    // can hit the same wall (a raw ALAC saved before the download path learned
-    // to transcode it): when the device is online it too can recover by
-    // streaming the transcode over the disk file, so allow the fallback for an
-    // offline source as long as we still have network to reach the server.
+    // A device that can't decode the source (a codec it advertises but fails to
+    // decode, or one it has no decoder for) — re-arm this track to stream
+    // through a server transcode and reload it once, before treating it as a
+    // failure. A downloaded file can hit the same wall: when the device is
+    // online it too can recover by streaming the transcode over the disk file,
+    // so allow the fallback for an offline source as long as we still have
+    // network to reach the server.
     const canRecoverOfflineViaStream =
       !!resolved?.isOffline && getIsOnline() && getServerReachable();
     // The bad bytes were a prefetched copy (offline source, but no download owns
@@ -1542,8 +1612,8 @@ function handlePlaybackStatus(status: AudioStatus) {
     // still shows as present. Say so.
     //
     // A format this device can't decode is different: the engine would otherwise
-    // sit on a track that never makes a sound (a local ALAC file, or a server
-    // whose transcode was already tried). Name it and move on to the next one.
+    // sit on a track that never makes a sound (a local file, or a server whose
+    // transcode was already tried). Name it and move on to the next one.
     if (current && !current.isRadio && unsupportedFormat) {
       usePlaybackNotice.getState().raise("PLAYBACK_FORMAT_UNSUPPORTED", {
         track: current.title ?? "",
@@ -1666,6 +1736,7 @@ function handlePlaybackStatus(status: AudioStatus) {
     if (checkSleepTimerExpiry()) return;
     const cur = useQueue.getState().getCurrent();
     if (cur) {
+      positionTrackId = cur.id;
       reportNowPlaying(cur);
       if (isAudiobookTrack(cur)) {
         recordAudiobookProgress(cur, status.currentTime ?? 0, {
@@ -1686,7 +1757,8 @@ function handlePlaybackStatus(status: AudioStatus) {
         recordPodcastProgress(cur, effectivePosition(status.currentTime ?? 0), {
           duration: status.duration,
         });
-      } else {
+      } else if (pendingResumeId !== cur.id) {
+        settleResume(cur.id);
         recordResumePosition(cur, effectivePosition(status.currentTime ?? 0));
       }
     }
@@ -1703,6 +1775,15 @@ function handlePlaybackStatus(status: AudioStatus) {
     if (isAudiobookTrack(paused)) {
       recordAudiobookProgress(paused, status.currentTime ?? 0, {
         playing: false,
+        force: true,
+      });
+    } else if (
+      paused &&
+      paused.id === positionTrackId &&
+      pendingResumeId !== paused.id &&
+      !isPodcastTrack(paused)
+    ) {
+      recordResumePosition(paused, effectivePosition(status.currentTime ?? 0), {
         force: true,
       });
     }
@@ -2004,8 +2085,10 @@ const queueUnsub = useQueue.subscribe((state) => {
     if (!hasHydrated) {
       // Persist rehydration emits a state change before onFinishHydration
       // fires; load the restored track silently so reopening the app does
-      // not auto-resume playback.
+      // not auto-resume playback. It is the launch track, so armed first: this
+      // load is the one that has to start it at its saved position.
       resetScrobbleState();
+      armResume(id);
       loadTrack(current, false);
       return;
     }
@@ -2059,8 +2142,10 @@ function hydratePlayerFromQueue() {
   // Bookmarks load asynchronously, so the loadTrack above usually runs before
   // the resume map is populated. Once it lands, arm the resume seek for the
   // restored (and not-yet-played) track so reopening the app lands at the saved
-  // position instead of the start.
-  if (current && !playbackInitialized) {
+  // position instead of the start. A position saved on the device was already
+  // applied by that loadTrack, offset into the URL for a transcoded stream,
+  // where seeking to it again would land twice as far in.
+  if (current && !playbackInitialized && getResumePosition(current) == null) {
     void loadResumePositions().then(() => {
       if (loadedTrackId !== current.id) return;
       if (playbackInitialized || player.playing) return;
@@ -2109,6 +2194,7 @@ export function resetPlayerForScopeChange() {
   lastTrackId = null;
   lastTrack = null;
   pendingResumeId = null;
+  positionTrackId = null;
   if (useQueue.persist.hasHydrated()) {
     hydratePlayerFromQueue();
   } else {
@@ -2139,6 +2225,7 @@ export function stopPlayback() {
   lastTrackId = null;
   lastTrack = null;
   pendingResumeId = null;
+  positionTrackId = null;
   useQueue.getState().clearQueue();
 }
 
@@ -2151,28 +2238,22 @@ registerLogoutHandler(clearArtworkCache);
 //
 // The next track load re-resolves its URL and follows the new route for free,
 // but the *currently loaded* source was handed to the player as an already
-// resolved absolute URL: it keeps playing off its buffer and then errors on the
-// dead host. handlePlaybackStatus only re-resolves the URL to classify that
-// error for Sentry — the sole branch that actually reloads is the decode-error
-// transcode fallback — so playback would just stop, and file a bogus report. A
-// swap is a *known* event, so re-resolve deliberately and eat a ~1s gap.
-let lastRouteUrl = useAuthBase.getState().url;
-useAuthBase.subscribe((state) => {
-  if (state.url === lastRouteUrl) return;
-  const previous = lastRouteUrl;
-  lastRouteUrl = state.url;
-  // Login (""-> url) and logout (url -> "") are not swaps; logout has its own
-  // teardown and login has nothing loaded yet.
-  if (!previous || !state.url) return;
+// resolved absolute URL. When its route just failed a probe, it keeps playing
+// off its buffer and then errors on the dead host, so rebuild it now and eat a
+// ~1s gap. A return to a preferred primary leaves it alone: the route it streams
+// from was never probed and is presumably still up, and reloading would only
+// interrupt the track. If that route goes away after all, handlePlaybackStatus
+// recovers the stale source on the active route.
+subscribeRouteSwap(({ fromFailed }) => {
   rewriteQueueRoutes();
+  if (!fromFailed) return;
   const current = useQueue.getState().getCurrent();
   if (!current) return;
   // Downloaded tracks play from disk and radio/podcast sources are absolute
   // URLs on other hosts — none of them care which route the server is on.
   if (current.isRadio || isSpokenWordTrack(current)) return;
   if (resolveTrackUrl(current).isOffline) return;
-  // reloadAtOffset preserves paused-ness, so this is safe either way.
-  reloadAtOffset(current, getCurrentTime());
+  reloadAt(current, getCurrentTime());
 });
 
 // Called from both the UI root and the car session (which is the only caller in
@@ -2233,14 +2314,30 @@ export async function beginRecordingSession(): Promise<() => Promise<void>> {
   };
 }
 
+// For a song picked on its own (a search hit, a tap in the car), where
+// playTracks would otherwise start whichever visible track follows it.
+export function refuseHiddenPick(track: QueueTrack | undefined): boolean {
+  if (!track || hiddenReasonNow(track) == null) return false;
+  usePlaybackNotice.getState().raise("TRACK_HIDDEN");
+  return true;
+}
+
 // Returns whether the queue was actually replaced, so callers can tell the user
 // when nothing happened.
 export function playTracks(
-  tracks: QueueTrack[],
-  startIndex = 0,
+  requested: QueueTrack[],
+  requestedStart = 0,
   options?: { shuffleFromRandom?: boolean; source?: QueueSource },
 ): boolean {
-  if (tracks.length === 0) return false;
+  if (requested.length === 0) return false;
+  const { tracks, startIndex } = withoutHiddenFromStart(
+    requested,
+    requestedStart,
+  );
+  if (tracks.length === 0) {
+    usePlaybackNotice.getState().raise("ALL_TRACKS_HIDDEN");
+    return false;
+  }
   const requestedIndex =
     options?.shuffleFromRandom && useQueue.getState().shuffle
       ? Math.floor(Math.random() * tracks.length)
@@ -2317,31 +2414,49 @@ export async function startTrackRadio(seed: QueueTrack): Promise<boolean> {
 // and `positionSeconds`, without auto-playing. Resets playbackInitialized so
 // the user's first play re-loads the track (and applies the seek reliably).
 export function restoreServerQueue(
-  tracks: QueueTrack[],
-  index: number,
-  positionSeconds: number,
+  restored: QueueTrack[],
+  restoredIndex: number,
+  restoredPositionSeconds: number,
 ) {
+  const { tracks, startIndex: index } = withoutHiddenFromStart(
+    restored,
+    restoredIndex,
+  );
   if (tracks.length === 0) return;
+  const positionSeconds =
+    tracks[index]?.id === restored[restoredIndex]?.id
+      ? restoredPositionSeconds
+      : 0;
+  const target = tracks[index];
+  const sameTrack = target != null && lastTrackId === target.id;
+  // Saved as the track's resume position, so the load below and the reload of
+  // the first play both start there, through the same path as a launch resume:
+  // offset into the URL for a transcoded stream, armed and seeked otherwise.
+  if (target && positionSeconds > 0) armResumeAt(target, positionSeconds);
   suppressAutoplayOnce = true;
   playbackInitialized = false;
   // Explicit null: the server queue carries no "Playing from …" context.
   useQueue.getState().setQueue(tracks, index, null);
-  if (positionSeconds > 0) {
-    // setQueue fired the queue subscription synchronously, so loadTrack has
-    // already armed pendingResumeAt from whatever the track's own resume source
-    // says. Arm the restored position over it (as takeOverFromRemote does)
-    // rather than only raw-seeking: the status listener re-applies the armed
-    // value once the media is ready and would otherwise undo this seek.
-    const current = useQueue.getState().getCurrent();
-    if (current) {
-      pendingResumeId = current.id;
-      pendingResumeAt = positionSeconds;
-    }
-    try {
-      player.seekTo(positionSeconds);
-    } catch (error) {
-      logSwallowed("seek to restored position", error);
-    }
+  // The subscription only consumes it on a track change.
+  suppressAutoplayOnce = false;
+  if (positionSeconds <= 0) return;
+  const current = useQueue.getState().getCurrent();
+  if (!current) return;
+  // Nothing was reloaded for the same track, whose source may still start at
+  // the position saved on the device. A remote target (the jukebox) owns
+  // playback meanwhile, and taking over from it loads the track afresh.
+  if (sameTrack && !activeRemoteTarget()) loadTrack(current, false);
+  if (getResumePosition(current) != null) return;
+  // Not one that resumes from the device (or too close to the start for it).
+  // Arm the restored position rather than only raw-seeking: the status listener
+  // re-applies the armed value once the media is ready and would otherwise undo
+  // this seek.
+  pendingResumeId = current.id;
+  pendingResumeAt = positionSeconds;
+  try {
+    player.seekTo(positionSeconds);
+  } catch (error) {
+    logSwallowed("seek to restored position", error);
   }
 }
 
@@ -2366,6 +2481,9 @@ export function enqueueWithoutAutoplay(tracks: QueueTrack[]): number {
 export function takeOverFromRemote(positionSeconds: number, shouldPlay = true) {
   const current = useQueue.getState().getCurrent();
   if (!current) return;
+  // The remote's position replaces the one saved on the device, which loadTrack
+  // would otherwise bake into a transcoded stream's URL under the seek below.
+  settleResume(current.id);
   if (shouldPlay) {
     // The play the remote announced (and may already have counted) carries on
     // here; starting it over would count it twice.
@@ -2402,6 +2520,17 @@ export function togglePlayPause() {
     return;
   }
   player.play();
+}
+
+/**
+ * Makes another queue entry current, and starts it only if something was
+ * playing: a track taken out from under a paused player mustn't resume it.
+ */
+export function moveToIndex(index: number) {
+  const queue = useQueue.getState();
+  if (!activeRemoteTarget() && !player.playing) suppressAutoplayOnce = true;
+  queue.setCurrentIndex(index);
+  suppressAutoplayOnce = false;
 }
 
 export function pause() {
@@ -2498,9 +2627,27 @@ export function play() {
   player.play();
 }
 
+// Saves where the current track is, for a restart to resume from. Pauses and
+// the playing tick already do; this covers leaving while it plays.
+export function savePlaybackPosition() {
+  if (activeRemoteTarget() || !playbackInitialized) return;
+  const current = useQueue.getState().getCurrent();
+  if (!current || loadedTrackId !== current.id) return;
+  if (pendingResumeId === current.id) return;
+  if (isAudiobookTrack(current) || isPodcastTrack(current)) return;
+  recordResumePosition(current, effectivePosition(player.currentTime ?? 0), {
+    force: true,
+  });
+}
+
 export function getCurrentTime() {
   const remote = activeRemoteTarget();
   if (remote) return remote.getCurrentTime();
+  // A resume seek armed on a source that isn't prepared yet (a restored track
+  // loaded without playing) leaves the engine at 0 until the first play.
+  if (pendingResumeId != null && pendingResumeId === loadedTrackId) {
+    return pendingResumeAt;
+  }
   return effectivePosition(player.currentTime ?? 0);
 }
 
@@ -2641,21 +2788,39 @@ export function skipPrevious(options?: { force?: boolean }) {
   queue.previous();
 }
 
-// Seek within a transcoded stream by re-requesting it at an offset (Subsonic
-// `timeOffset` / Jellyfin `StartTimeTicks`) and playing on from there — the
-// loaded stream itself isn't seekable, so a plain player.seekTo just restarts
-// it. The same track keeps playing, so the scrobble/now-playing state is
-// intentionally left intact.
-function reloadAtOffset(track: QueueTrack, seconds: number) {
+// Rebuild the current track's source (fresh route, headers and transcode
+// decision) and carry on from `seconds`, keeping paused-ness.
+//
+// What the *new* source is decides how: a transcoded stream isn't seekable, so it
+// is re-requested at an offset (Subsonic `timeOffset` / Jellyfin
+// `StartTimeTicks`) and `streamStartOffset` is added back to every position read.
+// Anything else is loaded plainly and seeked: a direct-play stream ignores the
+// offset parameters and starts at 0, so applying the offset there restarts the
+// audio while the clock carries on from where it was (issue #273).
+function reloadAt(track: QueueTrack, seconds: number) {
   const wasPlaying = player.playing;
-  streamStartOffset = Math.max(0, seconds);
-  const { url, transcoded } = resolveTrackUrl(track, streamStartOffset);
+  const at = Math.max(0, seconds);
+  const plain = resolveTrackUrl(track);
+  const { url, transcoded } = plain.transcoded
+    ? resolveTrackUrl(track, at)
+    : plain;
+  streamStartOffset = transcoded ? at : 0;
   loadedTranscode = { trackId: track.id, active: transcoded };
-  syncSessionStreamOffset(transcoded ? streamStartOffset : null);
+  syncSessionStreamOffset(transcoded ? at : null);
   player.replace(audioSource(url));
   player.volume = getReplayGainFactor(track);
   applyPlaybackRate(track);
-  pendingResumeId = null;
+  if (transcoded) {
+    pendingResumeId = null;
+  } else {
+    pendingResumeId = track.id;
+    pendingResumeAt = at;
+    try {
+      player.seekTo(at);
+    } catch (error) {
+      logSwallowed("seek on reload", error);
+    }
+  }
   if (wasPlaying) player.play();
 }
 
@@ -2667,7 +2832,7 @@ export function seekTo(seconds: number) {
   }
   const current = useQueue.getState().getCurrent();
   if (current && isTranscodedStream(current)) {
-    reloadAtOffset(current, seconds);
+    reloadAt(current, seconds);
     return;
   }
   player.seekTo(seconds);

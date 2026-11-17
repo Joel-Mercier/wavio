@@ -11,6 +11,7 @@ const mockNative = {
   ),
   list: jest.fn(),
   exists: jest.fn(),
+  delete: jest.fn(),
   probe: jest.fn(),
 };
 
@@ -22,6 +23,8 @@ jest.mock("@/modules/smb", () => ({
     mockNative.list(target, path, timeoutMs),
   smbExists: (target: unknown, path: string, timeoutMs: number) =>
     mockNative.exists(target, path, timeoutMs),
+  smbDelete: (target: unknown, path: string, timeoutMs: number) =>
+    mockNative.delete(target, path, timeoutMs),
   smbProbe: (target: unknown, timeoutMs: number) =>
     mockNative.probe(target, timeoutMs),
 }));
@@ -63,6 +66,7 @@ beforeEach(() => {
   mockNative.list.mockReset();
   mockNative.exists.mockReset();
   mockNative.probe.mockReset();
+  mockNative.delete.mockReset();
   mockNative.bridgeUrl.mockClear();
   mockGet.mockReset();
   mockAuth.url = "smb://nas.local/Music";
@@ -281,6 +285,48 @@ describe("smbFileSource", () => {
     it("turns the configured sub-path into an address", () => {
       expect(smbFileSource.normalizeRoot("/Albums")).toBe("smb:/Albums");
       expect(smbFileSource.normalizeRoot("")).toBe("smb:/");
+    });
+  });
+
+  describe("delete", () => {
+    it("deletes the share-relative path", async () => {
+      mockNative.delete.mockResolvedValue(true);
+      await smbFileSource.delete("smb:/Album/a.flac");
+      expect(mockNative.delete).toHaveBeenCalledWith(
+        expect.objectContaining({ share: "Music" }),
+        "/Album/a.flac",
+        expect.any(Number),
+      );
+    });
+
+    // A refusal from a signed-in session is about this file, not the password.
+    it("reports a refused delete as read-only", async () => {
+      mockNative.delete.mockRejectedValue(
+        Object.assign(new Error("denied"), { code: "ERR_SMB_READ_ONLY" }),
+      );
+      await expect(
+        smbFileSource.delete("smb:/Album/a.flac"),
+      ).rejects.toMatchObject({ code: "ERR_FS_READ_ONLY" });
+    });
+
+    // The server answered both, so neither is "check the address".
+    it.each([
+      ["ERR_SMB_IN_USE", "ERR_FS_IN_USE"],
+      ["ERR_SMB_SERVER", "ERR_FS_SERVER"],
+    ])("reports a %s refusal as %s", async (native, code) => {
+      mockNative.delete.mockRejectedValue(
+        Object.assign(new Error("refused"), { code: native }),
+      );
+      await expect(
+        smbFileSource.delete("smb:/Album/a.flac"),
+      ).rejects.toMatchObject({ code });
+    });
+
+    it("rejects an address that isn't an SMB one", async () => {
+      await expect(
+        smbFileSource.delete("webdav:/Album/a.flac"),
+      ).rejects.toMatchObject({ code: "ERR_FS_NOT_FOUND" });
+      expect(mockNative.delete).not.toHaveBeenCalled();
     });
   });
 });

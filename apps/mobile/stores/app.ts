@@ -20,6 +20,8 @@ import type { OfflineTrackSortType, TrackSortType } from "@/utils/trackSort";
 // Width (dp) at or above which the app switches to its "wide" layout: left
 // sidebar nav, docked player, two-column player, larger grids.
 export const WIDE_LAYOUT_BREAKPOINT = 600;
+// Width of the wide layout's left tab bar column; the player docks to its bottom.
+export const SIDEBAR_WIDTH = 240;
 
 const isWideLayout = (windowWidth: number) =>
   windowWidth >= WIDE_LAYOUT_BREAKPOINT;
@@ -249,6 +251,11 @@ interface AppStore {
   setTrackCacheOnCellular: (trackCacheOnCellular: boolean) => void;
   autoSignOutOnServerUnreachable: boolean;
   setAutoSignOutOnServerUnreachable: (enabled: boolean) => void;
+  // Android-only (issue #267): route https traffic through Cronet so servers
+  // that advertise HTTP/3 are reached over QUIC. Mirrored to native prefs by
+  // services/httpTransport.ts, since routing is decided before JS boots.
+  http3Enabled: boolean;
+  setHttp3Enabled: (enabled: boolean) => void;
   // Daily automatic backup (issue #262) into a SAF tree the user picked, so
   // Android-only for the same reason as downloadLocationUri. The time is minutes
   // after local midnight. Travels in a backup, and like downloadLocationUri the
@@ -271,6 +278,11 @@ interface AppStore {
   // spending someone's data plan is not a decision the app gets to make.
   scanOnWifiOnly: boolean;
   setScanOnWifiOnly: (enabled: boolean) => void;
+  // Offers "Permanently delete" on tracks, albums and artists where the backend
+  // can delete files (capabilities.fileDeletion). Off by default and enabled
+  // behind a confirmation, so nobody meets a delete action they didn't opt into.
+  fileDeletionEnabled: boolean;
+  setFileDeletionEnabled: (enabled: boolean) => void;
   // The Search tab looks through every library even while browsing is narrowed
   // to some of them (issue #259: keep singles out of album browsing, but still
   // find them by name). Off by default, which scopes search like everything else.
@@ -540,6 +552,10 @@ export const useAppBase = create<AppStore>()(
       setAutoSignOutOnServerUnreachable: (enabled: boolean) => {
         set({ autoSignOutOnServerUnreachable: enabled });
       },
+      http3Enabled: false,
+      setHttp3Enabled: (enabled: boolean) => {
+        set({ http3Enabled: enabled });
+      },
       autoBackupEnabled: false,
       setAutoBackupEnabled: (enabled: boolean) => {
         set({ autoBackupEnabled: enabled });
@@ -564,6 +580,10 @@ export const useAppBase = create<AppStore>()(
       scanOnWifiOnly: true,
       setScanOnWifiOnly: (enabled: boolean) => {
         set({ scanOnWifiOnly: enabled });
+      },
+      fileDeletionEnabled: false,
+      setFileDeletionEnabled: (enabled: boolean) => {
+        set({ fileDeletionEnabled: enabled });
       },
       searchAllLibraries: false,
       setSearchAllLibraries: (enabled: boolean) => {

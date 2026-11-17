@@ -221,7 +221,8 @@ import {
   upnpRefreshGroup,
   upnpRelease,
   upnpRemoveFromGroup,
-  upnpSetDeviceVolume,
+  upnpScrubDeviceVolume,
+  upnpScrubVolume,
   upnpStartDiscovery,
   upnpStopDiscovery,
 } from "@/services/upnp";
@@ -466,13 +467,41 @@ describe("sonos groups", () => {
     await connect();
     mockNative.groupState.mockResolvedValueOnce(withBedroom);
     await upnpRefreshGroup();
-    upnpSetDeviceVolume("uuid-2", 0.8);
+    upnpScrubDeviceVolume("uuid-2", 0.8);
     expect(mockNative.setDeviceVolume).toHaveBeenCalledWith("uuid-2", 80);
-    expect(useUpnpBase.getState().group?.members[1].volume).toBe(0.8);
+    // Mid-drag the store is left alone: a write per frame re-renders the
+    // sheet under the gesture.
+    expect(useUpnpBase.getState().group?.members[1].volume).toBe(0.5);
 
     mockNative.getVolume.mockResolvedValueOnce(55);
     await upnpCommitDeviceVolume("uuid-2", 0.8);
+    expect(useUpnpBase.getState().group?.members[1].volume).toBe(0.8);
     expect(useUpnpBase.getState().volume).toBeCloseTo(0.55);
+  });
+
+  it("sends a drag's volume a few times a second, and the release last", async () => {
+    await connect();
+    jest.useFakeTimers();
+    try {
+      upnpScrubVolume(0.1);
+      upnpScrubVolume(0.2);
+      upnpScrubVolume(0.3);
+      expect(mockNative.setVolume).toHaveBeenCalledTimes(1);
+      expect(mockNative.setVolume).toHaveBeenLastCalledWith(10);
+
+      jest.advanceTimersByTime(200);
+      expect(mockNative.setVolume).toHaveBeenCalledTimes(2);
+      expect(mockNative.setVolume).toHaveBeenLastCalledWith(30);
+
+      upnpScrubVolume(0.4);
+      const release = upnpCommitVolume(0.45);
+      jest.advanceTimersByTime(500);
+      await release;
+      expect(mockNative.setVolume).toHaveBeenLastCalledWith(45);
+      expect(mockNative.setVolume).not.toHaveBeenCalledWith(40);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it("re-reads every room after the group's volume moved them", async () => {

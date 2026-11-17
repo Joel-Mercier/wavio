@@ -16,3 +16,18 @@ const NAVIDROME_ARTWORK_ID = /^((?:al|ar|mf|pl)-[^_]+)_.+$/;
 
 export const artworkCacheKey = (id: string): string =>
   id.replace(NAVIDROME_ARTWORK_ID, "$1");
+
+const unsafeFileChars = /[^a-zA-Z0-9._-]/g;
+
+export const artworkCacheFileStem = (key: string): string =>
+  key.replace(unsafeFileChars, "_");
+
+// Timestamped, so a refreshed cover gets a new file:// URI: expo-image keys
+// its cache on the URI and would keep showing the old bytes.
+export const artworkCacheFileName = (key: string, savedAt: number): string =>
+  `${artworkCacheFileStem(key)}_${savedAt}.jpg`;
+
+const ARTWORK_CACHE_FILE = /^file:\/\/.*\/artwork\/([^/]+)_\d+\.jpg$/;
+
+export const artworkCacheFileStemOf = (uri: string): string | undefined =>
+  uri.match(ARTWORK_CACHE_FILE)?.[1];

@@ -12,6 +12,9 @@ let mockCapabilities = { extendedMetadata: true, songLists: true };
 let mockAudioMuseAvailable = false;
 let mockLastFmConnected = false;
 
+jest.mock("@/stores/hiddenTracks", () => ({
+  withoutHidden: <T>(tracks: T[]) => tracks,
+}));
 jest.mock("@/config/queryClient", () => ({
   queryClient: {
     ensureQueryData: ({ queryFn }: { queryFn: () => unknown }) => queryFn(),

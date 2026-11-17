@@ -1,7 +1,13 @@
+import { getAuthScope } from "@/config/authScope";
 import { hostnameFromUrl, upstreamBaseForUrl } from "@/modules/ssl-trust";
 import { speaksHttpType } from "@/services/backend/serverTraits";
 import { type Server, useServersBase } from "@/stores/servers";
 import { basicAuthHeader } from "@/utils/basicAuth";
+import {
+  type ImageCacheSession,
+  imageCacheKey,
+  imageCacheSession,
+} from "@/utils/imageCacheKey";
 import { USER_AGENT } from "@/utils/userAgent";
 
 // User-defined headers for a server, resolved for an arbitrary request URL.
@@ -13,8 +19,8 @@ import { USER_AGENT } from "@/utils/userAgent";
 let cache: Map<string, Record<string, string>> | null = null;
 let auth: Map<string, AuthEntry> | null = null;
 let outbound: Map<string, Record<string, string>> | null = null;
-let wrapped: Map<string, { uri: string; headers: Record<string, string> }> =
-  new Map();
+let wrapped: Map<string, WrappedSource> = new Map();
+let images: ImageCacheSession | null | undefined;
 let names: Set<string> | null = null;
 const listeners = new Set<() => void>();
 
@@ -191,6 +197,48 @@ export function setSessionBearer(next: SessionBearer): void {
   invalidate();
 }
 
+/** The signed-in account whose images get a credential-free cache key. */
+export type ImageCacheOwner = {
+  serverId: string;
+  username: string;
+  url: string;
+} | null;
+
+let imageOwner: ImageCacheOwner = null;
+
+/**
+ * Publish the active session for image cache keys. Pushed from stores/auth for
+ * the same reason as `setSessionCredentials`. Doesn't notify header listeners:
+ * no header changes with it.
+ */
+export function setImageCacheOwner(next: ImageCacheOwner): void {
+  if (
+    imageOwner?.serverId === next?.serverId &&
+    imageOwner?.username === next?.username &&
+    imageOwner?.url === next?.url
+  )
+    return;
+  imageOwner = next;
+  images = undefined;
+  wrapped = new Map();
+}
+
+function imageSession(): ImageCacheSession | null {
+  if (images !== undefined) return images;
+  const owner = imageOwner;
+  const server = owner
+    ? useServersBase.getState().servers.find((s) => s.id === owner.serverId)
+    : undefined;
+  images = owner
+    ? imageCacheSession(getAuthScope(owner.serverId, owner.username), [
+        owner.url,
+        server?.url,
+        server?.fallbackUrl,
+      ])
+    : null;
+  return images;
+}
+
 /** A non-music server the app signs in to itself (Audiobookshelf). */
 export type IntegrationBearer = { baseUrl: string; accessToken: string } | null;
 
@@ -288,6 +336,7 @@ function invalidate(): void {
   auth = null;
   outbound = null;
   wrapped = new Map();
+  images = undefined;
   names = null;
   for (const listener of listeners) listener();
 }
@@ -393,13 +442,28 @@ function isRemote(uri: string): boolean {
 // changes. Bounded because a large library has a lot of distinct cover URLs.
 const MAX_WRAPPED = 512;
 
-function wrappedFor(uri: string): {
+type WrappedSource = {
   uri: string;
   headers: Record<string, string>;
-} {
+  cacheKey?: string;
+};
+
+/**
+ * The key an image from the signed-in server is cached under: the session's
+ * (server, user) scope plus the URL minus its credentials, so the cache
+ * survives route swaps and, for versioned cover ids, re-auth. Undefined for any
+ * URL outside the active session's routes.
+ */
+export function imageCacheKeyForUrl(uri: string): string | undefined {
+  return imageCacheKey(uri, imageSession());
+}
+
+function wrappedFor(uri: string): WrappedSource {
   const hit = wrapped.get(uri);
   if (hit) return hit;
-  const next = { uri, headers: requestHeadersForUrl(uri) };
+  const cacheKey = imageCacheKeyForUrl(uri);
+  const headers = requestHeadersForUrl(uri);
+  const next = cacheKey ? { uri, headers, cacheKey } : { uri, headers };
   if (wrapped.size >= MAX_WRAPPED) wrapped.clear();
   wrapped.set(uri, next);
   return next;
@@ -407,7 +471,8 @@ function wrappedFor(uri: string): {
 
 /**
  * Attach outbound headers to an image `source`, so cover art carries the app's
- * User-Agent and — for a proxy-fronted server — its configured headers. Applied
+ * User-Agent and — for a proxy-fronted server — its configured headers, plus a
+ * credential-free `cacheKey` for an image served by a saved server. Applied
  * inside the shared image primitives rather than at the ~60 `artworkUrl()` call
  * sites, which would each have to remember.
  *
@@ -423,14 +488,23 @@ export function withServerHeaders<T>(source: T): T {
   if (!source || typeof source !== "object" || Array.isArray(source)) {
     return source;
   }
-  const candidate = source as { uri?: unknown; headers?: unknown };
+  const candidate = source as {
+    uri?: unknown;
+    headers?: unknown;
+    cacheKey?: unknown;
+  };
   if (typeof candidate.uri !== "string" || candidate.headers) return source;
   if (!isRemote(candidate.uri)) return source;
   // Only a `{ uri }` and nothing else can reuse the shared wrapper; anything
   // carrying extra fields (width/height/cacheKey/…) has to keep them.
   if (Object.keys(candidate).length === 1)
     return wrappedFor(candidate.uri) as T;
-  return { ...candidate, headers: requestHeadersForUrl(candidate.uri) } as T;
+  const cacheKey = candidate.cacheKey ?? imageCacheKeyForUrl(candidate.uri);
+  return {
+    ...candidate,
+    headers: requestHeadersForUrl(candidate.uri),
+    ...(cacheKey ? { cacheKey } : null),
+  } as T;
 }
 
 /**
@@ -469,5 +543,7 @@ export function __resetCustomHeadersCache(): void {
   integrationBearers.clear();
   outbound = null;
   wrapped = new Map();
+  imageOwner = null;
+  images = undefined;
   names = null;
 }

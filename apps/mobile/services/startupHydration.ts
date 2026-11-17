@@ -9,7 +9,11 @@ import { initListenBrainzScrobbler } from "@/services/listenBrainz/scrobbler";
 import { initOfflineMutationReplay } from "@/services/offlineMutations/replay";
 import { runStorageScopeMigration } from "@/services/storageScopeMigration";
 import useApp from "@/stores/app";
+import { useAudiobookProgressBase } from "@/stores/audiobookProgress";
+import { useAudiobookshelfBase } from "@/stores/audiobookshelf";
 import { useAuthBase } from "@/stores/auth";
+import { useCarAutoBase } from "@/stores/carAuto";
+import useHiddenTracks from "@/stores/hiddenTracks";
 import useLastFm from "@/stores/lastFm";
 import useListenBrainz from "@/stores/listenBrainz";
 import useOffline from "@/stores/offline";
@@ -74,7 +78,15 @@ export function hydratePlaybackStores(): Promise<void> {
   scopedHydration ??= Promise.all([
     Promise.resolve(useRecentPlays.persist.rehydrate()),
     Promise.resolve(useOffline.persist.rehydrate()),
+    // A play from the car filters hidden tracks; an unhydrated store would
+    // let them all through.
+    Promise.resolve(useHiddenTracks.persist.rehydrate()),
     Promise.resolve(useQueue.persist.rehydrate()),
+    // The car's tabs and buttons, and the audiobook account and positions its
+    // Audiobooks section reads, all have to be there on a headless boot.
+    Promise.resolve(useCarAutoBase.persist.rehydrate()),
+    Promise.resolve(useAudiobookshelfBase.persist.rehydrate()),
+    Promise.resolve(useAudiobookProgressBase.persist.rehydrate()),
     // Playback in the car scrobbles like any other playback, and nothing under
     // app/ mounts here to hydrate this store or start the drain loop.
     Promise.resolve(useListenBrainz.persist.rehydrate()).then(() => {

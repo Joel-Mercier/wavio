@@ -16,3 +16,13 @@ export const getPlaylistsByOwner = async (
   });
   return asList<NavidromePlaylist>(rsp.data);
 };
+
+// Every smart playlist the user can see, not just their own. Navidrome's
+// `smart` filter can't be used: whatever its value, it returns only the
+// regular playlists (it backs the web UI's add-to-playlist picker).
+export const getVisibleSmartPlaylists = async (): Promise<
+  NavidromePlaylist[]
+> => {
+  const rsp = await navidromeApiInstance.get<NavidromePlaylist[]>("/playlist");
+  return asList<NavidromePlaylist>(rsp.data).filter((p) => p.rules);
+};

@@ -1,4 +1,4 @@
-import { newLocalPlaylistId } from "@/services/local/keys";
+import { newLocalPlaylistId, parseLocalArtistId } from "@/services/local/keys";
 import { mapPlaylist, mapRowToChild } from "@/services/local/mappers";
 import {
   appendPlaylistTracks,
@@ -7,6 +7,7 @@ import {
   queryPlaylistById,
   queryPlaylistEntries,
   queryPlaylists,
+  queryPlaylistsByArtist,
   removePlaylistIndexes,
   updatePlaylistMeta,
 } from "@/services/local/repository";
@@ -37,6 +38,14 @@ export const getPlaylist = async (id: string) => {
     entry: entries.map(mapRowToChild),
   };
   return localEnvelope({ playlist });
+};
+
+export const getArtistPlaylists = async (artistId: string) => {
+  const key = parseLocalArtistId(artistId);
+  const rows = key == null ? [] : await queryPlaylistsByArtist(key);
+  return localEnvelope({
+    artistPlaylists: { playlist: rows.map(mapPlaylist) },
+  });
 };
 
 export const createPlaylist = async (name: string, songId?: string[]) => {

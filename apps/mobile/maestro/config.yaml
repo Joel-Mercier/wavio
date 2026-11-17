@@ -18,22 +18,22 @@ executionOrder:
     # the write paths last. Every flow is self-contained — it clears state and
     # logs in via login-demo — so this order is about fail-fast signal rather
     # than shared state.
-    - login            # sign in -> Home (smoke)
-    - navigation       # tabs + drawer + drawer destinations
-    - home             # feed "See all" + Radio sub-tab
-    - radio            # radio browse -> radio search screen
-    - library          # filter chips + Favorites screen + favorites search
-    - library-search   # library search screen (chips + query + filter)
-    - search           # genres + query/results + open result + recent searches
-    - settings         # all settings sections + offline-downloads manager
-    - playback         # play -> full player transport + "…" menu -> queue
-    - player-extras    # player "…" menu: Lyrics + Sleep timer + Similar songs
+    - login # sign in -> Home (smoke)
+    - navigation # tabs + drawer + drawer destinations
+    - home # feed "See all" + Radio sub-tab
+    - radio # radio browse -> radio search screen
+    - library # filter chips + Favorites screen + favorites search
+    - library-search # library search screen (chips + query + filter)
+    - search # genres + query/results + open result + recent searches
+    - settings # all settings sections + offline-downloads manager
+    - playback # play -> full player transport + "…" menu -> queue
+    - player-extras # player "…" menu: Lyrics + Sleep timer + Similar songs
     - queue-management # queue toolbar: create-from-queue dialog + clear queue
-    - album-actions    # track "…" menu (add to playlist + info) + album "…" menu (add to queue)
-    - favorite-toggle  # player heart: star then un-star a track (write path, self-cleaning)
-    - artist           # album -> Go to artist -> artist + discography
-    - profile          # drawer "See profile" -> profile (+ edit profile)
-    - playlists        # create -> open -> edit -> delete (write path, self-cleaning)
-    - smart-playlist   # create -> open -> delete a smart playlist (write path, self-cleaning)
-    - podcast-channel  # subscribe by RSS -> channel screen (episodes + about) -> delete (write path, self-cleaning)
-    - logout           # session teardown
+    - album-actions # track "…" menu (add to playlist + info) + album "…" menu (add to queue)
+    - favorite-toggle # player heart: star then un-star a track (write path, self-cleaning)
+    - artist # album -> Go to artist -> artist + discography
+    - profile # drawer "See profile" -> profile (+ edit profile)
+    - playlists # create -> open -> edit -> delete (write path, self-cleaning)
+    - smart-playlist # create -> open -> delete a smart playlist (write path, self-cleaning)
+    - podcast-channel # subscribe by RSS -> channel screen (episodes + about) -> delete (write path, self-cleaning)
+    - logout # session teardown

@@ -4,6 +4,7 @@ import { getDeviceId } from "@/services/jellyfin/deviceId";
 import { USER_AGENT } from "@/services/network";
 import { customHeadersForUrl } from "@/services/serverHeaders";
 import { useAuthBase } from "@/stores/auth";
+import { normalizeServerUrl } from "@/utils/serverUrl";
 
 const client = process.env.EXPO_PUBLIC_CLIENT_NAME || "Wavio";
 
@@ -34,7 +35,7 @@ const jellyfinApiInstance = axios.create({
 jellyfinApiInstance.interceptors.request.use(
   (request) => {
     const { url, jellyfinAccessToken } = useAuthBase.getState();
-    request.baseURL = url ? url.replace(/\/+$/, "") : "";
+    request.baseURL = url ? normalizeServerUrl(url) : "";
     request.headers.set("User-Agent", USER_AGENT);
     request.headers.set(
       "Authorization",
@@ -56,6 +57,13 @@ jellyfinApiInstance.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
+export type JellyfinRequestFlags = {
+  notFoundIsExpected?: boolean;
+  refusalIsExpected?: boolean;
+  /** The caller classifies and reports this request's failures itself. */
+  failureIsHandled?: boolean;
+};
+
 jellyfinApiInstance.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -65,17 +73,20 @@ jellyfinApiInstance.interceptors.response.use(
     // A child browse (album/artist/directory contents) can carry this flag: a
     // 400/404 there means a stale/invalid item id, which the caller resolves to
     // an empty result — a data state, not a bug, so don't report it.
-    const notFoundIsExpected = (
-      error?.config as { notFoundIsExpected?: boolean } | undefined
-    )?.notFoundIsExpected;
-    if (status === 401) {
+    const { notFoundIsExpected, refusalIsExpected, failureIsHandled } =
+      (error?.config as JellyfinRequestFlags | undefined) ?? {};
+    if (refusalIsExpected && (status === 401 || status === 403)) {
+      // Jellyfin answers a delete the user isn't allowed to make with 401, the
+      // same status as a dead token. Signing out over a refused delete would be
+      // far worse than letting the next ordinary request catch a dead token.
+    } else if (status === 401) {
       // Token rejected — drop the Jellyfin session so the user falls back
       // to the login screen. Do not log out from offline-mode-induced errors.
       useAuthBase.getState().setJellyfinSession(null);
       useAuthBase.getState().logout();
     } else if (notFoundIsExpected && (status === 400 || status === 404)) {
       // Expected stale-id not-found on a child browse; handled by the caller.
-    } else {
+    } else if (!failureIsHandled) {
       // The classifier drops offline / unreachable / cancelled noise; a genuine
       // 4xx/5xx (other than the 401 handled above) is a real failing endpoint.
       reportError(error, {

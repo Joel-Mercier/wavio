@@ -1,6 +1,7 @@
 import {
   type BottomSheetModal,
   BottomSheetScrollView,
+  type BottomSheetScrollViewMethods,
 } from "@gorhom/bottom-sheet";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
@@ -14,6 +15,8 @@ import ClipboardIcon from "lucide-react-native/icons/clipboard";
 import ClipboardCheck from "lucide-react-native/icons/clipboard-check";
 import Disc3 from "lucide-react-native/icons/disc-3";
 import Download from "lucide-react-native/icons/download";
+import Eye from "lucide-react-native/icons/eye";
+import EyeOff from "lucide-react-native/icons/eye-off";
 import Heart from "lucide-react-native/icons/heart";
 import Info from "lucide-react-native/icons/info";
 import ListChecks from "lucide-react-native/icons/list-checks";
@@ -26,6 +29,7 @@ import Share2 from "lucide-react-native/icons/share-2";
 import Sparkles from "lucide-react-native/icons/sparkles";
 import Star from "lucide-react-native/icons/star";
 import User from "lucide-react-native/icons/user";
+import UserCheck from "lucide-react-native/icons/user-check";
 import Waypoints from "lucide-react-native/icons/waypoints";
 import X from "lucide-react-native/icons/x";
 import {
@@ -44,6 +48,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import MusicBrainz from "@/assets/images/musicbrainz.svg";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
+import DangerZone, {
+  DangerZoneDeleteRow,
+} from "@/components/deletion/DangerZone";
+import DeleteFilesDialog, {
+  type DeletionTarget,
+} from "@/components/deletion/DeleteFilesDialog";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import RatingModal from "@/components/RatingModal";
 import ShareOptionsSheet from "@/components/shares/ShareOptionsSheet";
@@ -84,10 +94,20 @@ import {
   useIsTrackAvailableOffline,
 } from "@/hooks/offline";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useFileDeletionAvailable } from "@/hooks/useFileDeletion";
+import { useBlockedArtist, useHiddenReason } from "@/hooks/useHiddenTracks";
+import { useHiddenTracksToast } from "@/hooks/useHiddenTracksToast";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useQueueRemovalToast } from "@/hooks/useQueueRemovalToast";
 import type { ShareLinkOptions } from "@/services/backend/sharing";
 import { isTlsTrustFailure } from "@/services/errorReporting";
+import {
+  allowArtist,
+  allowTrack,
+  hideTrack,
+  restoreToQueue,
+  unhideTrack,
+} from "@/services/hiddenTracks";
 import { isPermanentWriteRefusal } from "@/services/notFound";
 import { offlineDownloadService } from "@/services/offline";
 import type { Child, PlaylistWithSongs } from "@/services/openSubsonic/types";
@@ -100,7 +120,7 @@ import usePlaylistsStore from "@/stores/playlists";
 import usePlaylistTargets from "@/stores/playlistTargets";
 import useQueue, { type QueueTrack, upcomingIndicesOf } from "@/stores/queue";
 import useTrackSelection from "@/stores/trackSelection";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { logError } from "@/utils/log";
 import { TOAST_DURATION } from "@/utils/toastDuration";
@@ -173,6 +193,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   const audioMuseSongPathAvailable = useAudioMuse(selectSongPathAvailable);
   const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
   const showRemovalToast = useQueueRemovalToast();
+  const showHiddenToast = useHiddenTracksToast();
 
   // Only `mutate` is referentially stable on a mutation result, and the
   // memoized `api` below reaches every track row through context — depend on
@@ -202,6 +223,9 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     downloadProgress?.status === "downloading" ||
     downloadProgress?.status === "pending";
   const [ctx, setCtx] = useState<TrackActionsContextValue>({});
+  const hiddenReason = useHiddenReason(track);
+  const blockedArtist = useBlockedArtist(track);
+  const isTrackHidden = hiddenReason != null;
   const isUpcomingInQueue = useQueue((state) =>
     track
       ? removableQueueIndices(
@@ -215,10 +239,14 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
+  const fileDeletionAvailable = useFileDeletionAvailable();
+  const [deleteTarget, setDeleteTarget] = useState<DeletionTarget | null>(null);
   const [clipboardText, setClipboardText] = useState("");
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
 
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+
+  const sheetScrollRef = useRef<BottomSheetScrollViewMethods>(null);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetShareOptionsModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetArtistsModalRef = useRef<BottomSheetModal>(null);
@@ -483,6 +511,49 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
     showRemovalToast(removed);
   };
 
+  const handleHidePress = () => {
+    if (!track) return;
+    bottomSheetModalRef.current?.dismiss();
+    const hidden = track;
+    const removed = hideTrack(hidden);
+    showHiddenToast(
+      t("app.hiddenTracks.trackHiddenMessage", { title: hidden.title }),
+      () => {
+        unhideTrack(hidden.id);
+        restoreToQueue(removed);
+      },
+    );
+  };
+
+  const handleUnhidePress = () => {
+    if (!track) return;
+    bottomSheetModalRef.current?.dismiss();
+    unhideTrack(track.id);
+    showHiddenToast(
+      t("app.hiddenTracks.trackUnhiddenMessage", { title: track.title }),
+    );
+  };
+
+  const handleAllowTrackPress = () => {
+    if (!track) return;
+    bottomSheetModalRef.current?.dismiss();
+    allowTrack(track);
+    showHiddenToast(
+      t("app.hiddenTracks.trackAllowedMessage", { title: track.title }),
+    );
+  };
+
+  const handleAllowArtistPress = () => {
+    if (!blockedArtist) return;
+    bottomSheetModalRef.current?.dismiss();
+    allowArtist(blockedArtist.id);
+    showHiddenToast(
+      t("app.hiddenTracks.artistAllowedMessage", {
+        name: blockedArtist.name || t("app.shared.unknownArtist"),
+      }),
+    );
+  };
+
   const createShareLink = (options?: ShareLinkOptions) => {
     if (!track) return;
     doShare.mutate(
@@ -637,6 +708,15 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
   const handleInfoPress = () => {
     bottomSheetModalRef.current?.dismiss();
     setShowInfoModal(true);
+  };
+
+  const handleDeleteFilePress = () => {
+    if (!track) return;
+    bottomSheetModalRef.current?.dismiss();
+    setDeleteTarget({
+      kind: "tracks",
+      tracks: [{ id: track.id, title: track.title, albumId: track.albumId }],
+    });
   };
 
   const handleSimilarSongsPress = () => {
@@ -994,6 +1074,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         handleIndicatorStyle={{ backgroundColor: "#b3b3b3" }}
       >
         <BottomSheetScrollView
+          ref={sheetScrollRef}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ alignItems: "center" }}
         >
@@ -1002,7 +1083,9 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
               <HStack className="items-center">
                 {track.coverArt ? (
                   <Image
-                    source={{ uri: artworkUrl(track.coverArt) }}
+                    source={{
+                      uri: artworkUrl(track.coverArt, ARTWORK_THUMB_SIZE),
+                    }}
                     className="w-16 h-16 rounded-md aspect-square"
                     alt="Track cover"
                   />
@@ -1100,22 +1183,26 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                     </HStack>
                   </FadeOutScaleDown>
                 )}
-                <FadeOutScaleDown onPress={handlePlayNextPress}>
-                  <HStack className="items-center">
-                    <ListStart size={24} color={gray200} />
-                    <Text className="ml-4 text-lg text-gray-200">
-                      {t("app.tracks.playNext")}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
-                <FadeOutScaleDown onPress={handleAddToQueuePress}>
-                  <HStack className="items-center">
-                    <ListPlus size={24} color={gray200} />
-                    <Text className="ml-4 text-lg text-gray-200">
-                      {t("app.tracks.addToQueue")}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
+                {!isTrackHidden && (
+                  <FadeOutScaleDown onPress={handlePlayNextPress}>
+                    <HStack className="items-center">
+                      <ListStart size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.tracks.playNext")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
+                {!isTrackHidden && (
+                  <FadeOutScaleDown onPress={handleAddToQueuePress}>
+                    <HStack className="items-center">
+                      <ListPlus size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.tracks.addToQueue")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
                 {isUpcomingInQueue && (
                   <FadeOutScaleDown
                     testID="track-remove-from-queue-button"
@@ -1125,6 +1212,64 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                       <ListX size={24} color={gray200} />
                       <Text className="ml-4 text-lg text-gray-200">
                         {t("app.queue.removeFromQueue")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
+                {hiddenReason === null && (
+                  <FadeOutScaleDown
+                    testID="track-hide-button"
+                    onPress={handleHidePress}
+                  >
+                    <HStack className="items-center">
+                      <EyeOff size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.hiddenTracks.hideTrack")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
+                {hiddenReason === "track" && (
+                  <FadeOutScaleDown
+                    testID="track-unhide-button"
+                    onPress={handleUnhidePress}
+                  >
+                    <HStack className="items-center">
+                      <Eye size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.hiddenTracks.unhideTrack")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
+                {hiddenReason === "artist" && (
+                  <FadeOutScaleDown
+                    testID="track-allow-button"
+                    onPress={handleAllowTrackPress}
+                  >
+                    <HStack className="items-center">
+                      <Eye size={24} color={gray200} />
+                      <Text className="ml-4 text-lg text-gray-200">
+                        {t("app.hiddenTracks.allowTrack")}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                )}
+                {hiddenReason === "artist" && blockedArtist && (
+                  <FadeOutScaleDown
+                    testID="track-allow-artist-button"
+                    onPress={handleAllowArtistPress}
+                  >
+                    <HStack className="items-center">
+                      <UserCheck size={24} color={gray200} />
+                      <Text
+                        className="ml-4 text-lg text-gray-200 flex-1"
+                        numberOfLines={1}
+                      >
+                        {t("app.hiddenTracks.allowArtistNamed", {
+                          name:
+                            blockedArtist.name || t("app.shared.unknownArtist"),
+                        })}
                       </Text>
                     </HStack>
                   </FadeOutScaleDown>
@@ -1289,6 +1434,17 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                     </HStack>
                   </FadeOutScaleDown>
                 )}
+                {fileDeletionAvailable && (
+                  <DangerZone
+                    onReveal={() => sheetScrollRef.current?.scrollToEnd()}
+                    itemId={track.id}
+                  >
+                    <DangerZoneDeleteRow
+                      label={t("app.fileDeletion.deleteTrack")}
+                      onPress={handleDeleteFilePress}
+                    />
+                  </DangerZone>
+                )}
               </VStack>
             </Box>
           )}
@@ -1302,6 +1458,11 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
         onConfirm={handleRatingChange}
         isPending={doSetRating.isPending}
         closeButtonTestID="track-rating-close-button"
+      />
+      <DeleteFilesDialog
+        isOpen={deleteTarget != null}
+        onClose={() => setDeleteTarget(null)}
+        target={deleteTarget}
       />
       <TrackInfoModal
         isOpen={showInfoModal}
@@ -1349,6 +1510,7 @@ export function TrackActionsProvider({ children }: { children: ReactNode }) {
                 )}
                 {track.contributors?.map((contributor, index) => (
                   <VStack
+                    // biome-ignore lint/suspicious/noArrayIndexKey: a contributor can repeat with the same role and artist
                     key={`${contributor.role}-${contributor.artist.id}-${index}`}
                     className="border-b border-primary-600 py-2"
                   >

@@ -46,8 +46,7 @@ export default function RuleRow({
   serverVersion,
 }: RuleRowProps) {
   const { t } = useTranslation();
-  const [gray200, gray400, red400] = Uniwind.getCSSVariable([
-    "--color-gray-200",
+  const [gray400, red400] = Uniwind.getCSSVariable([
     "--color-gray-400",
     "--color-red-400",
   ]) as string[];

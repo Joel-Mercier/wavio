@@ -1,7 +1,8 @@
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/icons/arrow-left";
-import type { ReactNode, RefObject } from "react";
+import type { ReactNode, Ref } from "react";
 import type { ScrollViewInstance } from "react-native";
+import { ScrollView as GestureScrollView } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import { Box } from "@/components/ui/box";
@@ -18,6 +19,7 @@ export default function SettingsScreenScaffold({
   children,
   overlays,
   scrollRef,
+  gestureScroll,
 }: {
   title: string;
   children: ReactNode;
@@ -25,12 +27,17 @@ export default function SettingsScreenScaffold({
   // root Box level) so they overlay the whole screen.
   overlays?: ReactNode;
   // Lets a section scroll itself to one of its rows (deep link into a setting).
-  scrollRef?: RefObject<ScrollViewInstance | null>;
+  scrollRef?: Ref<ScrollViewInstance>;
+  // For screens with drag-to-reorder lists (SortableColumn): the
+  // gesture-handler ScrollView lets an armed drag win the touch over the
+  // scroll, and `scrollEnabled` freezes it while a row is held.
+  gestureScroll?: { scrollEnabled: boolean };
 }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const isWideLayout = useApp((s) => s.isWideLayout);
+  const Scroll = gestureScroll ? GestureScrollView : ScrollView;
 
   return (
     <Box className="h-full">
@@ -47,8 +54,9 @@ export default function SettingsScreenScaffold({
           </Heading>
           <Box className="w-6" />
         </HStack>
-        <ScrollView
+        <Scroll
           ref={scrollRef}
+          scrollEnabled={gestureScroll?.scrollEnabled ?? true}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{
@@ -56,7 +64,7 @@ export default function SettingsScreenScaffold({
           }}
         >
           {children}
-        </ScrollView>
+        </Scroll>
       </Box>
       {overlays}
     </Box>

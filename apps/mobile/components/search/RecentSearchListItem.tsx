@@ -17,7 +17,7 @@ import { VStack } from "@/components/ui/vstack";
 import { useIsCurrentTrack } from "@/hooks/player";
 import { playAlbumFromSong } from "@/services/playSongInAlbum";
 import type { RecentSearch } from "@/stores/recentSearches";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 
 function RecentSearchListItemIcon({ type }: { type: RecentSearch["type"] }) {
@@ -80,7 +80,9 @@ export default function RecentSearchListItem({
         <HStack className="items-center flex-1">
           {recentSearch.coverArt ? (
             <Image
-              source={{ uri: artworkUrl(recentSearch.coverArt) }}
+              source={{
+                uri: artworkUrl(recentSearch.coverArt, ARTWORK_THUMB_SIZE),
+              }}
               className="w-16 h-16 rounded-md aspect-square"
               alt="Recent search cover"
             />

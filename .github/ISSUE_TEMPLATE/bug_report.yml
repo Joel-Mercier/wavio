@@ -48,6 +48,15 @@ body:
     validations:
       required: false
   - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics report
+      description: |
+        In Wavio, open Settings → Help & feedback and tap "Copy diagnostics report" (or "Open an issue on GitHub", which copies it for you), then paste it here. It's anonymous: no server address, username, password, token or library content. Tap "Preview the report" in the app to see exactly what it contains.
+      placeholder: Paste the diagnostics report here
+    validations:
+      required: false
+  - type: textarea
     id: screenshots
     attributes:
       label: Screenshots

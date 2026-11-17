@@ -7,7 +7,7 @@ import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import type { PodcastChannel } from "@/services/openSubsonic/types";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 
 interface ServerPodcastChannelListItemProps {
@@ -17,10 +17,13 @@ interface ServerPodcastChannelListItemProps {
   className?: string;
 }
 
-export function channelImageUrl(channel: PodcastChannel): string | undefined {
+export function channelImageUrl(
+  channel: PodcastChannel,
+  size?: number,
+): string | undefined {
   return (
     channel.originalImageUrl ||
-    (channel.coverArt ? artworkUrl(channel.coverArt) : undefined)
+    (channel.coverArt ? artworkUrl(channel.coverArt, size) : undefined)
   );
 }
 
@@ -32,6 +35,7 @@ export default function ServerPodcastChannelListItem({
 }: ServerPodcastChannelListItemProps) {
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const image = channelImageUrl(channel);
+  const thumbnail = channelImageUrl(channel, ARTWORK_THUMB_SIZE);
   return (
     <FadeOutScaleDown
       href={{
@@ -58,9 +62,9 @@ export default function ServerPodcastChannelListItem({
           "flex-row items-center": layout === "vertical",
         })}
       >
-        {image ? (
+        {thumbnail ? (
           <Image
-            source={{ uri: image }}
+            source={{ uri: thumbnail }}
             className={cn("w-32 h-32 rounded-md aspect-square", {
               "w-16 h-16": layout === "vertical",
             })}

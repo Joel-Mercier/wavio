@@ -1,6 +1,7 @@
 import {
   type BottomSheetModal,
   BottomSheetScrollView,
+  type BottomSheetScrollViewMethods,
 } from "@gorhom/bottom-sheet";
 import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useQueryClient } from "@tanstack/react-query";
@@ -10,10 +11,13 @@ import ArrowLeft from "lucide-react-native/icons/arrow-left";
 import ChevronRight from "lucide-react-native/icons/chevron-right";
 import Disc3 from "lucide-react-native/icons/disc-3";
 import EllipsisVertical from "lucide-react-native/icons/ellipsis-vertical";
+import EyeOff from "lucide-react-native/icons/eye-off";
 import Heart from "lucide-react-native/icons/heart";
 import ListMusic from "lucide-react-native/icons/list-music";
 import Star from "lucide-react-native/icons/star";
 import User from "lucide-react-native/icons/user";
+import UserCheck from "lucide-react-native/icons/user-check";
+import UserX from "lucide-react-native/icons/user-x";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking, ScrollView } from "react-native";
@@ -36,11 +40,16 @@ import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import ArtistCarouselRow from "@/components/artists/ArtistCarouselRow";
 import AudioMuseSimilarArtists from "@/components/artists/AudioMuseSimilarArtists";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
+import DangerZone, {
+  DangerZoneDeleteRow,
+} from "@/components/deletion/DangerZone";
+import DeleteFilesDialog from "@/components/deletion/DeleteFilesDialog";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import PlayPauseButton from "@/components/PlayPauseButton";
+import PlaylistListItem from "@/components/playlists/PlaylistListItem";
 import RatingModal from "@/components/RatingModal";
 import RichText from "@/components/RichText";
 import ShuffleToggle from "@/components/ShuffleToggle";
@@ -72,9 +81,13 @@ import {
   useStar,
   useUnstar,
 } from "@/hooks/backend/useMediaAnnotation";
+import { useArtistPlaylists } from "@/hooks/backend/usePlaylists";
 import { useHasPlayableTracks, useOfflineArtist } from "@/hooks/offline";
 import { useIsPlaying } from "@/hooks/player";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useFileDeletionAvailable } from "@/hooks/useFileDeletion";
+import { useIsArtistBlocked } from "@/hooks/useHiddenTracks";
+import { useHiddenTracksToast } from "@/hooks/useHiddenTracksToast";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useRefreshRecentPlay } from "@/hooks/useRefreshRecentPlay";
@@ -82,6 +95,11 @@ import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { SIMILAR_ARTISTS_DEFAULT_RESULTS } from "@/services/audioMuse/artists";
 import { getAlbum } from "@/services/backend/browsing";
+import {
+  allowArtist,
+  blockArtist,
+  restoreToQueue,
+} from "@/services/hiddenTracks";
 import { ARTIST_SCREEN_SIMILAR_PARAMS } from "@/services/mixes/artistMix";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
@@ -89,7 +107,7 @@ import useApp from "@/stores/app";
 import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
 import { logError } from "@/utils/log";
@@ -102,6 +120,7 @@ const AnimatedBox = Animated.createAnimatedComponent(Box);
 // count rather than keeping a second number in sync by hand. It doubles as the
 // getArtistInfo2 `count` param, which is what decides how many the server sends.
 const SIMILAR_ARTISTS_LIMIT = SIMILAR_ARTISTS_DEFAULT_RESULTS;
+const FEATURED_PLAYLISTS_LIMIT = 12;
 
 export default function ArtistDetail() {
   const [black, white, emerald500, gray200] = Uniwind.getCSSVariable([
@@ -125,6 +144,9 @@ export default function ArtistDetail() {
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const sheetScrollRef = useRef<BottomSheetScrollViewMethods>(null);
+  const isArtistBlocked = useIsArtistBlocked(id);
+  const showHiddenToast = useHiddenTracksToast();
   const { data: serverData, isLoading, error } = useArtist(id);
   // Offline (or before the server query resolves) fall back to the artist
   // derived from downloaded album collections so extended-offline libraries
@@ -143,8 +165,10 @@ export default function ArtistDetail() {
         }
       : undefined,
   );
-  const { data: artistInfoData, isLoading: isLoadingArtistInfo } =
-    useArtistInfo2(id, ARTIST_SCREEN_SIMILAR_PARAMS);
+  const { data: artistInfoData } = useArtistInfo2(
+    id,
+    ARTIST_SCREEN_SIMILAR_PARAMS,
+  );
   // Passing the route id lets servers with the `topSongsByArtistId` extension
   // (and Jellyfin / the local library) fetch this in parallel with useArtist
   // instead of waiting on it for a name.
@@ -168,6 +192,10 @@ export default function ArtistDetail() {
   });
   const appearsOnAlbums: AlbumID3[] =
     appearancesData?.artistAppearances?.album ?? [];
+  const { data: artistPlaylistsData } = useArtistPlaylists(id);
+  const featuredInPlaylists = (
+    artistPlaylistsData?.artistPlaylists?.playlist ?? []
+  ).slice(0, FEATURED_PLAYLISTS_LIMIT);
   const { data: starredData } = useStarred2({ musicFolderIds });
   const likedSongs =
     starredData?.starred2?.song?.filter((song) => song.artistId === id) ?? [];
@@ -178,9 +206,15 @@ export default function ArtistDetail() {
   const doUnfavorite = useUnstar();
   const doSetRating = useSetRating();
   const capabilities = useCapabilities();
+  const fileDeletionAvailable = useFileDeletionAvailable();
+  const [showDeleteFilesDialog, setShowDeleteFilesDialog] = useState(false);
   const isOnline = useIsOnline();
   const addRecentPlay = useRecentPlays((store) => store.addRecentPlay);
-  const colors = useImageColors(artworkUrl(data?.artist?.coverArt));
+  const colors = useImageColors(
+    data?.artist?.coverArt
+      ? artworkUrl(data?.artist?.coverArt, ARTWORK_THUMB_SIZE)
+      : undefined,
+  );
   const topColor =
     (colors?.platform === "ios"
       ? colors.primary
@@ -263,7 +297,7 @@ export default function ArtistDetail() {
             ),
           });
         },
-        onError: (error) => {
+        onError: () => {
           queryClient.setQueryData(["artist", id], {
             ...data,
             artist: {
@@ -316,7 +350,7 @@ export default function ArtistDetail() {
             ),
           });
         },
-        onError: (error) => {
+        onError: () => {
           queryClient.setQueryData(["artist", id], {
             ...data,
             artist: {
@@ -416,6 +450,33 @@ export default function ArtistDetail() {
         coverArt: data.artist.coverArt,
       });
     }
+  };
+
+  const artistDisplayName = () =>
+    data?.artist?.name || t("app.shared.unknownArtist");
+
+  const handleBlockArtistPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    const removed = blockArtist({
+      id,
+      name: data?.artist?.name,
+      coverArt: data?.artist?.coverArt,
+    });
+    showHiddenToast(
+      t("app.hiddenTracks.artistBlockedMessage", { name: artistDisplayName() }),
+      () => {
+        allowArtist(id);
+        restoreToQueue(removed);
+      },
+    );
+  };
+
+  const handleAllowArtistPress = () => {
+    bottomSheetModalRef.current?.dismiss();
+    allowArtist(id);
+    showHiddenToast(
+      t("app.hiddenTracks.artistAllowedMessage", { name: artistDisplayName() }),
+    );
   };
 
   const shuffle = useQueue((store) => store.shuffle);
@@ -616,6 +677,7 @@ export default function ArtistDetail() {
                   <ShuffleToggle
                     active={shuffle}
                     onPress={handleShufflePress}
+                    disabled={isArtistBlocked}
                   />
                   <PlayPauseButton
                     isPlaying={isActiveSource && isPlaying}
@@ -624,10 +686,34 @@ export default function ArtistDetail() {
                     iconSize={24}
                     color={white}
                     className="bg-emerald-500"
-                    disabled={!isActiveSource && !hasPlayableTracks}
+                    disabled={
+                      !isActiveSource && (!hasPlayableTracks || isArtistBlocked)
+                    }
                   />
                 </HStack>
               </HStack>
+              {isArtistBlocked && (
+                <HStack
+                  testID="artist-blocked-banner"
+                  className="items-center gap-x-4 mb-6 p-4 rounded-xl bg-primary-800"
+                >
+                  <EyeOff size={20} color={gray200} />
+                  <Text className="flex-1 text-primary-100">
+                    {t("app.hiddenTracks.artistBlockedBanner", {
+                      name: artistDisplayName(),
+                    })}
+                  </Text>
+                  <FadeOutScaleDown
+                    testID="artist-blocked-allow-button"
+                    onPress={handleAllowArtistPress}
+                    className="py-2 px-4 rounded-full border border-white"
+                  >
+                    <Text className="text-white font-bold">
+                      {t("app.hiddenTracks.allow")}
+                    </Text>
+                  </FadeOutScaleDown>
+                </HStack>
+              )}
               {(likedSongs.length > 0 || likedAlbums.length > 0) && (
                 <FadeOutScaleDown
                   href={{
@@ -638,7 +724,12 @@ export default function ArtistDetail() {
                   <HStack className="items-center mb-6">
                     <Box className="relative">
                       <ImageWithFallback
-                        source={{ uri: artworkUrl(data?.artist?.coverArt) }}
+                        source={{
+                          uri: artworkUrl(
+                            data?.artist?.coverArt,
+                            ARTWORK_THUMB_SIZE,
+                          ),
+                        }}
                         alt="Liked songs cover"
                         className="w-16 h-16 rounded-full aspect-square"
                         fallback={artistThumbnailFallback}
@@ -701,20 +792,15 @@ export default function ArtistDetail() {
                   }}
                 >
                   {topSongsError && <ErrorDisplay error={topSongsError} />}
-                  {isLoadingTopSongs ? (
-                    loadingData(6).map((_, index) => (
-                      <TrackListItemSkeleton
-                        key={`top-song-skeleton-${
-                          // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                          index
-                        }`}
-                        index={index}
-                        className="px-6"
-                      />
-                    ))
-                  ) : (
-                    <>
-                      {topSongs?.map((song, index) => (
+                  {isLoadingTopSongs
+                    ? loadingData(6).map((placeholder, index) => (
+                        <TrackListItemSkeleton
+                          key={`top-song-skeleton-${placeholder.id}`}
+                          index={index}
+                          className="px-6"
+                        />
+                      ))
+                    : topSongs?.map((song, index) => (
                         <TrackListItem
                           key={song.id}
                           showIndex
@@ -725,8 +811,6 @@ export default function ArtistDetail() {
                           disableSwipe
                         />
                       ))}
-                    </>
-                  )}
 
                   {!isLoadingTopSongs &&
                     !topSongsError &&
@@ -827,7 +911,12 @@ export default function ArtistDetail() {
                   <HStack className="items-center">
                     <Box className="relative">
                       <ImageWithFallback
-                        source={{ uri: artworkUrl(data?.artist?.coverArt) }}
+                        source={{
+                          uri: artworkUrl(
+                            data?.artist?.coverArt,
+                            ARTWORK_THUMB_SIZE,
+                          ),
+                        }}
                         alt="All songs cover"
                         className="w-16 h-16 rounded-full aspect-square"
                         fallback={artistThumbnailFallback}
@@ -878,6 +967,27 @@ export default function ArtistDetail() {
                     <AlbumListItem
                       key={album.id}
                       album={album}
+                      index={index}
+                      layout="horizontal"
+                    />
+                  ))}
+                </ScrollView>
+              </VStack>
+            )}
+            {featuredInPlaylists.length > 0 && (
+              <VStack className="bg-black pb-6">
+                <Heading className="text-white mb-4 px-6">
+                  {t("app.artists.featuredInPlaylists")}
+                </Heading>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerClassName="pl-6"
+                >
+                  {featuredInPlaylists.map((playlist, index) => (
+                    <PlaylistListItem
+                      key={playlist.id}
+                      playlist={playlist}
                       index={index}
                       layout="horizontal"
                     />
@@ -970,6 +1080,7 @@ export default function ArtistDetail() {
         }}
       >
         <BottomSheetScrollView
+          ref={sheetScrollRef}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ alignItems: "center" }}
         >
@@ -977,7 +1088,9 @@ export default function ArtistDetail() {
             <HStack className="items-center">
               {data?.artist?.coverArt ? (
                 <Image
-                  source={{ uri: artworkUrl(data?.artist?.coverArt) }}
+                  source={{
+                    uri: artworkUrl(data?.artist?.coverArt, ARTWORK_THUMB_SIZE),
+                  }}
                   className="w-16 h-16 rounded-full aspect-square"
                   alt="Track cover"
                 />
@@ -1000,12 +1113,37 @@ export default function ArtistDetail() {
               {data?.artist?.id && (
                 <FadeOutScaleDown
                   onPress={handleCreateMixPress}
-                  disabled={!isOnline}
+                  disabled={!isOnline || isArtistBlocked}
                 >
                   <HStack className="items-center">
                     <Disc3 size={24} color={gray200} />
                     <Text className="ml-4 text-lg text-gray-200">
                       {t("app.mixes.createArtistMix")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              )}
+              {isArtistBlocked ? (
+                <FadeOutScaleDown
+                  testID="artist-allow-button"
+                  onPress={handleAllowArtistPress}
+                >
+                  <HStack className="items-center">
+                    <UserCheck size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.hiddenTracks.allowArtist")}
+                    </Text>
+                  </HStack>
+                </FadeOutScaleDown>
+              ) : (
+                <FadeOutScaleDown
+                  testID="artist-block-button"
+                  onPress={handleBlockArtistPress}
+                >
+                  <HStack className="items-center">
+                    <UserX size={24} color={gray200} />
+                    <Text className="ml-4 text-lg text-gray-200">
+                      {t("app.hiddenTracks.blockArtist")}
                     </Text>
                   </HStack>
                 </FadeOutScaleDown>
@@ -1055,10 +1193,43 @@ export default function ArtistDetail() {
                   </HStack>
                 </FadeOutScaleDown>
               )}
+              {fileDeletionAvailable && !!data?.artist?.album?.length && (
+                // Asked about the albums rather than the artist: an artist built
+                // from tags is not a deletable item on Jellyfin, but the albums
+                // whose tracks this deletes are, and each can sit in a library
+                // with its own deletion policy.
+                <DangerZone
+                  onReveal={() => sheetScrollRef.current?.scrollToEnd()}
+                  itemId={id}
+                  checkIds={data.artist.album.map((album) => album.id)}
+                >
+                  <DangerZoneDeleteRow
+                    label={t("app.fileDeletion.deleteArtist")}
+                    onPress={() => {
+                      bottomSheetModalRef.current?.dismiss();
+                      setShowDeleteFilesDialog(true);
+                    }}
+                  />
+                </DangerZone>
+              )}
             </VStack>
           </Box>
         </BottomSheetScrollView>
       </CenteredBottomSheetModal>
+      <DeleteFilesDialog
+        isOpen={showDeleteFilesDialog}
+        onClose={() => setShowDeleteFilesDialog(false)}
+        target={
+          data?.artist
+            ? { kind: "artist", id, name: data.artist.name ?? "" }
+            : null
+        }
+        onDeleted={(result) => {
+          if (result.failed.length === 0 && !result.cancelled) {
+            goBackOrHome(router);
+          }
+        }}
+      />
       <RatingModal
         isOpen={showRatingModal}
         onClose={handleCloseRatingModal}

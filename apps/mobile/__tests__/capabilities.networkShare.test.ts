@@ -87,4 +87,17 @@ describe("network share capabilities", () => {
       expect(getCapabilities(type)).not.toEqual(subsonic);
     }
   });
+
+  // Navidrome never writes to its music folder and Subsonic has no delete
+  // endpoint; everything that can delete a file offers it.
+  it.each([
+    ["opensubsonic", false],
+    ["navidrome", false],
+    ["jellyfin", true],
+    ["local", true],
+    ["webdav", true],
+    ["smb", true],
+  ] as const)("%s fileDeletion is %s", (type, expected) => {
+    expect(getCapabilities(type).fileDeletion).toBe(expected);
+  });
 });

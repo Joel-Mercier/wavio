@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createDynamicScopedStorage } from "@/config/storage";
 import { currentAuthScope } from "@/stores/auth";
+import { withoutHidden } from "@/stores/hiddenTracks";
 import createSelectors from "@/utils/createSelectors";
 import { dispersedShuffle } from "@/utils/shuffle";
 
@@ -106,6 +107,7 @@ interface QueueStore {
   removeByIds: (ids: string[]) => void;
   removeAtIndices: (indices: number[]) => void;
   restoreAt: (track: QueueTrack, index: number) => void;
+  restorePlayedAt: (track: QueueTrack, index: number) => void;
   move: (from: number, to: number) => void;
 
   next: () => void;
@@ -325,7 +327,7 @@ function insertManual(
   let inserted = 0;
   set((state) => {
     const items = flagManual(
-      (Array.isArray(track) ? track : [track]).slice(
+      withoutHidden(Array.isArray(track) ? track : [track]).slice(
         0,
         enqueueLimit(state.queue.length),
       ),
@@ -532,7 +534,7 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
   enqueueEnd: (track) => {
     let inserted = 0;
     set((state) => {
-      const items = (Array.isArray(track) ? track : [track]).slice(
+      const items = withoutHidden(Array.isArray(track) ? track : [track]).slice(
         0,
         enqueueLimit(state.queue.length),
       );
@@ -682,6 +684,35 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
       const merged = state.queue.slice();
       merged.splice(at, 0, track);
       const fitted = makeRoomFor(merged, state.currentIndex, at, 1);
+      return {
+        queue: fitted.queue,
+        currentIndex: fitted.currentIndex,
+        originalOrderIds: state.shuffle
+          ? reconcileOriginalOrder(
+              state.originalOrderIds,
+              fitted.queue,
+              fitted.currentIndex,
+            )
+          : null,
+      } as Partial<QueueStore>;
+    });
+  },
+
+  // Undo for a removed track the cursor had already passed: it goes back into
+  // the history, never ahead of the current track.
+  restorePlayedAt: (track, index) => {
+    set((state) => {
+      const cursor = state.currentIndex;
+      const at = Math.max(0, Math.min(index, cursor ?? state.queue.length));
+      const { queuedManually: _, ...played } = track;
+      const merged = state.queue.slice();
+      merged.splice(at, 0, played);
+      const fitted = makeRoomFor(
+        merged,
+        cursor != null ? cursor + 1 : null,
+        at,
+        1,
+      );
       return {
         queue: fitted.queue,
         currentIndex: fitted.currentIndex,

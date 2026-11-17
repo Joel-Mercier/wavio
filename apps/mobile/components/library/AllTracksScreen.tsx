@@ -1,5 +1,5 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { LegendList, type LegendListRef } from "@legendapp/list/react-native";
+import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
 import ArrowDown from "lucide-react-native/icons/arrow-down";
@@ -15,6 +15,7 @@ import { Uniwind } from "uniwind";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import FastScroller, { useFastScroll } from "@/components/FastScroller";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import ShuffleToggle from "@/components/ShuffleToggle";
 import SortOptionsSheet, {
@@ -42,6 +43,7 @@ import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import { createSearchMatcher, toSearchHaystack } from "@/services/searchText";
 import useApp from "@/stores/app";
+import { everyTrackHidden } from "@/stores/hiddenTracks";
 import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 import useQueue, { MAX_QUEUE_TRACKS, type QueueSource } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
@@ -86,7 +88,7 @@ export default function AllTracksScreen() {
   const query = useSelector(form.store, (state) => state.values.query);
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const debounce = useDebounce(150);
-  const listRef = useRef<LegendListRef>(null);
+  const fastScroll = useFastScroll();
 
   useEffect(() => {
     debounce(() => setDebouncedQuery(query));
@@ -115,9 +117,10 @@ export default function AllTracksScreen() {
 
   // Editing the query — or the sort — swaps the result set; without this the
   // list keeps its old offset and hides the new top rows.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: debouncedQuery and sortParam are triggers: a new result set resets the list to the top
   useEffect(() => {
-    listRef.current?.scrollToOffset({ offset: 0, animated: false });
-  }, [debouncedQuery, sortParam]);
+    fastScroll.getList()?.scrollToOffset({ offset: 0, animated: false });
+  }, [debouncedQuery, sortParam, fastScroll.getList]);
 
   const {
     data,
@@ -308,11 +311,10 @@ export default function AllTracksScreen() {
       }
       // Offline none of these may be downloaded, in which case playTracks
       // leaves the queue alone rather than stranding the player.
+      const queueTracks = tracks.map(childToTrack);
       if (
-        !playTracks(tracks.map(childToTrack), 0, {
-          shuffleFromRandom: true,
-          source,
-        })
+        !playTracks(queueTracks, 0, { shuffleFromRandom: true, source }) &&
+        !everyTrackHidden(queueTracks)
       ) {
         showErrorToast(t("app.home.playErrorMessage"));
       }
@@ -389,80 +391,91 @@ export default function AllTracksScreen() {
           )}
         </form.Field>
       </Box>
-      <LegendList
-        recycleItems
-        ref={listRef}
-        data={isLoading ? SKELETON_DATA : songs}
-        keyExtractor={(item, index) =>
-          isLoading ? `skeleton-${index}` : (item as Child).id
-        }
-        renderItem={({ item, index }: { item: Child; index: number }) =>
-          isLoading ? (
-            <TrackListItemSkeleton index={index} className="px-6" />
-          ) : (
-            <TrackListItem
-              track={item}
-              index={index}
-              onPress={handleTrackPress}
-              showCoverArt
-              className="px-6"
-            />
-          )
-        }
-        ListHeaderComponent={
-          <VStack className="px-6">
-            <HStack className="items-center justify-between mb-4 gap-x-4">
-              {showSortControl ? (
-                <FadeOutScaleDown onPress={handlePresentSortModalPress}>
-                  <HStack className="items-center gap-x-2">
-                    {activeSort.endsWith("Desc") ? (
-                      <ArrowDown size={16} color={white} />
-                    ) : (
-                      <ArrowUp size={16} color={white} />
-                    )}
-                    <Text className="text-white font-bold">
-                      {sortFieldLabel(activeSortField)}
-                    </Text>
-                  </HStack>
-                </FadeOutScaleDown>
-              ) : (
-                <Box />
-              )}
-              <HStack className="items-center gap-x-4">
-                <ShuffleToggle active={shuffle} onPress={handleShufflePress} />
-                <PlayPauseButton
-                  isPlaying={isPlayingFromList && isPlaying}
-                  onPress={handlePlayPress}
-                  size={48}
-                  iconSize={24}
-                  color={white}
-                  className="bg-emerald-500"
-                  disabled={
-                    preparing || (!isPlayingFromList && !hasPlayableTracks)
-                  }
-                />
-              </HStack>
-            </HStack>
-            {error && <ErrorDisplay error={error as Error} />}
-          </VStack>
-        }
-        ListEmptyComponent={() => (isLoading ? null : <EmptyDisplay />)}
-        ListFooterComponent={
-          isFetchingNextPage ? (
-            <Box className="py-6">
-              <ActivityIndicator color={emerald500} />
-            </Box>
-          ) : null
-        }
-        contentContainerStyle={{ paddingBottom: screenBottomPadding }}
-        showsVerticalScrollIndicator={false}
-        onEndReached={() => {
-          if (hasNextPage && !isFetchingNextPage) {
-            fetchNextPage();
+      <Box className="flex-1">
+        <AnimatedLegendList
+          recycleItems
+          {...fastScroll.listProps}
+          data={isLoading ? SKELETON_DATA : songs}
+          keyExtractor={(item, index) =>
+            isLoading ? `skeleton-${index}` : (item as Child).id
           }
-        }}
-        onEndReachedThreshold={0.5}
-      />
+          renderItem={({ item, index }: { item: Child; index: number }) =>
+            isLoading ? (
+              <TrackListItemSkeleton index={index} className="px-6" />
+            ) : (
+              <TrackListItem
+                track={item}
+                index={index}
+                onPress={handleTrackPress}
+                showCoverArt
+                className="px-6"
+              />
+            )
+          }
+          ListHeaderComponent={
+            <VStack className="px-6">
+              <HStack className="items-center justify-between mb-4 gap-x-4">
+                {showSortControl ? (
+                  <FadeOutScaleDown onPress={handlePresentSortModalPress}>
+                    <HStack className="items-center gap-x-2">
+                      {activeSort.endsWith("Desc") ? (
+                        <ArrowDown size={16} color={white} />
+                      ) : (
+                        <ArrowUp size={16} color={white} />
+                      )}
+                      <Text className="text-white font-bold">
+                        {sortFieldLabel(activeSortField)}
+                      </Text>
+                    </HStack>
+                  </FadeOutScaleDown>
+                ) : (
+                  <Box />
+                )}
+                <HStack className="items-center gap-x-4">
+                  <ShuffleToggle
+                    active={shuffle}
+                    onPress={handleShufflePress}
+                  />
+                  <PlayPauseButton
+                    isPlaying={isPlayingFromList && isPlaying}
+                    onPress={handlePlayPress}
+                    size={48}
+                    iconSize={24}
+                    color={white}
+                    className="bg-emerald-500"
+                    disabled={
+                      preparing || (!isPlayingFromList && !hasPlayableTracks)
+                    }
+                  />
+                </HStack>
+              </HStack>
+              {error && <ErrorDisplay error={error as Error} />}
+            </VStack>
+          }
+          ListEmptyComponent={() => (isLoading ? null : <EmptyDisplay />)}
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <Box className="py-6">
+                <ActivityIndicator color={emerald500} />
+              </Box>
+            ) : null
+          }
+          contentContainerStyle={{ paddingBottom: screenBottomPadding }}
+          showsVerticalScrollIndicator={false}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) {
+              fetchNextPage();
+            }
+          }}
+          onEndReachedThreshold={0.5}
+        />
+        <FastScroller
+          fastScroll={fastScroll}
+          itemCount={isLoading ? 0 : songs.length}
+          top={8}
+          bottom={screenBottomPadding}
+        />
+      </Box>
       <SortOptionsSheet
         ref={bottomSheetSortModalRef}
         fields={sortFields}

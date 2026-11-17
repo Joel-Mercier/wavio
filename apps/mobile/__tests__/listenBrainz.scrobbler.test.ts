@@ -99,6 +99,12 @@ const httpError = (status: number) => ({
   response: { status },
 });
 
+const queuedListen = (...args: Parameters<typeof toQueuedListen>) => {
+  const queued = toQueuedListen(...args);
+  if (!queued) throw new Error("expected the track to be scrobblable");
+  return queued;
+};
+
 const queue = () => useListenBrainzBase.getState().queue;
 
 const drain = async () => {
@@ -147,7 +153,7 @@ describe("submission threshold", () => {
 
 describe("payload mapping", () => {
   it("omits absent optional fields entirely and never emits mbid_mapping", () => {
-    const queued = toQueuedListen(
+    const queued = queuedListen(
       track({
         album: undefined,
         musicBrainzId: undefined,
@@ -156,10 +162,10 @@ describe("payload mapping", () => {
       } as Partial<QueueTrack>),
       1_700_000_000,
     );
-    const listen = toListen(queued!, { includeTimestamp: true });
+    const listen = toListen(queued, { includeTimestamp: true });
 
     expect(listen.track_metadata).not.toHaveProperty("release_name");
-    const info = listen.track_metadata.additional_info!;
+    const info = listen.track_metadata.additional_info;
     expect(info).not.toHaveProperty("recording_mbid");
     expect(info).not.toHaveProperty("release_mbid");
     expect(info).not.toHaveProperty("duration_ms");
@@ -168,8 +174,8 @@ describe("payload mapping", () => {
   });
 
   it("carries the recording MBID, duration and track number when present", () => {
-    const queued = toQueuedListen(track(), 1_700_000_000);
-    const listen = toListen(queued!, { includeTimestamp: true });
+    const queued = queuedListen(track(), 1_700_000_000);
+    const listen = toListen(queued, { includeTimestamp: true });
 
     expect(listen.listened_at).toBe(1_700_000_000);
     expect(listen.track_metadata.artist_name).toBe("Rick Astley");
@@ -184,8 +190,8 @@ describe("payload mapping", () => {
   });
 
   it("omits listened_at for a playing_now submission", () => {
-    const queued = toQueuedListen(track(), 1_700_000_000);
-    const listen = toListen(queued!, { includeTimestamp: false });
+    const queued = queuedListen(track(), 1_700_000_000);
+    const listen = toListen(queued, { includeTimestamp: false });
     expect(listen).not.toHaveProperty("listened_at");
   });
 

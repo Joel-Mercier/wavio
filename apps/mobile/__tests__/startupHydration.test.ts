@@ -21,6 +21,10 @@ jest.mock("@/stores/queue", () => ({
   __esModule: true,
   default: { persist: { rehydrate: mockRehydrate("queue") } },
 }));
+jest.mock("@/stores/hiddenTracks", () => ({
+  __esModule: true,
+  default: { persist: { rehydrate: mockRehydrate("hiddenTracks") } },
+}));
 jest.mock("@/stores/recentPlays", () => ({
   __esModule: true,
   default: { persist: { rehydrate: mockRehydrate("recentPlays") } },
@@ -28,6 +32,19 @@ jest.mock("@/stores/recentPlays", () => ({
 jest.mock("@/stores/offline", () => ({
   __esModule: true,
   default: { persist: { rehydrate: mockRehydrate("offline") } },
+}));
+jest.mock("@/stores/carAuto", () => ({
+  useCarAutoBase: { persist: { rehydrate: mockRehydrate("carAuto") } },
+}));
+jest.mock("@/stores/audiobookshelf", () => ({
+  useAudiobookshelfBase: {
+    persist: { rehydrate: mockRehydrate("audiobookshelf") },
+  },
+}));
+jest.mock("@/stores/audiobookProgress", () => ({
+  useAudiobookProgressBase: {
+    persist: { rehydrate: mockRehydrate("audiobookProgress") },
+  },
 }));
 jest.mock("@/stores/listenBrainz", () => ({
   __esModule: true,
@@ -123,6 +140,10 @@ describe("hydratePlaybackStores", () => {
     await load().hydratePlaybackStores();
     expect(mockOrder[0]).toBe("migration");
     expect(mockOrder.slice(1).sort()).toEqual([
+      "audiobookProgress",
+      "audiobookshelf",
+      "carAuto",
+      "hiddenTracks",
       "lastFm",
       "lastFmScrobblerInit",
       "listenBrainz",

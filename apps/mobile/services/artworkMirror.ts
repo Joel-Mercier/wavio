@@ -2,7 +2,7 @@ import { Directory, File, Paths } from "expo-file-system";
 import { hostnameFromUrl } from "@/modules/ssl-trust";
 import { requestHeadersForUrl } from "@/services/serverHeaders";
 import { artworkCacheKey } from "@/utils/artworkCacheKey";
-import { looksLikeImage } from "@/utils/imageBytes";
+import { looksLikePlatformImage } from "@/utils/imageBytes";
 
 // Local mirror of remote cover art, so a consumer that can't speak to our server
 // never has to fetch it itself.
@@ -29,7 +29,9 @@ import { looksLikeImage } from "@/utils/imageBytes";
 // below deliberately ignores the size parameter — one shared directory would let
 // them overwrite each other's file.
 
-const MIN_COVER_BYTES = 512;
+// The smallest decodable image (a 1×1 GIF). Real covers can be tiny: a radio
+// station's favicon is often a few hundred bytes.
+const MIN_COVER_BYTES = 26;
 // Matches the shared axios instance's timeout (services/openSubsonic/index.ts).
 const REQUEST_TIMEOUT_MS = 15_000;
 // Backstop for servers whose cover URL doesn't change when the artwork does.
@@ -37,7 +39,7 @@ const REQUEST_TIMEOUT_MS = 15_000;
 // changed cover is already a different URL and a different cache entry.
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
-function isRemote(url: string | undefined): url is string {
+export function isRemoteArtwork(url: string | undefined): url is string {
   return !!url && /^https?:/i.test(url);
 }
 
@@ -189,7 +191,7 @@ export function createArtworkMirror(
     remoteUrl: string | undefined,
     { verify = false }: { verify?: boolean } = {},
   ): string | undefined {
-    if (!isRemote(remoteUrl)) return undefined;
+    if (!isRemoteArtwork(remoteUrl)) return undefined;
     const key = cacheKey(remoteUrl);
     const modified = entries().get(key);
     if (modified == null || !isFresh(modified)) return undefined;
@@ -232,7 +234,7 @@ export function createArtworkMirror(
   function retain(remoteUrls: Iterable<string>): void {
     const keys = new Set<string>();
     for (const url of remoteUrls) {
-      if (isRemote(url)) keys.add(cacheKey(url));
+      if (isRemoteArtwork(url)) keys.add(cacheKey(url));
     }
     pinned = keys;
   }
@@ -260,14 +262,13 @@ export function createArtworkMirror(
   /**
    * Ensure `remoteUrl` is mirrored locally, returning the `file://` URI.
    *
-   * Returns undefined when the URL isn't remote or the fetch failed — callers
-   * fall back to handing the consumer the remote URL, which is no worse than
-   * before.
+   * Returns undefined when the URL isn't remote, the fetch failed, or the body
+   * isn't an image the OS decoders could read either.
    */
   async function ensureArtworkCached(
     remoteUrl: string | undefined,
   ): Promise<string | undefined> {
-    if (!isRemote(remoteUrl)) return undefined;
+    if (!isRemoteArtwork(remoteUrl)) return undefined;
     const hit = cachedArtworkUri(remoteUrl);
     if (hit) return hit;
 
@@ -311,7 +312,7 @@ export function createArtworkMirror(
         }
         // A server behind an authenticating proxy, an expired session or a CDN
         // having a bad day answers with an HTML error page rather than an image.
-        if (!looksLikeImage(bytes.subarray(0, 4))) {
+        if (!looksLikePlatformImage(bytes.subarray(0, 12))) {
           return discard("not an image (probably an HTML error page)");
         }
 

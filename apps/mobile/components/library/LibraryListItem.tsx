@@ -32,6 +32,7 @@ import {
   useOfflineModeEnabled,
 } from "@/hooks/offline";
 import { useAlbumSort } from "@/hooks/useAlbumSort";
+import { useGridArtworkSize } from "@/hooks/useGridArtworkSize";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useSongSort } from "@/hooks/useSongSort";
 import useWebsiteMetadata from "@/hooks/useWebsiteMetadata";
@@ -45,7 +46,7 @@ import type { PodcastSource } from "@/stores/podcasts";
 import useRadioStations, {
   type RadioStationSource,
 } from "@/stores/radioStations";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import {
   PLAYLIST_FOLDER_COLOR_CLASSES,
   type PlaylistFolderColor,
@@ -204,11 +205,13 @@ export default function LibraryListItem({
   ]) as string[];
   const { t, i18n } = useTranslation();
   const isOnline = useIsOnline();
+  const gridArtworkSize = useGridArtworkSize();
+  const artworkSize = layout === "grid" ? gridArtworkSize : ARTWORK_THUMB_SIZE;
   const offlineModeEnabled = useOfflineModeEnabled();
   const musicFolderIds = useCurrentMusicFolderIds();
   const { sortParam } = useSongSort();
   const { listParams: albumListParams } = useAlbumSort();
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: i18n.language recomputes the translated labels when the locale changes
   const type = useMemo<{ id: string; label: string; url: Href }>(() => {
     if (item.isFavorites) {
       return {
@@ -485,8 +488,10 @@ export default function LibraryListItem({
                     // only the server's own cover goes through the offline
                     // artwork cache, so it wins while offline.
                     (isOnline
-                      ? item.artistImageUrl || artworkUrl(item.coverArt)
-                      : artworkUrl(item.coverArt) || item.artistImageUrl),
+                      ? item.artistImageUrl ||
+                        artworkUrl(item.coverArt, artworkSize)
+                      : artworkUrl(item.coverArt, artworkSize) ||
+                        item.artistImageUrl),
                 }
               : undefined
           }

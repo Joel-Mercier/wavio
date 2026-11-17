@@ -6,7 +6,6 @@ import {
 } from "@/services/jellyfin/mappers";
 import { fakeEnvelope } from "@/services/jellyfin/unsupported";
 import type { Lyrics } from "@/services/openSubsonic/types";
-import { useAuthBase } from "@/stores/auth";
 
 export const stream = async (
   _id: string,

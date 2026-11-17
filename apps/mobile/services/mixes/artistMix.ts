@@ -34,6 +34,7 @@ import {
   selectSimilarArtistsAvailable,
   useAudioMuseBase,
 } from "@/stores/audioMuse";
+import { withoutHidden } from "@/stores/hiddenTracks";
 import { isArtistInLibrary } from "@/utils/artistPresence";
 import { mapWithConcurrency } from "@/utils/mapWithConcurrency";
 import { AbortedError } from "@/utils/rateLimitedQueue";
@@ -306,13 +307,15 @@ export async function generateArtistMix(
 ): Promise<GeneratedMix> {
   const [similar, seedPool] = await Promise.all([
     resolveMixArtists(seed, { musicFolderIds, signal }),
-    artistPool(seed, 2, rand, signal),
+    artistPool(seed, 2, rand, signal).then(withoutHidden),
   ]);
 
+  // Hidden tracks are dropped from each pool before any capacity is counted, so
+  // the genre top-up below fills in for them instead of the mix coming out short.
   const similarPools = await mapWithConcurrency(
     similar,
     POOL_CONCURRENCY,
-    (artist) => artistPool(artist, 1, rand, signal),
+    (artist) => artistPool(artist, 1, rand, signal).then(withoutHidden),
   );
   const candidates = [...seedPool, ...similarPools.flat()];
 
@@ -326,7 +329,7 @@ export async function generateArtistMix(
   );
   const fallback =
     similarCapacity < MIX_TARGET / 2
-      ? await genreFallbackPool(seedPool, musicFolderIds, signal)
+      ? withoutHidden(await genreFallbackPool(seedPool, musicFolderIds, signal))
       : [];
   candidates.push(...fallback);
 

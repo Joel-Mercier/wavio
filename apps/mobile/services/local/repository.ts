@@ -671,6 +671,21 @@ export async function queryPlaylists(): Promise<PlaylistAggRow[]> {
   );
 }
 
+/** Playlists holding at least one of the artist's tracks, most of them first. */
+export async function queryPlaylistsByArtist(
+  artistKey: string,
+): Promise<PlaylistAggRow[]> {
+  const db = await getLocalLibraryDb();
+  return db.getAllAsync<PlaylistAggRow>(
+    `${PLAYLIST_AGG_SELECT}
+     GROUP BY p.id
+     HAVING SUM(t.resolved_artist_key = ?) > 0
+     ORDER BY SUM(t.resolved_artist_key = ?) DESC, p.name COLLATE NOCASE ASC`,
+    artistKey,
+    artistKey,
+  );
+}
+
 export async function queryPlaylistById(
   id: string,
 ): Promise<PlaylistAggRow | null> {

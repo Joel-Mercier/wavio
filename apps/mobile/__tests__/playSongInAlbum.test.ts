@@ -3,6 +3,7 @@
 // when the album can't be resolved.
 const mockGetAlbum = jest.fn();
 const mockPlayTracks = jest.fn();
+const mockRefuseHiddenPick = jest.fn();
 const mockAddRecentPlay = jest.fn();
 const mockGetQueryData = jest.fn();
 let mockOnline = true;
@@ -13,6 +14,7 @@ jest.mock("@/services/backend/browsing", () => ({
 
 jest.mock("@/services/player", () => ({
   playTracks: (...args: unknown[]) => mockPlayTracks(...args),
+  refuseHiddenPick: (...args: unknown[]) => mockRefuseHiddenPick(...args),
 }));
 
 jest.mock("@/services/network", () => ({
@@ -51,6 +53,7 @@ const song = { id: "s2", albumId: "al1", title: "911" } as Child;
 beforeEach(() => {
   mockGetAlbum.mockReset();
   mockPlayTracks.mockReset().mockReturnValue(true);
+  mockRefuseHiddenPick.mockReset().mockReturnValue(false);
   mockAddRecentPlay.mockReset();
   mockGetQueryData.mockReset().mockReturnValue(undefined);
   mockOnline = true;
@@ -69,6 +72,15 @@ describe("playSongInAlbum", () => {
       type: "album",
       coverArt: "cov",
     });
+  });
+
+  it("plays nothing in place of a hidden song", async () => {
+    mockRefuseHiddenPick.mockImplementation(
+      (track: { id: string }) => track.id === "s2",
+    );
+    await expect(playSongInAlbum(song)).resolves.toBe(true);
+    expect(mockPlayTracks).not.toHaveBeenCalled();
+    expect(mockAddRecentPlay).not.toHaveBeenCalled();
   });
 
   it("uses the cached album without a request", async () => {

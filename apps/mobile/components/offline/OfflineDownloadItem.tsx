@@ -9,7 +9,7 @@ import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import type { OfflineTrack } from "@/stores/offline";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { niceBytes } from "@/utils/fileSize";
 
 interface OfflineDownloadItemProps {
@@ -34,7 +34,7 @@ export default function OfflineDownloadItem({
         </FadeOutScaleDown>
         {item.coverArt ? (
           <Image
-            source={{ uri: artworkUrl(item.coverArt) }}
+            source={{ uri: artworkUrl(item.coverArt, ARTWORK_THUMB_SIZE) }}
             className="w-16 h-16 rounded-md aspect-square"
             alt="Track cover"
           />

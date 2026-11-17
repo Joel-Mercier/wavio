@@ -122,6 +122,9 @@ export function shouldPersistQuery(query: Query): boolean {
     // A generated mix is rerolled per visit; persisting each one would grow the
     // cache by a 50-track list per regenerate.
     query.queryKey[0] !== "mix" &&
+    // Derived from services/playlistArtistIndex, which persists on its own; a
+    // second persisted copy could only ever disagree with it.
+    query.queryKey[0] !== "artistPlaylists" &&
     !isEmptyLyricsLookup(query)
   );
 }

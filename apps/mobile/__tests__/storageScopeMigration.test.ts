@@ -169,6 +169,34 @@ describe("buildScopeRemap", () => {
   it("returns an empty remap for a fresh install", () => {
     expect(buildScopeRemap(undefined, []).size).toBe(0);
   });
+
+  // The servers store strips the slash at import, before this reads the blob,
+  // but the data on disk was keyed on the url as it was saved (issue #277).
+  it("maps scopes written while the url had a trailing slash", () => {
+    const slashed = legacyAuthScope(`${LAN}/`, "alice");
+    const orphan = legacyAuthScope(`${LAN}/`, "bob");
+    const remap = buildScopeRemap(remoteServers(), [slashed, orphan]);
+    expect(remap.get(slashed)).toBe(NEW);
+    expect(remap.get(OLD)).toBe(NEW);
+    expect(remap.get(orphan)).toBe("srv_1_bob");
+  });
+
+  it("keeps two servers saved as `x` and `x/` apart", () => {
+    const raw = serversBlob(
+      [
+        { id: "bare", url: LAN, type: "navidrome", name: "A" },
+        { id: "slash", url: `${LAN}/`, type: "navidrome", name: "B" },
+      ],
+      [
+        { serverId: "bare", username: "alice" },
+        { serverId: "slash", username: "alice" },
+      ],
+    );
+    const slashed = legacyAuthScope(`${LAN}/`, "alice");
+    const remap = buildScopeRemap(raw, [OLD, slashed]);
+    expect(remap.get(OLD)).toBe("bare_alice");
+    expect(remap.get(slashed)).toBe("slash_alice");
+  });
 });
 
 describe("runStorageScopeMigration", () => {
@@ -507,6 +535,10 @@ describe("resolveAuthServerId", () => {
       [],
     );
     expect(resolveAuthServerId("local", raw)).toBe("srv-local");
+  });
+
+  it("matches a url that differs only by a trailing slash", () => {
+    expect(resolveAuthServerId(`${LAN}/`, remoteServers())).toBe("srv-1");
   });
 
   it("returns null when no server matches", () => {

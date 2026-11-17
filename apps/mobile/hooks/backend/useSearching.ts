@@ -50,9 +50,7 @@ export const useSearch2 = (
 ) => {
   return useQuery({
     queryKey: ["search2", query, params],
-    queryFn: () => {
-      return search2WithKana(query, params);
-    },
+    queryFn: ({ signal }) => search2WithKana(query, { ...params, signal }),
   });
 };
 
@@ -80,9 +78,7 @@ export const useSearch3 = (
   const isOnline = useIsOnline();
   const serverQuery = useQuery({
     queryKey: ["search3", query, params],
-    queryFn: () => {
-      return search3WithKana(query, params);
-    },
+    queryFn: ({ signal }) => search3WithKana(query, { ...params, signal }),
     enabled: enabled && query.length > 0 && isOnline,
   });
   const offline = useOfflineSearch3(query, params, {

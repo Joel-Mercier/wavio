@@ -8,6 +8,7 @@ import type {
   OpenSubsonicExtensions,
 } from "@/services/openSubsonic/types";
 import { useAuthBase } from "@/stores/auth";
+import { normalizeServerUrl } from "@/utils/serverUrl";
 
 export const ping = async (opts?: { signal?: AbortSignal }) => {
   const rsp = await jellyfinApiInstance.get<{ Version?: string }>(
@@ -36,7 +37,7 @@ async function hasAudioMuseAi(): Promise<boolean> {
   const { url, jellyfinAccessToken } = useAuthBase.getState();
   if (!url || !jellyfinAccessToken) return false;
   try {
-    await axios.get(`${url.replace(/\/+$/, "")}/AudioMuseAI/info`, {
+    await axios.get(`${normalizeServerUrl(url)}/AudioMuseAI/info`, {
       headers: {
         Authorization: buildAuthorizationHeader(jellyfinAccessToken),
       },

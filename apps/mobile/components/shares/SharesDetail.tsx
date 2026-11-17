@@ -25,7 +25,7 @@ export default function SharesDetail() {
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
   const isWideLayout = useApp((s) => s.isWideLayout);
-  const { data, isLoading, error } = useGetShares();
+  const { data, error } = useGetShares();
   return (
     <Box className={cn("px-6 pb-6 h-full", isWideLayout ? "mb-6" : "mt-6")}>
       <HStack

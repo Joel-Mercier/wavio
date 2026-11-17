@@ -30,3 +30,15 @@ class SmbUnreachableException(message: String) :
 
 /** A path that isn't there, or isn't the kind of thing being asked for. */
 class SmbPathException(message: String) : SmbFailure("ERR_SMB_PATH", message)
+
+/** Signed in fine, but this user may not change the file. */
+class SmbReadOnlyException(message: String) :
+  SmbFailure("ERR_SMB_READ_ONLY", message)
+
+/** Another client has the file open in a way that keeps it from changing. */
+class SmbInUseException(message: String) :
+  SmbFailure("ERR_SMB_IN_USE", message)
+
+/** The server answered and refused, for a reason none of the above covers. */
+class SmbServerException(message: String) :
+  SmbFailure("ERR_SMB_SERVER", message)

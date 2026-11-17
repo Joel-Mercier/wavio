@@ -4,6 +4,10 @@ jest.mock("react-native-image-colors", () => ({
 }));
 jest.mock("@/services/serverHeaders", () => ({
   requestHeadersForUrl: () => ({}),
+  imageCacheKeyForUrl: (url: string) =>
+    url.startsWith("https://music.example.com/")
+      ? `server${url.slice("https://music.example.com".length).replace(/&t=[^&]*/, "")}`
+      : undefined,
 }));
 
 import { loadImageColors } from "@/hooks/useImageColors";
@@ -42,6 +46,17 @@ describe("loadImageColors", () => {
     expect(mockGetColors).toHaveBeenLastCalledWith(
       "https://feed.example/a.jpg",
       expect.objectContaining({ key: "http://feed.example/a.jpg" }),
+    );
+  });
+
+  it("caches a server cover under its credential-free key", async () => {
+    mockGetColors.mockResolvedValueOnce(colors);
+    await loadImageColors(
+      "https://music.example.com/rest/getCoverArt?id=1&t=abc",
+    );
+    expect(mockGetColors).toHaveBeenCalledWith(
+      "https://music.example.com/rest/getCoverArt?id=1&t=abc",
+      expect.objectContaining({ key: "server/rest/getCoverArt?id=1" }),
     );
   });
 

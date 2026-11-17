@@ -317,6 +317,22 @@ function pickDecade(
   return { decade, fromYear: decade, toYear: decade + 9 };
 }
 
+// Navidrome's byYear filter matches the recording year while the album `year`
+// it returns prefers the original year, so a 2016 reissue of a 1970 album lands
+// in the 2010s row labelled 1970 (issue #284). Keep the album year the decade
+// was picked from.
+export function albumsInYearRange(
+  albums: AlbumID3[] | undefined,
+  fromYear: number,
+  toYear: number,
+): AlbumID3[] | undefined {
+  const [low, high] =
+    fromYear <= toYear ? [fromYear, toYear] : [toYear, fromYear];
+  return albums?.filter(
+    (album) => !!album.year && album.year >= low && album.year <= high,
+  );
+}
+
 // "More from <artist>" for a compilation's album artist is "every compilation
 // on the server": thousands of albums on a large library, all fetched in one
 // getArtist and all rendered (issue #205). The OpenSubsonic flag is authoritative

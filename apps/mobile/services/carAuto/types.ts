@@ -1,21 +1,60 @@
+export type ContentStyle = "list" | "grid" | "categoryList" | "categoryGrid";
+
+export type CarIcon =
+  | "home"
+  | "library"
+  | "downloads"
+  | "recent"
+  | "favorites"
+  | "playlists"
+  | "albums"
+  | "artists"
+  | "genres"
+  | "radio"
+  | "mixes"
+  | "podcasts"
+  | "audiobooks"
+  | "songs"
+  | "search"
+  | "shuffle";
+
+export type ItemAction =
+  | "favoriteAdd"
+  | "favoriteRemove"
+  | "radio"
+  | "playNext"
+  | "addToQueue"
+  | "shuffle"
+  | "download";
+
+// The in-app placeholder glyph for an item without a usable cover.
+export type ArtFallback =
+  | "album"
+  | "artist"
+  | "playlist"
+  | "track"
+  | "radio"
+  | "podcast"
+  | "audiobook";
+
+export type DownloadState = "downloaded" | "downloading" | "notDownloaded";
+
 export type BrowseNode = {
   id: string;
   title: string;
   subtitle?: string;
   artworkUrl?: string;
-  // The mirrored copy of `artworkUrl`, when one exists on disk. Native prefers
-  // it (it becomes a content:// URI the car host can always read) and falls back
-  // to `artworkUrl` when the file is gone — the mirror lives in the reclaimable
-  // cache dir, while the tree snapshot that references it does not.
-  localArtworkUrl?: string;
+  artFallback?: ArtFallback;
   playable: boolean;
-  // UI hint for browsable nodes — "list" or "grid". Native maps this to the
-  // Android Auto content-style extras.
-  contentStyle?: "list" | "grid";
+  browsable?: boolean;
+  childrenStyle?: ContentStyle;
+  itemStyle?: ContentStyle;
+  groupTitle?: string;
+  icon?: CarIcon;
+  actions?: ItemAction[];
+  download?: DownloadState;
+  explicit?: boolean;
+  completion?: number;
 };
-
-// Flat parent→children map. Native looks up children by parentId; the root
-// children live under ROOT_ID. JS owns the entire hierarchy.
-export type BrowseTree = Record<string, BrowseNode[]>;
 
 export const ROOT_ID = "root";

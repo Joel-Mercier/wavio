@@ -5,6 +5,7 @@ import {
   topArtistNames,
 } from "@/services/mixes/artistMix";
 import { adaptiveArtistCap, curateMix } from "@/services/mixes/curate";
+import { withoutHidden } from "@/stores/hiddenTracks";
 
 // Over-fetched so the per-artist and per-album caps have room to work: a genre
 // dominated by a few prolific artists would otherwise leave a short mix.
@@ -19,7 +20,7 @@ export async function generateGenreMix(
     size: CANDIDATE_COUNT,
     musicFolderIds,
   });
-  const candidates = rsp.songs?.song ?? [];
+  const candidates = withoutHidden(rsp.songs?.song ?? []);
   const tracks = curateMix(
     candidates,
     {

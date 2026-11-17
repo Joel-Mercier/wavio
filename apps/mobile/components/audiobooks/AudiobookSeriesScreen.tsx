@@ -86,7 +86,11 @@ export default function AudiobookSeriesScreen() {
           }}
           ListHeaderComponent={
             series.data?.description ? (
-              <RichText className="text-md text-primary-50 px-6 mb-4">
+              <RichText
+                className="text-md text-primary-50"
+                containerClassName="px-6 mb-4"
+                collapsedLines={3}
+              >
                 {series.data.description}
               </RichText>
             ) : null

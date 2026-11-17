@@ -15,6 +15,8 @@ const NOTICE_KEY: Record<PlaybackNoticeCode, string> = {
   PLAYBACK_FORMAT_UNSUPPORTED: "app.player.notices.formatUnsupported",
   REMOTE_TRACK_REFUSED: "app.player.notices.remoteTrackRefused",
   REMOTE_LOST: "app.player.notices.remoteLost",
+  ALL_TRACKS_HIDDEN: "app.player.notices.allTracksHidden",
+  TRACK_HIDDEN: "app.player.notices.trackHidden",
 };
 
 export default function PlaybackNoticeToast() {
@@ -25,7 +27,7 @@ export default function PlaybackNoticeToast() {
 
   useEffect(() => {
     if (!notice) return;
-    showErrorToast(t(NOTICE_KEY[notice], params ?? undefined));
+    showErrorToast(t(NOTICE_KEY[notice], params ?? {}));
     // Clearing is what makes this fire once — `showErrorToast` is rebuilt every
     // render, so the effect re-runs freely and the guard above is what stops it.
     usePlaybackNotice.getState().clear();

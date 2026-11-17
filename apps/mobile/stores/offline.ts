@@ -58,6 +58,7 @@ export type OfflineTrack = {
   // source). Absent on downloads made before this existed.
   sourceSuffix?: string;
   sourceBitRate?: number;
+  sourceSamplingRate?: number;
   // The container the saved file actually is, recorded at download time. Used to
   // be derived by taking the extension off `path`, which stops being reliable
   // once a download can live in a user-picked folder: a SAF `content://` URI is

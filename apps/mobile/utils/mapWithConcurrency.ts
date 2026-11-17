@@ -1,7 +1,7 @@
 // Runs `task` over `items` with at most `limit` promises in flight at once, so a
 // large fan-out doesn't open dozens of simultaneous requests — which trips
 // server-side rate limits and returns HTTP 429 (see the Android Auto browse-tree
-// prefetch in services/carAuto/tree.ts). Results preserve input order, like
+// prefetch in the car browse providers). Results preserve input order, like
 // Promise.all. Rejections propagate; pass tasks that catch their own errors when
 // partial failures should not abort the whole batch.
 export async function mapWithConcurrency<T, R>(

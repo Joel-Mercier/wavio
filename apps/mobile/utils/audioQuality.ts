@@ -66,6 +66,8 @@ const CONTAINER_ALIASES: Record<string, string> = {
   m4a: "mp4",
   m4b: "mp4",
   mp4: "mp4",
+  // Jellyfin names a .m4b (or .mp4) source by its ffprobe container, `mov`.
+  mov: "mp4",
   alac: "mp4",
   oga: "ogg",
 };
@@ -101,6 +103,24 @@ const snapToLadder = (kbps: number | null): number | null => {
   return rung ?? kbps;
 };
 
+// Whether a reported bitrate is a lossless source's uncompressed rate (sample
+// rate × bits per sample × channels) rather than a measurement of the file.
+// Navidrome reports ALAC that way (1411 kbps for 16-bit 44.1 kHz stereo while
+// the file averages ~700), so comparing a copy against it reads every untouched
+// ALAC copy as downsampled. A lossy codec never lands on this grid: at 16 bits
+// per frame it would already be 705.6 kbps.
+const isUncompressedPcmBitRate = (
+  kbps: number,
+  sampleRate: number | undefined,
+): boolean => {
+  if (typeof sampleRate !== "number" || sampleRate <= 0) return false;
+  const bitsPerFrame = Math.round((kbps * 1000) / sampleRate / 8) * 8;
+  return (
+    bitsPerFrame >= 16 &&
+    Math.abs(kbps - (bitsPerFrame * sampleRate) / 1000) <= 1
+  );
+};
+
 export interface LocalFileTranscodeInfo extends TranscodeInfo {
   // Whether the comparison had evidence on both sides. Without it, an inactive
   // result means "nothing to compare", not "bit-exact", so the caller must not
@@ -134,7 +154,7 @@ const NOT_COMPARABLE: LocalFileTranscodeInfo = {
 export function localFileTranscodeInfo(
   track: QueueTrack | null,
   entry: { suffix: string | undefined; bytes: number } | null,
-  source?: { suffix?: string; bitRate?: number },
+  source?: { suffix?: string; bitRate?: number; samplingRate?: number },
 ): LocalFileTranscodeInfo {
   if (!isLibraryTrack(track) || !entry) {
     return NOT_COMPARABLE;
@@ -159,9 +179,15 @@ export function localFileTranscodeInfo(
     normalizeContainer(cachedFormat) != null &&
     normalizeContainer(format) != null &&
     normalizeContainer(cachedFormat) !== normalizeContainer(format);
+  // A lossless source can't be downsampled in place: every transcode the app
+  // asks for changes the container, which formatChanged already catches.
   const downsampled =
     sourceBitRate != null &&
     cachedBitRate != null &&
+    !isUncompressedPcmBitRate(
+      sourceBitRate,
+      source?.samplingRate ?? track.samplingRate,
+    ) &&
     cachedBitRate < sourceBitRate * CACHED_BITRATE_TOLERANCE;
 
   // What makes "no transcode detected" mean "bit-exact" rather than "nothing to

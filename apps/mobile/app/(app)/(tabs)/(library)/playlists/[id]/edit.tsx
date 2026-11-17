@@ -78,7 +78,11 @@ export default function EditPlaylistScreen() {
     },
     onSubmit: async ({ value }) => {
       doUpdatePlaylist.mutate(
-        { id, ...value },
+        {
+          id,
+          ...value,
+          comment: capabilities.playlistDescription ? value.comment : undefined,
+        },
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["playlist", id] });

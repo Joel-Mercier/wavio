@@ -91,6 +91,7 @@ jest.mock("@/services/network", () => ({
   getServerReachable: () => mockIsOnline(),
   getIsEffectivelyOnline: () => mockDeviceOnline() && mockIsOnline(),
   probeServer: jest.fn(),
+  subscribeRouteSwap: jest.fn(() => jest.fn()),
 }));
 
 // The backend-dispatch graph pulls in config/i18n, whose zod locale imports are

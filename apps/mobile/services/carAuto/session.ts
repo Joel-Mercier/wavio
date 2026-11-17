@@ -1,33 +1,6 @@
 import { AppRegistry, Platform } from "react-native";
 import i18n from "@/config/i18n";
 import {
-  getPlaybackSnapshot,
-  subscribePlaybackState,
-} from "@/hooks/player/playbackSnapshot";
-import { hasNetworkServerType } from "@/services/backend/serverTraits";
-import {
-  cachedCarArtwork,
-  clearCarArtworkCache,
-  ensureCarArtwork,
-  refreshCarArtworkIndex,
-} from "@/services/carAuto/artworkMirror";
-import {
-  CarAutoBridge,
-  type NowPlayingPayload,
-} from "@/services/carAuto/bridge";
-import { setupCarPlay, updateCarPlayTree } from "@/services/carAuto/carplay";
-import {
-  isCarConnected,
-  subscribeCarConnection,
-} from "@/services/carAuto/connection";
-import { handleBrowsePlay } from "@/services/carAuto/play";
-import {
-  buildBrowseTree,
-  getSnapshot,
-  loadOnDemandChildren,
-  localizeTreeArtwork,
-} from "@/services/carAuto/tree";
-import {
   getIsEffectivelyOnline,
   subscribeEffectiveOnline,
 } from "@/services/network";
@@ -35,62 +8,65 @@ import {
   configurePlayback,
   pause,
   play,
+  savePlaybackPosition,
+  seekBy,
   seekTo,
   skipNext,
   skipPrevious,
+  toggleCurrentTrackFavorite,
   togglePlayPause,
 } from "@/services/player";
+import { flushPlayQueue, initPlayQueueSync } from "@/services/playQueueSync";
 import {
   applyStartupLocale,
   hydratePlaybackStores,
 } from "@/services/startupHydration";
+import { useAudiobookshelfBase } from "@/stores/audiobookshelf";
 import {
   currentAuthScope,
   registerLogoutHandler,
   useAuthBase,
 } from "@/stores/auth";
-import usePodcasts, { podcastFavoritesForScope } from "@/stores/podcasts";
+import { useCarAutoBase } from "@/stores/carAuto";
+import useOffline from "@/stores/offline";
+import usePodcasts from "@/stores/podcasts";
 import useQueue from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
+import { radioFromCurrentTrack, runItemAction } from "./actions";
+import { startArtworkHeaders } from "./artwork";
+import { CarAutoBridge } from "./bridge";
+import {
+  cachedListing,
+  clearListings,
+  getChildren,
+  invalidateListings,
+} from "./browse";
+import { refreshCarPlay, setupCarPlay } from "./carplay";
+import { isCarConnected, subscribeCarConnection } from "./connection";
+import { startLabels } from "./labels";
+import { encodeMediaId } from "./mediaId";
+import {
+  pushAll,
+  pushError,
+  queueOffset,
+  startPlaybackMirror,
+} from "./nowPlaying";
+import { playMediaId } from "./play";
+import { ROOT_ID } from "./types";
+import { playFromSearch } from "./voice";
 
-// Bridges the app to Android Auto / CarPlay: pushes the browse tree, mirrors
-// now-playing + queue + playback state, and routes car intents back into the
-// player.
-//
-// This deliberately lives outside React. Android Auto binds the media service
-// without ever starting an Activity, so the JS runtime can boot with no UI at
-// all (see ReactHostBoot on the native side) — anything wired from a component
-// would never run in that case, and taps in the car would go nowhere. Started
-// from index.js so it covers every JS boot, headless or not.
+const IS_CARPLAY = Platform.OS === "ios";
+const CAR_SESSION_TASK = "WavioCarSession";
+const SEEK_STEP_SECONDS = 30;
+const REFRESH_DEBOUNCE_MS = 1500;
+const SEARCH_SETTLE_MS = 400;
 
-const REBUILD_DEBOUNCE_MS = 500;
-// How long a pushed tree is trusted before the next trigger is allowed to
-// rebuild it. The fingerprint below can only cover local state, but most of
-// what the tree shows comes from the server (home sections, playlists, starred)
-// and nothing notifies this process when the phone UI — or another client —
-// changes any of it. The TTL bounds how stale the car's view can get while
-// still collapsing the burst of triggers a single play produces.
-const REBUILD_TTL_MS = 5 * 60 * 1000;
-const PLAYBACK_PUSH_INTERVAL_MS = 1000;
-
-// Pairs with CarAutoLog on the native side: a headless session has no UI to
-// report from, so logcat is the only way to tell "did nothing" apart from
-// "chose to do nothing".
 const log = (message: string, error?: unknown) => {
   if (!__DEV__) return;
   if (error !== undefined) console.log(`[carauto] ${message}`, error);
   else console.log(`[carauto] ${message}`);
 };
 
-// Must match CarTimerHold.TASK_KEY on the native side.
-const CAR_SESSION_TASK = "WavioCarSession";
-
-// Native holds this task for as long as a car is connected (CarTimerHold.kt),
-// because an active headless task is RN's supported way to keep JS timers
-// running while no Activity is in the foreground — the normal state in a car.
-// It isn't enough on MIUI (timers froze with the task held and audio playing),
-// so this file's own waits go through CarAutoBridge.delay regardless. It
-// settles on disconnect, as native then finishes it too.
 const holdUntilCarDisconnects = () =>
   new Promise<void>((resolve) => {
     if (!CarAutoBridge.isCarConnected()) return resolve();
@@ -101,414 +77,195 @@ const holdUntilCarDisconnects = () =>
     });
   });
 
-type QueueEntry = ReturnType<typeof useQueue.getState>["queue"][number];
-
-// Prefer an already-mirrored copy of the cover. Unlike the browse tree, the
-// now-playing cover is loaded by media3's BitmapLoader *in this process*, so a
-// remote URL does work — until the server needs custom headers or a self-signed
-// certificate, neither of which that loader carries. A local file covers those
-// too, and is what the native side turns into a content:// URI for the host.
-// Answered from the mirror's in-memory index: this runs once per queue entry
-// on every queue push, so a stat per call is off the table. An entry the OS
-// reclaimed is caught by the verified lookup in mirrorNowPlayingArtwork, which
-// then re-mirrors the current track's cover and re-pushes.
-const carArtwork = (url: string | undefined): string | undefined =>
-  url ? (cachedCarArtwork(url) ?? url) : undefined;
-
-const trackToNowPlaying = (
-  track: QueueEntry | null,
-): NowPlayingPayload | null => {
-  if (!track) return null;
-  return {
-    id: track.id,
-    // Coerce empty strings (local files without tags/art) to undefined so the
-    // native car layer doesn't try to parse "" as an artwork URL.
-    title: track.title || undefined,
-    artist: track.artist || undefined,
-    album: track.album || undefined,
-    artworkUrl: carArtwork(track.artwork || undefined),
-    durationMs: Math.round((track.duration ?? 0) * 1000),
-  };
-};
-
-// Every section of the tree swallows its own errors, so a build that ran with
-// the server unreachable still returns a full set of tabs and section shells —
-// all of them empty. Pushing that would overwrite the native disk cache, which
-// is the only tree a cold car session has to show, with an unusable one. The
-// snapshot is populated exclusively from server responses, so it is the honest
-// test of whether the build actually got anything back.
-const builtNothing = () => {
-  const snap = getSnapshot();
-  return (
-    snap.tracks.size === 0 &&
-    snap.albums.size === 0 &&
-    snap.playlists.size === 0
-  );
-};
-
-// Fingerprint of everything buildBrowseTree() reads out of local state. The
-// store subscriptions below are unselective — they fire on every set(), and
-// most of those change nothing the tree renders — while a rebuild costs a burst
-// of server requests (album lists, playlists, starred, plus per-album and
-// per-artist prefetches). Cheap to compute, so compare before spending it.
-const rebuildSignature = () => {
-  const {
-    isAuthenticated,
-    serverId,
-    url,
-    username,
-    serverType,
-    subsonicSalt,
-    subsonicToken,
-    useTokenAuth,
-    password,
-    jellyfinAccessToken,
-  } = useAuthBase.getState();
-  const podcasts = usePodcasts.getState();
-  const podcastsEnabled = Boolean(
-    podcasts.taddyPodcastsApiKey && podcasts.taddyPodcastsUserId,
-  );
-  return JSON.stringify([
-    isAuthenticated,
-    serverId,
-    url,
-    username,
-    serverType,
-    // Every cover URL baked into the tree carries the session's credentials
-    // (`t`/`s`, or `p` when token auth is off — see utils/artwork.ts), and the
-    // salt is regenerated on every login while url/username stay identical.
-    // Without these, signing out and back in would keep a tree whose artwork
-    // all 401s.
-    subsonicSalt,
-    subsonicToken,
-    useTokenAuth,
-    password,
-    jellyfinAccessToken,
-    // The tree is built with translated section titles, so a locale change has
-    // to invalidate it.
-    i18n.language,
-    // Recent plays are deliberately absent. They feed the tree's "Recently
-    // played" tab, but they also change on every play, and a rebuild is a burst
-    // of server requests plus a walk over every track in every playlist — with
-    // large playlists that froze the JS thread for close to a minute each time
-    // the user pressed play on something new (issue #205). The recents
-    // subscription still fires; the TTL below decides when it may rebuild, so
-    // the car's recents lag the phone by at most REBUILD_TTL_MS.
-    podcastsEnabled,
-    podcastsEnabled
-      ? podcastFavoritesForScope(
-          podcasts.favoritePodcasts,
-          currentAuthScope(),
-        ).map((p) => [p.uuid, p.name, p.authorName, p.imageUrl])
-      : null,
-  ]);
-};
-
-let started = false;
-
-export function startCarAutoSession() {
-  if (started) return;
-  started = true;
-  void boot();
+async function answerChildren(parentId: string, fresh = false) {
+  const nodes = await getChildren(parentId, { fresh }).catch(() => null);
+  CarAutoBridge.setChildren(parentId, nodes);
 }
 
-async function boot() {
-  try {
-    await wire();
-  } catch (e) {
-    log("session wiring threw", e);
-  } finally {
-    // Releases any tap the car parked while this runtime was booting. It has to
-    // run even when the wiring above blew up: native gates every car intent on
-    // this call, so skipping it would leave the head unit permanently mute with
-    // no way back short of killing the process.
-    CarAutoBridge.notifyReady();
-  }
+async function prefetchTopLevel() {
+  const root = await getChildren(ROOT_ID).catch(() => null);
+  CarAutoBridge.setChildren(ROOT_ID, root);
+  for (const tab of root ?? []) void answerChildren(tab.id);
 }
 
-async function wire() {
-  if (Platform.OS === "ios") setupCarPlay();
-  if (!CarAutoBridge.available && Platform.OS !== "ios") return;
+// `purge` is for a change of account: the listings native holds belong to the
+// previous one, and serving them while JS refetches would show its library.
+function resetBrowse({ purge = false }: { purge?: boolean } = {}) {
+  clearListings();
+  if (IS_CARPLAY) return refreshCarPlay();
+  if (purge) CarAutoBridge.clearChildren();
+  else CarAutoBridge.invalidateChildren(null);
+  if (isCarConnected()) void prefetchTopLevel();
+}
 
-  CarAutoBridge.setVerbose(__DEV__);
+function refetchParents(ids: string[]) {
+  const opened = ids.filter((id) => cachedListing(id) !== undefined);
+  invalidateListings((id) => ids.includes(id));
+  CarAutoBridge.invalidateChildren(ids);
+  if (!isCarConnected()) return;
+  for (const id of opened) void answerChildren(id, true);
+}
 
-  // Before notifyReady (see boot), which is what lets native start it.
-  if (Platform.OS === "android") {
-    AppRegistry.registerHeadlessTask(
-      CAR_SESSION_TASK,
-      () => holdUntilCarDisconnects,
-    );
-  }
+let refreshRequest = 0;
+const pendingRefresh = new Set<string>();
 
-  // The mirrored covers belong to the server being left, and every one is
-  // re-derivable — same reasoning as the lock screen's mirror in
-  // services/player.ts.
-  registerLogoutHandler(clearCarArtworkCache);
-
-  // A headless boot renders nothing under app/, so the startup work the React
-  // tree normally owns has to happen here: the saved locale (or the tree would
-  // be English, and setNodes would overwrite the native disk cache with it), the
-  // scoped stores playback reads from, and the audio mode that keeps playback
-  // alive in the background. All are no-ops once the UI has done them.
-  // Individually guarded: a failure in any of them must still leave the car
-  // listeners below registered, degraded rather than dead.
-  await Promise.allSettled([
-    Promise.resolve().then(() => applyStartupLocale()),
-    hydratePlaybackStores(),
-    configurePlayback(),
-  ]);
-
-  // Bumped to cancel: a pending debounce only fires if no newer request (or a
-  // disconnect) came after it.
-  let rebuildRequest = 0;
-  // Only ever set after a *complete* tree was actually pushed, so a build that
-  // failed, came back empty or came back partial (offline, server unreachable,
-  // a section that timed out) stays retryable.
-  let pushedSignature: string | null = null;
-  let pushedAt = 0;
-  let building = false;
-  let rebuildQueued = false;
-  // Bumped on every push. The artwork mirror below runs after the tree is
-  // already in the car's hands and can easily outlive it (hundreds of covers vs
-  // a rebuild triggered by a track change), so its re-push has to prove the tree
-  // it localised is still the current one.
-  let treeGeneration = 0;
-
-  const rebuild = () => {
-    const request = ++rebuildRequest;
-    void CarAutoBridge.delay(REBUILD_DEBOUNCE_MS).then(() => {
-      if (request === rebuildRequest) void runRebuild();
-    });
-  };
-
-  const runRebuild = async () => {
-    // The debounce only delays the *start* of a build; the build itself is
-    // dozens of sequential requests and routinely outlives the next trigger.
-    // Two of them running at once would interleave their writes to the shared
-    // snapshot play.ts resolves taps against, and could push the older tree
-    // last — so serialize, and re-run once for whatever arrived meanwhile.
-    if (building) {
-      rebuildQueued = true;
-      return;
-    }
-    // The browse tree, its cover mirror and the position pulse only matter to a
-    // car that is there to show them. Building the tree is a burst of server
-    // requests and hundreds of cover downloads, which every launch used to pay
-    // with no car in sight (issue #205).
-    if (!isCarConnected()) return log("rebuild skipped: no car connected");
-    const { isAuthenticated, url, username, serverType } =
-      useAuthBase.getState();
-    // The on-device library has no url/username, so gate on the session
-    // being authenticated and only require credentials for remote servers.
-    if (!isAuthenticated) return log("rebuild skipped: not authenticated");
-    if (hasNetworkServerType(serverType) && (!url || !username)) {
-      return log("rebuild skipped: no credentials");
-    }
-    const signature = rebuildSignature();
-    if (
-      signature === pushedSignature &&
-      Date.now() - pushedAt < REBUILD_TTL_MS
-    ) {
-      return;
-    }
-    building = true;
-    try {
-      log("rebuild: building tree");
-      // One directory listing now, instead of a stat per node while building.
-      refreshCarArtworkIndex();
-      const build = await buildBrowseTree().catch((e) => {
-        log("buildBrowseTree threw", e);
-        return null;
-      });
-      if (!build) return;
-      // Silence here would be indistinguishable from a build that never
-      // finished — and this guard dropping a good tree is the one way it can be
-      // wrong, so it has to say so.
-      if (builtNothing()) return log("rebuild skipped: build returned nothing");
-      log("rebuild: pushing tree");
-      // A partial tree is still worth pushing — it beats the stale native disk
-      // cache — but it must not pin its signature, or the sections the server
-      // failed to answer would stay empty for the life of the process.
-      if (build.complete) {
-        pushedSignature = signature;
-        pushedAt = Date.now();
-      } else {
-        pushedSignature = null;
-        log("rebuild: build incomplete, staying retryable");
-      }
-      const generation = ++treeGeneration;
-      if (CarAutoBridge.available) CarAutoBridge.setNodes(build.tree);
-      if (Platform.OS === "ios") updateCarPlayTree(build.tree);
-      // Deliberately after the push and not awaited: the car gets a usable tree
-      // immediately, and covers land as they're mirrored. Blocking the push on a
-      // few hundred image fetches would leave a cold car session staring at an
-      // empty screen for as long as they take.
-      void localizeTreeArtwork(build.tree)
-        .then((changed) => {
-          if (!changed || generation !== treeGeneration) return;
-          log("rebuild: re-pushing tree with local artwork");
-          if (CarAutoBridge.available) CarAutoBridge.setNodes(build.tree);
-          if (Platform.OS === "ios") updateCarPlayTree(build.tree);
-        })
-        .catch((e) => log("localizeTreeArtwork threw", e));
-    } finally {
-      building = false;
-      if (rebuildQueued) {
-        rebuildQueued = false;
-        rebuild();
-      }
-    }
-  };
-
-  useAuthBase.subscribe(rebuild);
-  useRecentPlays.subscribe(rebuild);
-  usePodcasts.subscribe(rebuild);
-  i18n.on("languageChanged", rebuild);
-  subscribeEffectiveOnline(() => {
-    // Connectivity is invisible to the fingerprint, so a tree built while the
-    // server was unreachable would otherwise never be repaired. Drop it on the
-    // way back up and rebuild from a server that can actually answer.
-    if (!getIsEffectivelyOnline()) return;
-    pushedSignature = null;
-    rebuild();
-  });
-
-  // === Mirror current track + queue + playback state to native ===
-  let lastTrackId: string | null = null;
-  let lastQueueSig: string | null = null;
-  let lastQueueIndex: number | null = null;
-  // One fetch per track change, and only when the cover isn't mirrored already.
-  // Re-pushes so the head unit swaps the remote URL it was given for the local
-  // file — the only artwork that survives a server it can't authenticate to.
-  const mirrorNowPlayingArtwork = async (track: QueueEntry | null) => {
+function refreshParents(matches: (parentId: string) => boolean, ids: string[]) {
+  invalidateListings(matches);
+  if (IS_CARPLAY) return;
+  for (const id of ids) pendingRefresh.add(id);
+  const request = ++refreshRequest;
+  void CarAutoBridge.delay(REFRESH_DEBOUNCE_MS).then(() => {
+    if (request !== refreshRequest) return;
+    const parents = [...pendingRefresh];
+    pendingRefresh.clear();
+    CarAutoBridge.invalidateChildren(parents);
     if (!isCarConnected()) return;
-    const remote = track?.artwork;
-    if (!remote || cachedCarArtwork(remote, { verify: true })) return;
-    const local = await ensureCarArtwork(remote).catch(() => undefined);
-    if (!local) return;
-    // The track moved on while the fetch was in flight; the push this would
-    // refresh is no longer the one on screen.
-    if (useQueue.getState().getCurrent()?.id !== track?.id) return;
-    CarAutoBridge.setNowPlaying(trackToNowPlaying(track));
-  };
+    for (const parentId of parents) void answerChildren(parentId, true);
+  });
+}
 
-  const pushNowPlaying = () => {
-    if (!CarAutoBridge.available) return;
-    const current = useQueue.getState().getCurrent();
-    const id = current?.id ?? null;
-    if (id === lastTrackId) return;
-    lastTrackId = id;
-    CarAutoBridge.setNowPlaying(trackToNowPlaying(current));
-    void mirrorNowPlayingArtwork(current);
-  };
+function wireBrowse() {
+  CarAutoBridge.onChildrenRequest((parentId) => {
+    void answerChildren(parentId);
+  });
 
-  const pushQueue = () => {
-    if (!CarAutoBridge.available) return;
-    const q = useQueue.getState();
-    const tracks = q.queue
-      .map(trackToNowPlaying)
-      .filter((t): t is NowPlayingPayload => t != null);
-    const idx = q.currentIndex ?? 0;
-    // Only re-push the full track list when its contents actually changed;
-    // a plain skip just moves the cursor on the already-mirrored queue.
-    const sig = tracks.map((t) => t.id).join("|");
-    if (sig !== lastQueueSig) {
-      lastQueueSig = sig;
-      lastQueueIndex = idx;
-      CarAutoBridge.setQueue({ tracks, currentIndex: idx });
-      return;
+  // The car asks on every keystroke. Only a query the driver stopped typing
+  // at reaches the server; the ones typed past are answered empty at once, or
+  // native would keep them pending and never ask JS for that text again.
+  let latestSearch = "";
+  CarAutoBridge.onSearchRequest(async (query) => {
+    latestSearch = query;
+    const parentId = encodeMediaId({ kind: "search", query });
+    if (!cachedListing(parentId)) {
+      await CarAutoBridge.delay(SEARCH_SETTLE_MS);
+      if (latestSearch !== query) {
+        CarAutoBridge.setSearchResults(query, []);
+        return;
+      }
     }
-    if (idx !== lastQueueIndex) {
-      lastQueueIndex = idx;
-      CarAutoBridge.setQueueIndex(idx);
-    }
-  };
-
-  const pushPlaybackState = () => {
-    if (!CarAutoBridge.available) return;
-    const snap = getPlaybackSnapshot();
-    const q = useQueue.getState();
-    const repeatMode = q.repeatMode;
-    CarAutoBridge.setPlaybackState({
-      isPlaying: snap.playing,
-      positionMs: Math.round((snap.currentTime ?? 0) * 1000),
-      shuffle: q.shuffle,
-      repeatMode,
+    const nodes = await getChildren(parentId).catch((e) => {
+      log("search failed", e);
+      return null;
     });
-  };
+    CarAutoBridge.setSearchResults(query, nodes);
+  });
 
-  pushNowPlaying();
-  pushQueue();
-  pushPlaybackState();
-
-  useQueue.subscribe((state, prev) => {
-    const curId =
-      state.currentIndex != null ? state.queue[state.currentIndex]?.id : null;
-    const prevId =
-      prev.currentIndex != null ? prev.queue[prev.currentIndex]?.id : null;
-    if (curId !== prevId) pushNowPlaying();
+  let scope = currentAuthScope();
+  useAuthBase.subscribe((state, prev) => {
+    const next = currentAuthScope();
     if (
-      state.queue !== prev.queue ||
-      state.currentIndex !== prev.currentIndex
+      next !== scope ||
+      state.isAuthenticated !== prev.isAuthenticated ||
+      state.serverType !== prev.serverType
     ) {
-      pushQueue();
+      scope = next;
+      resetBrowse({ purge: true });
     }
+  });
+  useCarAutoBase.subscribe(() => resetBrowse());
+  i18n.on("languageChanged", () => resetBrowse());
+  subscribeEffectiveOnline(() => {
+    if (getIsEffectivelyOnline()) resetBrowse();
+  });
+
+  const sectionId = (
+    key: "recent" | "downloads" | "podcasts" | "library" | "audiobooks",
+  ) => encodeMediaId({ kind: "section", key });
+  useRecentPlays.subscribe((state, prev) => {
+    if (state.recentPlays === prev.recentPlays) return;
+    refreshParents(
+      (id) =>
+        id === sectionId("recent") ||
+        id.startsWith("row:mixes") ||
+        id === encodeMediaId({ kind: "section", key: "mixes" }),
+      [sectionId("recent")],
+    );
+  });
+  useOffline.subscribe((state, prev) => {
     if (
-      state.shuffle !== prev.shuffle ||
-      state.repeatMode !== prev.repeatMode
+      state.downloadedCollections === prev.downloadedCollections &&
+      state.downloadedTracks === prev.downloadedTracks
     ) {
-      pushPlaybackState();
-    }
-  });
-
-  CarAutoBridge.onPlay(async (mediaId, parentId) => {
-    const played = await handleBrowsePlay(mediaId, parentId);
-    if (played) return;
-    // Native flips the proxy player to the tapped item optimistically, so a tap
-    // we couldn't resolve (signed out, offline, unknown id) would leave the head
-    // unit sitting on a phantom playing track. Push the real state back.
-    lastTrackId = null;
-    pushNowPlaying();
-    pushPlaybackState();
-  });
-
-  CarAutoBridge.onChildrenRequest(async (parentId) => {
-    const nodes = await loadOnDemandChildren(parentId);
-    CarAutoBridge.setChildren(parentId, nodes);
-  });
-
-  // Unconditional, unlike the pulse below: the native mirror seeds the car
-  // session from these pushes when a host binds later (issue #161).
-  subscribePlaybackState(pushPlaybackState);
-
-  // Position pulse so the car's timeline keeps advancing even though we don't
-  // drive a real Player. Bumping `pulseRun` ends the running loop.
-  let pulseRun = 0;
-  const runPulse = async (run: number) => {
-    while (run === pulseRun) {
-      pushPlaybackState();
-      await CarAutoBridge.delay(PLAYBACK_PUSH_INTERVAL_MS);
-    }
-  };
-
-  const onCarConnection = (connected: boolean) => {
-    log(`car connected=${connected}`);
-    if (!connected) {
-      pulseRun++;
-      rebuildRequest++;
       return;
     }
-    // Straight to the build: a connect is a single event, with nothing to
-    // coalesce.
-    void runRebuild();
-    void runPulse(++pulseRun);
-    void mirrorNowPlayingArtwork(useQueue.getState().getCurrent());
-  };
+    const downloads = [
+      encodeMediaId({ kind: "downloads", of: "albums" }),
+      encodeMediaId({ kind: "downloads", of: "playlists" }),
+      encodeMediaId({ kind: "downloads", of: "songs" }),
+    ];
+    refreshParents(
+      (id) => id.startsWith("downloads:") || id.startsWith("offline:"),
+      downloads.filter((id) => cachedListing(id) !== undefined),
+    );
+  });
+  usePodcasts.subscribe((state, prev) => {
+    if (state.favoritePodcasts === prev.favoritePodcasts) return;
+    refreshParents(
+      (id) => id === sectionId("podcasts") || id === ROOT_ID,
+      [sectionId("podcasts"), ROOT_ID],
+    );
+  });
+  // Audiobooks is only offered while an Audiobookshelf server is signed in.
+  useAudiobookshelfBase.subscribe((state, prev) => {
+    if (
+      state.isConnected === prev.isConnected &&
+      state.serverUrl === prev.serverUrl &&
+      state.libraryId === prev.libraryId
+    ) {
+      return;
+    }
+    const audiobooks = sectionId("audiobooks");
+    const listings = [ROOT_ID, sectionId("library")];
+    refreshParents(
+      (id) => id === audiobooks || listings.includes(id),
+      cachedListing(audiobooks) ? [...listings, audiobooks] : listings,
+    );
+  });
+}
 
-  subscribeCarConnection(onCarConnection);
-  if (isCarConnected()) onCarConnection(true);
+function wirePlayback() {
+  // Native shows the tapped row and empties its queue the moment it is tapped,
+  // so the mirror is re-sent whole even when nothing changed on this side.
+  CarAutoBridge.onPlay(async (mediaId) => {
+    await playMediaId(mediaId);
+    pushAll();
+  });
 
-  // === Transport events from AA → drive expo-audio ===
+  CarAutoBridge.onPlaySearch(async (request) => {
+    const { query, ...hints } = request;
+    log(`voice "${query}"`);
+    const played = await playFromSearch(query, hints);
+    if (played) {
+      pushError(true);
+      return;
+    }
+    pushAll();
+    CarAutoBridge.setError({
+      code: "setup",
+      message: i18n.t("app.carAuto.errors.noResults", { query }),
+      transient: true,
+    });
+  });
+
+  CarAutoBridge.onItemAction(async (requestId, action, mediaId) => {
+    const result = await runItemAction(action, mediaId);
+    const stale = result.staleParents ?? [];
+    const patched = (result.changedParents ?? []).filter(
+      (parentId) => !stale.includes(parentId),
+    );
+    for (const parentId of patched) {
+      const listing = cachedListing(parentId);
+      if (listing) CarAutoBridge.setChildren(parentId, listing.nodes);
+    }
+    if (stale.length > 0) refetchParents(stale);
+    CarAutoBridge.answerAction(requestId, {
+      ok: result.ok,
+      message: result.message,
+      refreshItem: patched.length ? mediaId : undefined,
+      showPlaying: result.showPlaying,
+    });
+  });
+
   CarAutoBridge.onTransport((event) => {
     log(`transport ${event.action}`);
     switch (event.action) {
@@ -525,15 +282,19 @@ async function wire() {
         skipPrevious();
         break;
       case "seek":
-        seekTo((event.value ?? 0) / 1000);
+        seekTo(event.value / 1000);
+        break;
+      case "seekBack":
+        seekBy(-SEEK_STEP_SECONDS);
+        break;
+      case "seekForward":
+        seekBy(SEEK_STEP_SECONDS);
         break;
       case "seekToIndex": {
-        const idx = Math.round(event.value ?? 0);
-        const q = useQueue.getState();
-        // Jump within the existing queue — replaying it would rebuild the
-        // order the car is displaying (and re-randomise it under shuffle).
-        if (q.queue[idx]) {
-          q.setCurrentIndex(idx);
+        const index = queueOffset() + Math.round(event.value);
+        const queue = useQueue.getState();
+        if (queue.queue[index]) {
+          queue.setCurrentIndex(index);
           play();
         }
         break;
@@ -544,10 +305,98 @@ async function wire() {
       case "repeat":
         useQueue.getState().setRepeatMode(event.value);
         break;
+      case "favorite":
+        void toggleCurrentTrackFavorite();
+        break;
+      case "radio":
+        void radioFromCurrentTrack().then((started) => {
+          if (started) return;
+          CarAutoBridge.setError({
+            code: "setup",
+            message: i18n.t("app.carAuto.errors.radioUnavailable"),
+            transient: true,
+          });
+        });
+        break;
       default:
-        // Defensive — togglePlayPause for unknown signals if AA ever sends a
-        // bare action.
         togglePlayPause();
     }
   });
+}
+
+function wireConnection() {
+  const onCarConnection = (connected: boolean) => {
+    log(`car connected=${connected}`);
+    if (!connected) return;
+    CarAutoBridge.invalidateChildren(null);
+    pushAll();
+    void prefetchTopLevel();
+  };
+  subscribeCarConnection(onCarConnection);
+  if (isCarConnected()) onCarConnection(true);
+}
+
+// A headless boot mounts nothing under app/, which is what otherwise starts
+// queue sync and flushes it on leaving. Without this a queue played in the car
+// never reaches the server, and the server's older one replaces it the first
+// time the app is opened (issue #285). Started on connect rather than at boot
+// so a phone launch keeps waiting for app/'s TLS setup before its restore.
+function wireQueueSync() {
+  const onCarConnection = (connected: boolean) => {
+    if (connected) {
+      if (useAuthBase.getState().isAuthenticated) void initPlayQueueSync();
+      return;
+    }
+    savePlaybackPosition();
+    flushPlayQueue();
+  };
+  subscribeCarConnection(onCarConnection);
+  if (isCarConnected()) onCarConnection(true);
+}
+
+async function wire() {
+  if (!CarAutoBridge.available && !IS_CARPLAY) return;
+
+  if (CarAutoBridge.available) {
+    CarAutoBridge.setVerbose(__DEV__);
+    AppRegistry.registerHeadlessTask(
+      CAR_SESSION_TASK,
+      () => holdUntilCarDisconnects,
+    );
+  }
+
+  await Promise.allSettled([
+    Promise.resolve().then(() => applyStartupLocale()),
+    hydratePlaybackStores(),
+    configurePlayback(),
+  ]);
+
+  wireBrowse();
+  wireQueueSync();
+  if (IS_CARPLAY) {
+    setupCarPlay();
+    return;
+  }
+  registerLogoutHandler(() => CarAutoBridge.clearArtworkCache());
+  startLabels();
+  startArtworkHeaders();
+  startPlaybackMirror();
+  wirePlayback();
+  wireConnection();
+}
+
+let started = false;
+
+export function startCarAutoSession() {
+  if (started) return;
+  started = true;
+  void (async () => {
+    try {
+      await wire();
+    } catch (e) {
+      log("session wiring threw", e);
+    } finally {
+      CarAutoBridge.notifyReady();
+    }
+  })();
 }

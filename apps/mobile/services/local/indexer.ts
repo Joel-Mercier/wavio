@@ -627,16 +627,7 @@ export async function scanLibrary(
     if (removable.length > 0) {
       await db.withTransactionAsync(async () => {
         for (const { id, ftsRowid } of removable) {
-          await deleteFtsRow(db, id, ftsRowid);
-          await db.runAsync("DELETE FROM tracks WHERE id = ?", id);
-          // Unlike track_stats (which is left dangling so a returning file keeps
-          // its play count), a tag correction is meaningless without the file it
-          // corrects — and leaving it would silently re-apply to a *different*
-          // file that later hashes to the same URI-derived id.
-          await db.runAsync(
-            "DELETE FROM track_tag_overrides WHERE track_id = ?",
-            id,
-          );
+          await removeTrackRows(db, id, ftsRowid);
         }
       });
       result.removed = removable.length;
@@ -715,15 +706,59 @@ export async function deleteTracksByFolders(
       ...folders,
     );
     for (const { id, fts_rowid } of ids) {
-      await deleteFtsRow(db, id, fts_rowid);
-      await db.runAsync("DELETE FROM tracks WHERE id = ?", id);
+      await removeTrackRows(db, id, fts_rowid, { keepTagOverrides: true });
     }
     removed = ids.length;
   });
   return removed;
 }
 
+/**
+ * Delete indexed tracks by id, with their FTS shadow rows and tag corrections —
+ * the same removal the prune does, for files the app itself just deleted, so
+ * the index reflects it without a rescan. Play counts stay, as they do there.
+ */
+export async function deleteTracksByIds(
+  db: Awaited<ReturnType<typeof getLocalLibraryDb>>,
+  ids: string[],
+): Promise<void> {
+  if (ids.length === 0) return;
+  const placeholders = ids.map(() => "?").join(", ");
+  await db.withTransactionAsync(async () => {
+    const rows = await db.getAllAsync<{ id: string; fts_rowid: number | null }>(
+      `SELECT id, fts_rowid FROM tracks WHERE id IN (${placeholders})`,
+      ...ids,
+    );
+    for (const { id, fts_rowid } of rows) {
+      await removeTrackRows(db, id, fts_rowid);
+    }
+  });
+}
+
 // --- internals -------------------------------------------------------------
+
+/**
+ * Forget one indexed track: its row, its FTS shadow row and its tag correction.
+ * Call inside a transaction. Play counts (track_stats) are left dangling on
+ * purpose, so a file that comes back keeps its history.
+ *
+ * A tag correction is meaningless without the file it corrects, and leaving it
+ * would silently re-apply to a *different* file that later hashes to the same
+ * URI-derived id. `keepTagOverrides` is for a folder dropped from the library
+ * config: if it is added back, the same URIs return as the same files, and
+ * their corrections should come with them.
+ */
+async function removeTrackRows(
+  db: Awaited<ReturnType<typeof getLocalLibraryDb>>,
+  id: string,
+  ftsRowid: number | null,
+  { keepTagOverrides = false }: { keepTagOverrides?: boolean } = {},
+): Promise<void> {
+  await deleteFtsRow(db, id, ftsRowid);
+  await db.runAsync("DELETE FROM tracks WHERE id = ?", id);
+  if (keepTagOverrides) return;
+  await db.runAsync("DELETE FROM track_tag_overrides WHERE track_id = ?", id);
+}
 
 /**
  * Walk one configured root, listing up to `source.listConcurrency` directories

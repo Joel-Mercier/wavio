@@ -131,3 +131,105 @@ describe("webdavFileSource.list", () => {
     ]);
   });
 });
+
+describe("webdavFileSource.delete", () => {
+  it("sends DELETE to the file's URL with the share's headers", async () => {
+    answers(204);
+    await webdavFileSource.delete("webdav:/Album/01 a.flac");
+    expect(mockRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: "DELETE",
+        url: "https://dav.example.com/remote.php/dav/files/joel/Album/01%20a.flac",
+        headers: { Authorization: "Basic xxx" },
+      }),
+    );
+  });
+
+  // The end state already holds.
+  it.each([404, 410])("treats HTTP %i as deleted", async (status) => {
+    answers(status);
+    await expect(
+      webdavFileSource.delete("webdav:/Album/a.flac"),
+    ).resolves.toBeUndefined();
+  });
+
+  // copyparty answers 400 "file not found on disk (already deleted?)".
+  it("treats a 400 for a file that is gone as deleted", async () => {
+    mockRequest
+      .mockResolvedValueOnce({ status: 400, data: "already deleted?" })
+      .mockResolvedValueOnce({ status: 404, data: "" });
+    await expect(
+      webdavFileSource.delete("webdav:/Album/a.flac"),
+    ).resolves.toBeUndefined();
+    expect(mockRequest).toHaveBeenLastCalledWith(
+      expect.objectContaining({ method: "PROPFIND" }),
+    );
+  });
+
+  it("still fails a 400 for a file that is there", async () => {
+    mockRequest
+      .mockResolvedValueOnce({ status: 400, data: "bad request" })
+      .mockResolvedValueOnce({ status: 207, data: MULTISTATUS });
+    await expect(
+      webdavFileSource.delete("webdav:/Album/a.flac"),
+    ).rejects.toBeDefined();
+  });
+
+  // Unlike a listing, where a 403 is a credentials problem.
+  it.each([403, 405, 423])("reports HTTP %i as read-only", async (status) => {
+    answers(status);
+    await expect(
+      webdavFileSource.delete("webdav:/Album/a.flac"),
+    ).rejects.toMatchObject({ code: "ERR_FS_READ_ONLY" });
+  });
+
+  it.each([
+    [401, "ERR_FS_AUTH"],
+    [500, "ERR_FS_SERVER"],
+  ])("maps HTTP %i to %s", async (status, code) => {
+    answers(status);
+    await expect(
+      webdavFileSource.delete("webdav:/Album/a.flac"),
+    ).rejects.toMatchObject({ code });
+  });
+
+  const multiStatus = (...statuses: string[]) =>
+    mockRequest.mockResolvedValue({
+      status: 207,
+      data: `<?xml version="1.0"?><d:multistatus xmlns:d="DAV:">${statuses
+        .map(
+          (status) =>
+            `<d:response><d:href>/a.flac</d:href><d:status>${status}</d:status></d:response>`,
+        )
+        .join("")}</d:multistatus>`,
+    });
+
+  // A 207 carries its real outcome in the body, refusals included.
+  it("reads a refusal out of a 207 Multi-Status", async () => {
+    multiStatus("HTTP/1.1 423 Locked");
+    await expect(
+      webdavFileSource.delete("webdav:/Album/a.flac"),
+    ).rejects.toMatchObject({ code: "ERR_FS_READ_ONLY" });
+  });
+
+  it("accepts a 207 whose every status is a success", async () => {
+    multiStatus("HTTP/1.1 204 No Content", "HTTP/1.1 404 Not Found");
+    await expect(
+      webdavFileSource.delete("webdav:/Album/a.flac"),
+    ).resolves.toBeUndefined();
+  });
+
+  it("doesn't trust a 207 it can't read", async () => {
+    mockRequest.mockResolvedValue({ status: 207, data: "" });
+    await expect(
+      webdavFileSource.delete("webdav:/Album/a.flac"),
+    ).rejects.toMatchObject({ code: "ERR_FS_SERVER" });
+  });
+
+  it("treats a delete that got no response as unreachable", async () => {
+    mockRequest.mockRejectedValue(new Error("ECONNREFUSED"));
+    await expect(
+      webdavFileSource.delete("webdav:/Album/a.flac"),
+    ).rejects.toMatchObject({ code: "ERR_FS_UNREACHABLE" });
+  });
+});

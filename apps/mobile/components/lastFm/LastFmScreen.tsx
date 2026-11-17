@@ -365,8 +365,7 @@ export default function LastFmScreen() {
                 </Text>
                 {lovedTracks.data.items.map((track, index) => (
                   <VStack
-                    // Neither half is unique on its own, and an account can love
-                    // two recordings of the same song, so position completes it.
+                    // biome-ignore lint/suspicious/noArrayIndexKey: neither half is unique on its own, and an account can love two recordings of the same song, so position completes it
                     key={`${track.artist}-${track.name}-${index}`}
                     className="gap-y-0.5"
                   >

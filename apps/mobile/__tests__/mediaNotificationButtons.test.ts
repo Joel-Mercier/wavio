@@ -99,6 +99,7 @@ jest.mock("@/services/network", () => ({
   getServerReachable: () => true,
   getIsEffectivelyOnline: () => true,
   probeServer: jest.fn(),
+  subscribeRouteSwap: jest.fn(() => jest.fn()),
 }));
 
 jest.mock("@/config/i18n", () => ({

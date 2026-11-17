@@ -303,12 +303,13 @@ export async function folderScopedRequest<T>(
     ...params
   }: Record<string, unknown> & { musicFolderIds?: string[] },
   emptyPayload: T,
+  { signal }: { signal?: AbortSignal } = {},
 ): Promise<OpenSubsonicResponse<T>["subsonic-response"]> {
   try {
     return await subsonicRequest<T>(
       path,
       { ...params, musicFolderId: musicFolderIds },
-      { paramsSerializer: { indexes: null } },
+      { paramsSerializer: { indexes: null }, signal },
       {
         notFoundIsExpected: true,
       },

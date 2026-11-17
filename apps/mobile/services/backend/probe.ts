@@ -131,7 +131,22 @@ async function probeJellyfin(
       Authorization: buildAuthorizationHeader(jellyfinAccessToken),
     },
   });
-  return response.status === 200 && !!response.data?.Version;
+  const version = response.data?.Version;
+  if (response.status !== 200 || typeof version !== "string" || !version) {
+    return false;
+  }
+  noteJellyfinVersion(version, jellyfinAccessToken);
+  return true;
+}
+
+// The probe is the only Jellyfin call that reads the server version on every
+// cold start and server switch, and version-gated behaviour (the search
+// fallback) depends on it. The token check keeps a probe that outlives a server
+// switch from stamping the previous server's version onto the new session.
+function noteJellyfinVersion(version: string, probedWith: string | null) {
+  const state = useAuthBase.getState();
+  if (state.jellyfinAccessToken !== probedWith) return;
+  if (state.serverVersion !== version) state.setServerVersion(version);
 }
 
 // A `PROPFIND` with `Depth: 0` on the share root, requiring a 207 whose body

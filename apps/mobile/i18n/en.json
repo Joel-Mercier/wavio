@@ -274,21 +274,105 @@
 				}
 			},
 			"carAuto": {
-				"home": "Home",
-				"recentlyPlayed": "Recently played",
-				"recentlyAdded": "Recently added",
-				"mostPlayed": "Most played",
-				"topRated": "Top rated",
-				"random": "Random",
-				"library": "Library",
-				"playlists": "Playlists",
-				"albums": "Albums",
-				"podcasts": "Podcasts",
-				"favorites": "Favorites",
+				"unknownTitle": "Unknown title",
 				"songCount_one": "{{count}} song",
-				"songCount_other": "{{count}} songs"
+				"songCount_other": "{{count}} songs",
+				"albumCount_one": "{{count}} album",
+				"albumCount_other": "{{count}} albums",
+				"offlineNotice": "Can't reach the server",
+				"offlineNoticeSubtitle": "Browse your downloads",
+				"sections": {
+					"home": "Home",
+					"library": "Library",
+					"downloads": "Downloads",
+					"recent": "Recent",
+					"favorites": "Favorites",
+					"playlists": "Playlists",
+					"albums": "Albums",
+					"artists": "Artists",
+					"genres": "Genres",
+					"radio": "Radio",
+					"mixes": "Mixes",
+					"podcasts": "Podcasts",
+					"audiobooks": "Audiobooks"
+				},
+				"rows": {
+					"recentlyPlayed": "Recently played",
+					"newest": "Recently added",
+					"frequent": "Most played",
+					"highest": "Top rated",
+					"random": "Random",
+					"leastPlayed": "Least played",
+					"starredAlbums": "Favorite albums",
+					"mixes": "Mixes for you"
+				},
+				"favorites": {
+					"songs": "Favorite songs",
+					"albums": "Favorite albums",
+					"artists": "Favorite artists"
+				},
+				"downloads": {
+					"albums": "Albums",
+					"playlists": "Playlists",
+					"songs": "Songs"
+				},
+				"topSongs": "Top songs",
+				"artistMix": "Artist mix",
+				"artistMixOf": "{{artist}} mix",
+				"artistMixes": "Artist mixes",
+				"genreMixOf": "{{genre}} mix",
+				"genreMixes": "Genre mixes",
+				"shuffleAll": "Shuffle my library",
+				"shuffleGenre": "Shuffle {{genre}}",
+				"continueListening": "Continue listening",
+				"recentlyAdded": "Recently added",
+				"search": {
+					"songs": "Songs",
+					"albums": "Albums",
+					"artists": "Artists",
+					"playlists": "Playlists"
+				},
+				"actions": {
+					"favorited": "Added to favorites",
+					"unfavorited": "Removed from favorites",
+					"playingNext_one": "{{count}} song plays next",
+					"playingNext_other": "{{count}} songs play next",
+					"addedToQueue_one": "{{count}} song added to the queue",
+					"addedToQueue_other": "{{count}} songs added to the queue",
+					"downloading_one": "Downloading {{count}} song",
+					"downloading_other": "Downloading {{count}} songs",
+					"failed": "Something went wrong"
+				},
+				"errors": {
+					"signedOut": "Sign in to Wavio on your phone when it's safe to do so",
+					"offline": "Can't reach the server and nothing is downloaded",
+					"noResults": "Nothing found for \"{{query}}\"",
+					"radioUnavailable": "No similar songs found for this track"
+				},
+				"buttons": {
+					"favoriteAdd": "Add to favorites",
+					"favoriteRemove": "Remove from favorites",
+					"shuffleOn": "Turn shuffle on",
+					"shuffleOff": "Turn shuffle off",
+					"repeatAll": "Repeat all",
+					"repeatOne": "Repeat one",
+					"repeatOff": "Turn repeat off",
+					"radio": "Start radio",
+					"seekBack": "Back 30 seconds",
+					"seekForward": "Forward 30 seconds"
+				},
+				"itemActions": {
+					"favoriteAdd": "Add to favorites",
+					"favoriteRemove": "Remove from favorites",
+					"radio": "Start radio",
+					"playNext": "Play next",
+					"addToQueue": "Add to queue",
+					"shuffle": "Shuffle",
+					"download": "Download"
+				}
 			},
 			"albums": {
+				"goneMessage": "This album is no longer in your library.",
 				"addToPlaylist": "Add to playlist",
 				"playNext": "Play next",
 				"addToQueue": "Add to queue",
@@ -313,6 +397,7 @@
 				"addAllToFavoritesErrorMessage": "An error occurred while adding songs to favorites",
 				"typeAlbum": "Album",
 				"typeCompilation": "Compilation",
+				"reissued": "Reissued {{year}}",
 				"releaseTypeUntagged": "Untagged",
 				"releaseTypes": {
 					"album": "Album",
@@ -343,6 +428,7 @@
 				"topSongs": "Top songs",
 				"discography": "Discography",
 				"appearsOn": "Appears on",
+				"featuredInPlaylists": "Featured in playlists",
 				"soundsLike": "Sounds like",
 				"poweredByAudioMuse": "Powered by AudioMuse-AI",
 				"similarArtists": "Similar artists",
@@ -829,6 +915,10 @@
 						"title": "Playback & audio",
 						"description": "Audio quality, replay gain, equalizer"
 					},
+					"androidAuto": {
+						"title": "Android Auto",
+						"description": "Tabs, home rows, player buttons"
+					},
 					"library": {
 						"title": "Music library",
 						"description": "Scan your library and view its status"
@@ -872,6 +962,10 @@
 					"updates": {
 						"title": "Updates",
 						"description": "Check for and install app updates"
+					},
+					"support": {
+						"title": "Help & feedback",
+						"description": "Report a bug, suggest a feature or ask a question"
 					}
 				},
 				"integrations": {
@@ -1552,6 +1646,14 @@
 					"downloadLocationUnwritable": "That folder can't be written to. Pick a different one.",
 					"autoSignOutLabel": "Sign out when server unreachable",
 					"autoSignOutDescription": "Automatically sign out when your server can't be reached but the internet is working. Turn off to stay signed in and keep browsing downloaded tracks.",
+					"http3Label": "Use HTTP/3 when available",
+					"http3Description": "Steadier connections on weak or changing mobile networks, if your server or its proxy supports HTTP/3. Turn off if something stops loading.",
+					"http3StatusActive": "Connected to this server over HTTP/3.",
+					"http3StatusInactive": "This server isn't using HTTP/3 yet. It needs a proxy such as Caddy, nginx or Cloudflare with HTTP/3 enabled.",
+					"http3StatusCleartext": "HTTP/3 needs a secure server address. This server uses http://, so it stays on a regular connection.",
+					"http3StatusCustomTls": "HTTP/3 can't be used with a self-signed certificate you trusted or with a client certificate, so this server stays on a regular connection.",
+					"http3StatusTlsFallback": "A secure connection error happened over HTTP/3, so this server is on a regular connection for a few minutes.",
+					"http3StatusUnavailable": "HTTP/3 isn't available on this device.",
 					"pendingChangesLabel": "Pending changes",
 					"pendingChangesDescription_one": "{{count}} change made offline waiting to sync",
 					"pendingChangesDescription_other": "{{count}} changes made offline waiting to sync",
@@ -1595,6 +1697,32 @@
 					"rateDescription": "Enjoying Wavio? A rating on Google Play helps other people find it",
 					"rateAction": "Rate",
 					"currentVersionLabel": "Current version"
+				},
+				"supportSettings": {
+					"openIssueLabel": "Open an issue on GitHub",
+					"openIssueDescription": "Report a bug, request a feature or ask a question. The diagnostics report is copied first, ready to paste into a bug report.",
+					"openIssueAction": "Open",
+					"copyLabel": "Copy diagnostics report",
+					"copyDescription": "Your app version, device model and every setting, to paste into a bug report",
+					"copyAction": "Copy",
+					"previewLabel": "Preview the report",
+					"previewDescription": "See exactly what gets copied before you share it",
+					"previewShow": "Show",
+					"previewHide": "Hide",
+					"privacyNotice": "GitHub issues are public, so the report is anonymous: it never includes server addresses, usernames, passwords, tokens, server or library names, folder paths or anything about what you listen to. Those are left out or reduced to whether they are set.",
+					"copySuccess": "Diagnostics report copied to the clipboard",
+					"copySuccessOpening": "Diagnostics report copied. If you're reporting a bug, paste it into the Diagnostics report field.",
+					"copyError": "Couldn't build the diagnostics report",
+					"castingLogLabel": "Record a casting log",
+					"castingLogDescription": "Temporary, for debugging speakers and TVs (UPnP/DLNA, Sonos). Start it, reproduce the problem, then share the log. It keeps recording through crashes and restarts until you stop it.",
+					"castingLogStart": "Start",
+					"castingLogStop": "Stop",
+					"castingLogStarted": "Recording the casting log. Reproduce the problem, then come back to share it.",
+					"castingLogStopped": "Casting log stopped. You can share it now.",
+					"castingLogShareLabel": "Share the casting log",
+					"castingLogShareDescription": "Sends the log with the diagnostics report attached. It has no passwords or tokens, but it does include your server's address and your speakers' network addresses, so send it privately rather than posting it publicly.",
+					"castingLogShareAction": "Share",
+					"castingLogEmpty": "Nothing recorded yet. Start the casting log and reproduce the problem first."
 				},
 				"storageSettings": {
 					"title": "Storage",
@@ -1759,7 +1887,7 @@
 					"queueSyncOptions": {
 						"server": {
 							"label": "Prioritize server",
-							"description": "On launch, restore the queue saved on the server. Your queue is also uploaded so other devices can pick it up."
+							"description": "On launch, restore the queue saved on the server, unless this device changed its queue more recently without uploading it. Your queue is also uploaded so other devices can pick it up."
 						},
 						"local": {
 							"label": "Prioritize this device",
@@ -1799,7 +1927,7 @@
 					"cellularAudioQualityLabel": "Audio quality (cellular)",
 					"cellularAudioQualityDescription": "Cap the bitrate when on cellular to save data. The lower of this and the Wi-Fi cap is used.",
 					"streamingFormatLabel": "Streaming format",
-					"streamingFormatDescription": "Ask the server to transcode streams to this format. Keep Original for bit-perfect playback; pick a format if some files won't play (e.g. ALAC).",
+					"streamingFormatDescription": "Ask the server to transcode streams to this format. Keep Original for bit-perfect playback; pick a format if some files won't play.",
 					"cellularStreamingFormatLabel": "Streaming format (cellular)",
 					"cellularStreamingFormatDescription": "Transcode to a different format when on cellular. With Same as Wi-Fi, an Original stream still gets downsampled by the cellular bitrate cap, using the format your server prefers.",
 					"streamingFormatOptions": {
@@ -1876,6 +2004,53 @@
 					"autoBackupKeepLabel": "Backups to keep",
 					"autoBackupKeepDescription": "Older automatic backups are deleted from the folder after each backup. Other files there are never touched.",
 					"autoBackupPrivacyNotice": "Backups never include passwords, tokens or API keys. They do include your servers, usernames and listening history, so choose a folder only you can access."
+				},
+				"androidAutoSettings": {
+					"tabsTitle": "Tabs",
+					"tabsDescription": "Most cars show up to 4 tabs. Tabs past the car's limit are left out.",
+					"homeRowsTitle": "Home rows",
+					"libraryTitle": "Library",
+					"displayTitle": "Display",
+					"displayDescription": "Tap to switch between list and grid",
+					"display": {
+						"list": "List",
+						"grid": "Grid"
+					},
+					"collectionTap": {
+						"label": "Tapping an album or playlist",
+						"description": "Open it to pick a song, or start playing it right away. Also applies to artists, genres, favorites and downloads.",
+						"open": "Opens it",
+						"play": "Plays it"
+					},
+					"playerButtonsTitle": "Player buttons",
+					"playerButtons": {
+						"favorite": {
+							"label": "Favorite",
+							"description": "A heart that adds the current track to your favorites, or removes it."
+						},
+						"shuffle": {
+							"label": "Shuffle",
+							"description": "Turns shuffle on and off."
+						},
+						"repeat": {
+							"label": "Repeat",
+							"description": "Cycles through repeat all, repeat one and off."
+						},
+						"radio": {
+							"label": "Radio",
+							"description": "Replaces what's coming up with songs similar to the current track."
+						}
+					},
+					"itemActionsTitle": "List actions",
+					"itemActionsDescription": "Shortcuts on songs, albums and playlists, where the car supports them.",
+					"itemActions": {
+						"favoriteAdd": "Favorite",
+						"radio": "Start radio",
+						"playNext": "Play next",
+						"addToQueue": "Add to queue",
+						"shuffle": "Shuffle",
+						"download": "Download"
+					}
 				},
 				"securitySettings": {
 					"title": "Security",
@@ -2069,6 +2244,86 @@
 				"sleepStopsAt": "Sleep timer stops playback at {{time}} · {{remaining}} left",
 				"sleepStopsAround": "Sleep timer stops playback around {{time}} · {{remaining}} left"
 			},
+			"fileDeletion": {
+				"dangerZone": "Dangerous actions",
+				"deleteTrack": "Permanently delete file",
+				"deleteAlbum": "Permanently delete album files",
+				"deleteArtist": "Permanently delete artist's files",
+				"deleteSelected": "Delete files",
+				"offline": "Deleting files needs a connection to the server.",
+				"notAllowed": "Your account isn't allowed to delete this on the server.",
+				"permissionCheckFailed": "Couldn't check whether you can delete this. Try again later.",
+				"titleOne": "Permanently delete this file?",
+				"titleMany": "Permanently delete these files?",
+				"trackDescription": "“{{title}}” will be permanently deleted from {{where}}.",
+				"tracksDescription": "The selected songs will be permanently deleted from {{where}}.",
+				"albumDescription": "Every song on “{{name}}” will be permanently deleted from {{where}}.",
+				"artistDescription": "Every song on the albums of “{{name}}” will be permanently deleted from {{where}}.",
+				"where": {
+					"server": "the server's disk",
+					"device": "this device",
+					"share": "the network share"
+				},
+				"songCount_one": "{{count}} song",
+				"songCount_other": "{{count}} songs",
+				"albumCount_one": "{{count}} album",
+				"albumCount_other": "{{count}} albums",
+				"cannotBeUndone": "This can't be undone.",
+				"loadFailed": "Couldn't load the songs to delete.",
+				"nothingToDelete": "There are no songs to delete.",
+				"confirmIn": "Delete ({{seconds}})",
+				"progress": "Deleting {{done}} of {{total}}…",
+				"stop": "Stop",
+				"stopping": "Stopping…",
+				"deletedMessage_one": "Deleted {{count}} file.",
+				"deletedMessage_other": "Deleted {{count}} files.",
+				"stoppedMessage_one": "Stopped after deleting {{count}} file.",
+				"stoppedMessage_other": "Stopped after deleting {{count}} files.",
+				"partialMessage": "Deleted {{deleted}} of {{total}} files.",
+				"failedMessage": "Couldn't delete the files.",
+				"reasons": {
+					"notAllowed": "You don't have permission to delete them, or they're on a read-only share.",
+					"inUse": "They're open in another app or on another device. Try again once they're closed.",
+					"unreachable": "The server couldn't be reached.",
+					"serverError": "Check that the server is allowed to write to your music folder.",
+					"other": "Something went wrong while deleting."
+				},
+				"settingsLabel": "Allow deleting files",
+				"settingsDescription": "Adds a “Dangerous actions” section to song, album and artist menus to permanently delete their files.",
+				"enableTitle": "Allow deleting files?",
+				"enableDescription": "Deleted files are removed from disk for good. Wavio asks for confirmation before each delete, but it can't bring files back.",
+				"enableConfirm": "Allow"
+			},
+			"hiddenTracks": {
+				"hideTrack": "Hide song",
+				"unhideTrack": "Unhide song",
+				"allowTrack": "Play this song anyway",
+				"allowArtistNamed": "Allow {{name}}",
+				"blockArtist": "Don't play this artist",
+				"allowArtist": "Allow this artist",
+				"allow": "Allow",
+				"unhide": "Unhide",
+				"trackHiddenMessage": "“{{title}}” is hidden and won't play.",
+				"trackUnhiddenMessage": "“{{title}}” will play again.",
+				"trackAllowedMessage": "“{{title}}” will play even though its artist is blocked.",
+				"artistBlockedMessage": "Songs by {{name}} won't play.",
+				"artistAllowedMessage": "Songs by {{name}} will play again.",
+				"artistBlockedBanner": "You chose not to play {{name}}.",
+				"settingsLabel": "Hidden songs & artists",
+				"settingsDescription": "Review the songs you hid and the artists you chose not to play.",
+				"settingsAction": "Manage",
+				"screenTitle": "Hidden songs & artists",
+				"blockedArtistsHeading_one": "{{count}} blocked artist",
+				"blockedArtistsHeading_other": "{{count}} blocked artists",
+				"hiddenTracksHeading_one": "{{count}} hidden song",
+				"hiddenTracksHeading_other": "{{count}} hidden songs",
+				"empty": "Nothing is hidden",
+				"emptyHint": "Hide a song from its menu, or choose not to play an artist from their page.",
+				"clearAll": "Unhide everything",
+				"clearAllConfirmTitle": "Unhide everything?",
+				"clearAllConfirmDescription": "Every hidden song and blocked artist on this server will play again.",
+				"clearAllSuccessMessage": "Everything will play again."
+			},
 			"tracks": {
 				"addToFavorites": "Add to favorites",
 				"addToPlaylist": "Add to playlist",
@@ -2165,7 +2420,9 @@
 					"sourceUnavailable": "Couldn't play that track — the file wasn't reachable. Check that your server is switched on and on the same network.",
 					"formatUnsupported": "This device can't play the audio format of “{{track}}”.",
 					"remoteTrackRefused": "{{name}} couldn't play “{{track}}”. Pick another track, or play on this device.",
-					"remoteLost": "Lost contact with {{name}}. Playback is back on this device."
+					"remoteLost": "Lost contact with {{name}}. Playback is back on this device.",
+					"allTracksHidden": "Every song here is hidden or by an artist you chose not to play.",
+					"trackHidden": "This song is hidden or by an artist you chose not to play."
 				},
 				"original": "Original",
 				"playingFrom": {

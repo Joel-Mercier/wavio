@@ -15,7 +15,7 @@ import {
   useIsDetailCached,
 } from "@/hooks/offline";
 import type { Playlist } from "@/services/openSubsonic/types";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 
 interface PlaylistListItemProps {
@@ -55,7 +55,7 @@ function PlaylistListItem({
         <ImageWithFallback
           source={
             playlist.coverArt
-              ? { uri: artworkUrl(playlist.coverArt) }
+              ? { uri: artworkUrl(playlist.coverArt, ARTWORK_THUMB_SIZE) }
               : undefined
           }
           className={cn("rounded-md aspect-square", {

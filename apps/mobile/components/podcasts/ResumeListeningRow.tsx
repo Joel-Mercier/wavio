@@ -23,7 +23,7 @@ import usePodcasts, {
   type PodcastProgressEntry,
   podcastProgressForScope,
 } from "@/stores/podcasts";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { podcastProgressEntryToTrack } from "@/utils/podcastEpisodeToTrack";
 import { TOAST_DURATION } from "@/utils/toastDuration";
 
@@ -68,7 +68,10 @@ function ResumeListeningCard({ entry }: { entry: PodcastProgressEntry }) {
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const playingTrack = usePlayingTrack();
   const image =
-    entry.artwork || (entry.coverArt ? artworkUrl(entry.coverArt) : undefined);
+    entry.artwork ||
+    (entry.coverArt
+      ? artworkUrl(entry.coverArt, ARTWORK_THUMB_SIZE)
+      : undefined);
 
   const handlePress = () => {
     if (playingTrack?.id === entry.id) {

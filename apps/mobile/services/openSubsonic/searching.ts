@@ -45,6 +45,7 @@ export const search2 = async (
     songCount,
     songOffset,
     musicFolderIds,
+    signal,
   }: {
     artistCount?: number;
     artistOffset?: number;
@@ -53,6 +54,7 @@ export const search2 = async (
     songCount?: number;
     songOffset?: number;
     musicFolderIds?: string[];
+    signal?: AbortSignal;
   },
 ) =>
   folderScopedRequest<{ searchResult2: SearchResult2 }>(
@@ -68,6 +70,7 @@ export const search2 = async (
       musicFolderIds,
     },
     { searchResult2: {} },
+    { signal },
   );
 
 export const search3 = async (
@@ -80,6 +83,7 @@ export const search3 = async (
     songCount,
     songOffset,
     musicFolderIds,
+    signal,
   }: {
     artistCount?: number;
     artistOffset?: number;
@@ -88,6 +92,7 @@ export const search3 = async (
     songCount?: number;
     songOffset?: number;
     musicFolderIds?: string[];
+    signal?: AbortSignal;
   },
 ) =>
   folderScopedRequest<{ searchResult3: SearchResult3 }>(
@@ -103,4 +108,5 @@ export const search3 = async (
       musicFolderIds,
     },
     { searchResult3: {} },
+    { signal },
   );

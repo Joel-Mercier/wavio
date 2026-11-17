@@ -3,6 +3,7 @@ import Circle from "lucide-react-native/icons/circle";
 import CircleCheck from "lucide-react-native/icons/circle-check";
 import PlusCircle from "lucide-react-native/icons/circle-plus";
 import EllipsisVertical from "lucide-react-native/icons/ellipsis-vertical";
+import EyeOff from "lucide-react-native/icons/eye-off";
 import Heart from "lucide-react-native/icons/heart";
 import Info from "lucide-react-native/icons/info";
 import ListPlus from "lucide-react-native/icons/list-plus";
@@ -39,13 +40,14 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useIsTrackAvailableOffline } from "@/hooks/offline";
 import { useIsCurrentTrack } from "@/hooks/player";
+import { useHiddenReason } from "@/hooks/useHiddenTracks";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { selectionHaptic } from "@/services/haptics";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks } from "@/services/player";
 import useApp, { type SwipeAction } from "@/stores/app";
 import useTrackSelection from "@/stores/trackSelection";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { cn } from "@/utils/tailwind";
 import { type TrackActionsApi, useTrackActions } from "./TrackActionsProvider";
@@ -149,6 +151,7 @@ function TrackListItem({
   const isTrackDownloaded = useIsTrackAvailableOffline(track.id);
   const isOnline = useIsOnline();
   const isUnavailableOffline = !isOnline && !isTrackDownloaded;
+  const isHidden = useHiddenReason(track) != null;
   const api = useTrackActions();
   // Two narrow selectors rather than one object: entering selection re-renders
   // every visible row once, but toggling a row after that must re-render only
@@ -158,7 +161,8 @@ function TrackListItem({
     (state) => !!state.selectedIds[track.id],
   );
   const swipeLeftAction = useApp((state) => state.swipeLeftAction);
-  const canSwipeAction = swipeLeftAction !== "off" && !isUnavailableOffline;
+  const canSwipeAction =
+    swipeLeftAction !== "off" && !isUnavailableOffline && !isHidden;
   const canSwipeRemove = !!onSwipeRemove;
   const swipeEnabled =
     (canSwipeAction || canSwipeRemove) && !disableSwipe && !selectionActive;
@@ -322,7 +326,9 @@ function TrackListItem({
         {showCoverArt && (
           <ImageWithFallback
             source={
-              track.coverArt ? { uri: artworkUrl(track.coverArt) } : undefined
+              track.coverArt
+                ? { uri: artworkUrl(track.coverArt, ARTWORK_THUMB_SIZE) }
+                : undefined
             }
             className="w-16 h-16 rounded-md aspect-square"
             alt="Track cover"
@@ -348,6 +354,11 @@ function TrackListItem({
             {track.title}
           </Heading>
           <HStack className="items-center flex-1">
+            {isHidden && (
+              <Box testID="track-hidden-badge" className="mr-2">
+                <EyeOff size={14} color={gray300} />
+              </Box>
+            )}
             {isTrackDownloaded && <DownloadedBadge className="mr-2" />}
             {track.explicitStatus === "explicit" && (
               <Box className="flex items-center justify-center rounded-sm bg-primary-100 px-1 py-0.5 mr-2">
@@ -398,14 +409,19 @@ function TrackListItem({
 
   const pressable = (
     <Pressable
-      onPress={isUnavailableOffline ? undefined : handleTrackPress}
+      onPress={
+        isUnavailableOffline || (isHidden && !selectionActive)
+          ? undefined
+          : handleTrackPress
+      }
       onLongPress={isUnavailableOffline ? undefined : handleTrackLongPress}
       disabled={isUnavailableOffline}
     >
       <HStack
         className={cn(
           "items-center justify-between",
-          { "opacity-80": isUnavailableOffline },
+          { "opacity-80": isUnavailableOffline && !isHidden },
+          { "opacity-40": isHidden },
           className,
         )}
       >

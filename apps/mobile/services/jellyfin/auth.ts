@@ -1,5 +1,6 @@
 import axios from "axios";
 import { buildAuthorizationHeader } from "@/services/jellyfin/index";
+import { normalizeServerUrl } from "@/utils/serverUrl";
 
 export type JellyfinAuthResponse = {
   AccessToken: string;
@@ -17,7 +18,7 @@ export const authenticateByName = async (
   password: string,
   extraHeaders?: Record<string, string>,
 ): Promise<JellyfinAuthResponse> => {
-  const baseURL = url.replace(/\/+$/, "");
+  const baseURL = normalizeServerUrl(url);
   const rsp = await axios
     .create({
       baseURL,
@@ -47,7 +48,7 @@ export type JellyfinSystemInfo = {
 export const getSystemInfo = async (
   url: string,
 ): Promise<JellyfinSystemInfo> => {
-  const baseURL = url.replace(/\/+$/, "");
+  const baseURL = normalizeServerUrl(url);
   const rsp = await axios
     .create({
       baseURL,

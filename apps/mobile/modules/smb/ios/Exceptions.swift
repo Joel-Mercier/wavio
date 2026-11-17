@@ -49,3 +49,21 @@ final class SmbDialectException: GenericException<String>, SmbFailure {
   override var code: String { "ERR_SMB_DIALECT" }
   override var reason: String { param }
 }
+
+/// Signed in fine, but this user may not change the file.
+final class SmbReadOnlyException: GenericException<String>, SmbFailure {
+  override var code: String { "ERR_SMB_READ_ONLY" }
+  override var reason: String { param }
+}
+
+/// Another client has the file open in a way that keeps it from changing.
+final class SmbInUseException: GenericException<String>, SmbFailure {
+  override var code: String { "ERR_SMB_IN_USE" }
+  override var reason: String { param }
+}
+
+/// The server answered and refused, for a reason none of the above covers.
+final class SmbServerException: GenericException<String>, SmbFailure {
+  override var code: String { "ERR_SMB_SERVER" }
+  override var reason: String { param }
+}

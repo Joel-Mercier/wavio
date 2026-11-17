@@ -3,15 +3,18 @@ import { usePathname, useRouter } from "expo-router";
 import PlusCircle from "lucide-react-native/icons/circle-plus";
 import ListPlus from "lucide-react-native/icons/list-plus";
 import ListStart from "lucide-react-native/icons/list-start";
+import Trash2 from "lucide-react-native/icons/trash-2";
 import X from "lucide-react-native/icons/x";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
+import DeleteFilesDialog, {
+  type DeletionTarget,
+} from "@/components/deletion/DeleteFilesDialog";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import {
   FLOATING_PLAYER_HEIGHT,
-  SIDEBAR_WIDTH,
   TAB_BAR_CONTENT_HEIGHT,
 } from "@/components/FloatingPlayer";
 import { OFFLINE_BANNER_HEIGHT } from "@/components/OfflineBanner";
@@ -29,8 +32,9 @@ import {
   useToast,
 } from "@/components/ui/toast";
 import { useIsFloatingPlayerVisible } from "@/hooks/player";
+import { useFileDeletionAvailable } from "@/hooks/useFileDeletion";
 import { useIsOnline } from "@/hooks/useIsOnline";
-import useApp from "@/stores/app";
+import useApp, { SIDEBAR_WIDTH } from "@/stores/app";
 import useQueue from "@/stores/queue";
 import useTrackSelection from "@/stores/trackSelection";
 import { childToTrack } from "@/utils/childToTrack";
@@ -79,7 +83,10 @@ const isSelectionDetour = (pathname: string) =>
 // layout so every screen rendering TrackListItem gets it without wiring, the
 // same way the floating player is mounted.
 export default function TrackSelectionBar() {
-  const [gray200] = Uniwind.getCSSVariable(["--color-gray-200"]) as string[];
+  const [gray200, red500] = Uniwind.getCSSVariable([
+    "--color-gray-200",
+    "--color-red-500",
+  ]) as string[];
   const { t } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
@@ -130,6 +137,8 @@ export default function TrackSelectionBar() {
   const active = useTrackSelection((state) => state.active);
   const selected = useTrackSelection((state) => state.selected);
   const hasPool = useTrackSelection((state) => state.pool.length > 0);
+  const fileDeletionAvailable = useFileDeletionAvailable();
+  const [deleteTarget, setDeleteTarget] = useState<DeletionTarget | null>(null);
 
   // The bar is mounted once, at the (app) layout, for as long as the user is
   // signed in — so a selection that already exists when it mounts can only be a
@@ -170,7 +179,17 @@ export default function TrackSelectionBar() {
     useTrackSelection.getState().exit();
   }, [active, pathname]);
 
-  if (!active) return null;
+  // The selection stays while the dialog asks, so cancelling returns to it,
+  // and ends once the delete has run. The dialog sits in the same slot whether
+  // or not the bar renders, so the bar going away doesn't remount it.
+  const deleteDialog = (
+    <DeleteFilesDialog
+      isOpen={deleteTarget != null}
+      onClose={() => setDeleteTarget(null)}
+      target={deleteTarget}
+      onDeleted={() => useTrackSelection.getState().exit()}
+    />
+  );
 
   const handleAddToPlaylistPress = () => {
     if (selected.length === 0) return;
@@ -209,9 +228,19 @@ export default function TrackSelectionBar() {
     showQueueToast(t("app.shared.addedToQueueMessage", { count: added }));
   };
 
+  const handleDeletePress = () => {
+    if (selected.length === 0) return;
+    const tracks = selected.map((track) => ({
+      id: track.id,
+      title: track.title,
+      albumId: track.albumId,
+    }));
+    setDeleteTarget({ kind: "tracks", tracks });
+  };
+
   const disabled = selected.length === 0;
 
-  return (
+  const bar = (
     <Box
       testID="track-selection-bar"
       className="absolute right-0"
@@ -347,9 +376,30 @@ export default function TrackSelectionBar() {
                 </Text>
               </HStack>
             </FadeOutScaleDown>
+            {fileDeletionAvailable && (
+              <FadeOutScaleDown
+                testID="track-selection-delete-files"
+                onPress={handleDeletePress}
+                disabled={disabled || !isOnline}
+              >
+                <HStack className="items-center justify-center">
+                  <Trash2 size={20} color={red500} />
+                  <Text className="ml-2 text-red-500" numberOfLines={1}>
+                    {t("app.fileDeletion.deleteSelected")}
+                  </Text>
+                </HStack>
+              </FadeOutScaleDown>
+            )}
           </ScrollView>
         </MaskedView>
       </Box>
     </Box>
+  );
+
+  return (
+    <>
+      {active && bar}
+      {deleteDialog}
+    </>
   );
 }

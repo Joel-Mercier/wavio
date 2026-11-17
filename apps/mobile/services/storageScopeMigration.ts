@@ -13,6 +13,7 @@ import {
 import { usePodcastsBase } from "@/stores/podcasts";
 import { useRadioStationsBase } from "@/stores/radioStations";
 import type { Server, ServerUser } from "@/stores/servers";
+import { countNormalizedUrls, normalizeServerUrl } from "@/utils/serverUrl";
 
 // One-shot migration of every per-(server, user) storage bucket from the legacy
 // URL-derived scope to the id-derived one (see config/storage.ts).
@@ -81,6 +82,21 @@ function scopesPresentInStorage(): Set<string> {
   return found;
 }
 
+// The URLs a server's legacy scopes may have been derived from. The servers
+// store's v3 migration strips trailing slashes at import, before this reads the
+// blob, so a row now saved as `x` may have been `x/` when its data was written.
+// Rows it left untouched because their URLs collide are already exact.
+function legacyUrlsByServer(servers: Server[]): Map<string, string[]> {
+  const sharing = countNormalizedUrls(servers);
+  return new Map(
+    servers.map((s) => {
+      const exact = normalizeServerUrl(s.url) === s.url;
+      const unique = sharing.get(s.url) === 1;
+      return [s.id, exact && unique ? [s.url, `${s.url}/`] : [s.url]];
+    }),
+  );
+}
+
 /**
  * Build the old -> new scope mapping from a persisted `servers` blob.
  *
@@ -103,14 +119,17 @@ export function buildScopeRemap(
     (s) => s?.type && !isSingletonServerType(s.type) && s?.id,
   );
   const serverById = new Map(remoteServers.map((s) => [s.id, s] as const));
+  const legacyUrls = legacyUrlsByServer(remoteServers);
 
   // Exact mapping for every known (server, user) pair.
   for (const user of users) {
     const server = serverById.get(user?.serverId);
     if (!server || !user?.username) continue;
-    const from = legacyAuthScope(server.url, user.username);
     const to = getAuthScope(server.id, user.username);
-    if (from !== to) remap.set(from, to);
+    for (const url of legacyUrls.get(server.id) ?? []) {
+      const from = legacyAuthScope(url, user.username);
+      if (from !== to) remap.set(from, to);
+    }
   }
 
   // Recovery for scopes whose user is no longer in the `users` list (legacy
@@ -121,17 +140,21 @@ export function buildScopeRemap(
   // Longest URL prefix wins: with both `https://x.com` and `https://x.com:4533`
   // saved, the scope `https___x_com_4533_alice` is ambiguous, and the longer
   // match is the correct reading.
-  const byPrefixLength = [...remoteServers].sort(
-    (a, b) => b.url.length - a.url.length,
-  );
+  const byPrefixLength = remoteServers
+    .flatMap((server) =>
+      (legacyUrls.get(server.id) ?? []).map((url) => ({
+        id: server.id,
+        prefix: `${sanitize(url)}_`,
+      })),
+    )
+    .sort((a, b) => b.prefix.length - a.prefix.length);
   for (const scope of presentScopes) {
     if (remap.has(scope)) continue;
-    for (const server of byPrefixLength) {
-      const prefix = `${sanitize(server.url)}_`;
+    for (const { id, prefix } of byPrefixLength) {
       if (!scope.startsWith(prefix)) continue;
       const usernamePart = scope.slice(prefix.length);
       if (!usernamePart) break;
-      const to = `${sanitize(server.id)}_${usernamePart}`;
+      const to = `${sanitize(id)}_${usernamePart}`;
       if (scope !== to) remap.set(scope, to);
       break;
     }
@@ -379,9 +402,10 @@ export function resolveAuthServerId(
   if (!url) return null;
   const parsed = readJson<PersistedServers>(serversRaw);
   const servers = parsed?.state?.servers ?? [];
-  const trimmed = url.trim();
+  const trimmed = normalizeServerUrl(url);
   const match =
-    servers.find((s) => s?.url === trimmed) ??
+    servers.find((s) => s?.url === url.trim()) ??
+    servers.find((s) => s?.url && normalizeServerUrl(s.url) === trimmed) ??
     // The local library signs in with the fixed `local` sentinel URL.
     (trimmed === "local"
       ? servers.find((s) => s?.type === "local")

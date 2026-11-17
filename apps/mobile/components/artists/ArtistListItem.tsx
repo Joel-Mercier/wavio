@@ -13,7 +13,7 @@ import {
   useIsDetailCached,
 } from "@/hooks/offline";
 import type { ArtistID3 } from "@/services/openSubsonic/types";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 
 interface ArtistListItemProps {
@@ -55,7 +55,9 @@ function ArtistListItem({
       >
         <ImageWithFallback
           source={
-            artist.coverArt ? { uri: artworkUrl(artist.coverArt) } : undefined
+            artist.coverArt
+              ? { uri: artworkUrl(artist.coverArt, ARTWORK_THUMB_SIZE) }
+              : undefined
           }
           className={cn("rounded-full aspect-square", {
             "w-32 h-32": layout === "horizontal",

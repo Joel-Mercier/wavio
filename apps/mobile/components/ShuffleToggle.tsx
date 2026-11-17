@@ -21,6 +21,10 @@ type ShuffleToggleProps = {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+// Matches FadeOutScaleDown and PlayPauseButton, so a disabled shuffle reads the
+// same as the play button beside it.
+const DISABLED_OPACITY = 0.6;
+
 export default function ShuffleToggle({
   active,
   onPress,
@@ -35,7 +39,12 @@ export default function ShuffleToggle({
 
   // progress: 0 = inactive (white), 1 = active (emerald + dot).
   const progress = useSharedValue(active ? 1 : 0);
-  const opacity = useSharedValue(1);
+  const restingOpacity = disabled ? DISABLED_OPACITY : 1;
+  const opacity = useSharedValue(restingOpacity);
+
+  useEffect(() => {
+    opacity.value = withTiming(restingOpacity, { duration: 100 });
+  }, [restingOpacity, opacity]);
 
   useEffect(() => {
     progress.value = withTiming(active ? 1 : 0, {
@@ -62,7 +71,7 @@ export default function ShuffleToggle({
   };
 
   const handlePressOut = () => {
-    opacity.value = withTiming(1, { duration: 100 });
+    opacity.value = withTiming(restingOpacity, { duration: 100 });
   };
 
   return (

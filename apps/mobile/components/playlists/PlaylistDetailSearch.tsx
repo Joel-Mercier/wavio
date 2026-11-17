@@ -57,11 +57,7 @@ export default function PlaylistDetailSearch() {
   };
 
   const data = useMemo(() => {
-    if (
-      !playlistData ||
-      !playlistData?.playlist ||
-      !playlistData?.playlist.entry
-    ) {
+    if (!playlistData?.playlist?.entry) {
       return null;
     }
     // Same ordering as the detail screen, so the search results keep the sort

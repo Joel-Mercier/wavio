@@ -75,6 +75,8 @@ type Gate = {
   inFlight: number;
   /** Waiters parked until `inFlight` falls back to 0. */
   idle: Array<() => void>;
+  /** Settles once the last queued `withTransactionAsync` has finished. */
+  transactionTail: Promise<void>;
 };
 type Handle = { db: Promise<SQLiteDatabase>; gate: Gate };
 
@@ -98,6 +100,13 @@ const TRACKED_METHODS = new Set([
 /**
  * Wrap a handle so every async statement run through it is counted, which is
  * what lets `closeHandle` wait for the last one before closing.
+ *
+ * It also queues `withTransactionAsync` calls one behind the other. That method
+ * is a bare BEGIN/COMMIT on this one shared connection, so two overlapping
+ * callers (a scan batch and a file delete, two deletes on a network share)
+ * collide: the second BEGIN fails and its ROLLBACK undoes the first one's
+ * writes. Nothing calls it from inside another transaction, which already
+ * fails, so the queue can't deadlock on itself.
  */
 function guard(db: SQLiteDatabase, gate: Gate): SQLiteDatabase {
   const release = () => {
@@ -114,6 +123,19 @@ function guard(db: SQLiteDatabase, gate: Gate): SQLiteDatabase {
       // count itself twice.
       const fn = (value as (...args: unknown[]) => unknown).bind(target);
       if (!TRACKED_METHODS.has(prop as string)) return fn;
+      if (prop === "withTransactionAsync") {
+        return (...args: unknown[]) => {
+          gate.inFlight += 1;
+          const run = gate.transactionTail.then(
+            () => fn(...args) as Promise<void>,
+          );
+          gate.transactionTail = run.then(
+            () => {},
+            () => {},
+          );
+          return run.finally(release);
+        };
+      }
       return (...args: unknown[]) => {
         gate.inFlight += 1;
         let result: Promise<unknown>;
@@ -130,7 +152,11 @@ function guard(db: SQLiteDatabase, gate: Gate): SQLiteDatabase {
 }
 
 function openHandle(scope: string): Handle {
-  const gate: Gate = { inFlight: 0, idle: [] };
+  const gate: Gate = {
+    inFlight: 0,
+    idle: [],
+    transactionTail: Promise.resolve(),
+  };
   const db = (async () => {
     const opened = await openDatabaseAsync(dbNameForScope(scope));
     // WAL must be set outside any transaction; do it before migrating.

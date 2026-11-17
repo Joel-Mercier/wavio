@@ -129,6 +129,7 @@ export default function SoulSyncSearchScreen() {
   // Toggling a filter or editing the query swaps the result set; without this
   // the list keeps its old offset and lands mid-list, hiding the new top
   // matches.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: filter and debouncedTerm are triggers: a new result set resets the list to the top
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, [filter, debouncedTerm]);

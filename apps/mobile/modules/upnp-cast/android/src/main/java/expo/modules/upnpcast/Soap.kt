@@ -50,6 +50,7 @@ object Soap {
     }.toByteArray(Charsets.UTF_8)
 
     var connection: HttpURLConnection? = null
+    val startedAt = System.currentTimeMillis()
     try {
       connection = (URL(controlUrl).openConnection() as HttpURLConnection).apply {
         requestMethod = "POST"
@@ -63,17 +64,27 @@ object Soap {
       }
       connection.outputStream.use { it.write(envelope) }
       if (connection.responseCode == HttpURLConnection.HTTP_OK) {
-        Result(connection.inputStream.bufferedReader().use { it.readText() }, null)
+        val body = connection.inputStream.bufferedReader().use { it.readText() }
+        UpnpTrace.soap(action, controlUrl, arguments, "HTTP 200", body, System.currentTimeMillis() - startedAt)
+        Result(body, null)
       } else {
         // Never null on an answer, however empty: null fault means no answer at all.
         val fault = runCatching {
           connection.errorStream?.bufferedReader()?.use { it.readText() }
         }.getOrNull() ?: ""
         Log.w(TAG, "$action refused (${connection.responseCode}): ${fault?.take(FAULT_LOG_CHARS)}")
+        UpnpTrace.soap(
+          action, controlUrl, arguments, "refused HTTP ${connection.responseCode}", fault,
+          System.currentTimeMillis() - startedAt
+        )
         Result(null, fault)
       }
     } catch (e: Exception) {
       Log.w(TAG, "$action failed: ${e.javaClass.simpleName}: ${e.message}")
+      UpnpTrace.soap(
+        action, controlUrl, arguments, "no answer: ${e.javaClass.simpleName}: ${e.message}", null,
+        System.currentTimeMillis() - startedAt
+      )
       Result(null, null)
     } finally {
       connection?.disconnect()
@@ -88,9 +99,15 @@ object Soap {
         connectTimeout = timeoutMs
         readTimeout = timeoutMs
       }
-      if (connection.responseCode != HttpURLConnection.HTTP_OK) null
-      else connection.inputStream.bufferedReader().use { it.readText() }
-    } catch (_: Exception) {
+      if (connection.responseCode != HttpURLConnection.HTTP_OK) {
+        UpnpTrace.fetched(url, "HTTP ${connection.responseCode}", null)
+        null
+      } else {
+        connection.inputStream.bufferedReader().use { it.readText() }
+          .also { UpnpTrace.fetched(url, "HTTP 200", it) }
+      }
+    } catch (e: Exception) {
+      UpnpTrace.fetched(url, "no answer: ${e.javaClass.simpleName}: ${e.message}", null)
       null
     } finally {
       connection?.disconnect()

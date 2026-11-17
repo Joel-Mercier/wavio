@@ -37,6 +37,7 @@ const CenteredBottomSheetModal = forwardRef<
       enableDynamicSizing = true,
       maxDynamicContentSize,
       topInset,
+      onDismiss,
       ...props
     },
     ref,
@@ -100,13 +101,34 @@ const CenteredBottomSheetModal = forwardRef<
       return () => subscription.remove();
     }, []);
 
+    // gorhom treats a dismiss() of a sheet that isn't presented as a dismissal
+    // in progress, and ignores every present() after it until the screen
+    // remounts. Callers dismiss defensively (a header button sharing a sheet
+    // action's handler), so such a dismiss is dropped here.
+    const isPresentedRef = useRef(false);
+    const handleDismiss = useCallback(() => {
+      isPresentedRef.current = false;
+      onDismiss?.();
+    }, [onDismiss]);
+
     const setRefs = useCallback(
       (instance: BottomSheetModal | null) => {
-        modalRef.current = instance;
+        const guarded: BottomSheetModal | null = instance && {
+          ...instance,
+          present: (...args) => {
+            isPresentedRef.current = true;
+            instance.present(...args);
+          },
+          dismiss: (...args) => {
+            if (!isPresentedRef.current) return;
+            instance.dismiss(...args);
+          },
+        };
+        modalRef.current = guarded;
         if (typeof ref === "function") {
-          ref(instance);
+          ref(guarded);
         } else if (ref) {
-          ref.current = instance;
+          ref.current = guarded;
         }
       },
       [ref],
@@ -116,6 +138,7 @@ const CenteredBottomSheetModal = forwardRef<
       <BottomSheetModal
         ref={setRefs}
         onChange={handleChange}
+        onDismiss={handleDismiss}
         snapPoints={resolvedSnapPoints}
         enableDynamicSizing={enableDynamicSizing}
         maxDynamicContentSize={resolvedMaxDynamicContentSize}

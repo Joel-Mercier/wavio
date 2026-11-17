@@ -30,7 +30,7 @@ export default function GenreListItem({ genre }: GenreListItemProps) {
         <Heading
           size="md"
           numberOfLines={2}
-          className={cn("text-white", showCounts && "h-14 mb-2")}
+          className={cn("text-white h-14", showCounts && "mb-2")}
         >
           {genre.value}
         </Heading>

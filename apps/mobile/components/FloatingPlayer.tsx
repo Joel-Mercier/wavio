@@ -49,7 +49,7 @@ import { useIsOnline } from "@/hooks/useIsOnline";
 import { useTrackArtwork } from "@/hooks/useTrackArtwork";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
 import type { PodcastSeries } from "@/services/taddyPodcasts/types";
-import useApp from "@/stores/app";
+import useApp, { SIDEBAR_WIDTH } from "@/stores/app";
 import useCast from "@/stores/cast";
 import useFloatingPlayer from "@/stores/floatingPlayer";
 import useJukebox from "@/stores/jukebox";
@@ -62,8 +62,6 @@ import { TOAST_DURATION } from "@/utils/toastDuration";
 import { isSpokenWordTrack } from "@/utils/trackSource";
 
 export const FLOATING_PLAYER_HEIGHT = 64;
-// Width of the landscape left tab bar column; the player docks to its bottom.
-export const SIDEBAR_WIDTH = 240;
 // Approximate default react-navigation bottom tab content height (excluding the
 // safe-area inset). The portrait player sits directly on top of the tab bar, so
 // its bottom must track the real tab bar height instead of a hardcoded value.
@@ -145,7 +143,7 @@ export default function FloatingPlayer() {
       setHidden(false);
       translateY.value = withTiming(0, { duration: 220 });
     }
-  }, [playingTrack?.id, translateY]);
+  }, [playingTrack?.id, translateY, setHidden]);
 
   useEffect(() => () => setHidden(false), [setHidden]);
 
@@ -421,6 +419,7 @@ export default function FloatingPlayer() {
             <HStack className="items-center gap-x-2">
               <ImageWithFallback
                 source={artwork ? { uri: artwork } : undefined}
+                recyclingKey={null}
                 className="w-10 h-10 rounded aspect-square"
                 alt="Track cover"
                 contentFit={playingTrack.isRadio ? "contain" : "cover"}
@@ -555,6 +554,7 @@ export default function FloatingPlayer() {
                 <Box style={{ zIndex: 2 }} className="rounded-md">
                   <ImageWithFallback
                     source={artwork ? { uri: artwork } : undefined}
+                    recyclingKey={null}
                     className="w-12 h-12 rounded-md aspect-square"
                     alt="Track cover"
                     contentFit={playingTrack.isRadio ? "contain" : "cover"}

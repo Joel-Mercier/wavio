@@ -11,6 +11,7 @@ import {
 } from "@/services/serverHeaders";
 import { useAuthBase } from "@/stores/auth";
 import { logError } from "@/utils/log";
+import { normalizeServerUrl } from "@/utils/serverUrl";
 import { USER_AGENT } from "@/utils/userAgent";
 
 export const NAVIDROME_AUTH_HEADER = "X-ND-Authorization";
@@ -27,7 +28,7 @@ navidromeApiInstance.interceptors.request.use(
   async (request) => {
     await ensureFreshAccessToken();
     const { url, token } = useAuthBase.getState();
-    request.baseURL = url ? `${url.replace(/\/+$/, "")}/api` : "";
+    request.baseURL = url ? `${normalizeServerUrl(url)}/api` : "";
     // Set before the custom headers so a user-configured User-Agent still wins,
     // matching the other instances. Without it this instance keeps RN's default
     // `okhttp/*`, which Cloudflare-fronted servers reject.

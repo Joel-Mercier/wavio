@@ -2,9 +2,10 @@
 //
 // Everything above this seam — the indexer, the SQLite index, and every read
 // path in services/local/* — is identical whether the files sit on this phone's
-// storage or on a NAS. Only four operations differ: listing a directory, reading
-// a byte range, turning a file into something a player can open, and asking
-// whether the source is reachable at all. This is that interface.
+// storage or on a NAS. Only a few operations differ: listing a directory,
+// reading a byte range, turning a file into something a player can open,
+// deleting a file, and asking whether the source is reachable at all. This is
+// that interface.
 //
 // Addresses are **canonical URIs owned by the source**: `file:///…` or
 // `content://…` for the device, `webdav:/Music/a.flac` / `smb:/Music/a.flac`
@@ -72,5 +73,10 @@ export interface FileSource {
    * its port (see resolveServerBase in modules/ssl-trust).
    */
   playableUrl(path: string): string;
+  /**
+   * Permanently removes one file. Resolves once it is gone, including when it
+   * already was; rejects with a `FileSourceError` otherwise.
+   */
+  delete(path: string): Promise<void>;
   probe(): Promise<boolean>;
 }

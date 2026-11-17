@@ -1,4 +1,5 @@
 import { LegendList } from "@legendapp/list/react-native";
+import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import ArrowLeft from "lucide-react-native/icons/arrow-left";
@@ -13,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import DraggableList from "@/components/DraggableList";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import FastScroller, { useFastScroll } from "@/components/FastScroller";
 import { openSleepTimerSheet } from "@/components/player/SleepTimerSheet";
 import CreatePlaylistFromQueueDialog from "@/components/queue/CreatePlaylistFromQueueDialog";
 import QueueEditLaneDivider from "@/components/queue/QueueEditLaneDivider";
@@ -47,6 +49,7 @@ import { play as playLocal, startTrackRadio } from "@/services/player";
 import { reconcilePlayHistory } from "@/services/playHistory/reconcile";
 import { isSleepTimerActive, useSleepTimer } from "@/services/sleepTimer";
 import useApp from "@/stores/app";
+import { everyTrackHidden } from "@/stores/hiddenTracks";
 import usePlayHistory, { type PlayHistoryEntry } from "@/stores/playHistory";
 import useQueue, { manualLaneEnd, type QueueTrack } from "@/stores/queue";
 import { childToTrack, trackToChild } from "@/utils/childToTrack";
@@ -101,6 +104,7 @@ export default function QueueDetail() {
   const toast = useToast();
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
+  const fastScroll = useFastScroll();
   const isWideLayout = useApp((s) => s.isWideLayout);
   const queue = useQueue((state) => state.queue);
   const currentIndex = useQueue((state) => state.currentIndex);
@@ -207,7 +211,9 @@ export default function QueueDetail() {
       // TrackListItem already disables rows that are unavailable offline, but
       // connectivity can flip between render and tap — startTrackRadio then
       // leaves the queue alone, so surface that instead of doing nothing.
-      if (await startTrackRadio(childToTrack(track))) return;
+      const seed = childToTrack(track);
+      if (await startTrackRadio(seed)) return;
+      if (everyTrackHidden([seed])) return;
       toast.show({
         placement: "top",
         duration: TOAST_DURATION.default,
@@ -567,53 +573,62 @@ export default function QueueDetail() {
               }
             />
           ) : (
-            <LegendList
-              recycleItems
-              data={queueRows}
-              keyExtractor={(item) => item.key}
-              getItemType={(item) => item.kind}
-              showsVerticalScrollIndicator={false}
-              ListFooterComponent={QueueEndFooter}
-              contentContainerStyle={{
-                paddingBottom: screenBottomPadding,
-              }}
-              renderItem={({ item }) => {
-                if (item.kind === "header") {
-                  return (
-                    <Heading
-                      size="sm"
-                      className="text-gray-300 mt-6 mb-2 px-6"
-                      numberOfLines={1}
-                    >
-                      {item.label}
-                    </Heading>
-                  );
-                }
-                return isSpokenWordTrack(item.track) ? (
-                  <Box className="px-6">
-                    <QueuePodcastListItem
-                      track={item.track}
+            <>
+              <AnimatedLegendList
+                {...fastScroll.listProps}
+                recycleItems
+                data={queueRows}
+                keyExtractor={(item) => item.key}
+                getItemType={(item) => item.kind}
+                showsVerticalScrollIndicator={false}
+                ListFooterComponent={QueueEndFooter}
+                contentContainerStyle={{
+                  paddingBottom: screenBottomPadding,
+                }}
+                renderItem={({ item }) => {
+                  if (item.kind === "header") {
+                    return (
+                      <Heading
+                        size="sm"
+                        className="text-gray-300 mt-6 mb-2 px-6"
+                        numberOfLines={1}
+                      >
+                        {item.label}
+                      </Heading>
+                    );
+                  }
+                  return isSpokenWordTrack(item.track) ? (
+                    <Box className="px-6">
+                      <QueuePodcastListItem
+                        track={item.track}
+                        index={item.index}
+                        onPress={handleQueueItemPress}
+                      />
+                    </Box>
+                  ) : (
+                    <TrackListItem
+                      track={tracks[item.index]}
                       index={item.index}
+                      queueIndex={item.index}
+                      onSwipeRemove={
+                        item.index > (currentIndex ?? -1)
+                          ? handleSwipeRemove
+                          : undefined
+                      }
                       onPress={handleQueueItemPress}
+                      disableFirstItemMargin={item.index === currentIndex}
+                      className="px-6"
                     />
-                  </Box>
-                ) : (
-                  <TrackListItem
-                    track={tracks[item.index]}
-                    index={item.index}
-                    queueIndex={item.index}
-                    onSwipeRemove={
-                      item.index > (currentIndex ?? -1)
-                        ? handleSwipeRemove
-                        : undefined
-                    }
-                    onPress={handleQueueItemPress}
-                    disableFirstItemMargin={item.index === currentIndex}
-                    className="px-6"
-                  />
-                );
-              }}
-            />
+                  );
+                }}
+              />
+              <FastScroller
+                fastScroll={fastScroll}
+                itemCount={queue.length}
+                top={8}
+                bottom={screenBottomPadding}
+              />
+            </>
           )}
         </Box>
       </Box>

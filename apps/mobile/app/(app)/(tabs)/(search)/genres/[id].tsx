@@ -16,18 +16,21 @@ import { useWindowDimensions } from "react-native";
 import Animated, {
   Extrapolation,
   interpolate,
-  useAnimatedScrollHandler,
   useAnimatedStyle,
-  useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 import AlbumListItem from "@/components/albums/AlbumListItem";
 import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
+import { DetailStickyHeader } from "@/components/DetailScreenHeader";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
+import FastScroller, {
+  STICKY_HEADER_CLEARANCE,
+  useFastScroll,
+} from "@/components/FastScroller";
 import ScreenHeaderGradient from "@/components/ScreenHeaderGradient";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -42,11 +45,9 @@ import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
 import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
-import { gridColumnCount } from "@/utils/grid";
+import { COVER_GRID, gridColumnCount } from "@/utils/grid";
 import { loadingData } from "@/utils/loadingData";
 import { goBackOrHome } from "@/utils/navigation";
-
-const AnimatedBox = Animated.createAnimatedComponent(Box);
 
 export default function GenreScreen() {
   const { t } = useTranslation();
@@ -60,26 +61,18 @@ export default function GenreScreen() {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
   const screenBottomPadding = useScreenBottomPadding();
-  const offsetY = useSharedValue(0);
+  const fastScroll = useFastScroll();
+  const offsetY = fastScroll.offset;
   const headerStyle = useAnimatedStyle(() => {
     return {
       opacity: interpolate(offsetY.value, [0, 50], [0, 1], Extrapolation.CLAMP),
     };
   });
-  const scrollHandler = useAnimatedScrollHandler((event) => {
-    offsetY.value = event.contentOffset.y;
-  });
   const { id } = useLocalSearchParams<{ id: string }>();
   const { width } = useWindowDimensions();
   const { layout, toggle } = useAlbumScreenLayout("genre-albums");
   const gridColumns =
-    layout === "grid"
-      ? gridColumnCount(width, {
-          minItemWidth: 160,
-          minColumns: 3,
-          maxColumns: 5,
-        })
-      : 1;
+    layout === "grid" ? gridColumnCount(width, COVER_GRID) : 1;
   const musicFolderIds = useCurrentMusicFolderIds();
   const {
     data,
@@ -117,46 +110,28 @@ export default function GenreScreen() {
   ) : null;
   return (
     <Box className="h-full">
-      <AnimatedBox
-        className="w-full z-10 absolute top-0 left-0 right-0"
-        style={[headerStyle]}
-      >
-        <ScreenHeaderGradient opaque>
-          <HStack
-            className="items-center justify-between pb-4 px-6"
-            style={{ paddingTop: insets.top + 16 }}
-          >
-            <FadeOutScaleDown onPress={() => goBackOrHome(router)}>
+      <DetailStickyHeader
+        title={id}
+        style={headerStyle}
+        right={
+          <HStack className="items-center gap-x-3">
+            <FadeOutScaleDown testID="album-layout-toggle" onPress={toggle}>
               <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                <ArrowLeft size={24} color={white} />
+                {layout === "list" ? (
+                  <LayoutGrid size={20} color={white} />
+                ) : (
+                  <List size={20} color={white} />
+                )}
               </Box>
             </FadeOutScaleDown>
-            <Heading
-              numberOfLines={1}
-              className="text-white font-bold text-center truncate flex-1"
-              size="lg"
-            >
-              {id}
-            </Heading>
-            <HStack className="items-center gap-x-3">
-              <FadeOutScaleDown testID="album-layout-toggle" onPress={toggle}>
-                <Box className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
-                  {layout === "list" ? (
-                    <LayoutGrid size={20} color={white} />
-                  ) : (
-                    <List size={20} color={white} />
-                  )}
-                </Box>
-              </FadeOutScaleDown>
-              {optionsButton}
-            </HStack>
+            {optionsButton}
           </HStack>
-        </ScreenHeaderGradient>
-      </AnimatedBox>
+        }
+      />
       <AnimatedLegendList
         recycleItems
         key={`genre-albums-${layout}-${gridColumns}`}
-        onScroll={scrollHandler}
+        {...fastScroll.listProps}
         data={isLoading ? loadingData(12) : albums}
         numColumns={gridColumns}
         extraData={layout}
@@ -237,6 +212,12 @@ export default function GenreScreen() {
           }
         }}
         onEndReachedThreshold={0.5}
+      />
+      <FastScroller
+        fastScroll={fastScroll}
+        itemCount={isLoading ? 0 : albums.length}
+        top={insets.top + STICKY_HEADER_CLEARANCE}
+        bottom={screenBottomPadding}
       />
       <CenteredBottomSheetModal
         ref={bottomSheetModalRef}

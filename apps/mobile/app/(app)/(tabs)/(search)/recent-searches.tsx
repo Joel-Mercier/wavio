@@ -60,7 +60,7 @@ export default function RecentSearchesScreen() {
     debounce(() => setDebouncedQuery(query));
   }, [query, debounce]);
   const musicFolderIds = useSearchMusicFolderIds();
-  const { data, isLoading, error } = useSearch3(debouncedQuery, {
+  const { data } = useSearch3(debouncedQuery, {
     albumCount: 12,
     albumOffset: 0,
     songCount: 12,
@@ -71,7 +71,7 @@ export default function RecentSearchesScreen() {
   });
 
   const searchData = useMemo(() => {
-    if (!data || !data?.searchResult3) {
+    if (!data?.searchResult3) {
       return [];
     }
 

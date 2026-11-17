@@ -43,9 +43,9 @@ export default function PodcastSeriesRow({
           contentContainerClassName="mb-6 pl-6"
         >
           {isLoading
-            ? loadingData(skeletonCount).map((_, index) => (
+            ? loadingData(skeletonCount).map((placeholder, index) => (
                 <PodcastSeriesListItemSkeleton
-                  key={`${skeletonKey}-${index}`}
+                  key={`${skeletonKey}-${placeholder.id}`}
                   index={index}
                   layout="horizontal"
                 />

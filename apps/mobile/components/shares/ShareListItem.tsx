@@ -62,7 +62,7 @@ import {
   useShareDownloadsEnabled,
 } from "@/hooks/navidrome/useShares";
 import type { Share } from "@/services/openSubsonic/types";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { logError } from "@/utils/log";
 import { cn } from "@/utils/tailwind";
 import { TOAST_DURATION } from "@/utils/toastDuration";
@@ -262,7 +262,9 @@ export default function ShareListItem({ share }: { share: Share }) {
           <HStack className="flex-1 items-center">
             {share?.entry && hasEntries && share?.entry[0]?.coverArt ? (
               <Image
-                source={{ uri: artworkUrl(share.entry[0].coverArt) }}
+                source={{
+                  uri: artworkUrl(share.entry[0].coverArt, ARTWORK_THUMB_SIZE),
+                }}
                 className="w-16 h-16 rounded-md aspect-square"
                 alt="Share cover"
               />
@@ -289,7 +291,7 @@ export default function ShareListItem({ share }: { share: Share }) {
                 <Text className="text-md text-primary-100 capitalize">
                   {isPlaylist
                     ? t("app.shared.playlist_one")
-                    : hasEntries && share?.entry && share.entry[0].mediaType
+                    : hasEntries && share?.entry?.[0].mediaType
                       ? t(`app.shares.mediaType_${share.entry[0].mediaType}`, {
                           defaultValue: share.entry[0].mediaType,
                         })

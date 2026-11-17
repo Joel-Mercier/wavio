@@ -1,6 +1,7 @@
 import {
   type BottomSheetModal,
   BottomSheetScrollView,
+  type BottomSheetScrollViewMethods,
 } from "@gorhom/bottom-sheet";
 import { AnimatedLegendList } from "@legendapp/list/reanimated";
 import { useQueryClient } from "@tanstack/react-query";
@@ -50,6 +51,10 @@ import AlbumListItem from "@/components/albums/AlbumListItem";
 import AlbumListItemSkeleton from "@/components/albums/AlbumListItemSkeleton";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
 import DownloadedBadge from "@/components/DownloadedBadge";
+import DangerZone, {
+  DangerZoneDeleteRow,
+} from "@/components/deletion/DangerZone";
+import DeleteFilesDialog from "@/components/deletion/DeleteFilesDialog";
 import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
@@ -92,20 +97,23 @@ import {
 } from "@/hooks/offline";
 import { useIsPlaying } from "@/hooks/player";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { useFileDeletionAvailable } from "@/hooks/useFileDeletion";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useRefreshRecentPlay } from "@/hooks/useRefreshRecentPlay";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { ShareLinkOptions } from "@/services/backend/sharing";
+import { isNotFoundError } from "@/services/notFound";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
 import useQueue, { type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import useTrackSelection from "@/stores/trackSelection";
+import { laterReleaseYear } from "@/utils/albumDates";
 import type { AlbumListRow } from "@/utils/albumDiscRows";
 import { buildAlbumListRows } from "@/utils/albumDiscRows";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 import { format, formatDuration } from "@/utils/date";
 import { loadingData } from "@/utils/loadingData";
@@ -137,6 +145,7 @@ export default function AlbumDetail() {
   const [clipoardCopyDone, setClipoardCopyDone] = useState(false);
   const isWideLayout = useApp((s) => s.isWideLayout);
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const sheetScrollRef = useRef<BottomSheetScrollViewMethods>(null);
   const bottomSheetShareModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetShareOptionsModalRef = useRef<BottomSheetModal>(null);
   const doFavorite = useStar();
@@ -145,14 +154,19 @@ export default function AlbumDetail() {
   const canTranscodeShares = useCanTranscodeShares();
   const doSetRating = useSetRating();
   const capabilities = useCapabilities();
+  const fileDeletionAvailable = useFileDeletionAvailable();
+  const [showDeleteFilesDialog, setShowDeleteFilesDialog] = useState(false);
   const isOnline = useIsOnline();
   const toast = useToast();
   const { data: serverData, isLoading, error } = useAlbum(id);
   const offlineAlbumData = useOfflineAlbum(id);
+  // Its files were deleted, here or elsewhere: what is cached is stale.
+  const isGone = !!error && isNotFoundError(error);
   // Offline (or before the server query resolves) fall back to the downloaded
   // collection so a saved album stays browsable after a logout clears the React
   // Query cache.
-  const data = serverData ?? offlineAlbumData;
+  const data = isGone ? undefined : (serverData ?? offlineAlbumData);
+  const reissueYear = laterReleaseYear(data?.album);
   // A rename or new cover on the server reaches the home shortcut from here.
   useRefreshRecentPlay(
     serverData?.album
@@ -172,7 +186,11 @@ export default function AlbumDetail() {
     isLoading: discoverMoreIsLoading,
     error: discoverMoreError,
   } = useArtist(data?.album?.artistId ?? "");
-  const colors = useImageColors(artworkUrl(data?.album?.coverArt));
+  const colors = useImageColors(
+    data?.album?.coverArt
+      ? artworkUrl(data?.album?.coverArt, ARTWORK_THUMB_SIZE)
+      : undefined,
+  );
   const topColor =
     (colors?.platform === "ios"
       ? colors.primary
@@ -251,7 +269,7 @@ export default function AlbumDetail() {
             ),
           });
         },
-        onError: (error) => {
+        onError: () => {
           queryClient.setQueryData(["album", id], {
             ...data,
             album: {
@@ -304,7 +322,7 @@ export default function AlbumDetail() {
             ),
           });
         },
-        onError: (error) => {
+        onError: () => {
           queryClient.setQueryData(["album", id], {
             ...data,
             album: {
@@ -401,7 +419,7 @@ export default function AlbumDetail() {
             ),
           });
         },
-        onError: (error) => {
+        onError: () => {
           toast.show({
             placement: "top",
             duration: TOAST_DURATION.default,
@@ -908,7 +926,12 @@ export default function AlbumDetail() {
                 <ImageWithFallback
                   source={
                     data?.album?.artistId
-                      ? { uri: artworkUrl(data?.album?.artistId) }
+                      ? {
+                          uri: artworkUrl(
+                            data?.album?.artistId,
+                            ARTWORK_THUMB_SIZE,
+                          ),
+                        }
                       : undefined
                   }
                   className="w-8 h-8 rounded-full aspect-square"
@@ -976,6 +999,9 @@ export default function AlbumDetail() {
                         "dd MMM yyyy",
                       )
                     : data?.album?.year}
+                  {reissueYear
+                    ? ` ⦁ ${t("app.albums.reissued", { year: reissueYear })}`
+                    : null}
                 </Text>
               </HStack>
               <HStack className="mt-4 items-center justify-between">
@@ -1036,7 +1062,13 @@ export default function AlbumDetail() {
                 </HStack>
               </HStack>
             </VStack>
-            {error && <ErrorDisplay error={error} />}
+            {isGone ? (
+              <Text className="text-primary-100 px-6 mt-6">
+                {t("app.albums.goneMessage")}
+              </Text>
+            ) : (
+              error && <ErrorDisplay error={error} />
+            )}
           </LinearGradient>
         }
         ListFooterComponent={
@@ -1101,9 +1133,9 @@ export default function AlbumDetail() {
                       contentContainerClassName="pl-6 mb-6"
                     >
                       {discoverMoreIsLoading
-                        ? loadingData(4).map((_, index) => (
+                        ? loadingData(4).map((placeholder, index) => (
                             <AlbumListItemSkeleton
-                              key={`discover-more-${index}`}
+                              key={`discover-more-${placeholder.id}`}
                               index={index}
                               layout="horizontal"
                             />
@@ -1178,6 +1210,7 @@ export default function AlbumDetail() {
         }}
       >
         <BottomSheetScrollView
+          ref={sheetScrollRef}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ alignItems: "center" }}
         >
@@ -1186,7 +1219,12 @@ export default function AlbumDetail() {
               <ImageWithFallback
                 source={
                   data?.album?.coverArt
-                    ? { uri: artworkUrl(data?.album?.coverArt) }
+                    ? {
+                        uri: artworkUrl(
+                          data?.album?.coverArt,
+                          ARTWORK_THUMB_SIZE,
+                        ),
+                      }
                     : undefined
                 }
                 className="w-16 h-16 rounded-md aspect-square"
@@ -1402,6 +1440,20 @@ export default function AlbumDetail() {
                   </HStack>
                 </FadeOutScaleDown>
               )}
+              {fileDeletionAvailable && !!data?.album && (
+                <DangerZone
+                  onReveal={() => sheetScrollRef.current?.scrollToEnd()}
+                  itemId={id}
+                >
+                  <DangerZoneDeleteRow
+                    label={t("app.fileDeletion.deleteAlbum")}
+                    onPress={() => {
+                      bottomSheetModalRef.current?.dismiss();
+                      setShowDeleteFilesDialog(true);
+                    }}
+                  />
+                </DangerZone>
+              )}
             </VStack>
           </Box>
         </BottomSheetScrollView>
@@ -1413,6 +1465,20 @@ export default function AlbumDetail() {
         value={data?.album?.userRating || 0}
         onConfirm={handleRatingChange}
         isPending={doSetRating.isPending}
+      />
+      <DeleteFilesDialog
+        isOpen={showDeleteFilesDialog}
+        onClose={() => setShowDeleteFilesDialog(false)}
+        target={
+          data?.album
+            ? { kind: "album", id, name: data.album.name ?? "" }
+            : null
+        }
+        onDeleted={(result) => {
+          if (result.failed.length === 0 && !result.cancelled) {
+            goBackOrHome(router);
+          }
+        }}
       />
       <RemoveDownloadsDialog
         isOpen={showRemoveDownloadsDialog}

@@ -19,6 +19,7 @@ import { useAuthBase } from "@/stores/auth";
 import { chunk } from "@/utils/chunk";
 
 const FIELDS = "DateCreated,UserData,ChildCount";
+const DETAIL_FIELDS = `${FIELDS},Overview`;
 
 // Item ids travel on the query string — Jellyfin takes them comma-joined in
 // `Ids` / `EntryIds` rather than in a body — so a few hundred 32-char ids run
@@ -55,7 +56,7 @@ export const getPlaylist = async (id: string) => {
     // query cache) 404s here. The call still fails — the caller needs the
     // metadata — but it's a data state, not an app bug.
     jellyfinApiInstance.get<BaseItemDto>(`/Users/${userId()}/Items/${id}`, {
-      params: { Fields: FIELDS },
+      params: { Fields: DETAIL_FIELDS },
       notFoundIsExpected: true,
     } as AxiosRequestConfig & { notFoundIsExpected?: boolean }),
     jellyfinApiInstance.get<JellyfinItemsResult>(`/Playlists/${id}/Items`, {
@@ -106,10 +107,27 @@ export const deletePlaylist = async (id: string) => {
   return fakeEnvelope({});
 };
 
+// Overview is only writable through the admin-only item update, which replaces
+// every editable field with the body it is sent. So the body is the item as the
+// server just returned it (the single-item GET carries every field), changed in
+// Overview alone, and nothing is written when the description is unchanged:
+// the edit form always submits it, and a non-admin would be refused.
+async function updatePlaylistOverview(id: string, comment: string) {
+  const { data: item } = await jellyfinApiInstance.get<BaseItemDto>(
+    `/Users/${userId()}/Items/${id}`,
+  );
+  if ((item.Overview ?? "") === comment) return;
+  await jellyfinApiInstance.post(`/Items/${id}`, {
+    ...item,
+    Overview: comment,
+  });
+}
+
 export const updatePlaylist = async (
   id: string,
   {
     name,
+    comment,
     isPublic,
     songIdToAdd,
     songIndexToRemove,
@@ -121,15 +139,15 @@ export const updatePlaylist = async (
     songIndexToRemove?: string[];
   },
 ) => {
-  // Jellyfin has no playlist description field; `comment` is intentionally
-  // dropped. Use the dedicated UpdatePlaylist endpoint for Name/IsPublic so
-  // both apply in a single request without clobbering Users.
+  // The dedicated UpdatePlaylist endpoint applies Name/IsPublic in a single
+  // request without clobbering Users, but ignores Overview.
   if (name !== undefined || isPublic !== undefined) {
     await jellyfinApiInstance.post(`/Playlists/${id}`, {
       ...(name !== undefined ? { Name: name } : {}),
       ...(isPublic !== undefined ? { IsPublic: isPublic } : {}),
     });
   }
+  if (comment !== undefined) await updatePlaylistOverview(id, comment);
   // Sequential, not parallel: each request appends its ids to the end of the
   // playlist, so the caller's track order only survives if the chunks land in
   // order. A failure part-way leaves the earlier chunks added — a partial add

@@ -106,6 +106,7 @@ jest.mock("@/services/network", () => ({
   getIsEffectivelyOnline: () => mockIsOnline(),
   subscribeEffectiveOnline: jest.fn(() => jest.fn()),
   probeServer: jest.fn(),
+  subscribeRouteSwap: jest.fn(() => jest.fn()),
 }));
 jest.mock("@/config/i18n", () => ({
   __esModule: true,

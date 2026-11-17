@@ -18,6 +18,10 @@ jest.mock("@/config/storage", () => {
       jest.requireActual("zustand/middleware").createJSONStorage(() => make()),
     flushPendingScopedWrites: () => {},
     getAuthScope: () => "scope",
+    getNoBackupStorage: () => ({
+      getAllKeys: () => [],
+      remove: () => {},
+    }),
   };
 });
 

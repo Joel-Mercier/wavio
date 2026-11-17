@@ -1,0 +1,501 @@
+---
+import { PROMO_VIDEO_LANDSCAPE_ID, PROMO_VIDEO_PORTRAIT_ID } from "../consts";
+import { type Lang, useTranslations } from "../i18n/utils";
+
+interface Props {
+	lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang).video;
+---
+
+<button
+	type="button"
+	data-promo-open
+	aria-haspopup="dialog"
+	aria-controls="promo-video"
+	class="group inline-flex items-center gap-3 rounded-[14px] py-2 pl-2 pr-4 text-sm font-medium text-text transition-colors duration-200 hover:text-accent"
+>
+	<span class="relative flex size-11 shrink-0 items-center justify-center rounded-full border border-border-strong bg-white/5 text-accent transition-all duration-200 group-hover:border-accent group-hover:bg-accent group-hover:text-ink">
+		<span class="promo-ring pointer-events-none absolute inset-0 rounded-full border border-accent/60" aria-hidden="true"></span>
+		<svg class="ml-0.5 size-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+			<path d="M7 4.5v15c0 .8.9 1.3 1.6.8l11.5-7.5c.6-.4.6-1.3 0-1.7L8.6 3.7C7.9 3.2 7 3.7 7 4.5z" />
+		</svg>
+	</span>
+	{t.watch}
+</button>
+
+<dialog
+	id="promo-video"
+	class="promo-dialog"
+	aria-label={t.title}
+	data-landscape={PROMO_VIDEO_LANDSCAPE_ID}
+	data-portrait={PROMO_VIDEO_PORTRAIT_ID}
+>
+	<div class="promo-frame" data-frame data-state="loading">
+		<img class="promo-poster" data-poster alt="" decoding="async" />
+		<div class="promo-loader" aria-hidden="true">
+			{Array.from({ length: 5 }).map(() => <i />)}
+		</div>
+		<div class="promo-player" data-player-slot></div>
+
+		<button type="button" class="promo-veil promo-veil--paused" data-resume aria-label={t.play}>
+			<span class="promo-bigplay">
+				<svg class="ml-1 size-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+					<path d="M7 4.5v15c0 .8.9 1.3 1.6.8l11.5-7.5c.6-.4.6-1.3 0-1.7L8.6 3.7C7.9 3.2 7 3.7 7 4.5z" />
+				</svg>
+			</span>
+		</button>
+
+		<div class="promo-veil promo-veil--ended">
+			<div class="flex flex-wrap items-center justify-center gap-3">
+				<button
+					type="button"
+					data-replay
+					class="inline-flex items-center gap-2.5 rounded-[14px] bg-accent px-5 py-3 text-sm font-bold text-ink shadow-[0_12px_36px_-8px_rgba(16,185,129,0.35)] transition-transform duration-150 hover:-translate-y-0.5"
+				>
+					<svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+						<path d="M3 3v5h5" />
+					</svg>
+					{t.replay}
+				</button>
+				<button
+					type="button"
+					data-promo-close
+					class="inline-flex items-center rounded-[14px] border border-border-strong px-5 py-3 text-sm font-medium text-text transition-colors duration-200 hover:border-accent hover:bg-accent-soft"
+				>
+					{t.close}
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<button type="button" class="promo-close" data-promo-close aria-label={t.close} autofocus>
+		<svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" aria-hidden="true">
+			<path d="M6 6l12 12M18 6L6 18" />
+		</svg>
+	</button>
+</dialog>
+
+<script>
+	type YTPlayer = {
+		playVideo(): void;
+		seekTo(seconds: number, allowSeekAhead: boolean): void;
+		destroy(): void;
+	};
+	type YTNamespace = {
+		Player: new (el: HTMLElement, options: Record<string, unknown>) => YTPlayer;
+		PlayerState: { ENDED: number; PLAYING: number; PAUSED: number };
+	};
+
+	declare global {
+		interface Window {
+			YT?: YTNamespace;
+			onYouTubeIframeAPIReady?: () => void;
+		}
+	}
+
+	const EMBED_HOST = "https://www.youtube-nocookie.com";
+	const PLAYER_VARS = {
+		autoplay: 1,
+		playsinline: 1,
+		rel: 0,
+		iv_load_policy: 3,
+		cc_load_policy: 0,
+		modestbranding: 1,
+		color: "white",
+		fs: 1,
+	};
+	const CLOSE_MS = 240;
+	const PAUSE_VEIL_DELAY_MS = 220;
+
+	let apiPromise: Promise<YTNamespace> | null = null;
+
+	const loadYouTubeApi = () => {
+		apiPromise ??= new Promise<YTNamespace>((resolve, reject) => {
+			if (window.YT?.Player) return resolve(window.YT);
+			const previous = window.onYouTubeIframeAPIReady;
+			window.onYouTubeIframeAPIReady = () => {
+				previous?.();
+				if (window.YT) resolve(window.YT);
+			};
+			const script = document.createElement("script");
+			script.src = "https://www.youtube.com/iframe_api";
+			script.async = true;
+			script.onerror = () => {
+				apiPromise = null;
+				script.remove();
+				reject(new Error("YouTube IFrame API failed to load"));
+			};
+			document.head.append(script);
+		});
+		return apiPromise;
+	};
+
+	const dialog = document.getElementById("promo-video") as HTMLDialogElement | null;
+
+	if (dialog) {
+		const frame = dialog.querySelector<HTMLElement>("[data-frame]")!;
+		const poster = dialog.querySelector<HTMLImageElement>("[data-poster]")!;
+		const slot = dialog.querySelector<HTMLElement>("[data-player-slot]")!;
+		const portraitQuery = window.matchMedia("(orientation: portrait)");
+
+		let player: YTPlayer | null = null;
+		let session = 0;
+		let pauseTimer: number | undefined;
+		let closeTimer: number | undefined;
+
+		const setState = (state: "loading" | "ready" | "playing" | "paused" | "ended") => {
+			window.clearTimeout(pauseTimer);
+			if (state === "paused") {
+				pauseTimer = window.setTimeout(() => {
+					frame.dataset.state = "paused";
+				}, PAUSE_VEIL_DELAY_MS);
+				return;
+			}
+			frame.dataset.state = state;
+		};
+
+		const mountFallbackIframe = (videoId: string) => {
+			const params = new URLSearchParams(
+				Object.entries(PLAYER_VARS).map(([k, v]) => [k, String(v)]),
+			);
+			const iframe = document.createElement("iframe");
+			iframe.src = `${EMBED_HOST}/embed/${videoId}?${params}`;
+			iframe.title = dialog.getAttribute("aria-label") ?? "";
+			iframe.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
+			iframe.allowFullscreen = true;
+			iframe.addEventListener("load", () => setState("ready"), { once: true });
+			slot.replaceChildren(iframe);
+		};
+
+		const mountPlayer = async (videoId: string, current: number) => {
+			const mount = document.createElement("div");
+			slot.replaceChildren(mount);
+			try {
+				const YT = await loadYouTubeApi();
+				if (current !== session) return;
+				player = new YT.Player(mount, {
+					host: EMBED_HOST,
+					videoId,
+					playerVars: { ...PLAYER_VARS, enablejsapi: 1, origin: window.location.origin },
+					events: {
+						onReady: (event: { target: YTPlayer }) => {
+							if (current !== session) return;
+							setState("ready");
+							event.target.playVideo();
+						},
+						onStateChange: (event: { data: number }) => {
+							if (current !== session) return;
+							if (event.data === YT.PlayerState.PLAYING) setState("playing");
+							else if (event.data === YT.PlayerState.PAUSED) setState("paused");
+							else if (event.data === YT.PlayerState.ENDED) setState("ended");
+						},
+					},
+				});
+			} catch {
+				if (current === session) mountFallbackIframe(videoId);
+			}
+		};
+
+		const teardown = () => {
+			session++;
+			window.clearTimeout(pauseTimer);
+			player?.destroy();
+			player = null;
+			slot.replaceChildren();
+			dialog.removeAttribute("data-closing");
+			frame.dataset.state = "loading";
+		};
+
+		const open = () => {
+			if (dialog.open) return;
+			window.clearTimeout(closeTimer);
+			teardown();
+			const portrait = portraitQuery.matches;
+			const videoId = (portrait ? dialog.dataset.portrait : dialog.dataset.landscape) ?? "";
+			frame.dataset.orientation = portrait ? "portrait" : "landscape";
+			poster.src = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+			dialog.showModal();
+			mountPlayer(videoId, session);
+		};
+
+		const close = () => {
+			if (!dialog.open || dialog.hasAttribute("data-closing")) return;
+			const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+			if (reduceMotion) return dialog.close();
+			dialog.setAttribute("data-closing", "");
+			closeTimer = window.setTimeout(() => dialog.close(), CLOSE_MS);
+		};
+
+		for (const trigger of document.querySelectorAll("[data-promo-open]")) {
+			trigger.addEventListener("click", open);
+		}
+		for (const button of dialog.querySelectorAll("[data-promo-close]")) {
+			button.addEventListener("click", close);
+		}
+		dialog.querySelector("[data-resume]")?.addEventListener("click", () => player?.playVideo());
+		dialog.querySelector("[data-replay]")?.addEventListener("click", () => {
+			player?.seekTo(0, true);
+			player?.playVideo();
+		});
+
+		dialog.addEventListener("cancel", (event) => {
+			event.preventDefault();
+			close();
+		});
+		dialog.addEventListener("click", (event) => {
+			if (event.target === dialog) close();
+		});
+		dialog.addEventListener("close", teardown);
+	}
+</script>
+
+<style>
+	.promo-ring {
+		animation: promo-ring 2.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+	}
+	@keyframes promo-ring {
+		0% { transform: scale(1); opacity: 0.9; }
+		100% { transform: scale(1.7); opacity: 0; }
+	}
+
+	:global(html:has(.promo-dialog[open])) {
+		overflow: hidden;
+	}
+
+	.promo-dialog {
+		position: fixed;
+		inset: 0;
+		width: 100vw;
+		height: 100dvh;
+		max-width: none;
+		max-height: none;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		background: transparent;
+		color: var(--color-text);
+		overflow: hidden;
+		overscroll-behavior: contain;
+	}
+	.promo-dialog[open] {
+		display: grid;
+		place-items: center;
+		animation: promo-fade 0.35s ease-out;
+	}
+	.promo-dialog::backdrop {
+		background:
+			radial-gradient(ellipse 60% 55% at 50% 50%, rgba(16, 185, 129, 0.12), transparent 70%),
+			rgba(2, 3, 4, 0.94);
+		backdrop-filter: blur(16px) saturate(0.6);
+		-webkit-backdrop-filter: blur(16px) saturate(0.6);
+		animation: promo-fade 0.45s ease-out;
+	}
+	.promo-dialog[data-closing],
+	.promo-dialog[data-closing]::backdrop {
+		animation: promo-fade-out 0.24s ease-in forwards;
+	}
+
+	.promo-frame {
+		--ratio: 16 / 9;
+		--gutter-x: 96px;
+		--gutter-y: 128px;
+		position: relative;
+		aspect-ratio: var(--ratio);
+		width: min(100vw - var(--gutter-x), (100dvh - var(--gutter-y)) * var(--ratio));
+		overflow: hidden;
+		border-radius: 20px;
+		background: #000;
+		box-shadow:
+			0 0 0 1px rgba(255, 255, 255, 0.06),
+			0 50px 120px -30px rgba(0, 0, 0, 0.9),
+			0 0 140px -30px rgba(16, 185, 129, 0.4);
+		animation: promo-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+	.promo-frame[data-orientation="portrait"] {
+		--ratio: 9 / 16;
+	}
+	.promo-dialog[data-closing] .promo-frame {
+		animation: promo-sink 0.24s ease-in forwards;
+	}
+
+	@media (max-width: 640px) {
+		.promo-frame {
+			--gutter-x: 24px;
+			--gutter-y: 96px;
+			border-radius: 16px;
+		}
+	}
+	@media (max-height: 500px) and (orientation: landscape) {
+		.promo-frame {
+			--gutter-x: 136px;
+			--gutter-y: 32px;
+			border-radius: 14px;
+		}
+	}
+
+	.promo-poster {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		filter: blur(6px) brightness(0.45);
+		transform: scale(1.06);
+		transition: opacity 0.6s ease;
+	}
+	.promo-poster:not([src]) {
+		visibility: hidden;
+	}
+
+	.promo-loader {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 5px;
+		transition: opacity 0.4s ease;
+	}
+	.promo-loader i {
+		display: block;
+		width: 5px;
+		height: 34px;
+		border-radius: 3px;
+		background: linear-gradient(180deg, #10b981, #0a7f5c);
+		animation: eq 1.1s ease-in-out infinite;
+	}
+	.promo-loader i:nth-child(2) { animation-delay: -0.4s; }
+	.promo-loader i:nth-child(3) { animation-delay: -0.7s; }
+	.promo-loader i:nth-child(4) { animation-delay: -0.2s; }
+	.promo-loader i:nth-child(5) { animation-delay: -0.55s; }
+
+	.promo-player {
+		position: absolute;
+		inset: 0;
+		opacity: 0;
+		transition: opacity 0.7s ease;
+	}
+	.promo-player :global(iframe) {
+		display: block;
+		width: 100%;
+		height: 100%;
+		border: 0;
+	}
+
+	.promo-frame:not([data-state="loading"]) .promo-player {
+		opacity: 1;
+	}
+	.promo-frame:not([data-state="loading"]) .promo-poster,
+	.promo-frame:not([data-state="loading"]) .promo-loader {
+		opacity: 0;
+	}
+
+	.promo-veil {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: 0;
+		background:
+			radial-gradient(ellipse 70% 70% at 50% 50%, rgba(16, 185, 129, 0.14), transparent 70%),
+			rgba(3, 5, 6, 0.72);
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+		opacity: 0;
+		visibility: hidden;
+		transition:
+			opacity 0.3s ease,
+			visibility 0s linear 0.3s;
+	}
+	.promo-veil--paused {
+		bottom: 56px;
+		cursor: pointer;
+		mask-image: linear-gradient(180deg, #000 80%, transparent);
+		-webkit-mask-image: linear-gradient(180deg, #000 80%, transparent);
+	}
+	.promo-frame[data-state="paused"] .promo-veil--paused,
+	.promo-frame[data-state="ended"] .promo-veil--ended {
+		opacity: 1;
+		visibility: visible;
+		transition:
+			opacity 0.3s ease,
+			visibility 0s;
+	}
+
+	.promo-bigplay {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 84px;
+		height: 84px;
+		border-radius: 9999px;
+		background: var(--color-accent);
+		color: var(--color-ink);
+		box-shadow: 0 18px 50px -10px rgba(16, 185, 129, 0.55);
+		transition: transform 0.2s ease;
+	}
+	.promo-veil--paused:hover .promo-bigplay {
+		transform: scale(1.06);
+	}
+
+	.promo-close {
+		position: fixed;
+		top: max(16px, env(safe-area-inset-top));
+		right: max(16px, env(safe-area-inset-right));
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 44px;
+		height: 44px;
+		border-radius: 9999px;
+		border: 1px solid var(--color-border-strong);
+		background: rgba(11, 14, 16, 0.6);
+		color: var(--color-text-2);
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
+		transition:
+			color 0.2s ease,
+			border-color 0.2s ease,
+			transform 0.2s ease;
+	}
+	.promo-close:hover {
+		color: var(--color-text);
+		border-color: var(--color-accent);
+		transform: rotate(90deg);
+	}
+
+	@keyframes promo-fade {
+		from { opacity: 0; }
+		to { opacity: 1; }
+	}
+	@keyframes promo-fade-out {
+		from { opacity: 1; }
+		to { opacity: 0; }
+	}
+	@keyframes promo-rise {
+		from { opacity: 0; transform: translateY(24px) scale(0.96); }
+		to { opacity: 1; transform: none; }
+	}
+	@keyframes promo-sink {
+		from { opacity: 1; transform: none; }
+		to { opacity: 0; transform: translateY(12px) scale(0.97); }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.promo-ring,
+		.promo-loader i,
+		.promo-dialog[open],
+		.promo-dialog::backdrop,
+		.promo-frame {
+			animation: none;
+		}
+		.promo-close:hover {
+			transform: none;
+		}
+	}
+</style>

@@ -162,6 +162,7 @@ export default function SearchScreen() {
 
   // Swapping the sort reorders the list; reset to the top so the new ordering
   // starts in view instead of keeping the previous offset.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: activeSort is the trigger: a new sort resets the list to the top
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, [activeSort]);

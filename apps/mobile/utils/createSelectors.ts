@@ -10,7 +10,7 @@ const createSelectors = <S extends UseBoundStore<StoreApi<object>>>(
   const store = _store as WithSelectors<typeof _store>;
   store.use = {};
   for (const k of Object.keys(store.getState())) {
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    // biome-ignore lint/suspicious/noExplicitAny: keys come from Object.keys, so the mapped selector type cannot be indexed
     (store.use as any)[k] = () => store((s) => s[k as keyof typeof s]);
   }
 

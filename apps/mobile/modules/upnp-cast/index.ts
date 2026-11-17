@@ -154,6 +154,15 @@ type UpnpCastNativeModule = {
   /** One room's own volume, 0..100. */
   setDeviceVolume(deviceId: string, volume: number): Promise<boolean>;
   disconnect(): Promise<boolean>;
+  /** TEMPORARY (issue #220): the casting log a tester records and sends back. */
+  isTracing(): boolean;
+  hasTrace(): boolean;
+  trace(message: string): void;
+  /** Starting wipes the previous log. Persisted, so a crash doesn't stop it. */
+  setTracing(enabled: boolean): boolean;
+  clearTrace(): void;
+  /** Opens the share sheet on `header` + the log. False when nothing was recorded. */
+  shareTrace(header: string): Promise<boolean>;
   addListener(
     event: "device",
     listener: (device: UpnpDevice) => void,

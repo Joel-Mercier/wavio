@@ -7,6 +7,9 @@ import { ALBUM_CAROUSEL_SKELETON } from "@/components/home/sections/skeletons";
 import { useAlbumList2 } from "@/hooks/backend/useLists";
 import type { AlbumListType } from "@/services/backend/lists";
 import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
+import { albumsInYearRange } from "@/utils/homeFeed";
+
+const YEAR_RANGE_FETCH_SIZE = 50;
 
 interface AlbumCarouselSectionProps {
   title: string;
@@ -31,11 +34,22 @@ function AlbumCarouselSection({
 }: AlbumCarouselSectionProps) {
   const enabled = useSectionEnabled(sectionIndex);
   const musicFolderIds = useCurrentMusicFolderIds();
+  const yearBounded = fromYear != null && toYear != null;
   const { data, isLoading, error } = useAlbumList2(
-    { type, size, musicFolderIds, genre, fromYear, toYear },
+    {
+      type,
+      size: yearBounded ? YEAR_RANGE_FETCH_SIZE : size,
+      musicFolderIds,
+      genre,
+      fromYear,
+      toYear,
+    },
     { enabled },
   );
-  const albums = data?.albumList2?.album;
+  const fetched = data?.albumList2?.album;
+  const albums = yearBounded
+    ? albumsInYearRange(fetched, fromYear, toYear)?.slice(0, size)
+    : fetched;
   return (
     <HomeSection
       title={title}

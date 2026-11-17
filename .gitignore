@@ -23,6 +23,8 @@ android/.gradle/
 **/modules/car-auto/android/build/
 **/modules/audio-tagger/native/.build/
 **/modules/audio-tagger/native/.taglib/
+**/modules/alac-decoder/native/.build/
+**/modules/alac-decoder/native/.ffmpeg/
 *.iml
 *.orig.*
 *.jks

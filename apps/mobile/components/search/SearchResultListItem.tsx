@@ -19,7 +19,7 @@ import { useIsCurrentTrack } from "@/hooks/player";
 import type { AlbumID3, ArtistID3, Child } from "@/services/openSubsonic/types";
 import { playSongInAlbum } from "@/services/playSongInAlbum";
 import useRecentSearches from "@/stores/recentSearches";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { cn } from "@/utils/tailwind";
 
 function SearchResultListItemIcon({
@@ -117,7 +117,9 @@ export default function SearchResultListItem({
         <HStack className="items-center">
           {searchResult.coverArt ? (
             <Image
-              source={{ uri: artworkUrl(searchResult.coverArt) }}
+              source={{
+                uri: artworkUrl(searchResult.coverArt, ARTWORK_THUMB_SIZE),
+              }}
               className={cn("w-16 h-16 rounded-md aspect-square", {
                 "rounded-full": type.id === "artist",
               })}

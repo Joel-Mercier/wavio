@@ -37,6 +37,7 @@ import {
 import { queryClient } from "@/config/queryClient";
 import { subscribeQueryPersistence } from "@/config/queryPersister";
 import { scrubBreadcrumb, scrubEvent } from "@/services/errorReporting";
+import { initHttpTransport } from "@/services/httpTransport";
 import {
   getIsEffectivelyOnline,
   initConnectionType,
@@ -174,6 +175,7 @@ export default sentryWrap(function RootLayout() {
     // already-trusted self-signed servers connect on cold start (Android is
     // global; iOS also (re)starts the loopback proxy for trusted upstreams).
     void initSslTrust();
+    const unsubscribeHttpTransport = initHttpTransport();
     // Drive React Query's online state off effective connectivity (device
     // online AND server reachable) so it pauses refetches and serves cache when
     // the server is unreachable, instead of hammering it with failing requests.
@@ -214,6 +216,7 @@ export default sentryWrap(function RootLayout() {
       unsubscribeOrientation();
       unsubscribeCollectionAdoption();
       unsubscribePersist();
+      unsubscribeHttpTransport();
     };
   }, []);
 

@@ -146,6 +146,7 @@ export default function OfflineDownloadsDetail() {
 
   // A changed sort/query reorders the list; snap back to the top so the new
   // ordering starts in view instead of leaving the user mid-scroll.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: activeSort and debouncedQuery are triggers: a new ordering resets the list to the top
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, [activeSort, debouncedQuery]);

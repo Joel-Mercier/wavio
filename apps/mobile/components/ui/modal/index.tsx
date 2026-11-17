@@ -23,7 +23,7 @@ const SCOPE = "MODAL";
 const StyledAnimatedPressable = withUniwind(AnimatedPressable);
 const StyledAnimatedView = withUniwind(AnimatedView);
 const UIModal = createModal({
-  Root: withStyleContext(View as any, SCOPE),
+  Root: withStyleContext(View, SCOPE),
   Backdrop: StyledAnimatedPressable,
   Content: StyledAnimatedView,
   Body: ScrollView,

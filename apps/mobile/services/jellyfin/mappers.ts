@@ -185,6 +185,7 @@ export function mapBaseItemToPlaylist(
   return {
     id: item.Id,
     name: item.Name ?? "",
+    comment: item.Overview || undefined,
     songCount: item.ChildCount ?? 0,
     duration: ticksToSeconds(item.RunTimeTicks),
     created: parseDate(item.DateCreated) ?? new Date(0),

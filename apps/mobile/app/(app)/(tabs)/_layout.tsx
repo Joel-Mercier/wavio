@@ -12,15 +12,12 @@ import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCSSVariable } from "uniwind";
 import AddBottomSheet from "@/components/AddBottomSheet";
-import {
-  SIDEBAR_WIDTH,
-  TAB_BAR_CONTENT_HEIGHT,
-} from "@/components/FloatingPlayer";
+import { TAB_BAR_CONTENT_HEIGHT } from "@/components/FloatingPlayer";
 import OfflineBanner, {
   OFFLINE_BANNER_HEIGHT,
 } from "@/components/OfflineBanner";
 import { useIsOnline } from "@/hooks/useIsOnline";
-import useApp from "@/stores/app";
+import useApp, { SIDEBAR_WIDTH } from "@/stores/app";
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -129,18 +126,14 @@ export default function TabLayout() {
           name="(home)"
           options={{
             title: t("app.home.tabTitle"),
-            tabBarIcon: ({ focused, color }) => (
-              <Home color={color} size={24} />
-            ),
+            tabBarIcon: ({ color }) => <Home color={color} size={24} />,
           }}
         />
         <Tabs.Screen
           name="(search)"
           options={{
             title: t("app.search.title"),
-            tabBarIcon: ({ focused, color }) => (
-              <Search color={color} size={24} />
-            ),
+            tabBarIcon: ({ color }) => <Search color={color} size={24} />,
           }}
           listeners={{
             tabPress: (e) => {
@@ -162,9 +155,7 @@ export default function TabLayout() {
           name="(library)"
           options={{
             title: t("app.library.title"),
-            tabBarIcon: ({ focused, color }) => (
-              <Library color={color} size={24} />
-            ),
+            tabBarIcon: ({ color }) => <Library color={color} size={24} />,
           }}
         />
         <Tabs.Screen

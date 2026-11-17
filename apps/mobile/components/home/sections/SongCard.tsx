@@ -8,10 +8,11 @@ import { Image } from "@/components/ui/image";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useIsTrackAvailableOffline } from "@/hooks/offline";
+import { useHiddenReason } from "@/hooks/useHiddenTracks";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks } from "@/services/player";
-import { artworkUrl } from "@/utils/artwork";
+import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 
 interface SongCardProps {
@@ -25,19 +26,21 @@ function SongCard({ track, trackList, index }: SongCardProps) {
   const isTrackDownloaded = useIsTrackAvailableOffline(track.id);
   const isOnline = useIsOnline();
   const isUnavailableOffline = !isOnline && !isTrackDownloaded;
+  const isHidden = useHiddenReason(track) != null;
   const handlePress = () => {
     playTracks(trackList.map(childToTrack), index);
   };
   return (
     <FadeOutScaleDown
       onPress={handlePress}
-      disabled={isUnavailableOffline}
+      disabled={isUnavailableOffline || isHidden}
+      disabledOpacity={isHidden ? 0.4 : undefined}
       className="mr-6"
     >
       <VStack className="w-32 gap-y-2">
         {track.coverArt ? (
           <Image
-            source={{ uri: artworkUrl(track.coverArt) }}
+            source={{ uri: artworkUrl(track.coverArt, ARTWORK_THUMB_SIZE) }}
             className="w-32 h-32 rounded-md aspect-square"
             alt="Track cover"
           />

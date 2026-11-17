@@ -1,10 +1,12 @@
 import type { Href } from "expo-router";
 import Archive from "lucide-react-native/icons/archive";
 import AudioLines from "lucide-react-native/icons/audio-lines";
+import Car from "lucide-react-native/icons/car";
 import CloudDownload from "lucide-react-native/icons/cloud-download";
 import Download from "lucide-react-native/icons/download";
 import HardDrive from "lucide-react-native/icons/hard-drive";
 import Library from "lucide-react-native/icons/library";
+import LifeBuoy from "lucide-react-native/icons/life-buoy";
 import Podcast from "lucide-react-native/icons/mic-signal";
 import Palette from "lucide-react-native/icons/palette";
 import Radio from "lucide-react-native/icons/radio";
@@ -13,6 +15,7 @@ import ShieldCheck from "lucide-react-native/icons/shield-check";
 import Workflow from "lucide-react-native/icons/workflow";
 import type { ComponentType } from "react";
 import { useTranslation } from "react-i18next";
+import { Platform } from "react-native";
 import { Uniwind } from "uniwind";
 import SettingsLinkRow from "@/components/settings/SettingsLinkRow";
 import SettingsScreenScaffold from "@/components/settings/SettingsScreenScaffold";
@@ -33,8 +36,10 @@ const MENU_ENTRIES: {
   // Hidden unless the active backend advertises this capability, so a section
   // never opens onto features the server can't honour.
   requiresCapability?: keyof BackendCapabilities;
+  androidOnly?: boolean;
 }[] = [
   { key: "playback", icon: AudioLines },
+  { key: "androidAuto", icon: Car, androidOnly: true },
   { key: "library", icon: Library },
   { key: "downloads", icon: Download, hideWhenFilesOnDevice: true },
   { key: "appearance", icon: Palette },
@@ -49,6 +54,7 @@ const MENU_ENTRIES: {
   { key: "backup", icon: Archive },
   { key: "security", icon: ShieldCheck },
   { key: "updates", icon: RefreshCw },
+  { key: "support", icon: LifeBuoy },
 ];
 
 export default function SettingsMenu() {
@@ -67,6 +73,7 @@ export default function SettingsMenu() {
         {MENU_ENTRIES.filter(
           (entry) =>
             !(entry.hideWhenFilesOnDevice && filesOnDevice) &&
+            !(entry.androidOnly && Platform.OS !== "android") &&
             (!entry.requiresCapability ||
               capabilities[entry.requiresCapability]),
         ).map((entry) => {

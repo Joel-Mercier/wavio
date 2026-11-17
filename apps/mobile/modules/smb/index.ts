@@ -39,6 +39,8 @@ type SmbNativeModule = {
   bridgeUrl(target: SmbTarget, path: string, timeoutMs: number): string;
   list(target: SmbTarget, path: string, timeoutMs: number): Promise<SmbEntry[]>;
   exists(target: SmbTarget, path: string, timeoutMs: number): Promise<boolean>;
+  /** Resolves once the file is gone, including when it already was. */
+  delete(target: SmbTarget, path: string, timeoutMs: number): Promise<boolean>;
   probe(target: SmbTarget, timeoutMs: number): Promise<boolean>;
   disconnect(): Promise<boolean>;
 };
@@ -79,6 +81,14 @@ export function smbExists(
   timeoutMs: number,
 ): Promise<boolean> {
   return required().exists(target, path, timeoutMs);
+}
+
+export function smbDelete(
+  target: SmbTarget,
+  path: string,
+  timeoutMs: number,
+): Promise<boolean> {
+  return required().delete(target, path, timeoutMs);
 }
 
 export function smbProbe(
