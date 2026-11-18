@@ -1,12 +1,15 @@
 {
   "github": {
-    "version": "1.4.0",
+    "version": "1.5.0",
     "url": "https://github.com/Joel-Mercier/wavio/releases/latest"
   },
   "play": {
     "version": "1.4.0",
     "url": "https://play.google.com/store/apps/details?id=com.jmercier.wavio"
   },
-  "pending": null,
-  "checkedAt": "2026-10-21T22:02:02.534Z"
+  "pending": {
+    "version": "1.5.0",
+    "state": "IN_REVIEW"
+  },
+  "checkedAt": "2026-11-18T01:26:14.813Z"
 }
