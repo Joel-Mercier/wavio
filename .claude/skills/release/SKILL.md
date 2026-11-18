@@ -30,6 +30,27 @@ gh auth status
 bunx eas-cli@latest whoami
 ```
 
+### Build environment
+
+Your shell may not load the user's interactive profile, so it can be missing the Node version and SDK paths the user's terminal has. Run this once, then **start every later shell command with it**: shell state doesn't persist between commands.
+
+```bash
+export PATH="$HOME/.nvm/versions/node/v$(cat .nvmrc)/bin:$PATH"
+export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
+```
+
+Then check:
+
+| Check | Must hold |
+| --- | --- |
+| `node -v` | Equals `v` + the contents of `.nvmrc`. Expo prebuild and the local EAS build both use this Node. |
+| `$ANDROID_HOME/platforms` | Exists. If it's missing, Gradle fails at once with "SDK location not found". |
+| `java -version` | 17 or later, from `JAVA_HOME`. |
+
+The app's own build variables come from the EAS environment named by each profile (`production` for `production-apk*`). The build prints which variables it loaded. That includes `SENTRY_AUTH_TOKEN`, but the `production-apk*` profiles set `SENTRY_DISABLE_AUTO_UPLOAD`, so GitHub APKs never upload sourcemaps.
+
+`apps/mobile/.env` is read too. It must hold no Taddy credentials: those are development-only. Any key it shares with EAS `production` must have the same value. Compare them without printing either value.
+
 Then check whether translations are pending. Crowdin delivers translations as a PR from the `crowdin_translations` branch, titled "New Crowdin updates":
 
 ```bash
@@ -68,7 +89,7 @@ cd apps/mobile && bunx eas-cli@latest build:version:get --platform android
 
 Report the current value and propose current + 1.
 
-🛑 **Checkpoint: versionCode.** `build:version:set` is interactive, so you can't answer its prompt. Ask the user to run this command themselves (in Claude Code, prefix it with `!`) and enter the proposed value:
+🛑 **Checkpoint: versionCode.** `build:version:set` is interactive, so you can't answer its prompt. Ask the user to run this command themselves **in a terminal**, then enter the proposed value. A `!` prefix only works in the Claude Code CLI: other clients send it as a chat message, and the command never runs.
 
 ```bash
 cd apps/mobile && bunx eas-cli@latest build:version:set -p android -e production-apk
@@ -86,7 +107,7 @@ Write `tmp/RELEASE-X.Y.Z.md` at the repo root. Follow [RELEASE-NOTES.md](RELEASE
 
 The version bump stays **uncommitted** while you build and test. If a build fails or the device test finds a bug, the fix can then land on `main` before the release commit, never after it. The build scripts read the version from the working tree, so building before the commit is safe.
 
-Run the three builds **one after another, never in parallel**: they share `apps/mobile/android/`. Each one is a local EAS build that takes several minutes, so run each in the background with a long timeout, and wait for it to finish before starting the next. Each build runs `prebuild:github` itself.
+Run the three builds **one after another, never in parallel**: they share `apps/mobile/android/`. Each one is a local EAS build that takes several minutes, so run each in the background with a long timeout, and wait for it to finish before starting the next. Each build runs `prebuild:github` itself. Start the chain with the build environment exports from step 2.
 
 ```bash
 bun run mobile:build:android:production-apk          # → tmp/wavio-X.Y.Z-arm64-v8a.apk
@@ -94,12 +115,12 @@ bun run mobile:build:android:production-apk-armv7    # → tmp/wavio-X.Y.Z-armea
 bun run mobile:build:android:production-apk-x86_64   # → tmp/wavio-X.Y.Z-x86_64.apk
 ```
 
-If a build fails, stop and show the end of its output. Don't retry with changed flags, and don't edit `android/`.
+If a build fails, stop and show the end of its output. Don't retry with changed flags, and don't edit `android/`. To find the cause, look for `What went wrong` in the build log; the lines at the very end are a generic wrapper.
 
-Once all three are done, check that the three files exist in `tmp/`. If `aapt2` is available (`$ANDROID_HOME/build-tools/*/aapt2`), confirm that each APK's `versionName` is `X.Y.Z` and its `versionCode` matches step 4:
+Once all three are done, check that the three files exist in `tmp/`. Use `aapt2` (the newest `$ANDROID_HOME/build-tools/*/aapt2`) to confirm three things for each APK: its `versionName` is `X.Y.Z`, its `versionCode` matches step 4, and its `native-code` is the expected ABI:
 
 ```bash
-aapt2 dump badging tmp/wavio-X.Y.Z-arm64-v8a.apk | head -1
+aapt2 dump badging tmp/wavio-X.Y.Z-arm64-v8a.apk | grep -E '^package:|^native-code'
 ```
 
 🛑 **Checkpoint: device test.** Ask the user to install `tmp/wavio-X.Y.Z-arm64-v8a.apk` on a real device and test it. Wait for an explicit go-ahead.
