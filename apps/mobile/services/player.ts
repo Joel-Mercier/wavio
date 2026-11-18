@@ -2427,7 +2427,28 @@ export function restoreServerQueue(
     tracks[index]?.id === restored[restoredIndex]?.id
       ? restoredPositionSeconds
       : 0;
-  const target = tracks[index];
+  // Explicit null: the server queue carries no "Playing from …" context.
+  restoreQueueAt(tracks[index], positionSeconds, () =>
+    useQueue.getState().setQueue(tracks, index, null),
+  );
+}
+
+// The server holds the local queue: point it at `index` and restore the
+// position there, keeping its tracks, play-next lane and "Playing from …"
+// context, which the server never had (issue #290).
+export function restoreServerPosition(index: number, positionSeconds: number) {
+  const target = useQueue.getState().queue[index];
+  if (!target) return;
+  restoreQueueAt(target, positionSeconds, () =>
+    useQueue.getState().setCurrentIndex(index),
+  );
+}
+
+function restoreQueueAt(
+  target: QueueTrack | undefined,
+  positionSeconds: number,
+  apply: () => void,
+) {
   const sameTrack = target != null && lastTrackId === target.id;
   // Saved as the track's resume position, so the load below and the reload of
   // the first play both start there, through the same path as a launch resume:
@@ -2435,8 +2456,7 @@ export function restoreServerQueue(
   if (target && positionSeconds > 0) armResumeAt(target, positionSeconds);
   suppressAutoplayOnce = true;
   playbackInitialized = false;
-  // Explicit null: the server queue carries no "Playing from …" context.
-  useQueue.getState().setQueue(tracks, index, null);
+  apply();
   // The subscription only consumes it on a track change.
   suppressAutoplayOnce = false;
   if (positionSeconds <= 0) return;

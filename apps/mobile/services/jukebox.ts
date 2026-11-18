@@ -27,6 +27,7 @@ import useJukebox from "@/stores/jukebox";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 import { logError } from "@/utils/log";
+import { sameIds } from "@/utils/sameIds";
 import { isLibraryTrack } from "@/utils/trackSource";
 
 type ActivateOptions = {
@@ -156,12 +157,8 @@ function applyServerPlaylist(playlist: JukeboxPlaylist) {
   });
 
   const serverIds = (playlist.entry ?? []).map((e) => e.id);
-  const localIds = readQueueIds();
-  const sameOrder =
-    serverIds.length === localIds.length &&
-    serverIds.every((id, i) => id === localIds[i]);
 
-  if (sameOrder) {
+  if (sameIds(serverIds, readQueueIds())) {
     const local = useQueue.getState().currentIndex ?? 0;
     const serverIndex = playlist.currentIndex;
     if (typeof serverIndex === "number" && serverIndex !== local) {

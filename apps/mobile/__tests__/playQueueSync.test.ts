@@ -2,7 +2,7 @@
 // server's older queue must never replace one that was played meanwhile.
 import { createStore } from "zustand/vanilla";
 
-type Track = { id: string };
+type Track = { id: string; isRadio?: boolean };
 type QueueState = { queue: Track[]; currentIndex: number | null };
 
 const makeQueueStore = () =>
@@ -65,6 +65,9 @@ jest.mock("@/services/backgroundTimer", () => ({
 }));
 
 let mockPlaying = false;
+const mockRestoreServerPosition = jest.fn((index: number, _: number) => {
+  mockQueueStore.setState({ currentIndex: index });
+});
 const mockRestoreServerQueue = jest.fn((tracks: Track[], index: number) => {
   mockQueueStore.setState({ queue: tracks, currentIndex: index });
 });
@@ -73,6 +76,8 @@ jest.mock("@/services/player", () => ({
   getCurrentTime: () => 42,
   restoreServerQueue: (tracks: Track[], index: number) =>
     mockRestoreServerQueue(tracks, index),
+  restoreServerPosition: (index: number, position: number) =>
+    mockRestoreServerPosition(index, position),
 }));
 
 let mockPriority = "server";
@@ -125,6 +130,7 @@ beforeEach(() => {
   mockGetPlayQueue.mockReset();
   mockSavePlayQueue.mockClear();
   mockRestoreServerQueue.mockClear();
+  mockRestoreServerPosition.mockClear();
   jest.isolateModules(() => {
     sync = require("@/services/playQueueSync");
   });
@@ -139,6 +145,31 @@ describe("restore at startup", () => {
   test("replaces the local queue with the server's when nothing happened meanwhile", async () => {
     mockGetPlayQueue.mockResolvedValue(serverQueue);
     await sync.initPlayQueueSync();
+    expect(mockRestoreServerQueue).toHaveBeenCalledTimes(1);
+  });
+
+  // Issue #290: the server never had the "Playing from …" context, the play-next
+  // lane or the tracks a push leaves out.
+  test("keeps the local queue when the server holds what was pushed of it", async () => {
+    const station = { id: "station", isRadio: true };
+    const local = [{ id: "a" }, station, { id: "b" }];
+    mockQueueStore.setState({ queue: local, currentIndex: 0 });
+    mockGetPlayQueue.mockResolvedValue({
+      playQueue: { entry: tracks("a", "b"), current: "b", position: 30 },
+    });
+    await sync.initPlayQueueSync();
+    expect(mockRestoreServerQueue).not.toHaveBeenCalled();
+    expect(mockRestoreServerPosition).toHaveBeenCalledWith(2, 30);
+    expect(mockQueueStore.getState().queue).toBe(local);
+  });
+
+  test("replaces a local queue that only shares the server's tracks in another order", async () => {
+    mockQueueStore.setState({ queue: tracks("b", "a"), currentIndex: 0 });
+    mockGetPlayQueue.mockResolvedValue({
+      playQueue: { entry: tracks("a", "b"), current: "a", position: 0 },
+    });
+    await sync.initPlayQueueSync();
+    expect(mockRestoreServerPosition).not.toHaveBeenCalled();
     expect(mockRestoreServerQueue).toHaveBeenCalledTimes(1);
   });
 

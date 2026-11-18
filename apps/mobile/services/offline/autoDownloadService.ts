@@ -43,6 +43,7 @@ import useOffline, {
   type OfflineCollection,
 } from "@/stores/offline";
 import { logError } from "@/utils/log";
+import { sameIds } from "@/utils/sameIds";
 
 export type AutoDownloadRule = keyof AutoDownloadRules;
 
@@ -97,12 +98,6 @@ async function navidromeSmartPlaylistIds(): Promise<Set<string>> {
   } catch {
     return new Set();
   }
-}
-
-function sameIds(a: string[] | null, b: string[]): boolean {
-  if (!a || a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
-  return true;
 }
 
 function holdsRuleCollections(kind: OfflineCollection["kind"]): boolean {

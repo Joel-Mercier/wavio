@@ -13,6 +13,7 @@ import {
 import {
   getCurrentTime,
   isPlaying,
+  restoreServerPosition,
   restoreServerQueue,
 } from "@/services/player";
 import { useAppBase } from "@/stores/app";
@@ -20,6 +21,7 @@ import { currentAuthScope, useAuthBase } from "@/stores/auth";
 import useJukebox from "@/stores/jukebox";
 import useQueue, { type QueueTrack } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
+import { sameIds } from "@/utils/sameIds";
 import { isLibraryTrack } from "@/utils/trackSource";
 
 const PUSH_DEBOUNCE_MS = 5_000;
@@ -77,6 +79,21 @@ const markSynced = (changedAt: number) => {
 // into new arrays, which must not count as a change.
 const signatureOf = (queue: QueueTrack[], currentIndex: number | null) =>
   `${currentIndex}|${queue.map((t) => t.id).join(",")}`;
+
+// What a push sends of a queue. Radio stations, podcast episodes and audiobooks
+// aren't library tracks: the server couldn't resolve their ids.
+const syncedPositions = (queue: QueueTrack[]) =>
+  queue.flatMap((track, at) => (isLibraryTrack(track) ? [at] : []));
+
+// Where the server's entry at `serverIndex` sits in the local queue, when the
+// server holds what a push sends of it. Null when the two queues differ.
+function localIndexOf(serverIds: string[], serverIndex: number): number | null {
+  const { queue } = useQueue.getState();
+  const positions = syncedPositions(queue);
+  const localIds = positions.map((at) => queue[at].id);
+  if (!sameIds(localIds, serverIds)) return null;
+  return positions[serverIndex] ?? null;
+}
 
 const queueSignature = () => {
   const { queue, currentIndex } = useQueue.getState();
@@ -138,9 +155,7 @@ async function doPush(): Promise<void> {
   pushPending = false;
   const { queue, currentIndex } = useQueue.getState();
   if (queue.length === 0) return;
-  // Radio stations, podcast episodes and audiobooks aren't library tracks;
-  // skip them rather than uploading ids the server can't resolve.
-  const ids = queue.filter(isLibraryTrack).map((t) => t.id);
+  const ids = syncedPositions(queue).map((at) => queue[at].id);
   if (ids.length === 0) return;
   const current =
     currentIndex != null ? (queue[currentIndex]?.id ?? undefined) : undefined;
@@ -223,7 +238,13 @@ export async function restorePlayQueueFromServer(): Promise<boolean> {
       )
         index = current;
     }
-    restoreServerQueue(tracks, index, rsp.playQueue?.position ?? 0);
+    const position = rsp.playQueue?.position ?? 0;
+    const localIndex = localIndexOf(
+      tracks.map((t) => t.id),
+      index,
+    );
+    if (localIndex != null) restoreServerPosition(localIndex, position);
+    else restoreServerQueue(tracks, index, position);
     // The queue now matches the server's, whatever was stamped restoring it.
     markSynced(readLedger().changedAt);
     return true;

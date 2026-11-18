@@ -115,6 +115,7 @@ jest.mock("@/config/i18n", () => ({
 import {
   getCurrentTime,
   playTracks,
+  restoreServerPosition,
   restoreServerQueue,
 } from "@/services/player";
 import {
@@ -205,6 +206,53 @@ describe("position of a restored track", () => {
     emitStatus({ playing: false, currentTime: 90, duration: 240 });
     player.currentTime = 95;
     expect(getCurrentTime()).toBe(95);
+  });
+});
+
+describe("restoring the server's queue (issue #290)", () => {
+  const albumSource = { type: "album", id: "al1", name: "Album" } as const;
+
+  test("keeps the queue the server holds, with its context and play-next lane", () => {
+    const local = [
+      song("a"),
+      { ...song("b"), queuedManually: true as const },
+      song("c"),
+    ];
+    useQueue.setState({ queue: local, currentIndex: 0, source: albumSource });
+    // Setting up a new current track plays it; only the restore is under test.
+    player.play.mockClear();
+    restoreServerPosition(0, 30);
+    const state = useQueue.getState();
+    expect(state.source).toEqual(albumSource);
+    expect(state.queue).toBe(local);
+    expect(state.currentIndex).toBe(0);
+    expect(getCurrentTime()).toBe(30);
+    expect(player.play).not.toHaveBeenCalled();
+  });
+
+  test("moves to the server's track without playing it", () => {
+    useQueue.setState({
+      queue: [song("a"), song("b"), song("c")],
+      currentIndex: 0,
+      source: albumSource,
+    });
+    player.play.mockClear();
+    restoreServerPosition(2, 45);
+    const state = useQueue.getState();
+    expect(state.currentIndex).toBe(2);
+    expect(state.source).toEqual(albumSource);
+    expect(getCurrentTime()).toBe(45);
+    expect(player.play).not.toHaveBeenCalled();
+  });
+
+  test("drops the local context when it replaces the queue", () => {
+    useQueue.setState({
+      queue: [song("a"), song("b")],
+      currentIndex: 0,
+      source: albumSource,
+    });
+    restoreServerQueue([song("c"), song("d")], 0, 0);
+    expect(useQueue.getState().source).toBeNull();
   });
 });
 
