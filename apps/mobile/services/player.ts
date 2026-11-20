@@ -1160,11 +1160,31 @@ function syncMediaButtons() {
   const right = nativeMediaButton(mediaControlsRight, track);
   const key = `${left}|${right}`;
   if (key === pushedMediaButtons) return;
-  pushedMediaButtons = key;
   try {
     player.setMediaButtons(left, right);
+    pushedMediaButtons = key;
   } catch (error) {
     logSwallowed("setMediaButtons", error);
+  }
+}
+
+// The OS session reports these to other apps and accessories instead of the
+// engine's own modes: the engine only ever holds the current track, so a car
+// that set its repeat mode there looped that track forever (issue #232).
+let pushedQueueModes: string | null = null;
+
+function syncQueueModes() {
+  const queue = useQueue.getState();
+  const repeatMode = isLibraryTrack(queue.getCurrent())
+    ? queue.repeatMode
+    : null;
+  const key = `${repeatMode}|${queue.shuffle}`;
+  if (key === pushedQueueModes) return;
+  try {
+    player.setQueueModes(repeatMode, queue.shuffle);
+    pushedQueueModes = key;
+  } catch (error) {
+    logSwallowed("setQueueModes", error);
   }
 }
 
@@ -1982,6 +2002,16 @@ remoteListeners.push(
     queue.setRepeatMode(nextRepeatMode(queue.repeatMode));
   }),
 );
+remoteListeners.push(
+  player.addListener("remoteSetRepeatMode", (repeatMode) => {
+    useQueue.getState().setRepeatMode(repeatMode);
+  }),
+);
+remoteListeners.push(
+  player.addListener("remoteSetShuffle", (enabled) => {
+    useQueue.getState().setShuffle(enabled);
+  }),
+);
 statusListeners.push(
   player.addListener("playbackStatusUpdate", handlePlaybackStatus),
 );
@@ -2023,8 +2053,10 @@ let hasHydrated = false;
 // subscription firing to load silently.
 let suppressAutoplayOnce = false;
 syncMediaButtons();
+syncQueueModes();
 const queueUnsub = useQueue.subscribe((state) => {
   syncMediaButtons();
+  syncQueueModes();
   const current =
     state.currentIndex != null ? state.queue[state.currentIndex] : null;
   const id = current?.id ?? null;

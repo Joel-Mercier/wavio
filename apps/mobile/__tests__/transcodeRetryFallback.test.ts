@@ -64,6 +64,7 @@ jest.mock("expo-audio", () => {
     updateLockScreenMetadata: jest.fn(),
     setLockScreenStreamOffset: jest.fn(),
     setMediaButtons: jest.fn(),
+    setQueueModes: jest.fn(),
     setLockScreenControls: jest.fn(),
     clearLockScreenControls: jest.fn(),
     currentTime: 0,

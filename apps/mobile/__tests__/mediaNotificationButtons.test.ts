@@ -65,6 +65,7 @@ jest.mock("expo-audio", () => {
     updateLockScreenMetadata: jest.fn(),
     setLockScreenStreamOffset: jest.fn(),
     setMediaButtons: jest.fn(),
+    setQueueModes: jest.fn(),
     clearLockScreenControls: jest.fn(),
     currentTime: 0,
     duration: 0,
@@ -116,8 +117,8 @@ import useQueue, { type QueueTrack } from "@/stores/queue";
 const { __player: player, __listeners: listeners } = jest.requireMock(
   "expo-audio",
 ) as {
-  __player: { setMediaButtons: jest.Mock };
-  __listeners: Record<string, () => void>;
+  __player: { setMediaButtons: jest.Mock; setQueueModes: jest.Mock };
+  __listeners: Record<string, (value?: unknown) => void>;
 };
 const mockSetStarred = setStarred as jest.Mock;
 
@@ -133,6 +134,7 @@ const playing = (current: QueueTrack) =>
   useQueue.setState({ queue: [current], currentIndex: 0 });
 
 const lastPush = () => player.setMediaButtons.mock.calls.at(-1);
+const lastQueueModes = () => player.setQueueModes.mock.calls.at(-1);
 
 const flush = () => new Promise((resolve) => setImmediate(resolve));
 
@@ -259,6 +261,65 @@ describe("media notification buttons", () => {
 
     await flush();
     expect(lastPush()).toEqual(["favoriteOff", null]);
+    warn.mockRestore();
+  });
+});
+
+// Other apps and accessories (a car's Bluetooth link) see and set the queue's
+// modes, never the engine's: set on the engine, repeat looped the current track
+// forever and the queue never advanced. See GitHub issue #232.
+describe("queue modes on the OS media session", () => {
+  test("the queue's repeat mode and shuffle are pushed as they change", () => {
+    expect(lastQueueModes()).toEqual(["off", false]);
+
+    useQueue.getState().setRepeatMode("one");
+    expect(lastQueueModes()).toEqual(["one", false]);
+
+    useQueue.getState().setShuffle(true);
+    expect(lastQueueModes()).toEqual(["one", true]);
+  });
+
+  test("radio and spoken word turn them off", () => {
+    useQueue.getState().setRepeatMode("all");
+
+    playing(track("radio", { isRadio: true }));
+    expect(lastQueueModes()).toEqual([null, false]);
+
+    playing(track("episode", { source: "podcast" }));
+    expect(lastQueueModes()).toEqual([null, false]);
+
+    playing(track("b"));
+    expect(lastQueueModes()).toEqual(["all", false]);
+  });
+
+  test("a repeat mode set from outside lands in the queue", () => {
+    listeners.remoteSetRepeatMode("one");
+
+    expect(useQueue.getState().repeatMode).toBe("one");
+    expect(lastQueueModes()).toEqual(["one", false]);
+
+    listeners.remoteSetRepeatMode("off");
+    expect(useQueue.getState().repeatMode).toBe("off");
+  });
+
+  test("shuffle set from outside lands in the queue", () => {
+    listeners.remoteSetShuffle(true);
+
+    expect(useQueue.getState().shuffle).toBe(true);
+    expect(lastQueueModes()).toEqual(["off", true]);
+  });
+
+  test("a push the native side rejected is retried on the next change", () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    player.setQueueModes.mockImplementationOnce(() => {
+      throw new Error("not ready");
+    });
+    useQueue.getState().setRepeatMode("all");
+    player.setQueueModes.mockClear();
+
+    useQueue.setState({ queue: [track("a"), track("b")] });
+
+    expect(lastQueueModes()).toEqual(["all", false]);
     warn.mockRestore();
   });
 });
