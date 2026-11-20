@@ -113,6 +113,7 @@
       "./plugins/withInstallApkPermission",
       "./plugins/withProfileable",
       "./plugins/withGradleTuning",
+      "./plugins/withNativeLibPins",
       [
         "@sentry/react-native/expo",
         {
