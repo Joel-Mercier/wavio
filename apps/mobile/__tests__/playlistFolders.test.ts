@@ -3,6 +3,7 @@ import {
   groupPlaylistsIntoFolders,
   type PlaylistFolderOptions,
   playlistFolderRow,
+  playlistTitleInFolder,
   splitPlaylistName,
 } from "@/utils/playlistFolders";
 
@@ -287,5 +288,76 @@ describe("folderAssignmentFor", () => {
     expect(
       folderAssignmentFor(playlist("1", "chill"), null, " - "),
     ).toBeUndefined();
+  });
+});
+
+describe("playlistTitleInFolder", () => {
+  const rock = { name: "Rock", color: null, createdAt: 1 };
+
+  it("drops the folder prefix of a detected playlist", () => {
+    expect(playlistTitleInFolder(playlist("1", "Rock - 80s"), options())).toBe(
+      "80s",
+    );
+  });
+
+  it("keeps the full name with detection off", () => {
+    expect(
+      playlistTitleInFolder(
+        playlist("1", "Rock - 80s"),
+        options({ detect: false }),
+      ),
+    ).toBe("Rock - 80s");
+  });
+
+  it("keeps the full name of a playlist pinned to the root", () => {
+    expect(
+      playlistTitleInFolder(
+        playlist("1", "Rock - 80s"),
+        options({ assignments: { "1": null } }),
+      ),
+    ).toBe("Rock - 80s");
+  });
+
+  it("keeps the full name of a playlist moved into another folder", () => {
+    expect(
+      playlistTitleInFolder(
+        playlist("1", "Rock - 80s"),
+        options({
+          folders: { jazz: { name: "Jazz", color: null, createdAt: 1 } },
+          assignments: { "1": "jazz" },
+        }),
+      ),
+    ).toBe("Rock - 80s");
+  });
+
+  it("drops the prefix of a playlist moved into its detected folder", () => {
+    expect(
+      playlistTitleInFolder(
+        playlist("1", "Rock - 80s"),
+        options({ folders: { rock }, assignments: { "1": "rock" } }),
+      ),
+    ).toBe("80s");
+  });
+
+  it("falls back to detection when the assigned folder was deleted", () => {
+    expect(
+      playlistTitleInFolder(
+        playlist("1", "Rock - 80s"),
+        options({ assignments: { "1": "gone" } }),
+      ),
+    ).toBe("80s");
+  });
+
+  it("drops the prefix of a renamed folder's old name", () => {
+    expect(
+      playlistTitleInFolder(
+        playlist("1", "Rock - 80s"),
+        options({
+          folders: {
+            guitar: { ...rock, name: "Guitar", renamedFrom: ["rock"] },
+          },
+        }),
+      ),
+    ).toBe("80s");
   });
 });

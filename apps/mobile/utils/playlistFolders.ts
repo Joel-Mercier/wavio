@@ -150,6 +150,18 @@ function resolvePlaylistFolder(
   return null;
 }
 
+export function playlistTitleInFolder(
+  playlist: GroupablePlaylist,
+  options: PlaylistFolderOptions,
+): string {
+  const resolved = resolvePlaylistFolder(
+    playlist,
+    options,
+    renamedFolderKeys(options.folders),
+  );
+  return resolved?.title ?? playlist.name;
+}
+
 export function groupPlaylistsIntoFolders<T extends GroupablePlaylist>(
   playlists: T[],
   options: PlaylistFolderOptions,
