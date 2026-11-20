@@ -22,7 +22,8 @@
 				"becauseYouListened": "Porque has escuchado {{artist}}",
 				"becauseYouListenedFallback": "Recomendaciones para ti",
 				"yourPlaylists": "Tus listas de reproducción",
-				"starred": "Tus favoritos",
+				"starredAlbums": "Your favorite albums",
+				"starredSongs": "Your favorite songs",
 				"songsByGenre": "{{genre}} canciones",
 				"albumsByGenre": "{{genre}} álbumes",
 				"albumsByDecade": "Álbumes de los años {{decade}}s",
@@ -62,6 +63,7 @@
 					"frequent": "Los más reproducidos",
 					"random": "Aleatorio",
 					"leastPlayed": "Prueba algo nuevo",
+					"starred": "Álbumes favoritos",
 					"nowPlaying": "Escuchando ahora"
 				}
 			},

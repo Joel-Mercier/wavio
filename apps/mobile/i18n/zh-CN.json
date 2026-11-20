@@ -22,7 +22,8 @@
 				"becauseYouListened": "因为你听了 {{artist}}",
 				"becauseYouListenedFallback": "为您推荐",
 				"yourPlaylists": "歌单",
-				"starred": "收藏",
+				"starredAlbums": "Your favorite albums",
+				"starredSongs": "Your favorite songs",
 				"songsByGenre": "{{genre}} 歌曲",
 				"albumsByGenre": "{{genre}} 专辑",
 				"albumsByDecade": "{{decade}}年代专辑",
@@ -62,6 +63,7 @@
 					"frequent": "最常播放",
 					"random": "随机播放",
 					"leastPlayed": "尝试新功能",
+					"starred": "最喜欢的专辑",
 					"nowPlaying": "正在听"
 				}
 			},

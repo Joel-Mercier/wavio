@@ -22,7 +22,8 @@
 				"becauseYouListened": "Потому что ты прислушался к {{artist}}",
 				"becauseYouListenedFallback": "Рекомендуем вам",
 				"yourPlaylists": "Твои плейлисты",
-				"starred": "Твое избранное",
+				"starredAlbums": "Your favorite albums",
+				"starredSongs": "Your favorite songs",
 				"songsByGenre": "{{genre}} треки",
 				"albumsByGenre": "{{genre}} альбомы",
 				"albumsByDecade": "Альбомы из {{decade}}-х",
@@ -62,6 +63,7 @@
 					"frequent": "Популярные",
 					"random": "Вперемешку",
 					"leastPlayed": "Попробуйте что-то новое",
+					"starred": "Избранные альбомы",
 					"nowPlaying": "Сейчас играет"
 				}
 			},
