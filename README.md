@@ -1,7 +1,7 @@
 # Wavio
 
 <p align="center">
-<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/apps/mobile/assets/images/logo.svg" alt="Wavio logo" width="200" height="200">
+<img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/wavio-banner-2400x1200.webp" alt="Wavio: Your music, your player, your way" width="100%">
 </p>
 
 <h3 align="center">Your music, your player, your way</h3>
