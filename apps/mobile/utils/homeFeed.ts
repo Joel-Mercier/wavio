@@ -42,6 +42,7 @@ export type HomeSectionDescriptor =
   | { id: string; kind: "randomArtists" }
   | { id: string; kind: "playlists" }
   | { id: string; kind: "starred" }
+  | { id: string; kind: "starredSongs" }
   | { id: string; kind: "podcasts" }
   | { id: string; kind: "internetRadio" }
   | { id: string; kind: "listenBrainzCreatedForYou" }
@@ -107,7 +108,7 @@ const HOME_SECTION_CATALOG_ENTRIES = [
     capability: "songLists",
   },
   { key: "playlists", labelKey: "app.home.yourPlaylists" },
-  { key: "starred", labelKey: "app.home.starred" },
+  { key: "starred", labelKey: "app.home.starredAlbums" },
   {
     key: "nowPlaying",
     labelKey: "app.home.sections.nowPlaying",
@@ -120,6 +121,7 @@ const HOME_SECTION_CATALOG_ENTRIES = [
   },
   { key: "albumList:random", labelKey: "app.home.random" },
   { key: "leastPlayedAlbums", labelKey: "app.home.leastPlayed" },
+  { key: "starredSongs", labelKey: "app.home.starredSongs" },
   { key: "podcasts", labelKey: "app.home.podcasts", capability: "podcasts" },
   {
     key: "internetRadio",
@@ -535,6 +537,8 @@ export function buildHomeFeed({
   });
 
   sections.push({ id: "leastPlayedAlbums", kind: "leastPlayedAlbums" });
+
+  sections.push({ id: "starredSongs", kind: "starredSongs" });
 
   if (capabilities.podcasts) {
     sections.push({ id: "podcasts", kind: "podcasts" });

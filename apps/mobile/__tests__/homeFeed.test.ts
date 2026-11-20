@@ -108,6 +108,36 @@ describe("buildHomeFeed hidden sections", () => {
   });
 });
 
+describe("favorite albums and songs sections", () => {
+  it("keeps the two rows at least two sections apart on every server type", () => {
+    const serverTypes: ServerType[] = [
+      "navidrome",
+      "opensubsonic",
+      "jellyfin",
+      "local",
+      "webdav",
+      "smb",
+    ];
+    for (const serverType of serverTypes) {
+      const ids = buildHomeFeed({
+        seedAlbums,
+        genres,
+        availability: {
+          capabilities: getCapabilities(serverType),
+          integrations: { listenBrainz: false, lastFm: false },
+        },
+        sessionSeed: 42,
+        hiddenSections: [],
+        order: [],
+      }).map((s) => s.id);
+      const albums = ids.indexOf("starred");
+      const songs = ids.indexOf("starredSongs");
+      expect(albums).toBeGreaterThan(ids.length / 2);
+      expect(songs - albums).toBeGreaterThan(2);
+    }
+  });
+});
+
 describe("least played albums section", () => {
   it("is offered on every server type", () => {
     const serverTypes: ServerType[] = [

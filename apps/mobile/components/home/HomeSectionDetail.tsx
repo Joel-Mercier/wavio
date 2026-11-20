@@ -20,6 +20,7 @@ import { Box } from "@/components/ui/box";
 import {
   useInfiniteAlbumList2,
   useInfiniteLeastPlayedAlbums,
+  useStarred2,
 } from "@/hooks/backend/useLists";
 import { useIsPlaying } from "@/hooks/player";
 import { useAlbumScreenLayout } from "@/hooks/useAlbumScreenLayout";
@@ -46,6 +47,8 @@ import ShuffleToggle from "../ShuffleToggle";
 import { HStack } from "../ui/hstack";
 import { VStack } from "../ui/vstack";
 
+const PAGE_SIZE = 12;
+
 export default function HomeSectionDetail() {
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const { t } = useTranslation();
@@ -56,6 +59,8 @@ export default function HomeSectionDetail() {
     type: AlbumListType | "leastPlayed";
   }>();
   const isLeastPlayed = type === "leastPlayed";
+  // getAlbumList2 type=starred is empty on the local library; getStarred2 isn't.
+  const isStarred = type === "starred";
   const { width } = useWindowDimensions();
   const { layout, toggle } = useAlbumScreenLayout(`home-section:${type}`);
   const gridColumns =
@@ -71,25 +76,32 @@ export default function HomeSectionDetail() {
   const albumListQuery = useInfiniteAlbumList2(
     {
       type: isLeastPlayed ? "random" : type,
-      size: 12,
+      size: PAGE_SIZE,
       musicFolderIds,
     },
-    { enabled: !isLeastPlayed },
+    { enabled: !isLeastPlayed && !isStarred },
   );
   const leastPlayedQuery = useInfiniteLeastPlayedAlbums(
-    { size: 12, musicFolderIds },
+    { size: PAGE_SIZE, musicFolderIds },
     { enabled: isLeastPlayed },
   );
-  const {
-    data,
-    isLoading,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = isLeastPlayed ? leastPlayedQuery : albumListQuery;
+  const starredQuery = useStarred2({ musicFolderIds }, { enabled: isStarred });
+  const starredAlbums = starredQuery.data?.starred2?.album;
+  const [starredShown, setStarredShown] = useState(PAGE_SIZE);
+  const pagedQuery = isLeastPlayed ? leastPlayedQuery : albumListQuery;
+  const { data } = pagedQuery;
+  const { isLoading, error } = isStarred ? starredQuery : pagedQuery;
+  const hasNextPage = isStarred
+    ? starredShown < (starredAlbums?.length ?? 0)
+    : pagedQuery.hasNextPage;
+  const isFetchingNextPage = !isStarred && pagedQuery.isFetchingNextPage;
+  const fetchNextPage = () => {
+    if (isStarred) setStarredShown((shown) => shown + PAGE_SIZE);
+    else pagedQuery.fetchNextPage();
+  };
   // Random pools from an unseeded backend (local, Jellyfin) can overlap.
   const albums = useMemo(() => {
+    if (isStarred) return starredAlbums?.slice(0, starredShown) ?? [];
     const seen = new Set<string>();
     return (
       data?.pages
@@ -100,7 +112,7 @@ export default function HomeSectionDetail() {
           return true;
         }) ?? []
     );
-  }, [data]);
+  }, [isStarred, starredAlbums, starredShown, data]);
   const heading = t(`app.home.sections.${type}`);
   const source = useMemo<QueueSource>(
     () => ({ type: "albumList", name: heading, id: type }),

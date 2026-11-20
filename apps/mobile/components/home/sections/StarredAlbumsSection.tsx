@@ -1,3 +1,4 @@
+import type { Href } from "expo-router";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import AlbumListItem from "@/components/albums/AlbumListItem";
@@ -7,11 +8,12 @@ import { ALBUM_CAROUSEL_SKELETON } from "@/components/home/sections/skeletons";
 import { useStarred2 } from "@/hooks/backend/useLists";
 import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
 
-interface StarredSectionProps {
-  sectionIndex: number;
-}
+const SEE_ALL_HREF: Href = {
+  pathname: "/(app)/(tabs)/(home)/favorite-albums",
+  params: { type: "starred" },
+};
 
-function StarredSection({ sectionIndex }: StarredSectionProps) {
+function StarredAlbumsSection({ sectionIndex }: { sectionIndex: number }) {
   const enabled = useSectionEnabled(sectionIndex);
   const { t } = useTranslation();
   const musicFolderIds = useCurrentMusicFolderIds();
@@ -22,8 +24,8 @@ function StarredSection({ sectionIndex }: StarredSectionProps) {
   const albums = data?.starred2?.album?.slice(0, 12);
   return (
     <HomeSection
-      title={t("app.home.starred")}
-      seeAllHref="/favorites"
+      title={t("app.home.starredAlbums")}
+      seeAllHref={SEE_ALL_HREF}
       isLoading={!enabled || isLoading}
       error={error}
       isEmpty={!albums?.length}
@@ -41,4 +43,4 @@ function StarredSection({ sectionIndex }: StarredSectionProps) {
   );
 }
 
-export default memo(StarredSection);
+export default memo(StarredAlbumsSection);

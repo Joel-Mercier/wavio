@@ -24,7 +24,8 @@ import {
   RandomSongsSection,
   SongsByGenreSection,
 } from "@/components/home/sections/SongCarouselSection";
-import StarredSection from "@/components/home/sections/StarredSection";
+import StarredAlbumsSection from "@/components/home/sections/StarredAlbumsSection";
+import StarredSongsSection from "@/components/home/sections/StarredSongsSection";
 import TabHeaderGradient from "@/components/TabHeaderGradient";
 import { Box } from "@/components/ui/box";
 import { useGenres } from "@/hooks/backend/useBrowsing";
@@ -294,7 +295,9 @@ export default function HomeScreen() {
             />
           );
         case "starred":
-          return <StarredSection sectionIndex={index} />;
+          return <StarredAlbumsSection sectionIndex={index} />;
+        case "starredSongs":
+          return <StarredSongsSection sectionIndex={index} />;
         case "podcasts":
           return <PodcastCarouselSection sectionIndex={index} />;
         case "internetRadio":

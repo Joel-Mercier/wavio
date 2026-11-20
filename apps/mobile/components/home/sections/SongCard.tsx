@@ -12,6 +12,7 @@ import { useHiddenReason } from "@/hooks/useHiddenTracks";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks } from "@/services/player";
+import type { QueueSource } from "@/stores/queue";
 import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
 
@@ -19,16 +20,17 @@ interface SongCardProps {
   track: Child;
   trackList: Child[];
   index: number;
+  source?: QueueSource;
 }
 
-function SongCard({ track, trackList, index }: SongCardProps) {
+function SongCard({ track, trackList, index, source }: SongCardProps) {
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const isTrackDownloaded = useIsTrackAvailableOffline(track.id);
   const isOnline = useIsOnline();
   const isUnavailableOffline = !isOnline && !isTrackDownloaded;
   const isHidden = useHiddenReason(track) != null;
   const handlePress = () => {
-    playTracks(trackList.map(childToTrack), index);
+    playTracks(trackList.map(childToTrack), index, { source });
   };
   return (
     <FadeOutScaleDown
