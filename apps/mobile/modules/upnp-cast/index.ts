@@ -65,6 +65,12 @@ export type UpnpState = {
    * exists, and is dropped by comparing it to the load the app last asked for.
    */
   generation?: number;
+  /**
+   * When the report was taken, in ms on a clock that keeps counting while the
+   * phone sleeps and ignores changes to the time of day (Android's
+   * `elapsedRealtime`). Only meaningful against another report's.
+   */
+  at?: number;
 };
 
 export type UpnpLoadResult = {
@@ -117,7 +123,8 @@ type UpnpCastNativeModule = {
   describe(deviceId: string, location: string): Promise<UpnpDevice | null>;
   /** What a known renderer is doing, asked without becoming its controller. */
   probe(deviceId: string): Promise<UpnpState | null>;
-  connect(deviceId: string): Promise<boolean>;
+  /** `heldUri`: the track of ours the renderer still holds, when resuming a session. */
+  connect(deviceId: string, heldUri: string | null): Promise<boolean>;
   /**
    * Hands a track over: stops the renderer, sets the URI, starts or parks it, then
    * checks what it is actually holding. Not resolved until the renderer has settled,

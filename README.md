@@ -4,8 +4,6 @@
 <img src="https://raw.githubusercontent.com/Joel-Mercier/wavio/refs/heads/main/wavio-banner-2400x1200.webp" alt="Wavio: Your music, your player, your way" width="100%">
 </p>
 
-<h3 align="center">Your music, your player, your way</h3>
-
 <p align="center">Music streaming app for Android compatible with Navidrome, Jellyfin and OpenSubsonic servers or a local library.</p>
 
 [![CI](https://github.com/Joel-Mercier/wavio/actions/workflows/ci.yml/badge.svg)](https://github.com/Joel-Mercier/wavio/actions/workflows/ci.yml)
@@ -19,6 +17,7 @@
 [Presentation website](https://wavio-app.vercel.app) · [Presentation video](https://www.youtube.com/watch?v=VwLAz1QfZBg) · [Get it on Google Play](https://play.google.com/store/apps/details?id=com.jmercier.wavio) · [Get it on Github](https://github.com/Joel-Mercier/wavio/releases/latest)
 
 ## Table of contents
+
 - [How to install](#how-to-install)
 - [Features](#features)
 - [Translations](#translations)
@@ -49,25 +48,25 @@ APK installs need an extra step to show up in Android Auto (see below), so the P
 ### Latest version per channel
 
 <!-- store-status:start -->
-| Channel | Latest version |
-| --- | --- |
-| [Google Play Store](https://play.google.com/store/apps/details?id=com.jmercier.wavio) | 1.4.0 |
-| In review on Google Play | 1.5.0 |
-| [GitHub releases](https://github.com/Joel-Mercier/wavio/releases/latest) | 1.5.0 |
+| Channel                                                                               | Latest version |
+| ------------------------------------------------------------------------------------- | -------------- |
+| [Google Play Store](https://play.google.com/store/apps/details?id=com.jmercier.wavio) | 1.4.0          |
+| In review on Google Play                                                              | 1.5.0          |
+| [GitHub releases](https://github.com/Joel-Mercier/wavio/releases/latest)              | 1.5.0          |
 <!-- store-status:end -->
 
 The Play Store version is usually a release or two behind GitHub. Every Play Store submission goes through Google's review process, which can usually take two weeks, whereas a GitHub release is published as soon as the APKs are built. If you want the newest features and fixes as early as possible, grab the APK from the releases page; if you'd rather have Android Auto working out of the box, stick with the Play Store.
 
 ### Use Android Auto with a APK install
 
-Android Auto doesn't detect Wavio automatically if you installed the app via APK on Github, Android Auto detects only Play Store apps automatically. To see Wavio with a APK install on Android Auto : 
+Android Auto doesn't detect Wavio automatically if you installed the app via APK on Github, Android Auto detects only Play Store apps automatically. To see Wavio with a APK install on Android Auto :
 
-1. On the phone, open Android Auto settings  (Settings → Connected devices → Android Auto, or open the standalone Android Auto app's settings,  varies by phone).
+1. On the phone, open Android Auto settings (Settings → Connected devices → Android Auto, or open the standalone Android Auto app's settings, varies by phone).
 2. Scroll to the bottom and tap "Version" ~10 times until it says developer mode is enabled.
 3. Tap the ⋮ overflow menu (top right) → Developer settings.
 4. Turn on "Unknown sources" (sometimes worded "Add new apps to launcher" or "Unknown sources").
 5. Reconnect the phone to the car (unplug/replug, or restart the Android Auto session).
-6. If it still doesn't show, check Customize launcher in Android Auto settings and make sure Wavio is  enabled/checked.
+6. If it still doesn't show, check Customize launcher in Android Auto settings and make sure Wavio is enabled/checked.
 
 ## Features
 
@@ -159,20 +158,24 @@ You also do **not** need a Sentry account to develop the app — Sentry is disab
 2. Install dependencies with `bun install` — **from the repo root**, not from `apps/mobile`. The root `package.json` owns `patchedDependencies` (patches for `expo-audio`, `expo-font`, `expo-navigation-bar`, `lucide-react-native` and `zod`) and `bunfig.toml` pins `linker = "hoisted"`, both of which Metro and `jest-expo` depend on. Installing inside the workspace skips the patches and produces a layout Metro can't resolve.
 3. Create your env file: `cp apps/mobile/.env.example apps/mobile/.env`. This step is **required for everyone, maintainers included** — it is how the app gets its Subsonic API version and client name during local development (see [Environment variables](#environment-variables)). `.env` is gitignored.
 4. Generate the native projects:
+
    ```sh
    bun run mobile:prebuild
    ```
+
    `apps/mobile/android/` and `apps/mobile/ios/` are **not tracked in git** — they're generated from `app.json` and the config plugins in `apps/mobile/plugins/` ([Continuous Native Generation](https://docs.expo.dev/workflow/continuous-native-generation/)). To generate a single platform, run `cd apps/mobile && bunx expo prebuild -p android`; on macOS, follow an iOS prebuild with `bunx pod-install`.
 5. Build and install the development client on a connected device or emulator:
+
    ```sh
    cd apps/mobile && DARK_MODE=media bunx expo run:android
    ```
+
    The first Gradle build takes a while. This produces a **debug dev-client APK** — the app talks to the Metro bundler on your machine, so JS changes reload instantly and you never need to rebuild for a JS-only change.
 6. On later sessions, just start the bundler: `cd apps/mobile && DARK_MODE=media bunx expo start`, then open Wavio on the device.
 
 `DARK_MODE=media` is read by the Gluestack/Tailwind setup at bundle time — keep it set or the theme resolves incorrectly.
 
-Re-run prebuild after changing `app.json` or a config plugin — nothing else picks those changes up, and a JS-only change never needs it. It **wipes and regenerates** `android/` and `ios/`, so never hand-edit them: native changes belong in a config plugin (`apps/mobile/plugins/`) or a local Expo module (`apps/mobile/modules/`, whose own `android/` / `ios/` folders *are* tracked source). `eas build` runs prebuild itself, so cloud builds always match the plugins.
+Re-run prebuild after changing `app.json` or a config plugin — nothing else picks those changes up, and a JS-only change never needs it. It **wipes and regenerates** `android/` and `ios/`, so never hand-edit them: native changes belong in a config plugin (`apps/mobile/plugins/`) or a local Expo module (`apps/mobile/modules/`, whose own `android/` / `ios/` folders _are_ tracked source). `eas build` runs prebuild itself, so cloud builds always match the plugins.
 
 > `expo run:android` prebuilds on its own when `android/` is missing, so step 4 is technically optional — running it explicitly keeps config-plugin errors from getting buried in Gradle output. It needs no Expo account.
 
@@ -191,10 +194,12 @@ Optional. Do this if you want the `mobile:start` / `mobile:android` / `mobile:io
 2. In `apps/mobile/app.json`, change `"owner"` to your Expo username (or remove the field)
 3. From `apps/mobile`, run `eas init` to create a project under your account — it rewrites `extra.eas.projectId`
 4. Create the `development` environment variables the wrapper expects, if you want podcasts seeded automatically:
+
    ```sh
    eas env:create --environment development --name EXPO_PUBLIC_TADDY_PODCASTS_API_USER_ID --value <your-id>
    eas env:create --environment development --name EXPO_PUBLIC_TADDY_PODCASTS_API_KEY --value <your-key>
    ```
+
    Skip this and the scripts still work — they just inject nothing extra.
 
 ⚠️ Steps 2 and 3 modify `apps/mobile/app.json`, which is tracked. **Don't commit those changes** — revert with `git checkout apps/mobile/app.json` before opening a PR, or keep them out of your commits with `git update-index --skip-worktree apps/mobile/app.json`.
@@ -203,12 +208,12 @@ Optional. Do this if you want the `mobile:start` / `mobile:android` / `mobile:io
 
 `apps/mobile/.env.example` lists every variable the app reads. For local development only the first two matter:
 
-| Variable | Needed for | If missing |
-| --- | --- | --- |
-| `EXPO_PUBLIC_OPENSUBSONIC_API_VERSION` | Sent as `v=` on **every** Subsonic/Navidrome request | Requests go out with `v=`, and servers reject them with error 10 *"Required parameter is missing"* — login fails against any OpenSubsonic server |
-| `EXPO_PUBLIC_CLIENT_NAME` | Sent as `c=` on **every** Subsonic/Navidrome request | Same as above |
-| `EXPO_PUBLIC_TADDY_PODCASTS_API_USER_ID` / `_KEY` / `_LANGUAGE` / `_COUNTRY` | Seeds the Taddy podcast config | Podcasts simply need to be configured by hand in Settings; nothing else breaks |
-| `SENTRY_AUTH_TOKEN` | Sourcemap upload during **release** builds only | Nothing — Sentry is disabled in `__DEV__` |
+| Variable                                                                     | Needed for                                           | If missing                                                                                                                                       |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `EXPO_PUBLIC_OPENSUBSONIC_API_VERSION`                                       | Sent as `v=` on **every** Subsonic/Navidrome request | Requests go out with `v=`, and servers reject them with error 10 _"Required parameter is missing"_ — login fails against any OpenSubsonic server |
+| `EXPO_PUBLIC_CLIENT_NAME`                                                    | Sent as `c=` on **every** Subsonic/Navidrome request | Same as above                                                                                                                                    |
+| `EXPO_PUBLIC_TADDY_PODCASTS_API_USER_ID` / `_KEY` / `_LANGUAGE` / `_COUNTRY` | Seeds the Taddy podcast config                       | Podcasts simply need to be configured by hand in Settings; nothing else breaks                                                                   |
+| `SENTRY_AUTH_TOKEN`                                                          | Sourcemap upload during **release** builds only      | Nothing — Sentry is disabled in `__DEV__`                                                                                                        |
 
 The values in `.env.example` are the correct defaults for the first two, so copying the file verbatim is enough to get a working app. Every `EXPO_PUBLIC_*` value is inlined into the JS bundle at build time, so none of them are secret in a shipped build.
 
@@ -222,6 +227,7 @@ How the same variables reach a **release** build is different, and worth knowing
 ### Android Auto
 
 In order to test Android Auto, you need to :
+
 1. Install the Android Auto Desktop Head Unit Emulator via Android Studio in SDK Manager > SDK Tools > Android Auto Desktop Head Unit Emulator.
 2. Make sure to enable the developer mode in your devices Android Auto settings by tapping the version number 10 times.
 3. Run the head unit server in the Android Auto settings

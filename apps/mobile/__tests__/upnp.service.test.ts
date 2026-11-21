@@ -25,6 +25,7 @@ type NativeState = {
   durationMs: number;
   trackUri?: string;
   generation?: number;
+  at?: number;
 };
 type LoadResult = {
   ok: boolean;
@@ -347,7 +348,7 @@ describe("upnp session", () => {
 
   it("connects, loads the current track and marks the store connected", async () => {
     await connect();
-    expect(mockNative.connect).toHaveBeenCalledWith("uuid-1");
+    expect(mockNative.connect).toHaveBeenCalledWith("uuid-1", null);
     expect(mockNative.load).toHaveBeenCalledTimes(1);
     const [url, info, autoplay, startPositionMs, generation] = mockNative.load
       .mock.calls[0] as unknown as [
@@ -637,6 +638,43 @@ describe("end-of-track inference", () => {
     // and starting it, not an ending.
     push("STOPPED", 0, 0);
     expect(mockQueueState.next).not.toHaveBeenCalled();
+  });
+
+  it("advances when the polls went quiet long enough for the track to finish", async () => {
+    await connect();
+    push("PLAYING", 30, 100, { at: 1_000 });
+    push("STOPPED", 0, 100, { at: 71_000 });
+    expect(mockQueueState.next).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not advance after a gap too short to have reached the end", async () => {
+    await connect();
+    push("PLAYING", 30, 100, { at: 1_000 });
+    push("STOPPED", 0, 100, { at: 21_000 });
+    expect(mockQueueState.next).not.toHaveBeenCalled();
+  });
+
+  it("does not count a buffering stall as time played", async () => {
+    await connect();
+    push("PLAYING", 30, 100, { at: 1_000 });
+    for (let at = 2_000; at <= 61_000; at += 1_000) {
+      push("TRANSITIONING", 30, 100, { at });
+    }
+    push("STOPPED", 0, 100, { at: 62_000 });
+    expect(mockQueueState.next).not.toHaveBeenCalled();
+  });
+
+  it("measures the gap on the report clock, not the time of day", async () => {
+    await connect();
+    jest.useFakeTimers();
+    try {
+      push("PLAYING", 30, 100, { at: 1_000 });
+      jest.setSystemTime(Date.now() + 300_000);
+      push("STOPPED", 0, 100, { at: 21_000 });
+      expect(mockQueueState.next).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it("does not advance when playback stops far from the end", async () => {
@@ -1335,7 +1373,10 @@ describe("resuming after a restart", () => {
     mockNative.probe.mockResolvedValue(probe("PLAYING"));
     await initUpnpOnLaunch();
     await reattach();
-    expect(mockNative.connect).toHaveBeenCalledWith("uuid-1");
+    expect(mockNative.connect).toHaveBeenCalledWith(
+      "uuid-1",
+      savedSession.trackUrl,
+    );
     expect(mockNative.load).not.toHaveBeenCalled();
     expect(useUpnpBase.getState().connected).toBe(true);
     expect(useUpnpBase.getState().session?.trackId).toBe("t1");
@@ -1366,7 +1407,10 @@ describe("resuming after a restart", () => {
     mockNative.probe.mockResolvedValue(probe("PLAYING"));
     await initUpnpOnLaunch();
     await takeOverLocally();
-    expect(mockNative.connect).toHaveBeenCalledWith("uuid-1");
+    expect(mockNative.connect).toHaveBeenCalledWith(
+      "uuid-1",
+      savedSession.trackUrl,
+    );
     expect(mockNative.disconnect).toHaveBeenCalled();
     expect(useUpnpBase.getState().connected).toBe(false);
     expect(useUpnpBase.getState().session).toBeNull();

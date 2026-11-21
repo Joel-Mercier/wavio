@@ -109,10 +109,11 @@ class RendererSession(
 
   data class TransportResult(val ok: Boolean, val stoppedInstead: Boolean = false)
 
-  fun connect(): Int {
+  /** [heldUri]: the track of ours the renderer still holds, when picking a session back up. */
+  fun connect(heldUri: String? = null): Int {
     activeGeneration = 0.0
     latestRequested = 0.0
-    lastUri = null
+    lastUri = heldUri
     lastTransportState = null
     regrouped = false
     return ++epoch
@@ -434,6 +435,16 @@ class RendererSession(
       "<InstanceID>0</InstanceID><Channel>Master</Channel>"
     )
     return Soap.argument(result.body, "CurrentVolume")?.toIntOrNull()
+  }
+
+  /**
+   * Whether a report is about the track we handed over, rather than something
+   * another controller put on the renderer. One that names no track is given
+   * the benefit of the doubt once we have handed one over, as the app does.
+   */
+  fun isOurs(state: State): Boolean {
+    if (state.trackUri.isEmpty()) return lastUri != null
+    return StreamUri.same(state.trackUri, lastUri)
   }
 
   /**

@@ -1,5 +1,6 @@
 package expo.modules.upnpcast
 
+import android.os.SystemClock
 import expo.modules.kotlin.Promise
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -44,7 +45,8 @@ class TrackInfo(
  * UPnP's push mechanism (GENA) needs the phone to run an HTTP server for callbacks
  * and is unreliable across renderers, so state is polled instead — once a second
  * while something plays, every other second while nothing does — delivered to JS as
- * a "state" event. A renderer that stops answering altogether is reported once as
+ * a "state" event, with the phone kept awake for them while it plays (see
+ * [KeepAwake]). A renderer that stops answering altogether is reported once as
  * "lost", and the polling stops with it.
  */
 class UpnpCastModule : Module() {
@@ -65,6 +67,7 @@ class UpnpCastModule : Module() {
    */
   private val known = ConcurrentHashMap<String, RendererSession>()
   @Volatile private var session: RendererSession? = null
+  @Volatile private var keepAwake: KeepAwake? = null
 
   override fun definition() = ModuleDefinition {
     Name("UpnpCast")
@@ -72,10 +75,14 @@ class UpnpCastModule : Module() {
     Events("device", "state", "lost")
 
     OnCreate {
-      appContext.reactContext?.let { UpnpTrace.init(it) }
+      appContext.reactContext?.let {
+        UpnpTrace.init(it)
+        keepAwake = KeepAwake(it.applicationContext)
+      }
     }
 
     OnDestroy {
+      keepAwake?.release()
       pollJob?.cancel()
       listener?.close()
       scope.cancel()
@@ -190,7 +197,7 @@ class UpnpCastModule : Module() {
      * selectable; one that will not even say what it is doing is not connected
      * to, so the failure is "can't reach it" and not a track it never received.
      */
-    AsyncFunction("connect") { deviceId: String, promise: Promise ->
+    AsyncFunction("connect") { deviceId: String, heldUri: String?, promise: Promise ->
       val target = known[deviceId]
       if (target == null) {
         promise.resolve(false)
@@ -203,7 +210,7 @@ class UpnpCastModule : Module() {
           promise.resolve(false)
           return@launch
         }
-        sessionEpoch = target.connect()
+        sessionEpoch = target.connect(heldUri)
         // A grouped Sonos speaker plays whatever its group plays, so playing to it
         // means playing to the group — through its coordinator, from the start.
         if (target.description.isSonos) target.followCoordinator()
@@ -229,6 +236,7 @@ class UpnpCastModule : Module() {
         return@AsyncFunction
       }
       current.latestRequested = maxOf(current.latestRequested, generation)
+      if (autoplay) keepAwake?.renew()
       UpnpTrace.record(
         "LOAD",
         "#${generation.toInt()} ${track.mime} autoplay=$autoplay start=${startPositionMs.toLong()}ms " +
@@ -258,6 +266,7 @@ class UpnpCastModule : Module() {
     }
 
     AsyncFunction("play") { resumeAtMs: Double, promise: Promise ->
+      if (session != null) keepAwake?.renew()
       scope.launch { promise.resolve(session?.play(resumeAtMs.toLong())?.ok ?: false) }
     }
 
@@ -420,6 +429,7 @@ class UpnpCastModule : Module() {
       pollJob?.cancel()
       pollJob = null
       session = null
+      keepAwake?.release()
       // Leaving a renderer playing after the user has taken the music back to the
       // phone means two things playing at once. Not awaited: a renderer that has
       // gone quiet would otherwise hold up the phone taking playback back.
@@ -487,6 +497,8 @@ class UpnpCastModule : Module() {
     pollJob?.cancel()
     pollJob = scope.launch {
       var silentSince = 0L
+      var transitioningSince = 0L
+      var transitioningGeneration = 0.0
       var interval = POLL_INTERVAL_MS
       while (isActive) {
         val current = session ?: break
@@ -497,21 +509,33 @@ class UpnpCastModule : Module() {
           // Taken over from the Sonos app. Dropped before the app hears of it, so
           // the disconnect that follows does not stop another group's music.
           session = null
+          keepAwake?.release()
           sendEvent("lost", mapOf("deviceId" to current.deviceId))
           break
         }
         if (state != null) {
           silentSince = 0L
-          sendEvent("state", stateMap(state))
-          interval = if (state.playbackState == "PLAYING" || state.playbackState == "TRANSITIONING") {
-            POLL_INTERVAL_MS
-          } else {
-            IDLE_POLL_INTERVAL_MS
+          val transitioning = state.playbackState == "TRANSITIONING"
+          if (!transitioning) {
+            transitioningSince = 0L
+          } else if (transitioningSince == 0L || state.generation != transitioningGeneration) {
+            transitioningSince = SystemClock.elapsedRealtime()
+            transitioningGeneration = state.generation
           }
+          // A renderer stuck in TRANSITIONING after a load it cannot play would
+          // otherwise hold the phone awake for as long as the app stays connected.
+          val stillStarting = transitioning &&
+            SystemClock.elapsedRealtime() - transitioningSince < TRANSITIONING_AWAKE_MS
+          if ((state.playbackState == "PLAYING" || stillStarting) && current.isOurs(state)) {
+            keepAwake?.renew { isActive && session === current }
+          }
+          sendEvent("state", stateMap(state))
+          interval = if (state.playbackState == "PLAYING" || transitioning) POLL_INTERVAL_MS else IDLE_POLL_INTERVAL_MS
         } else {
           if (silentSince == 0L) silentSince = now
           if (now - silentSince >= LOST_AFTER_MS) {
             UpnpTrace.record("SESSION", "lost: ${current.deviceId} silent for ${now - silentSince}ms")
+            keepAwake?.release()
             sendEvent("lost", mapOf("deviceId" to current.deviceId))
             break
           }
@@ -548,12 +572,15 @@ class UpnpCastModule : Module() {
     "positionMs" to state.positionMs.toDouble(),
     "durationMs" to state.durationMs.toDouble(),
     "trackUri" to state.trackUri,
-    "generation" to state.generation
+    "generation" to state.generation,
+    "at" to SystemClock.elapsedRealtime().toDouble()
   )
 
   private companion object {
     const val POLL_INTERVAL_MS = 1000L
     const val IDLE_POLL_INTERVAL_MS = 2000L
+    /** Longer than any renderer takes to buffer a stream it can actually play. */
+    const val TRANSITIONING_AWAKE_MS = 30_000L
     // Long enough to ride out a Wi-Fi hiccup, short enough that the user is not
     // staring at a dead seek bar wondering.
     const val LOST_AFTER_MS = 8000L

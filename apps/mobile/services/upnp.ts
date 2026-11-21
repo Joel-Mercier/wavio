@@ -95,6 +95,11 @@ let resumeAtSec: number | null = null;
 let basePosition = 0;
 let baseAt = Date.now();
 
+// The last report, when it said our track was PLAYING and nothing has moved the
+// position since. What the end-of-track check carries forward over a silence in
+// the polls, on the native report clock rather than this one.
+let playingReport: { positionSec: number; at: number } | null = null;
+
 const changeListeners = new Set<() => void>();
 
 function notifyChange() {
@@ -104,7 +109,10 @@ function notifyChange() {
 function rebase(position: number) {
   basePosition = position;
   baseAt = Date.now();
+  playingReport = null;
 }
+
+const reportedAt = (state: UpnpState) => state.at ?? Date.now();
 
 function interpolatedPosition(): number {
   const elapsed = wasPlaying ? (Date.now() - baseAt) / 1000 : 0;
@@ -145,6 +153,8 @@ function traceState(state: UpnpState) {
 function onNativeState(state: UpnpState) {
   if (!isUpnpConnected()) return;
   traceState(state);
+  const lastPlayingReport = playingReport;
+  playingReport = null;
   if ((state.generation ?? 0) !== currentGeneration) return;
   if (pendingCommands > 0) return;
   const position = (state.positionMs ?? 0) / 1000;
@@ -184,6 +194,7 @@ function onNativeState(state: UpnpState) {
       // a Play that is not coming.
       resumeAtSec = null;
       rebase(position);
+      playingReport = { positionSec: lastPositionSec, at: reportedAt(state) };
       break;
     case "TRANSITIONING":
       break;
@@ -199,7 +210,10 @@ function onNativeState(state: UpnpState) {
     case "STOPPED":
     case "NO_MEDIA_PRESENT":
       if (!aboutOurTrack || loading || !wasPlaying || pausedByUs) break;
-      if (!finishedFired && nearEnd()) {
+      if (
+        !finishedFired &&
+        nearEnd(positionAtStop(lastPlayingReport, reportedAt(state)))
+      ) {
         finishedFired = true;
         wasPlaying = false;
         advanceAfterTrackEnd();
@@ -229,10 +243,27 @@ function onNativeState(state: UpnpState) {
  * With no known duration there is nothing to compare against, so trust that we
  * were playing: advancing beats stalling.
  */
-function nearEnd(): boolean {
+function nearEnd(position: number): boolean {
   if (lastDurationSec <= 0) return true;
   const window = Math.max(5, lastDurationSec * 0.1);
-  return lastPositionSec >= lastDurationSec - window;
+  return position >= lastDurationSec - window;
+}
+
+/**
+ * Where a track that just stopped had got to. When the report before was it
+ * playing, it played on through any silence since: polls can go quiet for over a
+ * minute while the phone sleeps (issue #295). A buffering stall or a command in
+ * between breaks that chain, because the renderer then reported something else
+ * or the position was moved, and played-on time would be a guess.
+ */
+function positionAtStop(
+  lastPlayingReport: typeof playingReport,
+  stoppedAt: number,
+): number {
+  if (!lastPlayingReport) return lastPositionSec;
+  const playedOn =
+    lastPlayingReport.positionSec + (stoppedAt - lastPlayingReport.at) / 1000;
+  return Math.max(lastPositionSec, playedOn);
 }
 
 function advanceAfterTrackEnd() {
@@ -518,7 +549,7 @@ export async function upnpConnect(device: UpnpDevice): Promise<boolean> {
 
   let connected = false;
   try {
-    connected = await Native.connect(device.id);
+    connected = await Native.connect(device.id, null);
   } catch (error) {
     reportError(error, { area: "player", endpoint: "upnp.connect" });
   }
@@ -840,7 +871,7 @@ export async function reattach(): Promise<void> {
   pauseLocal();
   let connected = false;
   try {
-    connected = await Native.connect(probe.device.id);
+    connected = await Native.connect(probe.device.id, probe.session.trackUrl);
   } catch (error) {
     reportError(error, { area: "player", endpoint: "upnp.connect" });
   }
@@ -880,7 +911,9 @@ export async function takeOverLocally(): Promise<void> {
   if (!probe) return;
   forgetSession(probe.session);
   try {
-    if (await Native?.connect(probe.device.id)) await Native?.disconnect();
+    if (await Native?.connect(probe.device.id, probe.session.trackUrl)) {
+      await Native?.disconnect();
+    }
   } catch (error) {
     reportError(error, { area: "player", endpoint: "upnp.disconnect" });
   }
