@@ -2421,6 +2421,7 @@
 					"sourceUnavailable": "Não foi possível reproduzir essa faixa — o arquivo não estava acessível. Verifique se o seu servidor está ligado e na mesma rede.",
 					"formatUnsupported": "Este aparelho não consegue reproduzir o formato de áudio “{{track}}”.",
 					"remoteTrackRefused": "{{name}} Não foi possível reproduzir “{{track}}”. Escolha outra faixa ou reproduza neste aparelho.",
+					"remoteTailnetUnreachable": "{{name}} can't reach your server's Tailscale address. In the server settings, set its local network address as the server URL and the Tailscale one as the fallback server URL.",
 					"remoteLost": "Perdeu contato com {{name}}. A reprodução voltou a funcionar neste dispositivo.",
 					"allTracksHidden": "Cada música aqui está escondida ou por um artista que você escolheu não tocar.",
 					"trackHidden": "Esta música está escondida ou por um artista que você escolheu não tocar."
