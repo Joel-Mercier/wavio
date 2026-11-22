@@ -16,12 +16,15 @@ import {
 } from "@/hooks/offline";
 import type { Playlist } from "@/services/openSubsonic/types";
 import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
+import type { PlaylistFolderPlacement } from "@/utils/playlistFolders";
 import { cn } from "@/utils/tailwind";
 
 interface PlaylistListItemProps {
   playlist: Playlist;
   index: number;
   layout?: "vertical" | "horizontal";
+  folder?: PlaylistFolderPlacement;
+  reserveFolderLine?: boolean;
   className?: string;
 }
 
@@ -29,12 +32,15 @@ function PlaylistListItem({
   playlist,
   index,
   layout = "vertical",
+  folder,
+  reserveFolderLine = false,
   className = "",
 }: PlaylistListItemProps) {
   const { t } = useTranslation();
   const [white] = Uniwind.getCSSVariable(["--color-white"]) as string[];
   const isDetailCached = useIsDetailCached(["playlist", playlist.id]);
   const isDownloaded = useIsCollectionAvailableOffline("playlist", playlist.id);
+  const songCount = t("app.shared.songCount", { count: playlist.songCount });
   return (
     <FadeOutScaleDown
       href={`/playlists/${playlist.id}`}
@@ -82,6 +88,11 @@ function PlaylistListItem({
             "flex-col ml-4 flex-1": layout === "vertical",
           })}
         >
+          {layout === "horizontal" && (folder || reserveFolderLine) && (
+            <Text numberOfLines={1} className="text-sm text-primary-100">
+              {folder?.folder ?? " "}
+            </Text>
+          )}
           <HStack className="items-center gap-x-2">
             {isDownloaded && <DownloadedBadge />}
             <Heading
@@ -89,11 +100,13 @@ function PlaylistListItem({
               className="text-white flex-1"
               numberOfLines={1}
             >
-              {playlist.name}
+              {folder?.title ?? playlist.name}
             </Heading>
           </HStack>
           <Text numberOfLines={2} className="text-md text-primary-100">
-            {t("app.shared.songCount", { count: playlist.songCount })}
+            {folder && layout === "vertical"
+              ? `${folder.folder} · ${songCount}`
+              : songCount}
           </Text>
         </VStack>
       </VStack>
