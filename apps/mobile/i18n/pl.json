@@ -2561,6 +2561,7 @@
 					"sourceUnavailable": "Nie można odtworzyć tej ścieżki — plik nie jest osiągalny. Sprawdź, czy serwer jest włączony i w tej samej sieci.",
 					"formatUnsupported": "To urządzenie nie może odtwarzać dźwięku w formacie “{{track}}”.",
 					"remoteTrackRefused": "{{name}} nie mógł odtworzyć \"{{track}}\". Wybierz inny utwór lub odtwórz go na tym urządzeniu.",
+					"remoteTailnetUnreachable": "{{name}} can't reach your server's Tailscale address. In the server settings, set its local network address as the server URL and the Tailscale one as the fallback server URL.",
 					"remoteLost": "Utracono kontakt z {{name}}. Odtwarzanie jest z powrotem na tym urządzeniu.",
 					"allTracksHidden": "Każda piosenka tutaj jest ukryta lub przez artystę, którego nie wybrałeś.",
 					"trackHidden": "Ta piosenka jest ukryta lub przez artystę, którego nie wybrałeś."
