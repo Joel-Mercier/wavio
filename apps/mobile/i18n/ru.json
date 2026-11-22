@@ -2561,6 +2561,7 @@
 					"sourceUnavailable": "Не удалось воспроизвести этот трек — файл недоступен. Убедитесь, что ваш сервер включен и находится в той же сети.",
 					"formatUnsupported": "Это устройство не поддерживает воспроизведение аудиоформата «{{track}}».",
 					"remoteTrackRefused": "{{name}} Не удалось воспроизвести «{{track}}». Выберите другой трек или воспроизведите его на этом устройстве.",
+					"remoteTailnetUnreachable": "{{name}} can't reach your server's Tailscale address. In the server settings, set its local network address as the server URL and the Tailscale one as the fallback server URL.",
 					"remoteLost": "Потеряна связь с {{name}}. На этом устройстве воспроизведение снова работает.",
 					"allTracksHidden": "Каждая песня здесь скрыта или у художника, которую вы выбрали не играть.",
 					"trackHidden": "Эта песня скрыта или исполнителя, которую вы выбрали не играть."
