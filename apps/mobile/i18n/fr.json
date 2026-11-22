@@ -2421,6 +2421,7 @@
 					"sourceUnavailable": "Impossible de lire ce morceau : le fichier n'était pas accessible. Vérifiez que votre serveur est allumé et qu'il se trouve sur le même réseau.",
 					"formatUnsupported": "Cet appareil ne peut pas lire le format audio de «{{track}}».",
 					"remoteTrackRefused": "{{name}} n'a pas pu jouer «{{track}}». Choisissez un autre titre, ou lancez la lecture  sur cet appareil.",
+					"remoteTailnetUnreachable": "{{name}} can't reach your server's Tailscale address. In the server settings, set its local network address as the server URL and the Tailscale one as the fallback server URL.",
 					"remoteLost": "Le contact avec {{name}} a été perdu. La lecture se fait désormais sur cet appareil.",
 					"allTracksHidden": "Tous les titres de cette liste sont masqués ou proviennent d'un artiste que vous avez choisi de ne pas écouter.",
 					"trackHidden": "Ce titre est masqué ou provient d'un artiste que vous avez choisi de ne pas écouter."
