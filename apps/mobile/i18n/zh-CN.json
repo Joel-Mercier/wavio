@@ -2351,6 +2351,7 @@
 					"sourceUnavailable": "无法播放该音轨——无法访问该文件。请检查您的服务器是否已开启，并且是否处于同一网络中。",
 					"formatUnsupported": "该设备无法播放“{{track}} ”格式的音频。",
 					"remoteTrackRefused": "{{name}} 无法播放“{{track}}”。请选择另一首歌曲，或在此设备上播放。",
+					"remoteTailnetUnreachable": "{{name}} can't reach your server's Tailscale address. In the server settings, set its local network address as the server URL and the Tailscale one as the fallback server URL.",
 					"remoteLost": "已与 {{name}}失去联系。该设备已恢复播放功能。",
 					"allTracksHidden": "这里的每一首歌都是隐藏的，或者是您选择不播放的艺术家。",
 					"trackHidden": "这首歌是隐藏的，或者是由您选择不播放的艺术家隐藏的。"
