@@ -5,7 +5,9 @@ import HomeSection from "@/components/home/sections/HomeSection";
 import { PLAYLIST_CAROUSEL_SKELETON } from "@/components/home/sections/skeletons";
 import PlaylistListItem from "@/components/playlists/PlaylistListItem";
 import { usePlaylists } from "@/hooks/backend/usePlaylists";
+import { usePlaylistFolderOptions } from "@/hooks/usePlaylistFolderOptions";
 import type { Playlist } from "@/services/openSubsonic/types";
+import { playlistFolderPlacements } from "@/utils/playlistFolders";
 import { sampleWithSeed } from "@/utils/shuffle";
 
 interface PlaylistCarouselSectionProps {
@@ -28,6 +30,13 @@ function PlaylistCarouselSection({
     const all = data?.playlists?.playlist ?? [];
     return sampleWithSeed(all, size, seed);
   }, [data?.playlists?.playlist, seed, size]);
+  const folderOptions = usePlaylistFolderOptions();
+  const placements = useMemo(
+    () =>
+      playlistFolderPlacements(data?.playlists?.playlist ?? [], folderOptions),
+    [data?.playlists?.playlist, folderOptions],
+  );
+  const hasFolders = playlists.some((playlist) => placements.has(playlist.id));
   return (
     <HomeSection
       title={t("app.home.yourPlaylists")}
@@ -43,6 +52,8 @@ function PlaylistCarouselSection({
           playlist={playlist}
           index={index}
           layout="horizontal"
+          folder={placements.get(playlist.id)}
+          reserveFolderLine={hasFolders}
         />
       ))}
     </HomeSection>

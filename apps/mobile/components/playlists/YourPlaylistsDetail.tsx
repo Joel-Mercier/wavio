@@ -17,6 +17,7 @@ import {
 import { Box } from "@/components/ui/box";
 import { usePlaylists } from "@/hooks/backend/usePlaylists";
 import { useIsPlaying } from "@/hooks/player";
+import { usePlaylistFolderOptions } from "@/hooks/usePlaylistFolderOptions";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
 import { getPlaylist } from "@/services/backend/playlists";
@@ -27,6 +28,7 @@ import useQueue, { MAX_QUEUE_TRACKS, type QueueSource } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
 import { mapWithConcurrency } from "@/utils/mapWithConcurrency";
+import { playlistFolderPlacements } from "@/utils/playlistFolders";
 import { shuffleWithSeed } from "@/utils/shuffle";
 import EmptyDisplay from "../EmptyDisplay";
 import ErrorDisplay from "../ErrorDisplay";
@@ -58,6 +60,11 @@ export default function YourPlaylistsDetail() {
     const all = data?.playlists?.playlist ?? [];
     return shuffleWithSeed(all, seed);
   }, [data, seed]);
+  const folderOptions = usePlaylistFolderOptions();
+  const placements = useMemo(
+    () => playlistFolderPlacements(playlists, folderOptions),
+    [playlists, folderOptions],
+  );
   const heading = t("app.home.yourPlaylists");
   const source = useMemo<QueueSource>(
     () => ({ type: "playlistList", name: heading, id: SOURCE_ID }),
@@ -145,6 +152,7 @@ export default function YourPlaylistsDetail() {
                 playlist={item}
                 index={index}
                 layout="vertical"
+                folder={placements.get(item.id)}
               />
             </Box>
           )

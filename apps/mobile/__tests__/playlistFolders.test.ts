@@ -2,6 +2,7 @@ import {
   folderAssignmentFor,
   groupPlaylistsIntoFolders,
   type PlaylistFolderOptions,
+  playlistFolderPlacements,
   playlistFolderRow,
   playlistTitleInFolder,
   splitPlaylistName,
@@ -359,5 +360,44 @@ describe("playlistTitleInFolder", () => {
         }),
       ),
     ).toBe("80s");
+  });
+});
+
+describe("playlistFolderPlacements", () => {
+  it("places detected playlists under their folder's shared name", () => {
+    const placements = playlistFolderPlacements(
+      [
+        playlist("1", "rock - 80s"),
+        playlist("2", "Rock - alt-rock"),
+        playlist("3", "chill vibes"),
+      ],
+      options(),
+    );
+    expect(placements.get("1")).toEqual({ folder: "rock", title: "80s" });
+    expect(placements.get("2")).toEqual({ folder: "rock", title: "alt-rock" });
+    expect(placements.has("3")).toBe(false);
+  });
+
+  it("uses a local folder's name and keeps an assigned playlist's name", () => {
+    const placements = playlistFolderPlacements(
+      [playlist("1", "rock - 80s"), playlist("2", "chill vibes")],
+      options({
+        folders: { rock: { name: "Rock", color: null, createdAt: 1 } },
+        assignments: { "2": "rock" },
+      }),
+    );
+    expect(placements.get("1")).toEqual({ folder: "Rock", title: "80s" });
+    expect(placements.get("2")).toEqual({
+      folder: "Rock",
+      title: "chill vibes",
+    });
+  });
+
+  it("places nothing with detection off and no assignments", () => {
+    const placements = playlistFolderPlacements(
+      [playlist("1", "rock - 80s")],
+      options({ detect: false }),
+    );
+    expect(placements.size).toBe(0);
   });
 });

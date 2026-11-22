@@ -199,6 +199,21 @@ export function groupPlaylistsIntoFolders<T extends GroupablePlaylist>(
   return { rootPlaylists, folders: [...groups.values()] };
 }
 
+export type PlaylistFolderPlacement = { folder: string; title: string };
+
+export function playlistFolderPlacements<T extends GroupablePlaylist>(
+  playlists: T[],
+  options: PlaylistFolderOptions,
+): Map<string, PlaylistFolderPlacement> {
+  const placements = new Map<string, PlaylistFolderPlacement>();
+  for (const group of groupPlaylistsIntoFolders(playlists, options).folders) {
+    for (const { playlist, title } of group.members) {
+      placements.set(playlist.id, { folder: group.name, title });
+    }
+  }
+  return placements;
+}
+
 // Undefined when no member reports the field (an offline download carries no
 // duration), so the folder sorts as "no data" rather than as an empty one.
 function sumOf<T extends GroupablePlaylist>(
