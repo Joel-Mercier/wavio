@@ -18,6 +18,8 @@ export type PlaybackNoticeCode =
   | "PLAYBACK_FORMAT_UNSUPPORTED"
   /** A remote output (renderer, Cast receiver) would not take the track. */
   | "REMOTE_TRACK_REFUSED"
+  /** The stream is on a Tailscale address, which the remote output can't reach. */
+  | "REMOTE_TAILNET_UNREACHABLE"
   /** A remote output stopped answering; playback came back to this device. */
   | "REMOTE_LOST"
   /** Every track the user asked to play is hidden or by a blocked artist. */

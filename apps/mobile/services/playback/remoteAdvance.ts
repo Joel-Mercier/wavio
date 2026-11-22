@@ -1,6 +1,7 @@
 import { consumeSleepEndOfTrack } from "@/services/sleepTimer";
 import usePlaybackNotice from "@/stores/playbackNotice";
 import useQueue, { type QueueTrack } from "@/stores/queue";
+import { isTailnetUrl } from "@/utils/serverUrl";
 
 // What happens when a track ends somewhere other than this device, and what
 // happens when the next one cannot be handed over. Shared by every remote target
@@ -89,11 +90,15 @@ export function noteRemoteLoadSucceeded() {
  * is the worse surprise. The receiver was stopped before the handover, so the
  * honest state is "this track, not playing" — say why, and let the listener pick
  * another. Only an advance nobody asked for is allowed to try the next one, once.
+ *
+ * A stream on a Tailscale address fails on every track, and the generic notice
+ * sends the listener looking at the track, so that case names the real cause.
  */
 export function handleRemoteLoadFailure(options: {
   automatic: boolean;
   deviceName: string;
   track: QueueTrack;
+  url?: string;
 }): "skipped" | "held" {
   const queue = useQueue.getState();
   if (options.automatic && failedAutomaticAdvances < 1 && !atQueueTail(queue)) {
@@ -103,6 +108,12 @@ export function handleRemoteLoadFailure(options: {
     return "skipped";
   }
   failedAutomaticAdvances = 0;
+  if (isTailnetUrl(options.url)) {
+    usePlaybackNotice.getState().raise("REMOTE_TAILNET_UNREACHABLE", {
+      name: options.deviceName,
+    });
+    return "held";
+  }
   usePlaybackNotice.getState().raise("REMOTE_TRACK_REFUSED", {
     name: options.deviceName,
     track: options.track.title ?? "",

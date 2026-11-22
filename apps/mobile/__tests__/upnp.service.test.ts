@@ -91,12 +91,13 @@ jest.mock("@/modules/upnp-cast", () => ({
   isUpnpAvailable: () => true,
 }));
 
+let mockStreamOrigin = "http://server";
 jest.mock("@/services/backend/streaming", () => ({
   streamUrl: (id: string) =>
     jest
       .requireActual("@/services/local/keys")
       .parseLocalPodcastEpisodeId(id) ??
-    `http://server/rest/stream?id=${id}&u=x&t=y&s=z`,
+    `${mockStreamOrigin}/rest/stream?id=${id}&u=x&t=y&s=z`,
 }));
 
 jest.mock("@/services/errorReporting", () => ({ reportError: jest.fn() }));
@@ -872,6 +873,26 @@ describe("a track the renderer will not take", () => {
     );
     expect(activeRemoteTarget()?.readSnapshot().playing).toBe(false);
     expect(useUpnpBase.getState().connected).toBe(true);
+  });
+
+  it("names Tailscale as the cause when the stream is on a tailnet address", async () => {
+    mockStreamOrigin = "https://music.example.ts.net";
+    try {
+      await connect();
+      refuse();
+      moveQueueTo(1);
+      await settle();
+      expect(mockRaiseNotice).toHaveBeenCalledWith(
+        "REMOTE_TAILNET_UNREACHABLE",
+        expect.objectContaining({ name: "Kitchen" }),
+      );
+      expect(mockRaiseNotice).not.toHaveBeenCalledWith(
+        "REMOTE_TRACK_REFUSED",
+        expect.anything(),
+      );
+    } finally {
+      mockStreamOrigin = "http://server";
+    }
   });
 
   it("does not blame the track when the renderer simply did not answer", async () => {

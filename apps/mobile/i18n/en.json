@@ -2422,6 +2422,7 @@
 					"sourceUnavailable": "Couldn't play that track — the file wasn't reachable. Check that your server is switched on and on the same network.",
 					"formatUnsupported": "This device can't play the audio format of “{{track}}”.",
 					"remoteTrackRefused": "{{name}} couldn't play “{{track}}”. Pick another track, or play on this device.",
+					"remoteTailnetUnreachable": "{{name}} can't reach your server's Tailscale address. In the server settings, set its local network address as the server URL and the Tailscale one as the fallback server URL.",
 					"remoteLost": "Lost contact with {{name}}. Playback is back on this device.",
 					"allTracksHidden": "Every song here is hidden or by an artist you chose not to play.",
 					"trackHidden": "This song is hidden or by an artist you chose not to play."

@@ -288,6 +288,7 @@ function onRendererError() {
     automatic: true,
     deviceName: useUpnpBase.getState().deviceName ?? "",
     track: current,
+    url: loadedTrackUri,
   });
 }
 
@@ -332,6 +333,7 @@ async function loadOnRenderer(
       automatic: options.automatic ?? false,
       deviceName,
       track,
+      url,
     });
     return false;
   }
@@ -376,6 +378,7 @@ async function loadOnRenderer(
           automatic: options.automatic ?? false,
           deviceName,
           track,
+          url,
         });
       }
       notifyChange();
@@ -404,6 +407,7 @@ async function loadOnRenderer(
       automatic: options.automatic ?? false,
       deviceName,
       track,
+      url,
     });
     notifyChange();
     return false;

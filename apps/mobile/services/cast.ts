@@ -265,6 +265,7 @@ function onReceiverError() {
     automatic: true,
     deviceName: useCastBase.getState().deviceName ?? "",
     track: current,
+    url: castContentUrl(current),
   });
 }
 
@@ -490,6 +491,7 @@ async function loadOnReceiver(
       automatic: options.automatic ?? false,
       deviceName,
       track,
+      url: contentUrl,
     });
     return false;
   }
@@ -538,6 +540,7 @@ async function loadOnReceiver(
       automatic: options.automatic ?? false,
       deviceName,
       track,
+      url: contentUrl,
     });
     notifyChange();
     return false;
