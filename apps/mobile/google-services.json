@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "829776528482",
+    "project_id": "wavio-ee08f",
+    "storage_bucket": "wavio-ee08f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:829776528482:android:19567d685ee8423eaabd3b",
+        "android_client_info": {
+          "package_name": "com.jmercier.wavio"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB0Xf3PakiASJ57t3pHi9sM75viFh2T6FM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:829776528482:android:c48cb1d1aba4d3cdaabd3b",
+        "android_client_info": {
+          "package_name": "com.jmercier.wavio.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB0Xf3PakiASJ57t3pHi9sM75viFh2T6FM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:829776528482:android:05deb5d9d3d12045aabd3b",
+        "android_client_info": {
+          "package_name": "com.jmercier.wavio.preview"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB0Xf3PakiASJ57t3pHi9sM75viFh2T6FM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,117 @@
+name: Release push
+
+# Announces a release to GitHub-build installs through one FCM topic message
+# (modules/release-push). A full release goes to `releases`; a prerelease goes
+# to `releases_test`, which only the dev and preview variants subscribe to, so a
+# throwaway prerelease rehearses the whole path without reaching users.
+#
+# `released` fires both for a release published directly and for a prerelease
+# promoted later, which `published` misses. A full release also fires
+# `published`; the job skips that one so users get a single message.
+on:
+  release:
+    types: [published, released]
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: Topic to send to
+        type: choice
+        options:
+          - releases_test
+          - releases
+        default: releases_test
+      version:
+        description: Version to announce (x.y.z). On `releases` it must be a published, non-prerelease GitHub release.
+        required: true
+
+concurrency:
+  group: release-push-${{ github.event.release.tag_name || github.run_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write # required to mint the OIDC token Google federates against
+
+jobs:
+  send:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.action == 'released' ||
+      github.event.release.prerelease
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: apps/mobile/google-services.json
+          sparse-checkout-cone-mode: false
+      - id: target
+        env:
+          EVENT: ${{ github.event_name }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
+          TAG: ${{ github.event.release.tag_name }}
+          INPUT_TOPIC: ${{ inputs.topic }}
+          INPUT_VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$EVENT" = "release" ]; then
+            if [ "$PRERELEASE" = "true" ]; then topic=releases_test; else topic=releases; fi
+            version="${TAG#v}"
+          else
+            topic="$INPUT_TOPIC"
+            version="${INPUT_VERSION#v}"
+          fi
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            echo "::error::'$version' is not an x.y.z version"
+            exit 1
+          fi
+          # Every install trusts the announced version, so a hand-run on the
+          # production topic may only repeat a release that really exists.
+          if [ "$EVENT" = "workflow_dispatch" ] && [ "$topic" = "releases" ]; then
+            if ! release=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/v$version" 2>/dev/null); then
+              echo "::error::v$version is not a GitHub release"
+              exit 1
+            fi
+            if [ "$(jq -r '.draft or .prerelease' <<<"$release")" != "false" ]; then
+              echo "::error::v$version is a draft or a prerelease"
+              exit 1
+            fi
+          fi
+          project_id=$(jq -r '.project_info.project_id' apps/mobile/google-services.json)
+          {
+            echo "topic=$topic"
+            echo "version=$version"
+            echo "project_id=$project_id"
+          } >> "$GITHUB_OUTPUT"
+          echo "Announcing $version on $topic (project $project_id)"
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/firebase.messaging
+          create_credentials_file: false
+      # A tap runs the app's normal GitHub check, and GitHub serves
+      # releases/latest from a cache for a short while after publishing.
+      - if: github.event_name == 'release'
+        run: sleep 120
+      - env:
+          ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          PROJECT_ID: ${{ steps.target.outputs.project_id }}
+          TOPIC: ${{ steps.target.outputs.topic }}
+          VERSION: ${{ steps.target.outputs.version }}
+        run: |
+          # High priority gets through Doze. The week-long TTL and the collapse
+          # key mean a phone that was off only receives the latest release.
+          body=$(jq -n --arg topic "$TOPIC" --arg version "$VERSION" '{
+            message: {
+              topic: $topic,
+              data: { type: "release", version: $version },
+              android: { priority: "HIGH", ttl: "604800s", collapse_key: "release" }
+            }
+          }')
+          curl --fail-with-body -sS -X POST \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$body" \
+            "https://fcm.googleapis.com/v1/projects/$PROJECT_ID/messages:send"
