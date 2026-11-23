@@ -1689,6 +1689,9 @@
 					"title": "Actualizaciones",
 					"autoCheckLabel": "Buscar actualizaciones automáticamente",
 					"autoCheckDescription": "Comprobará si hay una nueva versión al iniciar la aplicación y te avisará cuando haya una disponible.",
+					"notifyLabel": "Notify me about new versions",
+					"notifyDescription": "Get a notification as soon as a new version of Wavio is released, even when the app is closed",
+					"notifyPermissionDenied": "Notifications are turned off for Wavio. Allow them in your phone's settings to hear about new versions.",
 					"checkNowLabel": "Comprueba si hay actualizaciones",
 					"checkNowDescription": "Busca ahora una versión más reciente",
 					"checkNowAction": "Comprobar",
@@ -2616,7 +2619,18 @@
 				"installing": "Abrir el instalador…",
 				"errorDescription": "No se ha podido descargar la actualización. Comprueba tu conexión e inténtalo de nuevo, o descárgala desde la página de versiones.",
 				"retry": "Volver a intentarlo",
-				"openBrowser": "Abrir en el navegador"
+				"openBrowser": "Abrir en el navegador",
+				"notification": {
+					"title": "Wavio {{version}} is available",
+					"body": "Tap to see what's new and update",
+					"channelName": "App updates"
+				},
+				"notificationsPrompt": {
+					"title": "Hear about new versions?",
+					"description": "Wavio can send you a notification as soon as a new version is out, so you never miss a fix or a new feature. You can turn this off at any time in Settings → Updates.",
+					"enable": "Turn on",
+					"decline": "No thanks"
+				}
 			},
 			"shared": {
 				"sort": {
