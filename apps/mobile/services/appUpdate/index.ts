@@ -11,6 +11,7 @@ import { isNewer } from "@/services/appUpdate/version";
 
 export {
   isGithubRateLimited,
+  latestReleaseApiUrl,
   releasesPageUrl,
 } from "@/services/appUpdate/github";
 export {

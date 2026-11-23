@@ -1,3 +1,4 @@
+import ReleaseNotificationsPrompt from "@/components/update/ReleaseNotificationsPrompt";
 import UpdateAvailableDialog from "@/components/update/UpdateAvailableDialog";
 import { useAppUpdate } from "@/hooks/useAppUpdate";
 
@@ -11,12 +12,17 @@ export default function UpdateGate() {
   if (isStore) return null;
 
   return (
-    <UpdateAvailableDialog
-      status={status}
-      update={update}
-      progress={progress}
-      onUpdate={startDownload}
-      onDismiss={dismiss}
-    />
+    <>
+      <UpdateAvailableDialog
+        status={status}
+        update={update}
+        progress={progress}
+        onUpdate={startDownload}
+        onDismiss={dismiss}
+      />
+      <ReleaseNotificationsPrompt
+        hidden={status === "checking" || update != null}
+      />
+    </>
   );
 }

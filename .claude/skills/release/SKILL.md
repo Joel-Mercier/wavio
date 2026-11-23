@@ -169,4 +169,12 @@ gh release view vX.Y.Z --json assets --jq '.assets[].name'
 
 Check the title, the tag, that the release is not a draft or prerelease, that the notes rendered, and that exactly the three APKs are attached. Report the release URL.
 
-Publishing the release triggers the store-status workflow, which refreshes the README table on its own. Releasing on the Play Store (`mobile:build:android:production`, then submit) is a separate flow, outside this skill.
+Publishing the release also triggers the release-push workflow, which notifies GitHub-build installs about two minutes later. A release fires it twice, `published` and `released`, and only the `released` run sends; the other is skipped. Check that the sending run succeeded:
+
+```bash
+gh run list --workflow release-push.yml --limit 2 --json databaseId,conclusion,status,createdAt
+```
+
+If it failed, show the failing step's log (`gh run view <id> --log-failed`) and tell the user. Don't re-run it before they decide: a run that got as far as the send step may already have notified everyone.
+
+Publishing the release triggers the store-status workflow too, which refreshes the README table on its own. Releasing on the Play Store (`mobile:build:android:production`, then submit) is a separate flow, outside this skill.

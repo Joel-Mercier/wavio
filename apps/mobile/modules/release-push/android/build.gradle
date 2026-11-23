@@ -1,0 +1,32 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+group = 'expo.modules.releasepush'
+version = '0.0.1'
+
+def expoModulesCorePlugin = new File(project(":expo-modules-core").projectDir.absolutePath, "ExpoModulesCorePlugin.gradle")
+apply from: expoModulesCorePlugin
+applyKotlinExpoModulesCorePlugin()
+useCoreDependencies()
+useExpoPublishing()
+
+android {
+  namespace "expo.modules.releasepush"
+  compileSdk rootProject.ext.compileSdkVersion ?: 36
+  defaultConfig {
+    minSdkVersion rootProject.ext.minSdkVersion ?: 26
+    targetSdkVersion rootProject.ext.targetSdkVersion ?: 36
+  }
+}
+
+dependencies {
+  implementation project(':expo-modules-core')
+  // Same unpinned form as http-stack: OkHttpClientProvider and OkHttp come from
+  // React Native, so the fallback check rides the app's own client.
+  compileOnly "com.facebook.react:react-android"
+  compileOnly 'com.squareup.okhttp3:okhttp'
+  implementation platform("com.google.firebase:firebase-bom:35.1.0")
+  implementation "com.google.firebase:firebase-messaging"
+  implementation "com.google.android.gms:play-services-base:18.11.1"
+  implementation "androidx.work:work-runtime-ktx:2.11.2"
+}

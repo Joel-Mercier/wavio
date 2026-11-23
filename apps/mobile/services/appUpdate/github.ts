@@ -5,9 +5,11 @@ import { reportError } from "@/services/errorReporting";
 
 // The repository whose releases drive the in-app updater.
 const REPO = "Joel-Mercier/wavio";
+const LATEST_RELEASE_PATH = `/repos/${REPO}/releases/latest`;
+const GITHUB_API_URL = "https://api.github.com";
 
 const githubApi = axios.create({
-  baseURL: "https://api.github.com",
+  baseURL: GITHUB_API_URL,
   timeout: 10000,
   headers: {
     Accept: "application/vnd.github+json",
@@ -36,9 +38,7 @@ export function isGithubRateLimited(error: unknown): boolean {
 // successful check that then suppresses the retry for hours.
 export async function fetchLatestRelease(): Promise<GithubRelease | null> {
   try {
-    const { data } = await githubApi.get<GithubRelease>(
-      `/repos/${REPO}/releases/latest`,
-    );
+    const { data } = await githubApi.get<GithubRelease>(LATEST_RELEASE_PATH);
     if (!data || typeof data.tag_name !== "string") return null;
     if (data.draft || data.prerelease) return null;
     return data;
@@ -53,7 +53,7 @@ export async function fetchLatestRelease(): Promise<GithubRelease | null> {
       reportError(error, {
         area: "api",
         api: "github",
-        endpoint: `/repos/${REPO}/releases/latest`,
+        endpoint: LATEST_RELEASE_PATH,
         status,
         notFoundIsExpected: true,
       });
@@ -65,3 +65,5 @@ export async function fetchLatestRelease(): Promise<GithubRelease | null> {
 }
 
 export const releasesPageUrl = `https://github.com/${REPO}/releases`;
+
+export const latestReleaseApiUrl = `${GITHUB_API_URL}${LATEST_RELEASE_PATH}`;

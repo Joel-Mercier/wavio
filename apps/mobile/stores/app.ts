@@ -358,6 +358,11 @@ interface AppStore {
   setLastDismissedUpdateVersion: (version: string | null) => void;
   lastUpdateCheckAt: number | null;
   setLastUpdateCheckAt: (timestamp: number | null) => void;
+  releaseNotificationsEnabled: boolean;
+  setReleaseNotificationsEnabled: (enabled: boolean) => void;
+  // Set once the Android 13+ permission explanation was answered, either way.
+  releaseNotificationsPromptHandled: boolean;
+  setReleaseNotificationsPromptHandled: (handled: boolean) => void;
   // Live device orientation + window width, kept in sync by
   // services/orientation.ts. Transient device state (not persisted) — exposed
   // here so any screen can branch its layout on `isWideLayout` without each one
@@ -694,6 +699,18 @@ export const useAppBase = create<AppStore>()(
       lastUpdateCheckAt: null,
       setLastUpdateCheckAt: (lastUpdateCheckAt: number | null) => {
         set({ lastUpdateCheckAt });
+      },
+      releaseNotificationsEnabled: true,
+      setReleaseNotificationsEnabled: (
+        releaseNotificationsEnabled: boolean,
+      ) => {
+        set({ releaseNotificationsEnabled });
+      },
+      releaseNotificationsPromptHandled: false,
+      setReleaseNotificationsPromptHandled: (
+        releaseNotificationsPromptHandled: boolean,
+      ) => {
+        set({ releaseNotificationsPromptHandled });
       },
       orientation: Orientation.PORTRAIT_UP,
       windowWidth: Dimensions.get("window").width,

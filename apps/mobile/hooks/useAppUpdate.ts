@@ -1,5 +1,6 @@
+import * as Application from "expo-application";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Platform } from "react-native";
+import { Linking, Platform } from "react-native";
 import {
   isGithubDistribution,
   isStoreDistribution,
@@ -11,8 +12,14 @@ import {
   type GithubUpdate,
   isGithubRateLimited,
   isStoreUpdateAvailable,
+  releasesPageUrl,
   startStoreUpdate,
 } from "@/services/appUpdate";
+import { isNewer } from "@/services/appUpdate/version";
+import {
+  noteReleaseSeen,
+  subscribeReleaseNotificationTaps,
+} from "@/services/releasePush";
 import { noteUpdateOffered } from "@/services/reviewPrompt";
 import useApp from "@/stores/app";
 
@@ -59,7 +66,11 @@ export function useAppUpdate({ autoCheck = false } = {}) {
   // `manual` bypasses the throttle and the dismissal filter (an explicit tap
   // always re-surfaces an available update); the auto path honours both.
   const runGithubCheck = useCallback(
-    async (manual: boolean) => {
+    async (manual: boolean): Promise<UpdateStatus> => {
+      const settle = (next: UpdateStatus) => {
+        setStatus(next);
+        return next;
+      };
       setStatus("checking");
       try {
         const result = await checkForGithubUpdate();
@@ -67,23 +78,20 @@ export function useAppUpdate({ autoCheck = false } = {}) {
         // it untouched so the next launch retries instead of being suppressed for
         // hours by a transient blip.
         setLastUpdateCheckAt(Date.now());
-        if (!result) {
-          setStatus(manual ? "upToDate" : "idle");
-          return;
-        }
+        if (!result) return settle(manual ? "upToDate" : "idle");
         if (!manual && result.version === lastDismissedUpdateVersion) {
-          setStatus("idle");
-          return;
+          return settle("idle");
         }
+        noteReleaseSeen(result.version);
         setUpdate(result);
-        setStatus("available");
+        return settle("available");
       } catch (error) {
         // A blip leaves the throttle unstamped on purpose (above) so the next
         // launch retries. Being over GitHub's hourly quota is the opposite case:
         // an immediate retry is bound to fail too and spends more of the same
         // quota, so record it as a completed check and wait out the interval.
         if (isGithubRateLimited(error)) setLastUpdateCheckAt(Date.now());
-        setStatus(manual ? "checkFailed" : "idle");
+        return settle(manual ? "checkFailed" : "idle");
       }
     },
     [lastDismissedUpdateVersion, setLastUpdateCheckAt],
@@ -147,6 +155,24 @@ export function useAppUpdate({ autoCheck = false } = {}) {
     setStatus("idle");
     setProgress(0);
   }, []);
+
+  // A tap on the release notification is an explicit request, like the
+  // settings button: it skips the throttle and any "Later". Declared before the
+  // launch check so a cold start from the tap runs this check instead of both.
+  // When the check can't show the announced version (offline, rate-limited, or
+  // GitHub still serving the previous release), the releases page does.
+  useEffect(() => {
+    if (!autoCheck || !githubUpdaterSupported) return;
+    return subscribeReleaseNotificationTaps(async (version) => {
+      ranAutoCheck.current = true;
+      const outcome = await runGithubCheck(true);
+      if (outcome === "available") return;
+      setStatus("idle");
+      if (isNewer(version, Application.nativeApplicationVersion)) {
+        Linking.openURL(releasesPageUrl).catch(() => {});
+      }
+    });
+  }, [autoCheck, runGithubCheck]);
 
   useEffect(() => {
     if (!autoCheck || ranAutoCheck.current) return;

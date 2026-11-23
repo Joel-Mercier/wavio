@@ -111,6 +111,7 @@
       "./plugins/withDependenciesInfo",
       "./plugins/withSslTrust",
       "./plugins/withInstallApkPermission",
+      "./plugins/withReleasePush",
       "./plugins/withProfileable",
       "./plugins/withGradleTuning",
       "./plugins/withNativeLibPins",

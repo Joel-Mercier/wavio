@@ -2,9 +2,9 @@
 //
 // Everything else still lives in app.json — this file only overlays the few
 // identity fields that have to differ so Android treats the builds as three
-// separate apps. With APP_VARIANT unset (or "production") app.json is returned
-// verbatim, so the Play Store build keeps `com.jmercier.wavio` and the name
-// "Wavio" exactly as before.
+// separate apps. With APP_VARIANT unset (or "production") the identity in
+// app.json is left alone, so the Play Store build keeps `com.jmercier.wavio` and
+// the name "Wavio" exactly as before.
 //
 // APP_VARIANT is read at prebuild time (see the prebuild:* scripts in
 // package.json and the `env` blocks in eas.json), because the identity it
@@ -22,7 +22,23 @@ const VARIANTS = {
   },
 };
 
-module.exports = ({ config }) => {
+// Release notifications (modules/release-push) only exist on the GitHub build:
+// Play owns the store build's updates, so it gets no Firebase config and
+// FirebaseApp never initializes there. Absent EXPO_PUBLIC_DISTRIBUTION means
+// github, as in config/distribution.ts.
+const withFirebaseConfig = (config) =>
+  process.env.EXPO_PUBLIC_DISTRIBUTION === "store"
+    ? config
+    : {
+        ...config,
+        android: {
+          ...config.android,
+          googleServicesFile: "./google-services.json",
+        },
+      };
+
+module.exports = ({ config: staticConfig }) => {
+  const config = withFirebaseConfig(staticConfig);
   const variant = VARIANTS[process.env.APP_VARIANT ?? ""];
   if (!variant) return config;
 

@@ -14,6 +14,11 @@ import UpdateAvailableDialog from "@/components/update/UpdateAvailableDialog";
 import { isStoreDistribution } from "@/config/distribution";
 import { useAppUpdate } from "@/hooks/useAppUpdate";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
+import {
+  enableReleaseNotificationsFromSystemSettings,
+  releaseNotificationsSupported,
+  requestNotificationPermission,
+} from "@/services/releasePush";
 import useApp from "@/stores/app";
 
 const canRateOnPlayStore = isStoreDistribution && Platform.OS === "android";
@@ -34,6 +39,12 @@ export default function UpdatesSection() {
   const { showSuccessToast, showErrorToast } = useSettingsToast();
   const autoUpdateCheckEnabled = useApp((s) => s.autoUpdateCheckEnabled);
   const setAutoUpdateCheckEnabled = useApp((s) => s.setAutoUpdateCheckEnabled);
+  const releaseNotificationsEnabled = useApp(
+    (s) => s.releaseNotificationsEnabled,
+  );
+  const setReleaseNotificationsEnabled = useApp(
+    (s) => s.setReleaseNotificationsEnabled,
+  );
   const { status, update, progress, check, startDownload, dismiss, reset } =
     useAppUpdate();
 
@@ -49,6 +60,21 @@ export default function UpdatesSection() {
       reset();
     }
   }, [status, reset, showSuccessToast, showErrorToast, t]);
+
+  const toggleReleaseNotifications = async (enabled: boolean) => {
+    if (!enabled) {
+      setReleaseNotificationsEnabled(false);
+      return;
+    }
+    const permission = await requestNotificationPermission();
+    if (permission === "granted") {
+      setReleaseNotificationsEnabled(true);
+      return;
+    }
+    showErrorToast(t("app.settings.updatesSettings.notifyPermissionDenied"));
+    if (permission === "blocked")
+      enableReleaseNotificationsFromSystemSettings();
+  };
 
   return (
     <SettingsScreenScaffold
@@ -70,6 +96,14 @@ export default function UpdatesSection() {
           value={autoUpdateCheckEnabled}
           onToggle={(value) => setAutoUpdateCheckEnabled(value)}
         />
+        {releaseNotificationsSupported && (
+          <SettingsToggleRow
+            label={t("app.settings.updatesSettings.notifyLabel")}
+            description={t("app.settings.updatesSettings.notifyDescription")}
+            value={releaseNotificationsEnabled}
+            onToggle={(value) => void toggleReleaseNotifications(value)}
+          />
+        )}
         <SettingsActionRow
           label={t("app.settings.updatesSettings.checkNowLabel")}
           description={t("app.settings.updatesSettings.checkNowDescription")}

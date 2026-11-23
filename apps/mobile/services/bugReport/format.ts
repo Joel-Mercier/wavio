@@ -94,6 +94,8 @@ export const APP_SETTING_RULES: Record<AppSettingKey, FieldRule> = {
   autoUpdateCheckEnabled: "value",
   lastDismissedUpdateVersion: "value",
   lastUpdateCheckAt: "omit",
+  releaseNotificationsEnabled: "value",
+  releaseNotificationsPromptHandled: "omit",
   orientation: "value",
   windowWidth: "value",
   isWideLayout: "value",

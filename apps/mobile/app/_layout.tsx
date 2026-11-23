@@ -47,6 +47,7 @@ import {
 import { subscribeCollectionAdoption } from "@/services/offline/collectionAdoption";
 import { initOrientation } from "@/services/orientation";
 import { configurePlayback } from "@/services/player";
+import { initReleasePush } from "@/services/releasePush";
 import { initSentryScope } from "@/services/sentryScope";
 import { initSslTrust, refreshSslProxyOnForeground } from "@/services/sslTrust";
 import { applyStartupLocale } from "@/services/startupHydration";
@@ -176,6 +177,7 @@ export default sentryWrap(function RootLayout() {
     // global; iOS also (re)starts the loopback proxy for trusted upstreams).
     void initSslTrust();
     const unsubscribeHttpTransport = initHttpTransport();
+    const unsubscribeReleasePush = initReleasePush();
     // Drive React Query's online state off effective connectivity (device
     // online AND server reachable) so it pauses refetches and serves cache when
     // the server is unreachable, instead of hammering it with failing requests.
@@ -217,6 +219,7 @@ export default sentryWrap(function RootLayout() {
       unsubscribeCollectionAdoption();
       unsubscribePersist();
       unsubscribeHttpTransport();
+      unsubscribeReleasePush();
     };
   }, []);
 
