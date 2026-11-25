@@ -2,6 +2,7 @@ import {
   type BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
+import Airplay from "lucide-react-native/icons/airplay";
 import Cast from "lucide-react-native/icons/cast";
 import Check from "lucide-react-native/icons/check";
 import RefreshCw from "lucide-react-native/icons/refresh-cw";
@@ -17,7 +18,7 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator } from "react-native";
+import { ActivityIndicator, StyleSheet } from "react-native";
 import CastContext from "react-native-google-cast";
 import { Uniwind } from "uniwind";
 import BottomSheetModalComponent from "@/components/CenteredBottomSheetModal";
@@ -41,6 +42,13 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { useCanCast } from "@/hooks/player/useCanCast";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import {
+  AirPlayRouteButton,
+  type AudioRoute,
+  currentAudioRoute,
+  isAirPlayAvailable,
+  subscribeAudioRoute,
+} from "@/modules/airplay-route";
 import { isUpnpAvailable, type UpnpDevice } from "@/modules/upnp-cast";
 import {
   castDisconnect,
@@ -144,6 +152,15 @@ export default function OutputSheet() {
   const canCast = useCanCast();
   const showUpnp = canCast && isUpnpAvailable();
   const playingLocally = !jukeboxActive && !upnpConnected && !casting;
+  const airPlay = isAirPlayAvailable();
+  const [audioRoute, setAudioRoute] = useState<AudioRoute | null>(
+    currentAudioRoute,
+  );
+
+  useEffect(() => {
+    if (!airPlay) return;
+    return subscribeAudioRoute(setAudioRoute);
+  }, [airPlay]);
 
   // The connected Sonos speaker's household: the other rooms of its group, ticked,
   // and the rest, which could join. Listed here rather than as outputs of their
@@ -374,6 +391,33 @@ export default function OutputSheet() {
               selectLocal,
             )}
 
+            {airPlay && playingLocally && (
+              <Box>
+                {outputRow(
+                  "airplay",
+                  <Airplay
+                    size={20}
+                    color={audioRoute?.airPlay ? emerald500 : gray200}
+                  />,
+                  audioRoute?.airPlay
+                    ? audioRoute.name
+                    : t("app.player.outputAirPlay"),
+                  !!audioRoute?.airPlay,
+                  () => {},
+                  audioRoute?.airPlay
+                    ? t("app.player.outputChromecastConnected")
+                    : t("app.player.outputAirPlayHint"),
+                )}
+                {/* The system's own picker, invisible, over the row: iOS has no
+                    public way to open it from a tap of ours. */}
+                <AirPlayRouteButton
+                  style={StyleSheet.absoluteFill}
+                  tint="transparent"
+                  activeTint="transparent"
+                />
+              </Box>
+            )}
+
             {capabilities.jukebox &&
               (jukeboxActive || jukeboxCanPlayCurrent) &&
               outputRow(
@@ -486,6 +530,14 @@ export default function OutputSheet() {
                     ? t("app.player.outputChromecastNoPlayServicesHint")
                     : undefined,
               )}
+
+            {!canCast && (
+              <Text className="text-sm text-primary-100">
+                {airPlay
+                  ? `${t("app.player.outputCastingUnavailable")} ${t("app.player.outputCastingUseAirPlay")}`
+                  : t("app.player.outputCastingUnavailable")}
+              </Text>
+            )}
 
             {jukeboxActive && (
               <VStack className="gap-y-2">

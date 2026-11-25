@@ -1,0 +1,22 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'expo.modules.castserver'
+version = '0.0.1'
+
+android {
+  namespace "expo.modules.castserver"
+}
+
+dependencies {
+  // Upstream sources (an SMB share's loopback bridge, a WebDAV server, a remote
+  // server relayed for a receiver that can't reach it) are fetched through React
+  // Native's shared OkHttp client, which modules/http-stack builds: TOFU trust,
+  // client certificates and the HTTP/3 routing come with it. Both are provided by
+  // React Native at runtime; see modules/ssl-trust/android/build.gradle for why
+  // neither carries a version.
+  compileOnly "com.facebook.react:react-android"
+  compileOnly 'com.squareup.okhttp3:okhttp'
+}

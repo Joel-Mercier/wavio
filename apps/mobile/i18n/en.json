@@ -2426,6 +2426,7 @@
 					"formatUnsupported": "This device can't play the audio format of “{{track}}”.",
 					"remoteTrackRefused": "{{name}} couldn't play “{{track}}”. Pick another track, or play on this device.",
 					"remoteTailnetUnreachable": "{{name}} can't reach your server's Tailscale address. In the server settings, set its local network address as the server URL and the Tailscale one as the fallback server URL.",
+					"remoteRelayUnreached": "{{name}} couldn't connect to this phone to play “{{track}}”. Make sure both are on the same Wi-Fi network, and not on a guest network that keeps devices apart.",
 					"remoteLost": "Lost contact with {{name}}. Playback is back on this device.",
 					"allTracksHidden": "Every song here is hidden or by an artist you chose not to play.",
 					"trackHidden": "This song is hidden or by an artist you chose not to play."
@@ -2527,7 +2528,11 @@
 				"outputConnectErrorMessage": "Could not play to {{name}}.",
 				"outputAddRooms": "Also play on",
 				"outputGroupVolume": "Group volume",
-				"outputGroupErrorMessage": "Could not change the group on {{name}}."
+				"outputGroupErrorMessage": "Could not change the group on {{name}}.",
+				"outputAirPlay": "AirPlay",
+				"outputAirPlayHint": "Speakers and TVs on your network",
+				"outputCastingUnavailable": "Chromecast and network speakers can't play this library from this device yet.",
+				"outputCastingUseAirPlay": "Use AirPlay to play it on a speaker or TV."
 			},
 			"shares": {
 				"title": "Shares",

@@ -1,4 +1,7 @@
-import { parseLocalPodcastEpisodeId } from "@/services/local/keys";
+import {
+  parseLocalPodcastEpisodeId,
+  parseLocalTrackId,
+} from "@/services/local/keys";
 import { getEffectiveStreamingFormat } from "@/services/network";
 import { isPodcastTrack } from "@/services/podcastProgress";
 import { useAppBase } from "@/stores/app";
@@ -31,9 +34,10 @@ const MIME_ALIASES: Record<string, string> = {
   "audio/x-m4a": "audio/mp4",
 };
 
-// Internet radio, Taddy enclosures and self-hosted feed episodes are fetched
-// from wherever they are hosted, so the server's transcoding never touches them.
-function hostedElsewhere(track: QueueTrack): boolean {
+// Internet radio, Taddy enclosures, self-hosted feed episodes and audiobooks are
+// fetched from wherever they are hosted, so the server's transcoding never
+// touches them, and a receiver can fetch them on any backend.
+export function hostedElsewhere(track: QueueTrack): boolean {
   if (track.isRadio || track.source === "audiobook") return true;
   if (!isPodcastTrack(track)) return false;
   if (track.podcastSource === "taddy" || typeof track.audioUrl === "string") {
@@ -76,11 +80,12 @@ export function castMime(track: QueueTrack, url?: string): string {
     const mime = isSpokenWordTrack(track) ? episodeMime(track, url) : undefined;
     return mime ?? "audio/mpeg";
   }
+  // The streaming format is a global setting that only a server applies.
   const { streamingFormat, cellularStreamingFormat } = useAppBase.getState();
-  const effective = getEffectiveStreamingFormat(
-    streamingFormat,
-    cellularStreamingFormat,
-  );
+  const effective =
+    parseLocalTrackId(track.id) != null
+      ? "raw"
+      : getEffectiveStreamingFormat(streamingFormat, cellularStreamingFormat);
   const format =
     effective && effective !== "raw"
       ? effective

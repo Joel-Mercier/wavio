@@ -13,9 +13,14 @@ import {
   ensureAudiobookSession,
   isAudiobookTrack,
 } from "@/services/audiobookPlayback";
+import {
+  endCastRelaySession,
+  relayNeverReached,
+  resolveCastMedia,
+  resumeCastRelay,
+} from "@/services/castRelay";
 import { reportError } from "@/services/errorReporting";
 import { castContentUrl } from "@/services/playback/castContentUrl";
-import { castMime } from "@/services/playback/castMime";
 import {
   advanceAfterTrackEnd as advanceQueueAfterTrackEnd,
   consumeAutomaticAdvance,
@@ -261,11 +266,13 @@ function advanceAfterTrackEnd() {
 function onReceiverError() {
   const current = useQueue.getState().getCurrent();
   if (!current) return;
+  const url = loadedUrl ?? castContentUrl(current);
   handleRemoteLoadFailure({
     automatic: true,
     deviceName: useCastBase.getState().deviceName ?? "",
     track: current,
-    url: castContentUrl(current),
+    url,
+    relayUnreached: relayNeverReached(url),
   });
 }
 
@@ -281,6 +288,26 @@ let lastPushedTrackId: string | null = null;
 // when it is replaced or the session ends: nothing plays locally meanwhile, so
 // the receiver's position is the only record of what was listened to.
 let loadedTrack: QueueTrack | null = null;
+
+// The receiver's address, which picks the phone's address on its network when the
+// phone serves the media itself (services/castRelay.ts).
+let receiverHost: string | null = null;
+let receiverHostLookedUp = false;
+// What the receiver was last handed, for telling a receiver that never reached
+// this phone from one that refused the track.
+let loadedUrl: string | undefined;
+// Numbers every load request as it is made. Resolving the media can wait on the
+// network, so a later skip may resolve first, and only the latest request may
+// reach the receiver.
+let loadRequests = 0;
+
+async function currentReceiverHost(): Promise<string | null> {
+  if (receiverHostLookedUp) return receiverHost;
+  const device = await session?.getCastDevice().catch(() => null);
+  receiverHost = device?.ipAddress || null;
+  receiverHostLookedUp = true;
+  return receiverHost;
+}
 
 // Set while a session is being taken over, so the SDK reporting the same
 // session twice (started, then resumed) cannot run the takeover twice.
@@ -311,6 +338,9 @@ async function takeOver(started: CastSession) {
   session = started;
   const receiver = started.client ?? new RemoteMediaClient();
   client = receiver;
+  receiverHost = null;
+  receiverHostLookedUp = false;
+  loadedUrl = undefined;
   currentGeneration = 0;
   pendingCommands = 0;
   loadedTrack = null;
@@ -348,12 +378,21 @@ async function takeOver(started: CastSession) {
   // casting, the SDK resumed it on launch — may find the receiver still on the
   // track this phone is on. Then it stays the receiver's state, not the phone's
   // cold one: reloading would restart the song from the top.
-  const existing = await receiver.getMediaStatus().catch(() => null);
+  // The receiver's address is looked up before the first load, so no load has to
+  // wait on it between a queue move and its generation bump.
+  const [existing] = await Promise.all([
+    receiver.getMediaStatus().catch(() => null),
+    currentReceiverHost(),
+  ]);
   if (client !== receiver || !isCastActive()) return;
   if (existing && isMidTrack(existing) && describesTrack(existing, current)) {
     currentGeneration = generationOf(existing) ?? 0;
     loadedTrack = current;
+    loadedUrl = existing.mediaInfo?.contentUrl;
     onMediaStatus(existing);
+    // If this phone was serving the track, the receiver is about to ask the
+    // restarted app for its next range.
+    void resumeCastRelay(current, receiverHost, "cast");
     return;
   }
   void loadOnReceiver(current, wasLocallyPlaying, position);
@@ -413,10 +452,14 @@ function detach() {
   session = null;
   client = null;
   loadedTrack = null;
+  receiverHost = null;
+  receiverHostLookedUp = false;
+  loadedUrl = undefined;
   wasPlaying = false;
   loading = false;
   receiverIdle = false;
   resumeAtSec = null;
+  endCastRelaySession("cast");
   useCastBase.getState().setSession(null, null);
   notifyChange();
 }
@@ -478,26 +521,35 @@ async function loadOnReceiver(
 ): Promise<boolean> {
   const receiver = client;
   if (!receiver || !isCastActive()) return false;
+  const request = ++loadRequests;
+  const stale = () =>
+    client !== receiver || !isCastActive() || request !== loadRequests;
   const deviceName = useCastBase.getState().deviceName ?? "";
   // The receiver can't send our token, so a book needs its session's public
   // track URL, which only exists once the session is open.
   if (isAudiobookTrack(track)) {
     await ensureAudiobookSession(track);
-    if (client !== receiver || !isCastActive()) return false;
+    if (stale()) return false;
   }
-  const contentUrl = castContentUrl(track);
-  if (!contentUrl || contentUrl.startsWith("file://")) {
+  if (!receiverHostLookedUp) {
+    await currentReceiverHost();
+    if (stale()) return false;
+  }
+  const media = resolveCastMedia(track, receiverHost, "cast");
+  if (!media) {
     handleRemoteLoadFailure({
       automatic: options.automatic ?? false,
       deviceName,
       track,
-      url: contentUrl,
+      url: castContentUrl(track),
     });
     return false;
   }
+  const contentUrl = media.url;
 
   const generation = ++currentGeneration;
   resetPlaybackState(startSeconds, track.duration ?? 0);
+  loadedUrl = contentUrl;
   notifyChange();
   try {
     await receiver.loadMedia({
@@ -505,7 +557,7 @@ async function loadOnReceiver(
       startTime: track.isRadio || startSeconds <= 0 ? undefined : startSeconds,
       mediaInfo: {
         contentUrl,
-        contentType: castMime(track, contentUrl),
+        contentType: media.mime,
         streamType: track.isRadio
           ? MediaStreamType.LIVE
           : MediaStreamType.BUFFERED,
@@ -516,11 +568,7 @@ async function loadOnReceiver(
           title: track.title,
           albumTitle: track.album,
           artist: track.artist,
-          // Only an address the receiver can reach: a cached cover lives on
-          // this phone.
-          images: track.artwork?.startsWith("http")
-            ? [{ url: track.artwork }]
-            : undefined,
+          images: media.artworkUrl ? [{ url: media.artworkUrl }] : undefined,
         },
       },
     });
@@ -535,12 +583,16 @@ async function loadOnReceiver(
     if (generation !== currentGeneration || !isCastActive()) return false;
     // Nothing got loaded, so the next Play is a retry of this load.
     parkReceiver(startSeconds);
+    // The receiver follows the rejection with an IDLE/ERROR status about the same
+    // load, which must not be reported again as a failure nobody asked for.
+    finishedFired = true;
     reportError(error, { area: "player", endpoint: "cast.load" });
     handleRemoteLoadFailure({
       automatic: options.automatic ?? false,
       deviceName,
       track,
       url: contentUrl,
+      relayUnreached: relayNeverReached(contentUrl),
     });
     notifyChange();
     return false;

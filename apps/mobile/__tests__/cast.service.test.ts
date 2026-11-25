@@ -80,6 +80,34 @@ jest.mock("@/services/backend/streaming", () => ({
   streamUrl: (id: string) => `http://server/rest/stream?id=${id}&u=x&t=y&s=z`,
 }));
 
+jest.mock("@/services/castRelay", () => {
+  const { castContentUrl } = jest.requireActual(
+    "@/services/playback/castContentUrl",
+  );
+  const { castMime } = jest.requireActual("@/services/playback/castMime");
+  return {
+    isCastRelayAvailable: () => false,
+    endCastRelaySession: jest.fn(),
+    resumeCastRelay: jest.fn(async () => {}),
+    relayNeverReached: () => false,
+    redactRelayUrl: (url: string) => url.split("?")[0],
+    // No relay in these suites: what the receiver is handed is the direct URL,
+    // and a track only on this phone has nothing to hand over.
+    resolveCastMedia: jest.fn((track: { artwork?: string; id: string }) => {
+      const url = castContentUrl(track);
+      if (!url || url.startsWith("file://")) return null;
+      return {
+        url,
+        mime: castMime(track, url),
+        artworkUrl: track.artwork?.startsWith("http")
+          ? track.artwork
+          : undefined,
+        relayed: false,
+      };
+    }),
+  };
+});
+
 jest.mock("@/services/errorReporting", () => ({ reportError: jest.fn() }));
 jest.mock("@/services/audiobookPlayback", () => ({
   isAudiobookTrack: (track: { source?: string } | null) =>
@@ -536,6 +564,25 @@ describe("a track the receiver cannot play", () => {
       expect.objectContaining({ track: "Two" }),
     );
     expect(activeRemoteTarget()?.isPlaying()).toBe(false);
+  });
+
+  it("does not skip ahead on the error status that follows a refused load", async () => {
+    mockQueueState.next.mockImplementation(() =>
+      moveQueueTo((mockQueueState.currentIndex ?? 0) + 1),
+    );
+    mockQueueState.queue = [
+      TRACK,
+      { id: "t2", title: "Two", duration: 100 },
+      { id: "t3", duration: 100 },
+    ];
+    await startSession();
+    mockClient.loadMedia.mockRejectedValueOnce(new Error("Load failed"));
+    moveQueueTo(1);
+    await settle();
+    status("idle", { idleReason: "error" });
+    await settle();
+    expect(mockQueueState.currentIndex).toBe(1);
+    expect(mockRaiseNotice).toHaveBeenCalledTimes(1);
   });
 });
 

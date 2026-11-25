@@ -100,6 +100,35 @@ jest.mock("@/services/backend/streaming", () => ({
     `${mockStreamOrigin}/rest/stream?id=${id}&u=x&t=y&s=z`,
 }));
 
+const mockRelayUnreached = { value: false };
+jest.mock("@/services/castRelay", () => {
+  const { castContentUrl } = jest.requireActual(
+    "@/services/playback/castContentUrl",
+  );
+  const { castMime } = jest.requireActual("@/services/playback/castMime");
+  return {
+    isCastRelayAvailable: () => false,
+    endCastRelaySession: jest.fn(),
+    resumeCastRelay: jest.fn(async () => {}),
+    relayNeverReached: () => mockRelayUnreached.value,
+    redactRelayUrl: (url: string) => url.split("?")[0],
+    // No relay in these suites: what the receiver is handed is the direct URL,
+    // and a track only on this phone has nothing to hand over.
+    resolveCastMedia: jest.fn((track: { artwork?: string; id: string }) => {
+      const url = castContentUrl(track);
+      if (!url || url.startsWith("file://")) return null;
+      return {
+        url,
+        mime: castMime(track, url),
+        artworkUrl: track.artwork?.startsWith("http")
+          ? track.artwork
+          : undefined,
+        relayed: false,
+      };
+    }),
+  };
+});
+
 jest.mock("@/services/errorReporting", () => ({ reportError: jest.fn() }));
 jest.mock("@/services/audiobookPlayback", () => ({
   isAudiobookTrack: (track: { source?: string } | null) =>
@@ -209,6 +238,7 @@ jest.mock("@/stores/queue", () => ({
   },
 }));
 
+import { localTrackId } from "@/services/local/keys";
 import { activeRemoteTarget } from "@/services/playback/remoteTarget";
 import {
   castMime,
@@ -934,6 +964,94 @@ describe("a track the renderer will not take", () => {
     expect(mockRaiseNotice).toHaveBeenCalledTimes(1);
   });
 
+  it("doesn't blame the network for a type the renderer refused outright", async () => {
+    // The phone served the track and nothing fetched it, but a SOAP refusal
+    // means the renderer never tried.
+    mockRelayUnreached.value = true;
+    try {
+      await connect();
+      refuse();
+      moveQueueTo(1);
+      await settle();
+      expect(mockRaiseNotice).toHaveBeenCalledWith(
+        "REMOTE_TRACK_REFUSED",
+        expect.anything(),
+      );
+      expect(mockRaiseNotice).not.toHaveBeenCalledWith(
+        "REMOTE_RELAY_UNREACHED",
+        expect.anything(),
+      );
+    } finally {
+      mockRelayUnreached.value = false;
+    }
+  });
+
+  it("says the renderer can't reach the phone when it took the track and never fetched it", async () => {
+    mockRelayUnreached.value = true;
+    try {
+      await connect();
+      mockNative.load.mockImplementationOnce(async (...args: unknown[]) => ({
+        ok: false,
+        reason: "error",
+        generation: args[4] as number,
+        trackUri: "",
+      }));
+      moveQueueTo(1);
+      await settle();
+      expect(mockRaiseNotice).toHaveBeenCalledWith(
+        "REMOTE_RELAY_UNREACHED",
+        expect.objectContaining({ name: "Kitchen" }),
+      );
+    } finally {
+      mockRelayUnreached.value = false;
+    }
+  });
+
+  it("reports a failed load once, not again when the next poll still carries the error", async () => {
+    mockRelayUnreached.value = true;
+    try {
+      await connect();
+      mockNative.load.mockImplementationOnce(async (...args: unknown[]) => ({
+        ok: false,
+        reason: "error",
+        generation: args[4] as number,
+        trackUri: "",
+      }));
+      moveQueueTo(1);
+      await settle();
+      push("STOPPED", 0, 100, { transportStatus: "ERROR_OCCURRED" });
+      expect(mockRaiseNotice).toHaveBeenCalledTimes(1);
+    } finally {
+      mockRelayUnreached.value = false;
+    }
+  });
+
+  it("keeps the connection when the listener skips during the first handover", async () => {
+    mockQueueState.queue = [TRACK, { id: "t2", duration: 100 }];
+    mockQueueState.currentIndex = 0;
+    let finishFirst: (value: unknown) => void = () => {};
+    mockNative.load.mockImplementationOnce(
+      (...args: unknown[]) =>
+        new Promise((resolve) => {
+          finishFirst = () =>
+            resolve({
+              ok: false,
+              reason: "superseded",
+              generation: args[4] as number,
+              trackUri: "",
+            });
+        }),
+    );
+    const connecting = upnpConnect(device);
+    await settle();
+    moveQueueTo(1);
+    await settle();
+    finishFirst(undefined);
+    expect(await connecting).toBe(true);
+    expect(useUpnpBase.getState().connected).toBe(true);
+    expect(mockNative.disconnect).not.toHaveBeenCalled();
+  });
+
   it("does not resume this device on a failed connect from a state the renderer never reached", async () => {
     mockQueueState.queue = [TRACK];
     mockQueueState.currentIndex = 0;
@@ -1490,6 +1608,19 @@ describe("castMime", () => {
   it("is case-insensitive about the suffix", () => {
     mockStreamingFormat.value = "raw";
     expect(castMime({ id: "t", url: "u", suffix: "FLAC" })).toBe("audio/flac");
+  });
+
+  it("ignores the streaming format for a library track, which no server transcodes", () => {
+    // The format is a global setting a Navidrome session may have left on Opus;
+    // a FLAC off an SMB share or this phone still arrives as FLAC.
+    mockStreamingFormat.value = "opus";
+    expect(
+      castMime({
+        id: localTrackId("smb:/Music/a.flac"),
+        url: "u",
+        suffix: "flac",
+      }),
+    ).toBe("audio/flac");
   });
 
   it("ignores the transcode target for audio the server never serves", () => {

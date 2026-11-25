@@ -19,12 +19,12 @@ export type BackendCapabilities = {
   playlistDescription: boolean;
   replayGain: boolean;
   jukebox: boolean;
-  // Tracks resolve to a URL another device on the network can fetch for itself,
-  // which is what casting of any kind needs — Chromecast and UPnP/DLNA both hand
-  // the receiver a URL and step back. True wherever a server serves the audio
-  // over HTTP with the credentials in the URL. False for the local library,
-  // whose tracks are `file://` paths on this phone: nothing off-device can reach
-  // them, so casting is not offered rather than offered and silently failing.
+  // Tracks resolve to a URL another device on the network can fetch for itself:
+  // Chromecast and UPnP/DLNA both hand the receiver a URL and step back. True
+  // wherever a server serves the audio over HTTP with the credentials in the URL.
+  // False for the index-backed libraries, whose tracks are files on this phone
+  // or behind a share's credentials. Not the only casting gate: see
+  // hooks/player/useCanCast.ts.
   remoteStreamableUrl: boolean;
   songLists: boolean;
   // A home carousel + "See all" list of the user's globally most-played tracks.
@@ -257,8 +257,6 @@ const LOCAL: BackendCapabilities = {
   playlistDescription: false,
   replayGain: true,
   jukebox: false,
-  // Tracks are `file://` paths on this phone. Nothing else on the network can
-  // fetch them, so no form of casting can work without serving them ourselves.
   remoteStreamableUrl: false,
   songLists: true,
   mostPlayedTracks: true,
@@ -360,8 +358,9 @@ export type CapabilitySession = {
  *
  * A single-sign-on session reaches its server only with the proxy's bearer
  * token in a header, and a Chromecast or UPnP renderer fetches the bare stream
- * URL itself — it would be turned away at the proxy, so casting isn't offered.
- * The jukebox is unaffected: the server plays the audio itself.
+ * URL itself — it would be turned away at the proxy, so it can only cast where
+ * this phone relays the stream (services/castRelay.ts). The jukebox is
+ * unaffected: the server plays the audio itself.
  *
  * Jellyfin keeps a playlist's description in the item's Overview, which only
  * the admin-only item update (POST /Items/{id}) can write: the playlist

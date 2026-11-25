@@ -117,7 +117,7 @@ Subsonic error codes are translated via `openSubsonicErrorCodes` using `config/i
 - **Token delivery:** the access token reaches every transport as an origin-keyed `Authorization: Bearer` via `setSessionBearer` in `services/serverHeaders.ts`. Subsonic URLs then carry only `u`.
 - **Navidrome's own JWT** goes only in `X-ND-Authorization`, never in `Authorization`.
 - **Failure handling:** a 401 refreshes and replays once. Only `invalid_grant` / `invalid_client` / `unauthorized_client` sign the user out.
-- **Casting:** Cast and UPnP are switched off through `sessionCapabilityOverrides`, because receivers can't send the token.
+- **Casting:** receivers can't send the token, so `sessionCapabilityOverrides` turns `remoteStreamableUrl` off. On Android these sessions cast anyway: the phone relays the stream and adds the token (`services/castRelay.ts`). On iOS casting stays off for them.
 - **Test rig:** Keycloak + oauth2-proxy + Caddy in `tmp/oidc-rig` (gitignored).
 
 Podcast services (`services/taddyPodcasts`, `hooks/taddyPodcasts`) follow the same split for the Taddy GraphQL API.
@@ -189,6 +189,24 @@ A new `replace` call site that skips the sync leaves the notification on a stale
 Realtime playback state for non-React consumers (widget, Android Auto) goes through `hooks/player/playbackSnapshot.ts`: call `getPlaybackSnapshot()` for the current state and `subscribePlaybackStatus(cb)` to observe changes.
 
 **Remote outputs** (Subsonic jukebox, UPnP/DLNA renderers, Chromecast) are all `RemoteTarget`s registered from their own service module (`services/jukebox.ts`, `services/upnp.ts`, `services/cast.ts`) via `services/playback/remoteTarget.ts`; `services/playback/targets.ts` imports the three so registration happens even on a headless (Android Auto) boot. `services/player.ts` checks `activeRemoteTarget()` at every transport entry point and the local engine stands down while one is active — never drive `react-native-google-cast` or `modules/upnp-cast` from a component. End-of-track advance and the failed-load policy (hold + notice for user moves, one auto-skip for automatic advances) are shared in `services/playback/remoteAdvance.ts`; `services/playback/streamUri.ts` / `modules/upnp-cast/.../StreamUri.kt` match stream URLs by track id, not text (auth salts differ per URL). The UPnP native module (`modules/upnp-cast`) serialises every SOAP exchange per session and stamps each poll with the load `generation` it describes; `services/upnp.ts` drops reports from earlier generations, which is what keeps a renderer's "old track stopped" from being read as the new one ending. Discovery streams `"device"` events (M-SEARCH on each Wi-Fi/Ethernet `Network`, plus `ssdp:alive` listening under a MulticastLock while the output sheet is open) and probes remembered renderers (`stores/upnp.ts` `seen`) directly. `scripts/mock-upnp-renderer.py --help` lists the real-renderer quirks each fix targets.
+
+**Casting through the phone (issue #297).** A receiver is handed a URL and fetches it itself, which fails for media only this phone can read. In those cases `modules/cast-server` serves the media on the phone's Wi-Fi address while the session lasts.
+- **What gets relayed:** `services/castRelay.ts` decides per track.
+  - Every index-backed library track (device files, SMB via its loopback bridge, WebDAV with its `Authorization`).
+  - Any stream whose server needs headers a receiver can't send (single sign-on bearer, custom headers).
+  - A tailnet address, or a certificate only this app trusts.
+  - Everything else is still handed over directly, except a library or credentialed track with no relay available: that one is refused, never handed over bare.
+  - `resolveCastMedia` is synchronous on purpose, because UPnP's load generation has to be bumped in the same tick as the queue move. Certificate trust is cached for that reason, and an unknown host counts as public.
+  - Upstream headers are re-sent whenever `serverHeaders` invalidates, so a refreshed SSO token reaches range requests mid-track.
+- **Exposure:** the server binds one Wi-Fi/Ethernet address (never cellular or VPN) and only while a session is open. It serves `/<session token>/<key>.<ext>` for registered sources only, and the key is derived from token + track id.
+  - The token and port persist in no-backup storage. After a restart, `resumeCastRelay` re-serves the URL a renderer or Cast receiver still holds.
+  - A receiver that has fetched nothing at all this session raises `REMOTE_RELAY_UNREACHED` (guest Wi-Fi, client isolation). A UPnP `refused` load never counts as that.
+- **Staying awake:** the phone holds a wake lock and a Wi-Fi lock while the receiver plays.
+- **Diagnostics:** each request is logged as an `SRV` line in the casting log.
+- **Formats:** no transcoding yet, so a receiver that can't decode the file (ALAC on Chromecast, > 48 kHz on Sonos) refuses it.
+- **iOS:**
+  - The relay is compiled but switched off (`isCastRelayAvailable` is Android-only). iOS suspends an app that serves without playing audio about 30 s after it is backgrounded.
+  - `modules/airplay-route` puts AirPlay in the output sheet instead. The phone keeps playing and iOS carries the audio, which works in the background and for every source.
 
 ### Connectivity & offline detection
 
@@ -289,4 +307,5 @@ Static [Astro](https://astro.build/) website (Astro 6) for the marketing/landing
 - The root config must stay at the repo root: the Biome VS Code extension resolves config per *workspace folder*, and `biome.requireConfiguration` defaults to `false`, so if it finds no config it formats with Biome's built-in defaults (**tabs**) and silently reindents whole files on save. `.vscode/settings.json` sets `biome.requireConfiguration: true` as a backstop. Note VS Code only reads `.vscode/settings.json` from workspace *roots*, so that backstop is inactive if the repo is opened as a nested folder of a larger multi-root workspace.
 - Bun applies patches from the root `patches/` during install; check it before upgrading patched deps, and keep the dep version exactly matching the `patchedDependencies` key (see **Monorepo layout** — a mismatch unpatches silently). The Kotlin patches only reach the build because `expo.autolinking.android.buildFromSource` in `apps/mobile/package.json` lists `expo-audio` and `expo-file-system`; without that, prebuilt Maven artifacts are used and the patched sources are ignored.
 - Native directories `apps/mobile/android/` and `apps/mobile/ios/` are **gitignored** and generated by `expo prebuild` (CNG) — never edit them, changes are wiped on the next prebuild. All native customization goes through `app.json` config fields, the config plugins in `apps/mobile/plugins/`, or the local Expo modules in `apps/mobile/modules/` (whose own `android/` / `ios/` dirs *are* tracked source). EAS Build runs prebuild itself; after changing `app.json` or a plugin, run `bun run mobile:prebuild` before a local `expo run:*`, and `bunx pod-install` for iOS.
+- A new local module's `android/build.gradle` uses `plugins { id 'com.android.library'; id 'expo-module-gradle-plugin' }` (as `modules/cast-server` does), never the legacy `apply from: ExpoModulesCorePlugin.gradle` + `applyKotlinExpoModulesCorePlugin()`. Only the plugin applies Expo's pika compiler plugin. Without it, a module whose function returns a type no earlier module has returned crashes the app at launch, in every build type. The other local modules are still on the legacy form, so the same applies when adding a return type to one of them.
 - Don't write comments unless absolutely necessary (complex feature, critical reminder, etc.). Rather aim to make the code self-explanatory.

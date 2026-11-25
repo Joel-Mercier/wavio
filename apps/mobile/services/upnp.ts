@@ -10,6 +10,14 @@ import {
   isAudiobookTrack,
 } from "@/services/audiobookPlayback";
 import { sessionCapabilities } from "@/services/backend/capabilities";
+import {
+  endCastRelaySession,
+  isCastRelayAvailable,
+  redactRelayUrl,
+  relayNeverReached,
+  resolveCastMedia,
+  resumeCastRelay,
+} from "@/services/castRelay";
 import { reportError } from "@/services/errorReporting";
 import { getConnectionType, subscribeConnectionType } from "@/services/network";
 import { castContentUrl } from "@/services/playback/castContentUrl";
@@ -289,18 +297,22 @@ function onRendererError() {
     deviceName: useUpnpBase.getState().deviceName ?? "",
     track: current,
     url: loadedTrackUri,
+    relayUnreached: relayNeverReached(loadedTrackUri),
   });
 }
 
 // ── Loading tracks ───────────────────────────────────────────────────────────
 
+// Numbers every load request as it is made. Resolving the media can wait on the
+// network, so a later skip may resolve first, and only the latest request may
+// reach the renderer.
+let loadRequests = 0;
+
 /**
  * Hand a track to the renderer.
  *
- * Returns false for anything the renderer cannot fetch — a local-library file or a
- * download resolves to a `file://` URI that exists only on this phone. The
- * capability flag keeps UPnP off the output list for a local server entirely; this
- * is the backstop for a single unreachable track on a server that is otherwise fine.
+ * Returns false for anything the renderer cannot fetch and this phone cannot
+ * serve for it (services/castRelay.ts) — a library file on iOS, say.
  *
  * A refusal is reported to the listener and the queue stays where it is (see
  * `handleRemoteLoadFailure`); a load overtaken by a newer one before it reached the
@@ -313,27 +325,36 @@ async function loadOnRenderer(
   options: { automatic?: boolean } = {},
 ): Promise<boolean> {
   if (!Native || !isUpnpConnected()) return false;
+  const request = ++loadRequests;
+  const stale = () => !isUpnpConnected() || request !== loadRequests;
   const deviceName = useUpnpBase.getState().deviceName ?? "";
   // The renderer can't send our token, so a book needs its session's public
   // track URL, which only exists once the session is open.
   if (isAudiobookTrack(track)) {
     await ensureAudiobookSession(track);
-    if (!isUpnpConnected()) return false;
+    if (stale()) return false;
   }
-  const url = castContentUrl(track);
+  // Synchronous: the generation below must be bumped in the same tick as the
+  // queue move, or a poll about the outgoing track lands first.
+  const media = resolveCastMedia(
+    track,
+    useUpnpBase.getState().session?.address ?? null,
+    "upnp",
+  );
+  const url = media?.url;
   upnpTrace(
     () =>
       `load track ${track.id} suffix=${track.suffix} bitRate=${track.bitRate} ` +
       `radio=${!!track.isRadio} source=${track.source} duration=${track.duration} ` +
       `autoplay=${autoplay} start=${startSeconds}s automatic=${!!options.automatic} ` +
-      `url=${url ? url.split("?")[0] : "none"}`,
+      `relayed=${!!media?.relayed} url=${url ? redactRelayUrl(url) : "none"}`,
   );
-  if (!url || url.startsWith("file://")) {
+  if (!media || !url) {
     handleRemoteLoadFailure({
       automatic: options.automatic ?? false,
       deviceName,
       track,
-      url,
+      url: castContentUrl(track),
     });
     return false;
   }
@@ -345,15 +366,11 @@ async function loadOnRenderer(
     const result = await Native.load(
       url,
       {
-        mime: castMime(track, url),
+        mime: media.mime,
         title: track.title ?? "",
         artist: track.artist,
         album: track.album,
-        // Only an address the renderer can reach: a cached cover lives on this
-        // phone and would render as a broken image on the device.
-        artworkUrl: track.artwork?.startsWith("http")
-          ? track.artwork
-          : undefined,
+        artworkUrl: media.artworkUrl,
         durationSec: track.duration,
       },
       autoplay,
@@ -374,11 +391,17 @@ async function loadOnRenderer(
       // loop reports it lost if it stays silent; blaming the track meanwhile
       // sends the listener looking for a problem that is not there.
       if (result.reason !== "unreachable") {
+        // The renderer goes on reporting the error that failed the load; the
+        // next poll must not report it a second time.
+        errorFired = true;
         handleRemoteLoadFailure({
           automatic: options.automatic ?? false,
           deviceName,
           track,
           url,
+          // A refusal is a SOAP fault on the handover itself: the renderer said
+          // no without fetching, which says nothing about reaching the phone.
+          relayUnreached: result.reason !== "refused" && relayNeverReached(url),
         });
       }
       notifyChange();
@@ -408,6 +431,7 @@ async function loadOnRenderer(
       deviceName,
       track,
       url,
+      relayUnreached: relayNeverReached(url),
     });
     notifyChange();
     return false;
@@ -572,8 +596,11 @@ export async function upnpConnect(device: UpnpDevice): Promise<boolean> {
   attach(device, { trackId: "", trackUrl: "" });
   const current = useQueue.getState().getCurrent();
   if (current) {
+    const request = loadRequests + 1;
     const loaded = await loadOnRenderer(current, wasLocallyPlaying, position);
-    if (!loaded) {
+    // A skip while the first track was being handed over started a newer load,
+    // which owns the session now; this one only stood down for it.
+    if (!loaded && loadRequests <= request) {
       // Back to where the phone was, not to what the failed handover left
       // behind: the state machine was reset for a track that never played.
       detach();
@@ -644,6 +671,7 @@ function detach() {
   lostSubscription = undefined;
   queueUnsubscribe?.();
   queueUnsubscribe = null;
+  endCastRelaySession("upnp");
   useUpnpBase.getState().setConnected(null, null);
   useUpnpBase.getState().setSession(null);
   useUpnpBase.getState().setGroup(null);
@@ -807,7 +835,10 @@ export async function initUpnpOnLaunch(): Promise<void> {
     !Native ||
     store.connected ||
     useJukebox.getState().active ||
-    !sessionCapabilities(useAuthBase.getState()).remoteStreamableUrl
+    !(
+      sessionCapabilities(useAuthBase.getState()).remoteStreamableUrl ||
+      isCastRelayAvailable()
+    )
   ) {
     forgetSession(session);
     return;
@@ -887,6 +918,13 @@ export async function reattach(): Promise<void> {
     );
     return;
   }
+  // If this phone was serving the track, the renderer is about to ask the
+  // restarted app for its next range.
+  await resumeCastRelay(
+    useQueue.getState().getCurrent(),
+    probe.device.address,
+    "upnp",
+  );
   seedFromProbe(probe.state);
   attach(probe.device, probe.session);
   await adoptRendererVolume();

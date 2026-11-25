@@ -99,8 +99,22 @@ export function handleRemoteLoadFailure(options: {
   deviceName: string;
   track: QueueTrack;
   url?: string;
+  /**
+   * The track was served by this phone (services/castRelay.ts) and the output
+   * never asked for it: the output can't reach the phone, which is the same for
+   * every track, so skipping ahead would only fail again.
+   */
+  relayUnreached?: boolean;
 }): "skipped" | "held" {
   const queue = useQueue.getState();
+  if (options.relayUnreached) {
+    failedAutomaticAdvances = 0;
+    usePlaybackNotice.getState().raise("REMOTE_RELAY_UNREACHED", {
+      name: options.deviceName,
+      track: options.track.title ?? "",
+    });
+    return "held";
+  }
   if (options.automatic && failedAutomaticAdvances < 1 && !atQueueTail(queue)) {
     failedAutomaticAdvances += 1;
     automaticAdvancePending = true;

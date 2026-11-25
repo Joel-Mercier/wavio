@@ -20,6 +20,8 @@ export type PlaybackNoticeCode =
   | "REMOTE_TRACK_REFUSED"
   /** The stream is on a Tailscale address, which the remote output can't reach. */
   | "REMOTE_TAILNET_UNREACHABLE"
+  /** The output accepted a track this phone serves, but never fetched it. */
+  | "REMOTE_RELAY_UNREACHED"
   /** A remote output stopped answering; playback came back to this device. */
   | "REMOTE_LOST"
   /** Every track the user asked to play is hidden or by a blocked artist. */
