@@ -2355,6 +2355,7 @@
 					"formatUnsupported": "该设备无法播放“{{track}} ”格式的音频。",
 					"remoteTrackRefused": "{{name}} 无法播放“{{track}}”。请选择另一首歌曲，或在此设备上播放。",
 					"remoteTailnetUnreachable": "{{name}} can't reach your server's Tailscale address. In the server settings, set its local network address as the server URL and the Tailscale one as the fallback server URL.",
+					"remoteRelayUnreached": "{{name}} couldn't connect to this phone to play “{{track}}”. Make sure both are on the same Wi-Fi network, and not on a guest network that keeps devices apart.",
 					"remoteLost": "已与 {{name}}失去联系。该设备已恢复播放功能。",
 					"allTracksHidden": "这里的每一首歌都是隐藏的，或者是您选择不播放的艺术家。",
 					"trackHidden": "这首歌是隐藏的，或者是由您选择不播放的艺术家隐藏的。"
@@ -2455,6 +2456,10 @@
 				"outputAddRooms": "还可以继续玩",
 				"outputGroupVolume": "组交易量",
 				"outputGroupErrorMessage": "无法更改 {{name}} 上的组。",
+				"outputAirPlay": "AirPlay",
+				"outputAirPlayHint": "Speakers and TVs on your network",
+				"outputCastingUnavailable": "Chromecast and network speakers can't play this library from this device yet.",
+				"outputCastingUseAirPlay": "Use AirPlay to play it on a speaker or TV.",
 				"sleepTimerMinutes_other": "{{count}}分钟"
 			},
 			"shares": {
