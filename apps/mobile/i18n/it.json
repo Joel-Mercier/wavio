@@ -2425,6 +2425,7 @@
 					"formatUnsupported": "Questo dispositivo non è in grado di riprodurre il formato audio “{{track}}”.",
 					"remoteTrackRefused": "{{name}} Non è stato possibile riprodurre “{{track}}”. Scegli un altro brano oppure riproducilo su questo dispositivo.",
 					"remoteTailnetUnreachable": "{{name}} can't reach your server's Tailscale address. In the server settings, set its local network address as the server URL and the Tailscale one as the fallback server URL.",
+					"remoteRelayUnreached": "{{name}} couldn't connect to this phone to play “{{track}}”. Make sure both are on the same Wi-Fi network, and not on a guest network that keeps devices apart.",
 					"remoteLost": "Il contatto con {{name}}è stato perso. La riproduzione è nuovamente attiva su questo dispositivo.",
 					"allTracksHidden": "Ogni canzone qui è nascosta o da un artista che hai scelto di non suonare.",
 					"trackHidden": "Questa canzone è nascosta o da un artista che hai scelto di non suonare."
@@ -2525,6 +2526,10 @@
 				"outputAddRooms": "Gioca anche su",
 				"outputGroupVolume": "Volume del gruppo",
 				"outputGroupErrorMessage": "Impossibile modificare il gruppo su {{name}}.",
+				"outputAirPlay": "AirPlay",
+				"outputAirPlayHint": "Speakers and TVs on your network",
+				"outputCastingUnavailable": "Chromecast and network speakers can't play this library from this device yet.",
+				"outputCastingUseAirPlay": "Use AirPlay to play it on a speaker or TV.",
 				"sleepTimerMinutes_one": "{{count}} minuto",
 				"sleepTimerMinutes_other": "{{count}} minuti"
 			},
