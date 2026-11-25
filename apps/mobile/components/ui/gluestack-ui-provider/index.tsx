@@ -1,9 +1,9 @@
 import { OverlayProvider } from "@gluestack-ui/core/overlay/creator";
-import { ToastProvider } from "@gluestack-ui/core/toast/creator";
 import type React from "react";
 import { useEffect } from "react";
 import { View, type ViewProps } from "react-native";
 import { Uniwind } from "uniwind";
+import { ToastProvider } from "@/components/ui/toast";
 
 export type ModeType = "light" | "dark" | "system";
 

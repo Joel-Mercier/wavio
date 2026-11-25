@@ -1,5 +1,4 @@
 "use client";
-import { createToastHook } from "@gluestack-ui/core/toast/creator";
 import type { VariantProps } from "@gluestack-ui/utils/nativewind-utils";
 import {
   tva,
@@ -10,8 +9,18 @@ import React from "react";
 import { AccessibilityInfo, Text, View } from "react-native";
 import Animated, { SlideInUp } from "react-native-reanimated";
 import { withUniwind } from "uniwind";
+import { useToast } from "./store";
+import { ToastList } from "./ToastList";
 
-const useToast = createToastHook(View);
+function ToastProvider({ children }: { children?: React.ReactNode }) {
+  return (
+    <>
+      {children}
+      <ToastList />
+    </>
+  );
+}
+
 const SCOPE = "TOAST";
 const AnimatedView = Animated.createAnimatedComponent(View);
 const StyledAnimatedView = withUniwind(AnimatedView);
@@ -253,4 +262,4 @@ Toast.displayName = "Toast";
 ToastTitle.displayName = "ToastTitle";
 ToastDescription.displayName = "ToastDescription";
 
-export { Toast, ToastDescription, ToastTitle, useToast };
+export { Toast, ToastDescription, ToastProvider, ToastTitle, useToast };
