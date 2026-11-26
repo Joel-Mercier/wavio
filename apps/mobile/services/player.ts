@@ -150,6 +150,7 @@ import useQueue, {
   nextRepeatMode,
   type QueueSource,
   type QueueTrack,
+  resolveSourceShuffle,
 } from "@/stores/queue";
 import { resolveOfflineTrackArtwork } from "@/utils/artwork";
 import {
@@ -2359,7 +2360,11 @@ export function refuseHiddenPick(track: QueueTrack | undefined): boolean {
 export function playTracks(
   requested: QueueTrack[],
   requestedStart = 0,
-  options?: { shuffleFromRandom?: boolean; source?: QueueSource },
+  options?: {
+    shuffleFromRandom?: boolean;
+    source?: QueueSource;
+    shuffle?: boolean;
+  },
 ): boolean {
   if (requested.length === 0) return false;
   const { tracks, startIndex } = withoutHiddenFromStart(
@@ -2370,8 +2375,10 @@ export function playTracks(
     usePlaybackNotice.getState().raise("ALL_TRACKS_HIDDEN");
     return false;
   }
+  const source = options?.source ?? null;
+  const shuffle = options?.shuffle ?? resolveSourceShuffle(source);
   const requestedIndex =
-    options?.shuffleFromRandom && useQueue.getState().shuffle
+    options?.shuffleFromRandom && shuffle
       ? Math.floor(Math.random() * tracks.length)
       : startIndex;
   // Offline with nothing playable at or after the requested index, replacing the
@@ -2382,7 +2389,7 @@ export function playTracks(
   const index = resolvePlayableStartIndex(tracks, requestedIndex);
   if (index == null) return false;
   const previousId = lastTrackId;
-  useQueue.getState().playNow(tracks, index, options?.source ?? null);
+  useQueue.getState().playNow(tracks, index, source, shuffle);
   const current = useQueue.getState().getCurrent();
   if (!current) return false;
   // Starting a new track normally auto-plays via the queue subscription, which

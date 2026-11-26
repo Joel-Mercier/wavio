@@ -8,6 +8,7 @@ import { getAlbumList2, getStarred2 } from "@/services/backend/lists";
 import { getPlaylist, getPlaylists } from "@/services/backend/playlists";
 import type { Child } from "@/services/openSubsonic/types";
 import { fetchTopSongs } from "@/services/topSongs";
+import { FAVORITES_QUEUE_SOURCE_ID } from "@/utils/activeRecentPlay";
 import { childToTrack } from "@/utils/childToTrack";
 import { encodeMediaId, type FavoritesKind } from "../mediaId";
 import {
@@ -205,6 +206,10 @@ export async function favoritesKindListing(
   return tracklist(
     encodeMediaId({ kind: "favorites", of: "songs" }),
     starred?.song ?? [],
-    { type: "likedSongs", name: t("favorites.songs") },
+    {
+      type: "likedSongs",
+      id: FAVORITES_QUEUE_SOURCE_ID,
+      name: t("favorites.songs"),
+    },
   );
 }

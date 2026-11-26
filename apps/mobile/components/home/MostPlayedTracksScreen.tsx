@@ -26,11 +26,12 @@ import { useInfiniteMostPlayedSongs } from "@/hooks/backend/useLists";
 import { useHasPlayableTracks } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
+import { useSourceShuffle } from "@/hooks/useSourceShuffle";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
-import useQueue, { type QueueSource } from "@/stores/queue";
+import type { QueueSource } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
 
@@ -69,8 +70,8 @@ export default function MostPlayedTracksScreen() {
   const trackIdSet = useMemo(() => new Set(songs.map((s) => s.id)), [songs]);
   const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
   const hasPlayableTracks = useHasPlayableTracks(songs);
-  const shuffle = useQueue((store) => store.shuffle);
-  const setShuffle = useQueue((store) => store.setShuffle);
+  const { active: shuffle, toggle: handleShufflePress } =
+    useSourceShuffle(source);
 
   const handlePlayPress = () => {
     if (isPlayingFromList) {
@@ -79,10 +80,6 @@ export default function MostPlayedTracksScreen() {
     }
     if (songs.length === 0) return;
     playTracks(songs.map(childToTrack), 0, { shuffleFromRandom: true, source });
-  };
-
-  const handleShufflePress = () => {
-    setShuffle(!shuffle);
   };
 
   return (

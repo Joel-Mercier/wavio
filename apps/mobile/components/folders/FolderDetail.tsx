@@ -11,6 +11,7 @@ import EmptyDisplay from "@/components/EmptyDisplay";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import FadeOutScaleDown from "@/components/FadeOutScaleDown";
 import FastScroller, { useFastScroll } from "@/components/FastScroller";
+import ShuffleToggle from "@/components/ShuffleToggle";
 import TrackListItem from "@/components/tracks/TrackListItem";
 import TrackListItemSkeleton from "@/components/tracks/TrackListItemSkeleton";
 import { Box } from "@/components/ui/box";
@@ -21,6 +22,7 @@ import { VStack } from "@/components/ui/vstack";
 import { useIndexes, useMusicDirectory } from "@/hooks/backend/useBrowsing";
 import { useHasPlayableTracks } from "@/hooks/offline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
+import { useSourceShuffle } from "@/hooks/useSourceShuffle";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks } from "@/services/player";
@@ -100,6 +102,8 @@ export default function FolderDetail() {
     [headerName, id],
   );
   const hasPlayableTracks = useHasPlayableTracks(tracks);
+  const { active: shuffle, toggle: handleShufflePress } =
+    useSourceShuffle(folderSource);
   const handlePlayAllPress = () => {
     if (tracks.length === 0) return;
     playTracks(tracks.map(childToTrack), 0, {
@@ -125,14 +129,17 @@ export default function FolderDetail() {
             {headerName}
           </Heading>
           {tracks.length > 0 ? (
-            <FadeOutScaleDown
-              onPress={handlePlayAllPress}
-              disabled={!hasPlayableTracks}
-            >
-              <Box className="w-10 h-10 rounded-full bg-emerald-500 items-center justify-center">
-                <Play size={18} color={white} fill={white} />
-              </Box>
-            </FadeOutScaleDown>
+            <HStack className="items-center gap-x-4">
+              <ShuffleToggle active={shuffle} onPress={handleShufflePress} />
+              <FadeOutScaleDown
+                onPress={handlePlayAllPress}
+                disabled={!hasPlayableTracks}
+              >
+                <Box className="w-10 h-10 rounded-full bg-emerald-500 items-center justify-center">
+                  <Play size={18} color={white} fill={white} />
+                </Box>
+              </FadeOutScaleDown>
+            </HStack>
           ) : (
             <Box className="w-10" />
           )}

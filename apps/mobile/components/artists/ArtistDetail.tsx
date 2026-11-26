@@ -92,6 +92,7 @@ import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useRefreshRecentPlay } from "@/hooks/useRefreshRecentPlay";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
+import { useSourceShuffle } from "@/hooks/useSourceShuffle";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { SIMILAR_ARTISTS_DEFAULT_RESULTS } from "@/services/audioMuse/artists";
 import { getAlbum } from "@/services/backend/browsing";
@@ -479,11 +480,9 @@ export default function ArtistDetail() {
     );
   };
 
-  const shuffle = useQueue((store) => store.shuffle);
-  const setShuffle = useQueue((store) => store.setShuffle);
-  const handleShufflePress = () => {
-    setShuffle(!shuffle);
-  };
+  const { active: shuffle, toggle: handleShufflePress } = useSourceShuffle(
+    artistSource ?? { type: "artist", name: "", id },
+  );
 
   const handleTrackPressCallback = () => {
     if (data?.artist) {

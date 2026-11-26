@@ -75,6 +75,9 @@ interface QueueStore {
   originalOrderIds: string[] | null;
   // Where the current queue was played from (Spotify-style "Playing from …")
   source: QueueSource;
+  // Keyed by shuffleKey: the sources whose last play was shuffled. Absent
+  // means off, the default for a source never played.
+  shuffledSources: Record<string, true>;
   setQueue: (
     tracks: QueueTrack[],
     startIndex?: number | null,
@@ -88,6 +91,7 @@ interface QueueStore {
   setRemovePlayed: (remove: boolean) => void;
   setRepeatMode: (mode: "off" | "all" | "one") => void;
   setShuffle: (enabled: boolean) => void;
+  setSourceShuffle: (source: QueueSource, enabled: boolean) => void;
 
   // All three return how many tracks were actually inserted, so callers can
   // report what happened instead of assuming the whole batch landed.
@@ -101,6 +105,7 @@ interface QueueStore {
     tracks: QueueTrack[] | QueueTrack,
     startIndex?: number,
     source?: QueueSource,
+    shuffle?: boolean,
   ) => void;
 
   updateTrack: (id: string, patch: Partial<QueueTrack>) => void;
@@ -125,6 +130,68 @@ interface QueueStore {
 // (what will actually play); an enqueue at the cap evicts to make room rather
 // than refusing (see makeRoomFor).
 export const MAX_QUEUE_TRACKS = 1000;
+
+// Generated lists are rebuilt on every play, so each kind shares one setting.
+const GENERATED_SOURCE_TYPES = new Set<NonNullable<QueueSource>["type"]>([
+  "similar",
+  "audiomuse",
+  "listenbrainz",
+  "mix",
+]);
+
+export function shuffleKey(source: QueueSource): string | null {
+  if (!source || source.type === "audiobook") return null;
+  if (GENERATED_SOURCE_TYPES.has(source.type) || !source.id) return source.type;
+  return `${source.type}:${source.id}`;
+}
+
+const MAX_SHUFFLED_SOURCES = 500;
+
+// Re-inserting moves the key to the end, so the cap drops the sources that
+// went longest without a shuffled play. `keep` (the playing source) is never
+// dropped, or its button would disagree with the live queue.
+function rememberShuffle(
+  remembered: Record<string, true>,
+  key: string | null,
+  enabled: boolean,
+  keep: string | null = null,
+): Record<string, true> {
+  if (key == null || (!enabled && !remembered[key])) return remembered;
+  const next = { ...remembered };
+  delete next[key];
+  if (!enabled) return next;
+  next[key] = true;
+  let overflow = Object.keys(next).length - MAX_SHUFFLED_SOURCES;
+  for (const oldest of Object.keys(next)) {
+    if (overflow <= 0) break;
+    if (oldest === keep || oldest === key) continue;
+    delete next[oldest];
+    overflow--;
+  }
+  return next;
+}
+
+function shuffleForSource(
+  state: Pick<QueueStore, "shuffle" | "shuffledSources">,
+  source: QueueSource,
+): boolean {
+  const key = shuffleKey(source);
+  return key == null ? state.shuffle : !!state.shuffledSources[key];
+}
+
+export function resolveSourceShuffle(source: QueueSource): boolean {
+  return shuffleForSource(useQueueBase.getState(), source);
+}
+
+export function sourceShuffleActive(
+  state: Pick<QueueStore, "shuffle" | "shuffledSources" | "source">,
+  source: QueueSource,
+): boolean {
+  const key = shuffleKey(source);
+  if (key == null) return false;
+  if (key === shuffleKey(state.source)) return state.shuffle;
+  return !!state.shuffledSources[key];
+}
 
 // The order a repeat button steps through, wherever it lives.
 export function nextRepeatMode(
@@ -363,6 +430,7 @@ const initialQueueState = {
   shuffle: false,
   originalOrderIds: null as string[] | null,
   source: null as QueueSource,
+  shuffledSources: {} as Record<string, true>,
 };
 
 const useQueueBase = create<QueueStore>()((set, get) => ({
@@ -467,6 +535,11 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
   setShuffle: (enabled) => {
     set((state) => {
       if (enabled === state.shuffle) return state;
+      const shuffledSources = rememberShuffle(
+        state.shuffledSources,
+        shuffleKey(state.source),
+        enabled,
+      );
 
       if (enabled) {
         // The manual lane stays put too: only the context behind it is
@@ -475,6 +548,7 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
         const tail = state.queue.slice(tailStart);
         return {
           shuffle: true,
+          shuffledSources,
           originalOrderIds: state.queue.map((t) => t.id),
           queue:
             tail.length > 1
@@ -485,7 +559,7 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
 
       const order = state.originalOrderIds;
       if (!order || state.queue.length === 0) {
-        return { shuffle: false, originalOrderIds: null };
+        return { shuffle: false, shuffledSources, originalOrderIds: null };
       }
       const byId = new Map(state.queue.map((t) => [t.id, t]));
       const restored: QueueTrack[] = [];
@@ -510,11 +584,30 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
       const nextIndex = found >= 0 ? found : state.currentIndex;
       return {
         shuffle: false,
+        shuffledSources,
         originalOrderIds: null,
         queue: normalizeLane(restored, nextIndex),
         currentIndex: nextIndex,
       } as Partial<QueueStore>;
     });
+  },
+
+  setSourceShuffle: (source, enabled) => {
+    const state = get();
+    const key = shuffleKey(source);
+    if (key == null) return;
+    const playingKey = shuffleKey(state.source);
+    if (key === playingKey) {
+      state.setShuffle(enabled);
+      return;
+    }
+    const shuffledSources = rememberShuffle(
+      state.shuffledSources,
+      key,
+      enabled,
+      playingKey,
+    );
+    if (shuffledSources !== state.shuffledSources) set({ shuffledSources });
   },
 
   // "Play next" goes to the front of the manual lane, "Add to queue" to its
@@ -568,7 +661,7 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
   // The entry point for "start playing this list". With shuffle on, the track
   // the user actually picked leads and the rest of the list follows in random
   // order — so the whole context sits ahead of them, as on Spotify.
-  playNow: (tracks, startIndex = 0, source = null) => {
+  playNow: (tracks, startIndex = 0, source = null, shuffleOverride) => {
     const capped = capQueueWindow(
       Array.isArray(tracks) ? tracks : [tracks],
       startIndex,
@@ -584,13 +677,21 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
           source,
         } as Partial<QueueStore>;
       }
+      const shuffle = shuffleOverride ?? shuffleForSource(state, source);
+      const shuffledSources = rememberShuffle(
+        state.shuffledSources,
+        shuffleKey(source),
+        shuffle,
+      );
       const start = Math.max(0, Math.min(cappedStart, items.length - 1));
-      if (!state.shuffle) {
+      if (!shuffle) {
         return {
           queue: [...items],
           currentIndex: start,
           originalOrderIds: null,
           source,
+          shuffle,
+          shuffledSources,
         } as Partial<QueueStore>;
       }
       const lead = items[start];
@@ -600,6 +701,8 @@ const useQueueBase = create<QueueStore>()((set, get) => ({
         currentIndex: 0,
         originalOrderIds: items.map((t) => t.id),
         source,
+        shuffle,
+        shuffledSources,
       } as Partial<QueueStore>;
     });
   },
@@ -965,6 +1068,7 @@ type CursorBlob = {
 const keyQueue = `${QUEUE_STORAGE_NAME}:queue`;
 const keyOriginalOrder = `${QUEUE_STORAGE_NAME}:originalOrder`;
 const keyCursor = `${QUEUE_STORAGE_NAME}:cursor`;
+const keyShuffledSources = `${QUEUE_STORAGE_NAME}:shuffledSources`;
 // Written by versions that kept a parallel shuffle traversal beside the queue;
 // dropped on the first rehydrate so it doesn't linger in MMKV forever.
 const keyLegacyShuffleOrder = `${QUEUE_STORAGE_NAME}:shuffleOrder`;
@@ -981,6 +1085,13 @@ const writeOriginalOrder = (ids: string[] | null) => {
     persistedStorage.setItem(keyOriginalOrder, JSON.stringify(ids));
   } catch (e) {
     console.warn("[queue] persist originalOrder failed", e);
+  }
+};
+const writeShuffledSources = (remembered: Record<string, true>) => {
+  try {
+    persistedStorage.setItem(keyShuffledSources, JSON.stringify(remembered));
+  } catch (e) {
+    console.warn("[queue] persist shuffledSources failed", e);
   }
 };
 const writeCursor = (s: CursorBlob) => {
@@ -1001,6 +1112,8 @@ useQueueBase.subscribe((next, prev) => {
   if (next.queue !== prev.queue) writeQueue(next.queue);
   if (next.originalOrderIds !== prev.originalOrderIds)
     writeOriginalOrder(next.originalOrderIds);
+  if (next.shuffledSources !== prev.shuffledSources)
+    writeShuffledSources(next.shuffledSources);
   if (
     next.currentIndex !== prev.currentIndex ||
     next.repeatMode !== prev.repeatMode ||
@@ -1025,6 +1138,7 @@ const rehydrate = (): Promise<void> => {
     const queueRaw = readSync(keyQueue);
     const orderRaw = readSync(keyOriginalOrder);
     const cursorRaw = readSync(keyCursor);
+    const shuffledRaw = readSync(keyShuffledSources);
     persistedStorage.removeItem(keyLegacyShuffleOrder);
     const patch: Partial<QueueStore> = {};
     if (queueRaw) patch.queue = JSON.parse(queueRaw) as QueueTrack[];
@@ -1037,6 +1151,17 @@ const rehydrate = (): Promise<void> => {
       patch.shuffle = cursor.shuffle;
       patch.source = cursor.source ?? null;
     }
+    if (shuffledRaw) {
+      patch.shuffledSources = JSON.parse(shuffledRaw) as Record<string, true>;
+    } else if (patch.shuffle) {
+      // First launch on a build that remembers shuffle per source: carry the
+      // shuffle the queue was left in over to the source it plays from.
+      patch.shuffledSources = rememberShuffle(
+        {},
+        shuffleKey(patch.source ?? null),
+        true,
+      );
+    }
     // Upgrading from a build that stored the queue in source order beside a
     // separate shuffle traversal: that queue *is* the pre-shuffle order, so
     // adopt it. The shuffled traversal is lost — the queue view is truthful
@@ -1046,6 +1171,9 @@ const rehydrate = (): Promise<void> => {
     }
     if (Object.keys(patch).length > 0) {
       useQueueBase.setState(patch);
+    }
+    if (!shuffledRaw && patch.shuffledSources) {
+      writeShuffledSources(patch.shuffledSources);
     }
   } catch (e) {
     console.warn("[queue] rehydrate failed", e);

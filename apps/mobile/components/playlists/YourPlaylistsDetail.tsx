@@ -20,6 +20,7 @@ import { useIsPlaying } from "@/hooks/player";
 import { usePlaylistFolderOptions } from "@/hooks/usePlaylistFolderOptions";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
+import { useSourceShuffle } from "@/hooks/useSourceShuffle";
 import { getPlaylist } from "@/services/backend/playlists";
 import type { Playlist } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
@@ -74,8 +75,8 @@ export default function YourPlaylistsDetail() {
   const isActiveSource =
     queueSource?.type === "playlistList" && queueSource.id === SOURCE_ID;
   const isPlaying = useIsPlaying();
-  const shuffle = useQueue((store) => store.shuffle);
-  const setShuffle = useQueue((store) => store.setShuffle);
+  const { active: shuffle, toggle: handleShufflePress } =
+    useSourceShuffle(source);
   const [preparing, setPreparing] = useState(false);
   const canPlay = !preparing && playlists.length > 0;
 
@@ -130,10 +131,6 @@ export default function YourPlaylistsDetail() {
     } finally {
       setPreparing(false);
     }
-  };
-
-  const handleShufflePress = () => {
-    setShuffle(!shuffle);
   };
 
   return (

@@ -33,12 +33,13 @@ import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
+import { useSourceShuffle } from "@/hooks/useSourceShuffle";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { artistTracksFromDownloads } from "@/services/offline/collections";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import { everyTrackHidden } from "@/stores/hiddenTracks";
-import useQueue, { MAX_QUEUE_TRACKS, type QueueSource } from "@/stores/queue";
+import { MAX_QUEUE_TRACKS, type QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
@@ -199,11 +200,8 @@ export default function AllSongs() {
     }
   };
 
-  const shuffle = useQueue((store) => store.shuffle);
-  const setShuffle = useQueue((store) => store.setShuffle);
-  const handleShufflePress = () => {
-    setShuffle(!shuffle);
-  };
+  const { active: shuffle, toggle: handleShufflePress } =
+    useSourceShuffle(songsSource);
 
   const handleTrackPress = useTrackListPress(songs, songsSource);
 

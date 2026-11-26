@@ -162,6 +162,9 @@ function collectIds(): Set<string> {
   for (const id of queue.originalOrderIds ?? []) add(id);
   add(queue.source?.id);
   addArtwork(queue.source?.coverArt);
+  for (const key of Object.keys(queue.shuffledSources)) {
+    add(shuffledSourceId(key));
+  }
 
   for (const entry of usePlayHistory.getState().history) {
     add(entry.id);
@@ -259,6 +262,16 @@ function collectIds(): Set<string> {
 
 function overrideId(key: string): string {
   return key.slice(key.indexOf(":") + 1);
+}
+
+function shuffledSourceId(key: string): string | null {
+  const idx = key.indexOf(":");
+  return idx > 0 ? key.slice(idx + 1) : null;
+}
+
+function remapShuffledSourceKey(key: string, remap: Remap): string {
+  const id = shuffledSourceId(key);
+  return id == null ? key : `${key.slice(0, key.indexOf(":"))}:${remap(id)}`;
 }
 
 function applyRemap(remap: Remap): void {
@@ -395,6 +408,12 @@ function applyRemap(remap: Remap): void {
       };
     }),
     originalOrderIds: queue.originalOrderIds?.map(remap) ?? null,
+    shuffledSources: Object.fromEntries(
+      Object.entries(queue.shuffledSources).map(([key, value]) => [
+        remapShuffledSourceKey(key, remap),
+        value,
+      ]),
+    ),
     source: queue.source
       ? {
           ...queue.source,

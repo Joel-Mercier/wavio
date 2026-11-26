@@ -72,6 +72,20 @@ describe("playing an artist", () => {
     expect(mockGetArtistSongs).not.toHaveBeenCalled();
     expect(mockPlayTracks).toHaveBeenCalledWith([{ id: "top1" }], 0, {
       source,
+      shuffleFromRandom: true,
+    });
+  });
+
+  it("shuffles through the queue rather than pre-shuffling the list", async () => {
+    const tracks = [{ id: "t1" }, { id: "t2" }, { id: "t3" }];
+    mockGetListing.mockResolvedValue({ nodes: [], tracks, source });
+
+    expect(await playMediaId("artist:ar1", { shuffle: true })).toBe(true);
+
+    expect(mockPlayTracks).toHaveBeenCalledWith(tracks, 0, {
+      source,
+      shuffleFromRandom: true,
+      shuffle: true,
     });
   });
 
@@ -87,7 +101,7 @@ describe("playing an artist", () => {
     expect(mockPlayTracks).toHaveBeenCalledWith(
       [{ id: "s1" }, { id: "s2" }],
       0,
-      { source },
+      { source, shuffleFromRandom: true },
     );
   });
 

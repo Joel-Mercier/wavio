@@ -28,10 +28,11 @@ import { useSimilarTracks } from "@/hooks/backend/useBrowsing";
 import { useHasPlayableTracks } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
+import { useSourceShuffle } from "@/hooks/useSourceShuffle";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
-import useQueue, { type QueueSource } from "@/stores/queue";
+import type { QueueSource } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 import { loadingData } from "@/utils/loadingData";
 
@@ -72,8 +73,8 @@ export default function SimilarSongsScreen() {
   const trackIdSet = useMemo(() => new Set(songs?.map((t) => t.id)), [songs]);
   const isPlayingFromList = !!(playingTrack && trackIdSet.has(playingTrack.id));
   const hasPlayableTracks = useHasPlayableTracks(songs);
-  const shuffle = useQueue((store) => store.shuffle);
-  const setShuffle = useQueue((store) => store.setShuffle);
+  const { active: shuffle, toggle: handleShufflePress } =
+    useSourceShuffle(similarSource);
 
   const handlePlayPress = () => {
     if (isPlayingFromList) {
@@ -85,10 +86,6 @@ export default function SimilarSongsScreen() {
       shuffleFromRandom: true,
       source: similarSource,
     });
-  };
-
-  const handleShufflePress = () => {
-    setShuffle(!shuffle);
   };
 
   return (

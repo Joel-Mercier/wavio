@@ -59,7 +59,7 @@ export function downloadsKindListing(of: DownloadsKind): Listing {
     return tracklist(
       encodeMediaId({ kind: "downloads", of: "songs" }),
       tracks.map(offlineTrackToChild),
-      { type: "allTracks", name: t("downloads.songs") },
+      { type: "allTracks", id: "downloads", name: t("downloads.songs") },
     );
   }
   const kind = of === "albums" ? "album" : "playlist";

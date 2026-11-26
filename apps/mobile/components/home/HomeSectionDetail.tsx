@@ -26,6 +26,7 @@ import { useIsPlaying } from "@/hooks/player";
 import { useAlbumScreenLayout } from "@/hooks/useAlbumScreenLayout";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
+import { useSourceShuffle } from "@/hooks/useSourceShuffle";
 import { getAlbum } from "@/services/backend/browsing";
 import type { AlbumListType } from "@/services/openSubsonic/lists";
 import type { AlbumID3 } from "@/services/openSubsonic/types";
@@ -122,8 +123,8 @@ export default function HomeSectionDetail() {
   const isActiveSource =
     queueSource?.type === "albumList" && queueSource.id === type;
   const isPlaying = useIsPlaying();
-  const shuffle = useQueue((store) => store.shuffle);
-  const setShuffle = useQueue((store) => store.setShuffle);
+  const { active: shuffle, toggle: handleShufflePress } =
+    useSourceShuffle(source);
   const [preparing, setPreparing] = useState(false);
   const canPlay = !preparing && albums.length > 0;
 
@@ -162,10 +163,6 @@ export default function HomeSectionDetail() {
     } finally {
       setPreparing(false);
     }
-  };
-
-  const handleShufflePress = () => {
-    setShuffle(!shuffle);
   };
 
   return (

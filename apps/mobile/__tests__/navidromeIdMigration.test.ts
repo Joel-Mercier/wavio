@@ -165,7 +165,12 @@ const resetStores = () => {
     artworkCachedAt: {},
     artworkAliases: {},
   });
-  useQueue.setState({ queue: [], originalOrderIds: null, source: null });
+  useQueue.setState({
+    queue: [],
+    originalOrderIds: null,
+    source: null,
+    shuffledSources: {},
+  });
   usePlayHistory.setState({ history: [] });
   useActivity.setState({ activity: [] });
   useBookmarks.setState({ bookmarks: {} });
@@ -600,6 +605,21 @@ describe("applyCanonicalIdRemap", () => {
     expect(entry.albumId).toBe(NEW_SONG_2);
     expect(useQueue.getState().originalOrderIds).toEqual([NEW_SONG]);
     expect(useQueue.getState().source?.id).toBe(NEW_SONG_2);
+  });
+
+  it("remaps the ids in remembered shuffle settings", async () => {
+    useQueue.setState({
+      shuffledSources: {
+        [`album:${OLD_SONG_2}`]: true,
+        allTracks: true,
+      },
+    });
+    await applyCanonicalIdRemap();
+
+    expect(useQueue.getState().shuffledSources).toEqual({
+      [`album:${NEW_SONG_2}`]: true,
+      allTracks: true,
+    });
   });
 
   it("points a downloaded queue entry at its local file", async () => {

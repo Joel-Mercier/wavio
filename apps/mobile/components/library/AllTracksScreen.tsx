@@ -37,6 +37,7 @@ import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
 import { useSongSort } from "@/hooks/useSongSort";
+import { useSourceShuffle } from "@/hooks/useSourceShuffle";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { getRandomSongs, getSongs } from "@/services/backend/lists";
 import type { Child } from "@/services/openSubsonic/types";
@@ -217,11 +218,13 @@ export default function AllTracksScreen() {
   // Membership in the list (the convention elsewhere) can't tell this screen
   // apart from any other: the list *is* the whole library, so every playing
   // track is in it. The queue's own source is the exact test.
-  const queueSourceType = useQueue((store) => store.source?.type);
-  const isPlayingFromList = !!playingTrack && queueSourceType === "allTracks";
+  const isAllTracksSource = useQueue(
+    (store) => store.source?.type === "allTracks" && !store.source.id,
+  );
+  const isPlayingFromList = !!playingTrack && isAllTracksSource;
   const hasPlayableTracks = useHasPlayableTracks(songs);
-  const shuffle = useQueue((store) => store.shuffle);
-  const setShuffle = useQueue((store) => store.setShuffle);
+  const { active: shuffle, toggle: handleShufflePress } =
+    useSourceShuffle(source);
   const [preparing, setPreparing] = useState(false);
 
   // The visible order, from the top. Offsets come from the running total rather than
@@ -323,10 +326,6 @@ export default function AllTracksScreen() {
     } finally {
       setPreparing(false);
     }
-  };
-
-  const handleShufflePress = () => {
-    setShuffle(!shuffle);
   };
 
   const handleSearchClearPress = () => {

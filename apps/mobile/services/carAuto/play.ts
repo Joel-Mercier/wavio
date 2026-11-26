@@ -82,8 +82,11 @@ export async function playCollection(
   { shuffle = false }: { shuffle?: boolean } = {},
 ): Promise<boolean> {
   if (!collection || collection.tracks.length === 0) return false;
-  const tracks = shuffle ? shuffled(collection.tracks) : collection.tracks;
-  return playTracks(tracks, 0, { source: collection.source });
+  return playTracks(collection.tracks, 0, {
+    source: collection.source,
+    shuffleFromRandom: true,
+    ...(shuffle ? { shuffle: true } : {}),
+  });
 }
 
 // A play started from the car counts like one started on the phone, so the

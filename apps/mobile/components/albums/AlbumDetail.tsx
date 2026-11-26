@@ -102,6 +102,7 @@ import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useRefreshRecentPlay } from "@/hooks/useRefreshRecentPlay";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
+import { useSourceShuffle } from "@/hooks/useSourceShuffle";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import type { ShareLinkOptions } from "@/services/backend/sharing";
 import { isNotFoundError } from "@/services/notFound";
@@ -658,11 +659,9 @@ export default function AlbumDetail() {
     }
   };
 
-  const shuffle = useQueue((store) => store.shuffle);
-  const setShuffle = useQueue((store) => store.setShuffle);
-  const handleShufflePress = () => {
-    setShuffle(!shuffle);
-  };
+  const { active: shuffle, toggle: handleShufflePress } = useSourceShuffle(
+    albumSource ?? { type: "album", name: "", id },
+  );
 
   const album = data?.album;
   const handleTrackPressCallback = useCallback(() => {

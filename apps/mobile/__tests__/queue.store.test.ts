@@ -28,6 +28,9 @@ import useQueue, {
   MAX_QUEUE_TRACKS,
   peekNextTrack,
   peekNextTracks,
+  resolveSourceShuffle,
+  shuffleKey,
+  sourceShuffleActive,
   upcomingIndicesOf,
 } from "@/stores/queue";
 
@@ -51,6 +54,7 @@ beforeEach(() => {
     shuffle: false,
     originalOrderIds: null,
     source: null,
+    shuffledSources: {},
   });
 });
 
@@ -222,6 +226,136 @@ describe("queue store - shuffle mode", () => {
     );
     expect(ids()).toEqual(["t3", "t1", "t2"]);
     expect(get().getCurrent()?.id).toBe("t3");
+  });
+});
+
+describe("queue store - shuffle per source", () => {
+  const albumA = { type: "album" as const, name: "A", id: "a" };
+  const albumB = { type: "album" as const, name: "B", id: "b" };
+  const playlist = { type: "playlist" as const, name: "P", id: "p" };
+  const mix = { type: "mix" as const, name: "Mix" };
+
+  test("a source never played starts unshuffled", () => {
+    get().setShuffle(true);
+    get().playNow(makeTracks(10), 0, albumA);
+    expect(get().shuffle).toBe(false);
+    expect(ids()).toEqual(makeTracks(10).map((t) => t.id));
+  });
+
+  test("each source replays with the shuffle it was last left in", () => {
+    get().playNow(makeTracks(10, "p"), 0, playlist);
+    get().setShuffle(true);
+    get().playNow(makeTracks(10, "a"), 0, albumA);
+    expect(get().shuffle).toBe(false);
+    get().playNow(makeTracks(10, "p"), 0, playlist);
+    expect(get().shuffle).toBe(true);
+    expect(get().originalOrderIds).toEqual(
+      makeTracks(10, "p").map((t) => t.id),
+    );
+  });
+
+  test("turning shuffle off forgets the source", () => {
+    get().playNow(makeTracks(3), 0, albumA);
+    get().setShuffle(true);
+    get().setShuffle(false);
+    expect(get().shuffledSources).toEqual({});
+  });
+
+  test("an explicit shuffle overrides and is remembered", () => {
+    get().playNow(makeTracks(5), 0, albumA, true);
+    expect(get().shuffle).toBe(true);
+    expect(resolveSourceShuffle(albumA)).toBe(true);
+  });
+
+  test("a play with no source keeps the live shuffle and remembers nothing", () => {
+    get().setShuffle(true);
+    get().playNow(makeTracks(5), 0, null);
+    expect(get().shuffle).toBe(true);
+    expect(get().shuffledSources).toEqual({});
+  });
+
+  test("generated lists share one setting per kind", () => {
+    get().playNow(makeTracks(5), 0, mix);
+    get().setShuffle(true);
+    get().playNow(makeTracks(5), 0, albumA);
+    expect(get().shuffle).toBe(false);
+    get().playNow(makeTracks(5, "m"), 0, { type: "mix", name: "Other mix" });
+    expect(get().shuffle).toBe(true);
+  });
+
+  test("a generated list's button leaves a playing album alone", () => {
+    get().playNow(makeTracks(10), 0, albumA);
+    const before = get().queue;
+    get().setSourceShuffle(mix, true);
+    expect(get().queue).toBe(before);
+    expect(get().shuffle).toBe(false);
+    expect(resolveSourceShuffle(albumA)).toBe(false);
+    expect(sourceShuffleActive(get(), mix)).toBe(true);
+  });
+
+  test("a screen without a source yet shows off and changes nothing", () => {
+    get().playNow(makeTracks(10), 0, albumA);
+    get().setShuffle(true);
+    expect(sourceShuffleActive(get(), null)).toBe(false);
+    get().setSourceShuffle(null, false);
+    expect(get().shuffle).toBe(true);
+    expect(resolveSourceShuffle(albumA)).toBe(true);
+  });
+
+  test("setSourceShuffle on the playing source flips the live queue", () => {
+    get().playNow(makeTracks(10), 0, albumA);
+    get().setSourceShuffle({ ...albumA }, true);
+    expect(get().shuffle).toBe(true);
+    expect(get().originalOrderIds).not.toBeNull();
+    expect(resolveSourceShuffle(albumA)).toBe(true);
+  });
+
+  test("setSourceShuffle on another source leaves the live queue alone", () => {
+    get().playNow(makeTracks(10), 0, albumA);
+    const before = get().queue;
+    get().setSourceShuffle(albumB, true);
+    expect(get().shuffle).toBe(false);
+    expect(get().queue).toBe(before);
+    expect(sourceShuffleActive(get(), albumB)).toBe(true);
+    expect(sourceShuffleActive(get(), albumA)).toBe(false);
+    get().playNow(makeTracks(10, "b"), 0, albumB);
+    expect(get().shuffle).toBe(true);
+  });
+
+  test("keys single lists by type and the rest by type and id", () => {
+    expect(shuffleKey({ type: "likedSongs", name: "Liked" })).toBe(
+      "likedSongs",
+    );
+    expect(shuffleKey({ type: "likedSongs", name: "X", id: "ar1" })).toBe(
+      "likedSongs:ar1",
+    );
+    expect(shuffleKey({ type: "similar", name: "S" })).toBe("similar");
+    expect(shuffleKey({ type: "audiobook", name: "B", id: "1" })).toBeNull();
+    expect(shuffleKey(null)).toBeNull();
+  });
+
+  test("caps the remembered sources, dropping the oldest", () => {
+    for (let i = 0; i < 505; i++) {
+      get().playNow(
+        makeTracks(1),
+        0,
+        { type: "album", name: "", id: `x${i}` },
+        true,
+      );
+    }
+    const keys = Object.keys(get().shuffledSources);
+    expect(keys).toHaveLength(500);
+    expect(keys[0]).toBe("album:x5");
+    expect(keys[499]).toBe("album:x504");
+  });
+
+  test("the cap never drops the playing source", () => {
+    get().playNow(makeTracks(3), 0, albumA, true);
+    for (let i = 0; i < 505; i++) {
+      get().setSourceShuffle({ type: "album", name: "", id: `y${i}` }, true);
+    }
+    expect(Object.keys(get().shuffledSources)).toHaveLength(500);
+    expect(resolveSourceShuffle(albumA)).toBe(true);
   });
 });
 
@@ -1182,5 +1316,47 @@ describe("queue store - hidden tracks", () => {
     expect(ids()).toEqual(["x", "t1", "t2", "t3"]);
     expect(get().getCurrent()?.id).toBe("t2");
     expect(get().queue[0].queuedManually).toBeUndefined();
+  });
+});
+
+describe("queue store - remembered shuffle persistence", () => {
+  const storage = () =>
+    (
+      jest.requireMock("@/config/storage") as {
+        createDynamicScopedStorage: () => {
+          setItem: (k: string, v: string) => void;
+          getItem: (k: string) => string | null;
+        };
+      }
+    ).createDynamicScopedStorage();
+
+  test("an upgrade carries the queue's shuffle over to its source", () => {
+    storage().setItem("queueStore:queue", JSON.stringify(makeTracks(3)));
+    storage().setItem(
+      "queueStore:cursor",
+      JSON.stringify({
+        currentIndex: 0,
+        repeatMode: "off",
+        shuffle: true,
+        source: { type: "playlist", name: "P", id: "p1" },
+      }),
+    );
+    useQueue.persist.rehydrate();
+    expect(get().shuffledSources).toEqual({ "playlist:p1": true });
+    expect(
+      JSON.parse(storage().getItem("queueStore:shuffledSources") ?? "null"),
+    ).toEqual({ "playlist:p1": true });
+  });
+
+  test("writes the remembered sources when they change", () => {
+    get().playNow(
+      makeTracks(2),
+      0,
+      { type: "album", name: "A", id: "a9" },
+      true,
+    );
+    expect(
+      JSON.parse(storage().getItem("queueStore:shuffledSources") ?? "null"),
+    ).toEqual(expect.objectContaining({ "album:a9": true }));
   });
 });

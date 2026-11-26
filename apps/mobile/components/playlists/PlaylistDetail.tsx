@@ -102,6 +102,7 @@ import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useRefreshRecentPlay } from "@/hooks/useRefreshRecentPlay";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
+import { useSourceShuffle } from "@/hooks/useSourceShuffle";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { useTrackSort } from "@/hooks/useTrackSort";
 import type { ShareLinkOptions } from "@/services/backend/sharing";
@@ -856,11 +857,9 @@ export default function PlaylistDetail() {
     }
   };
 
-  const shuffle = useQueue((store) => store.shuffle);
-  const setShuffle = useQueue((store) => store.setShuffle);
-  const handleShufflePress = () => {
-    setShuffle(!shuffle);
-  };
+  const { active: shuffle, toggle: handleShufflePress } = useSourceShuffle(
+    playlistSource ?? { type: "playlist", name: "", id },
+  );
 
   return (
     <Box className="h-full">

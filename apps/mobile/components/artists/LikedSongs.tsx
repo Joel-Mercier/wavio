@@ -58,10 +58,11 @@ import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
+import { useSourceShuffle } from "@/hooks/useSourceShuffle";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { playTracks, togglePlayPause } from "@/services/player";
 import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
-import useQueue, { type QueueSource } from "@/stores/queue";
+import type { QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { ARTWORK_THUMB_SIZE, artworkUrl } from "@/utils/artwork";
 import { childToTrack } from "@/utils/childToTrack";
@@ -166,11 +167,8 @@ export default function LikedSongs() {
     handleTrackPressCallback();
   };
 
-  const shuffle = useQueue((store) => store.shuffle);
-  const setShuffle = useQueue((store) => store.setShuffle);
-  const handleShufflePress = () => {
-    setShuffle(!shuffle);
-  };
+  const { active: shuffle, toggle: handleShufflePress } =
+    useSourceShuffle(likedSongsSource);
 
   const handleTrackPress = useTrackListPress(likedSongs, likedSongsSource);
 

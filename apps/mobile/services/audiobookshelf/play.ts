@@ -109,11 +109,11 @@ export async function playAudiobook(
   const queue = useQueue.getState();
   // A shuffled or repeated book is never what anyone wants, and the player
   // swaps those controls out for spoken word anyway.
-  if (queue.shuffle) queue.setShuffle(false);
   if (queue.repeatMode !== "off") queue.setRepeatMode("off");
   requestAudiobookStart(tracks[fileIndex].id, offset);
   const started = playTracks(tracks, fileIndex, {
     source: { type: "audiobook", name: book.title, id: book.itemId },
+    shuffle: false,
   });
   if (started) {
     const current = useQueue.getState().getCurrent();

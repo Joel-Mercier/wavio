@@ -18,13 +18,14 @@ import { VStack } from "@/components/ui/vstack";
 import { useHasPlayableTracks } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useSettingsToast } from "@/hooks/useSettingsToast";
+import { useSourceShuffle } from "@/hooks/useSourceShuffle";
 import type { Child } from "@/services/openSubsonic/types";
 import {
   enqueueWithoutAutoplay,
   playTracks,
   togglePlayPause,
 } from "@/services/player";
-import useQueue, { type QueueSource } from "@/stores/queue";
+import type { QueueSource } from "@/stores/queue";
 import { childToTrack } from "@/utils/childToTrack";
 
 // The action bar over a track list the app generated rather than fetched: it has
@@ -64,8 +65,7 @@ export default function GeneratedTrackListActions({
   const isPlaying = useIsPlaying();
   const playingTrack = usePlayingTrack();
   const hasPlayableTracks = useHasPlayableTracks(tracks);
-  const shuffle = useQueue((store) => store.shuffle);
-  const setShuffle = useQueue((store) => store.setShuffle);
+  const { active: shuffle, toggle: toggleShuffle } = useSourceShuffle(source);
 
   const trackIdSet = useMemo(
     () => new Set(tracks.map((track) => track.id)),
@@ -164,10 +164,7 @@ export default function GeneratedTrackListActions({
           />
         </Box>
         <HStack className="items-center justify-end gap-x-4 px-6">
-          <ShuffleToggle
-            active={shuffle}
-            onPress={() => setShuffle(!shuffle)}
-          />
+          <ShuffleToggle active={shuffle} onPress={toggleShuffle} />
           <PlayPauseButton
             isPlaying={isPlayingFromList && isPlaying}
             onPress={handlePlayPress}

@@ -38,13 +38,14 @@ import { useStarred2 } from "@/hooks/backend/useLists";
 import { useHasPlayableTracks, useOfflineModeEnabled } from "@/hooks/offline";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
 import { useScreenBottomPadding } from "@/hooks/useScreenBottomPadding";
+import { useSourceShuffle } from "@/hooks/useSourceShuffle";
 import { useTrackListPress } from "@/hooks/useTrackListPress";
 import { useTrackSort } from "@/hooks/useTrackSort";
 import type { Child } from "@/services/openSubsonic/types";
 import { playTracks, togglePlayPause } from "@/services/player";
 import useApp from "@/stores/app";
 import { useCurrentMusicFolderIds } from "@/stores/musicFolders";
-import useQueue, { type QueueSource } from "@/stores/queue";
+import type { QueueSource } from "@/stores/queue";
 import useRecentPlays from "@/stores/recentPlays";
 import { FAVORITES_QUEUE_SOURCE_ID } from "@/utils/activeRecentPlay";
 import { childToTrack } from "@/utils/childToTrack";
@@ -128,11 +129,8 @@ export default function FavoritesScreen() {
     addRecentPlay({ id: "favorites", title: "Favorites", type: "favorites" });
   };
 
-  const shuffle = useQueue((store) => store.shuffle);
-  const setShuffle = useQueue((store) => store.setShuffle);
-  const handleShufflePress = () => {
-    setShuffle(!shuffle);
-  };
+  const { active: shuffle, toggle: handleShufflePress } =
+    useSourceShuffle(favoritesSource);
 
   const keyExtractor = useCallback(
     (item: Child, index: number) => item.id ?? String(index),
