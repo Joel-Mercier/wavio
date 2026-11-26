@@ -51,6 +51,8 @@ const reset = () =>
       podcastPlaybackRate: 1,
       endlessPlaybackEnabled: false,
       queueSyncPriority: "off",
+      floatingPlayerAction1: "cast",
+      floatingPlayerAction2: "favorite",
       orientation: Orientation.PORTRAIT_UP,
       windowWidth: 579,
       isWideLayout: false,
@@ -307,5 +309,37 @@ describe("app store", () => {
     expect(useAppBase.getState().homeShortcutsCount).toBe(20);
     setHomeShortcutsCount(7);
     expect(useAppBase.getState().homeShortcutsCount).toBe(8);
+  });
+
+  describe("floating player actions", () => {
+    const actions = () => {
+      const { floatingPlayerAction1, floatingPlayerAction2 } =
+        useAppBase.getState();
+      return [floatingPlayerAction1, floatingPlayerAction2];
+    };
+
+    it("defaults to cast then favorite", () => {
+      expect(actions()).toEqual(["cast", "favorite"]);
+    });
+
+    it("sets each slot on its own", () => {
+      useAppBase.getState().setFloatingPlayerAction(1, "shuffle");
+      expect(actions()).toEqual(["shuffle", "favorite"]);
+      useAppBase.getState().setFloatingPlayerAction(2, "skipNext");
+      expect(actions()).toEqual(["shuffle", "skipNext"]);
+    });
+
+    it("swaps the slots when the other slot's action is picked", () => {
+      useAppBase.getState().setFloatingPlayerAction(1, "favorite");
+      expect(actions()).toEqual(["favorite", "cast"]);
+      useAppBase.getState().setFloatingPlayerAction(1, "cast");
+      expect(actions()).toEqual(["cast", "favorite"]);
+    });
+
+    it("lets both slots be empty", () => {
+      useAppBase.getState().setFloatingPlayerAction(1, null);
+      useAppBase.getState().setFloatingPlayerAction(2, null);
+      expect(actions()).toEqual([null, null]);
+    });
   });
 });

@@ -1,7 +1,5 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "expo-router";
 import AudioLines from "lucide-react-native/icons/audio-lines";
-import Cast from "lucide-react-native/icons/cast";
 import SkipForward from "lucide-react-native/icons/skip-forward";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -20,45 +18,28 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 import { Uniwind } from "uniwind";
-import AnimatedHeart from "@/components/AnimatedHeart";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import MovingText from "@/components/MovingText";
 import { OFFLINE_BANNER_HEIGHT } from "@/components/OfflineBanner";
 import PlayPauseButton from "@/components/PlayPauseButton";
+import FloatingPlayerActionButton from "@/components/player/FloatingPlayerActionButton";
 import FloatingPlayerRestoreBadge from "@/components/player/FloatingPlayerRestoreBadge";
-import { openOutputSheet } from "@/components/player/OutputSheet";
 import PlaybackProgressBar from "@/components/player/PlaybackProgressBar";
 import SleepTimerBadge from "@/components/player/SleepTimerBadge";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Pressable } from "@/components/ui/pressable";
 import { Text } from "@/components/ui/text";
-import {
-  Toast,
-  ToastDescription,
-  ToastTitle,
-  useToast,
-} from "@/components/ui/toast";
 import { VStack } from "@/components/ui/vstack";
-import { useStar, useUnstar } from "@/hooks/backend/useMediaAnnotation";
 import { useIsPlaying, usePlayingTrack } from "@/hooks/player";
-import { useCanCast } from "@/hooks/player/useCanCast";
-import { useCapabilities } from "@/hooks/useCapabilities";
 import useImageColors from "@/hooks/useImageColors";
 import { useIsOnline } from "@/hooks/useIsOnline";
 import { useTrackArtwork } from "@/hooks/useTrackArtwork";
 import { skipNext, skipPrevious, togglePlayPause } from "@/services/player";
-import type { PodcastSeries } from "@/services/taddyPodcasts/types";
-import useApp, { SIDEBAR_WIDTH } from "@/stores/app";
-import useCast from "@/stores/cast";
+import useApp, { type FloatingPlayerAction, SIDEBAR_WIDTH } from "@/stores/app";
 import useFloatingPlayer from "@/stores/floatingPlayer";
-import useJukebox from "@/stores/jukebox";
-import usePodcasts from "@/stores/podcasts";
 import useQueue from "@/stores/queue";
-import useUpnp from "@/stores/upnp";
 import { hidesFloatingPlayer } from "@/utils/floatingPlayerRoutes";
-import { invalidateKeys } from "@/utils/invalidateKeys";
-import { TOAST_DURATION } from "@/utils/toastDuration";
 import { isSpokenWordTrack } from "@/utils/trackSource";
 
 export const FLOATING_PLAYER_HEIGHT = 64;
@@ -74,6 +55,11 @@ const DISMISS_THRESHOLD = 60;
 const DISMISS_ACTIVATE = 15;
 const HIDE_TRANSLATE = FLOATING_PLAYER_HEIGHT + 24;
 
+// The sidebar player always has its own skip-next button beside play/pause.
+function withoutFixedSkip(action: FloatingPlayerAction | null) {
+  return action === "skipNext" ? null : action;
+}
+
 export default function FloatingPlayer() {
   const { t } = useTranslation();
   const isPlaying = useIsPlaying();
@@ -85,43 +71,18 @@ export default function FloatingPlayer() {
   const pathname = usePathname();
   const artwork = useTrackArtwork(playingTrack);
   const colors = useImageColors(artwork);
-  const toast = useToast();
-  const doFavorite = useStar();
-  const doUnfavorite = useUnstar();
-  const [black, white, emerald500] = Uniwind.getCSSVariable([
+  const [black, white] = Uniwind.getCSSVariable([
     "--color-black",
     "--color-white",
-    "--color-emerald-500",
   ]) as string[];
-  const capabilities = useCapabilities();
-  const jukeboxActive = useJukebox((s) => s.active);
-  const upnpConnected = useUpnp((s) => s.connected);
-  const casting = useCast((s) => s.active);
-  const playingRemotely = jukeboxActive || upnpConnected || casting;
-  // The sheet is worth opening when there is any output to pick between, not
-  // only when the server happens to have a jukebox.
-  const canCast = useCanCast();
-  const hasOutputs = capabilities.jukebox || canCast;
+  const floatingPlayerAction1 = useApp((s) => s.floatingPlayerAction1);
+  const floatingPlayerAction2 = useApp((s) => s.floatingPlayerAction2);
   const queueLength = useQueue((s) => s.queue.length);
   const currentIndex = useQueue((s) => s.currentIndex);
   const repeatMode = useQueue((s) => s.repeatMode);
-  const queryClient = useQueryClient();
 
   const isRadio = !!playingTrack?.isRadio;
-  const isPodcast = playingTrack?.source === "podcast";
   const isSpokenWord = isSpokenWordTrack(playingTrack);
-  const podcastSeries = (
-    isPodcast ? playingTrack?.podcastSeries : null
-  ) as PodcastSeries | null;
-  const addFavoritePodcast = usePodcasts((store) => store.addFavoritePodcast);
-  const removeFavoritePodcast = usePodcasts(
-    (store) => store.removeFavoritePodcast,
-  );
-  const isPodcastSeriesFavorite = usePodcasts((store) =>
-    podcastSeries
-      ? store.favoritePodcasts.some((fav) => fav.uuid === podcastSeries.uuid)
-      : false,
-  );
   const canSkipNext =
     !isRadio &&
     (repeatMode !== "off" ||
@@ -158,169 +119,6 @@ export default function FloatingPlayer() {
 
   const handlePlayPausePress = () => {
     togglePlayPause();
-  };
-
-  const handleAddPodcastFavoritePress = () => {
-    if (!podcastSeries) return;
-    addFavoritePodcast(podcastSeries);
-    toast.show({
-      placement: "top",
-      duration: TOAST_DURATION.default,
-      render: () => (
-        <Toast action="success">
-          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-          <ToastDescription>
-            {t("app.podcasts.addToFavoritesSuccessMessage")}
-          </ToastDescription>
-        </Toast>
-      ),
-    });
-  };
-
-  const handleRemovePodcastFavoritePress = () => {
-    if (!podcastSeries) return;
-    removeFavoritePodcast(podcastSeries.uuid);
-    toast.show({
-      placement: "top",
-      duration: TOAST_DURATION.default,
-      render: () => (
-        <Toast action="success">
-          <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-          <ToastDescription>
-            {t("app.podcasts.removeFromFavoritesSuccessMessage")}
-          </ToastDescription>
-        </Toast>
-      ),
-    });
-  };
-
-  const handleFavoritePress = () => {
-    if (!playingTrack?.id) return;
-    const trackId = playingTrack.id;
-    const starredAt = new Date().toISOString();
-    doFavorite.mutate(
-      { id: trackId, song: playingTrack },
-      {
-        onSuccess: () => {
-          const starredTrack = { ...playingTrack, starred: starredAt };
-          queryClient.setQueriesData<{
-            // biome-ignore lint/suspicious/noExplicitAny: cached subsonic response shape varies
-            "subsonic-response"?: any;
-          }>({ predicate: (q) => q.queryKey[0] === "starred2" }, (old) => {
-            const body = old?.["subsonic-response"];
-            if (!body?.starred2) return old;
-            const existing = body.starred2.song ?? [];
-            if (existing.some((s: { id: string }) => s.id === trackId))
-              return old;
-            return {
-              ...old,
-              "subsonic-response": {
-                ...body,
-                starred2: {
-                  ...body.starred2,
-                  song: [starredTrack, ...existing],
-                },
-              },
-            };
-          });
-          invalidateKeys(queryClient, [
-            ["starred2"],
-            ["starred"],
-            ["album"],
-            ["search3"],
-          ]);
-          toast.show({
-            placement: "top",
-            duration: TOAST_DURATION.default,
-            render: () => (
-              <Toast action="success">
-                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-                <ToastDescription>
-                  {t("app.tracks.favoriteSuccessMessage")}
-                </ToastDescription>
-              </Toast>
-            ),
-          });
-        },
-        onError: () => {
-          toast.show({
-            placement: "top",
-            duration: TOAST_DURATION.default,
-            render: () => (
-              <Toast action="error">
-                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
-                <ToastDescription>
-                  {t("app.tracks.favoriteErrorMessage")}
-                </ToastDescription>
-              </Toast>
-            ),
-          });
-        },
-      },
-    );
-  };
-
-  const handleUnfavoritePress = () => {
-    if (!playingTrack?.id) return;
-    const trackId = playingTrack.id;
-    doUnfavorite.mutate(
-      { id: trackId, song: playingTrack },
-      {
-        onSuccess: () => {
-          queryClient.setQueriesData<{
-            // biome-ignore lint/suspicious/noExplicitAny: cached subsonic response shape varies
-            "subsonic-response"?: any;
-          }>({ predicate: (q) => q.queryKey[0] === "starred2" }, (old) => {
-            const body = old?.["subsonic-response"];
-            if (!body?.starred2) return old;
-            return {
-              ...old,
-              "subsonic-response": {
-                ...body,
-                starred2: {
-                  ...body.starred2,
-                  song: body.starred2.song?.filter(
-                    (s: { id: string }) => s.id !== trackId,
-                  ),
-                },
-              },
-            };
-          });
-          invalidateKeys(queryClient, [
-            ["starred2"],
-            ["starred"],
-            ["album"],
-            ["search3"],
-          ]);
-          toast.show({
-            placement: "top",
-            duration: TOAST_DURATION.default,
-            render: () => (
-              <Toast action="success">
-                <ToastTitle>{t("app.shared.toastSuccessTitle")}</ToastTitle>
-                <ToastDescription>
-                  {t("app.tracks.unfavoriteSuccessMessage")}
-                </ToastDescription>
-              </Toast>
-            ),
-          });
-        },
-        onError: () => {
-          toast.show({
-            placement: "top",
-            duration: TOAST_DURATION.default,
-            render: () => (
-              <Toast action="error">
-                <ToastTitle>{t("app.shared.toastErrorTitle")}</ToastTitle>
-                <ToastDescription>
-                  {t("app.tracks.unfavoriteErrorMessage")}
-                </ToastDescription>
-              </Toast>
-            ),
-          });
-        },
-      },
-    );
   };
 
   const textStyle = useAnimatedStyle(() => ({
@@ -444,48 +242,22 @@ export default function FloatingPlayer() {
                   </Text>
                 </MovingText>
               </VStack>
-              {!isRadio && isPodcast && podcastSeries && (
-                <AnimatedHeart
-                  hitSlop={8}
-                  filled={isPodcastSeriesFavorite}
-                  onPress={
-                    isPodcastSeriesFavorite
-                      ? handleRemovePodcastFavoritePress
-                      : handleAddPodcastFavoritePress
-                  }
-                />
-              )}
-              {!isRadio && !isSpokenWord && (
-                <AnimatedHeart
-                  hitSlop={8}
-                  filled={!!playingTrack.starred}
-                  onPress={
-                    playingTrack.starred
-                      ? handleUnfavoritePress
-                      : handleFavoritePress
-                  }
-                />
-              )}
+              <FloatingPlayerActionButton
+                action={withoutFixedSkip(floatingPlayerAction2)}
+                track={playingTrack}
+                size={24}
+                hitSlop={8}
+              />
             </HStack>
             <HStack className="items-center justify-between">
-              {hasOutputs ? (
-                <Pressable
+              <Box className="min-w-5 items-start">
+                <FloatingPlayerActionButton
+                  action={withoutFixedSkip(floatingPlayerAction1)}
+                  track={playingTrack}
+                  size={20}
                   hitSlop={8}
-                  disabled={!isOnline}
-                  style={{ opacity: isOnline ? 1 : 0.6 }}
-                  onPress={(e) => {
-                    e.stopPropagation?.();
-                    openOutputSheet();
-                  }}
-                >
-                  <Cast
-                    size={20}
-                    color={playingRemotely ? emerald500 : white}
-                  />
-                </Pressable>
-              ) : (
-                <Box className="w-5" />
-              )}
+                />
+              </Box>
               <PlayPauseButton
                 testID="floating-player-play-pause"
                 isPlaying={isPlaying}
@@ -586,44 +358,18 @@ export default function FloatingPlayer() {
                 </Animated.View>
               </HStack>
               <HStack className="items-center pl-4 gap-4" style={{ zIndex: 2 }}>
-                {hasOutputs && (
-                  <Pressable
-                    hitSlop={12}
-                    disabled={!isOnline}
-                    style={{ opacity: isOnline ? 1 : 0.6 }}
-                    onPress={(e) => {
-                      e.stopPropagation?.();
-                      openOutputSheet();
-                    }}
-                  >
-                    <Cast
-                      size={24}
-                      color={playingRemotely ? emerald500 : white}
-                    />
-                  </Pressable>
-                )}
-                {!playingTrack.isRadio && isPodcast && podcastSeries && (
-                  <AnimatedHeart
-                    hitSlop={12}
-                    filled={isPodcastSeriesFavorite}
-                    onPress={
-                      isPodcastSeriesFavorite
-                        ? handleRemovePodcastFavoritePress
-                        : handleAddPodcastFavoritePress
-                    }
-                  />
-                )}
-                {!playingTrack.isRadio && !isSpokenWord && (
-                  <AnimatedHeart
-                    hitSlop={12}
-                    filled={!!playingTrack.starred}
-                    onPress={
-                      playingTrack.starred
-                        ? handleUnfavoritePress
-                        : handleFavoritePress
-                    }
-                  />
-                )}
+                <FloatingPlayerActionButton
+                  action={floatingPlayerAction1}
+                  track={playingTrack}
+                  size={24}
+                  hitSlop={12}
+                />
+                <FloatingPlayerActionButton
+                  action={floatingPlayerAction2}
+                  track={playingTrack}
+                  size={24}
+                  hitSlop={12}
+                />
                 <PlayPauseButton
                   testID="floating-player-play-pause"
                   isPlaying={isPlaying}

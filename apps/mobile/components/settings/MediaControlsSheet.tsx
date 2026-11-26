@@ -13,8 +13,7 @@ import SkipForward from "lucide-react-native/icons/skip-forward";
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import CenteredBottomSheetModal from "@/components/CenteredBottomSheetModal";
-import FadeOutScaleDown from "@/components/FadeOutScaleDown";
-import { Badge, BadgeText } from "@/components/ui/badge";
+import ButtonSlotPicker from "@/components/settings/ButtonSlotPicker";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { HStack } from "@/components/ui/hstack";
@@ -23,14 +22,10 @@ import { VStack } from "@/components/ui/vstack";
 import useApp, {
   MEDIA_CONTROL_BUTTONS,
   type MediaControlButton,
-  type MediaControlSide,
 } from "@/stores/app";
-import { cn } from "@/utils/tailwind";
 
 const SLOT_SIZE = 32;
 const ICON_SIZE = 24;
-
-const BUTTON_OPTIONS = [null, ...MEDIA_CONTROL_BUTTONS];
 
 export function mediaControlButtonLabelKey(button: MediaControlButton | null) {
   return `app.settings.playbackSettings.mediaControlsButtons.${button ?? "none"}`;
@@ -70,46 +65,6 @@ function PreviewButton({ button }: { button: MediaControlButton | null }) {
   );
 }
 
-function SidePicker({
-  side,
-  selected,
-}: {
-  side: MediaControlSide;
-  selected: MediaControlButton | null;
-}) {
-  const { t } = useTranslation();
-  const setMediaControlButton = useApp((store) => store.setMediaControlButton);
-  return (
-    <VStack className="gap-y-3">
-      <Text className="text-lg text-gray-200">
-        {t(
-          side === "left"
-            ? "app.settings.playbackSettings.mediaControlsLeftLabel"
-            : "app.settings.playbackSettings.mediaControlsRightLabel",
-        )}
-      </Text>
-      <HStack className="flex-wrap gap-2">
-        {BUTTON_OPTIONS.map((button) => (
-          <FadeOutScaleDown
-            key={button ?? "none"}
-            onPress={() => setMediaControlButton(side, button)}
-          >
-            <Badge
-              className={cn("rounded-full bg-primary-500 px-4 py-1", {
-                "bg-emerald-500": button === selected,
-              })}
-            >
-              <BadgeText className="normal-case text-md text-white">
-                {t(mediaControlButtonLabelKey(button))}
-              </BadgeText>
-            </Badge>
-          </FadeOutScaleDown>
-        ))}
-      </HStack>
-    </VStack>
-  );
-}
-
 /** Picks the optional buttons on each side of the Android media notification. */
 export default function MediaControlsSheet({
   modalRef,
@@ -119,6 +74,7 @@ export default function MediaControlsSheet({
   const { t } = useTranslation();
   const mediaControlsLeft = useApp((store) => store.mediaControlsLeft);
   const mediaControlsRight = useApp((store) => store.mediaControlsRight);
+  const setMediaControlButton = useApp((store) => store.setMediaControlButton);
   return (
     <CenteredBottomSheetModal
       ref={modalRef}
@@ -153,8 +109,20 @@ export default function MediaControlsSheet({
             <PreviewButton button={mediaControlsRight} />
           </HStack>
           <VStack className="mt-6 gap-y-6">
-            <SidePicker side="left" selected={mediaControlsLeft} />
-            <SidePicker side="right" selected={mediaControlsRight} />
+            <ButtonSlotPicker
+              label={t("app.settings.playbackSettings.mediaControlsLeftLabel")}
+              options={MEDIA_CONTROL_BUTTONS}
+              selected={mediaControlsLeft}
+              optionLabel={(button) => t(mediaControlButtonLabelKey(button))}
+              onSelect={(button) => setMediaControlButton("left", button)}
+            />
+            <ButtonSlotPicker
+              label={t("app.settings.playbackSettings.mediaControlsRightLabel")}
+              options={MEDIA_CONTROL_BUTTONS}
+              selected={mediaControlsRight}
+              optionLabel={(button) => t(mediaControlButtonLabelKey(button))}
+              onSelect={(button) => setMediaControlButton("right", button)}
+            />
           </VStack>
         </Box>
       </BottomSheetScrollView>

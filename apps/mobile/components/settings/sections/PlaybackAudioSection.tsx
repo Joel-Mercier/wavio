@@ -4,6 +4,9 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Platform } from "react-native";
 import ConfirmActionDialog from "@/components/settings/ConfirmActionDialog";
+import FloatingPlayerControlsSheet, {
+  floatingPlayerActionLabelKey,
+} from "@/components/settings/FloatingPlayerControlsSheet";
 import MediaControlsSheet, {
   mediaControlButtonLabelKey,
 } from "@/components/settings/MediaControlsSheet";
@@ -86,6 +89,8 @@ export default function PlaybackAudioSection() {
   const bottomSheetQueueSyncModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetLyricsSourceModalRef = useRef<BottomSheetModal>(null);
   const bottomSheetMediaControlsModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetFloatingPlayerControlsModalRef =
+    useRef<BottomSheetModal>(null);
 
   const maxBitRate = useApp((store) => store.maxBitRate);
   const setMaxBitRate = useApp((store) => store.setMaxBitRate);
@@ -119,6 +124,8 @@ export default function PlaybackAudioSection() {
   const setShowPlayerRating = useApp((store) => store.setShowPlayerRating);
   const mediaControlsLeft = useApp((store) => store.mediaControlsLeft);
   const mediaControlsRight = useApp((store) => store.mediaControlsRight);
+  const floatingPlayerAction1 = useApp((store) => store.floatingPlayerAction1);
+  const floatingPlayerAction2 = useApp((store) => store.floatingPlayerAction2);
   const queueSyncPriority = useApp((store) => store.queueSyncPriority);
   const setQueueSyncPriority = useApp((store) => store.setQueueSyncPriority);
   const lyricsSource = useApp((store) => store.lyricsSource);
@@ -201,6 +208,9 @@ export default function PlaybackAudioSection() {
             dismissOnSelect
           />
           <MediaControlsSheet modalRef={bottomSheetMediaControlsModalRef} />
+          <FloatingPlayerControlsSheet
+            modalRef={bottomSheetFloatingPlayerControlsModalRef}
+          />
           <OptionsBottomSheetModal
             modalRef={bottomSheetLyricsSourceModalRef}
             header={t("app.settings.displaySettings.lyricsSourceLabel")}
@@ -378,6 +388,23 @@ export default function PlaybackAudioSection() {
             onToggle={(value) => setShowPlayerRating(value)}
           />
         )}
+        <SettingsSelectRow
+          label={t("app.settings.playbackSettings.floatingPlayerControlsLabel")}
+          description={t(
+            "app.settings.playbackSettings.floatingPlayerControlsDescription",
+          )}
+          badgeText={
+            floatingPlayerAction1 || floatingPlayerAction2
+              ? [floatingPlayerAction1, floatingPlayerAction2]
+                  .filter((action) => action !== null)
+                  .map((action) => t(floatingPlayerActionLabelKey(action)))
+                  .join(" · ")
+              : t(floatingPlayerActionLabelKey(null))
+          }
+          onPress={() =>
+            bottomSheetFloatingPlayerControlsModalRef.current?.present()
+          }
+        />
         {Platform.OS === "android" && (
           <SettingsSelectRow
             label={t("app.settings.playbackSettings.mediaControlsLabel")}

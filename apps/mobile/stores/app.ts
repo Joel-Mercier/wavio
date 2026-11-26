@@ -62,6 +62,31 @@ export const MEDIA_CONTROL_BUTTONS = [
 export type MediaControlButton = (typeof MEDIA_CONTROL_BUTTONS)[number];
 export type MediaControlSide = "left" | "right";
 
+export const FLOATING_PLAYER_ACTIONS = [
+  "cast",
+  "favorite",
+  "shuffle",
+  "repeat",
+  "skipPrevious",
+  "skipNext",
+  "seekBackward",
+  "seekForward",
+] as const;
+export type FloatingPlayerAction = (typeof FLOATING_PLAYER_ACTIONS)[number];
+export type FloatingPlayerSlot = 1 | 2;
+
+// A button can't fill both slots: picking the other slot's swaps them.
+function pickSlot<T>(
+  [first, second]: [T | null, T | null],
+  slot: "first" | "second",
+  value: T | null,
+): [T | null, T | null] {
+  const next: [T | null, T | null] =
+    slot === "first" ? [value, second] : [first, value];
+  if (value === null || next[0] !== next[1]) return next;
+  return [second, first];
+}
+
 // The single-setting layouts persisted before v3.
 const LEGACY_MEDIA_CONTROLS_LAYOUTS: Record<
   string,
@@ -332,6 +357,12 @@ interface AppStore {
   setMediaControlButton: (
     side: MediaControlSide,
     button: MediaControlButton | null,
+  ) => void;
+  floatingPlayerAction1: FloatingPlayerAction | null;
+  floatingPlayerAction2: FloatingPlayerAction | null;
+  setFloatingPlayerAction: (
+    slot: FloatingPlayerSlot,
+    action: FloatingPlayerAction | null,
   ) => void;
   // See services/playQueueSync.ts.
   queueSyncPriority: "server" | "local" | "off";
@@ -646,18 +677,26 @@ export const useAppBase = create<AppStore>()(
       },
       mediaControlsLeft: "seekBackward",
       mediaControlsRight: "seekForward",
-      // A button can't sit on both sides: picking the other side's swaps them.
       setMediaControlButton: (side, button) => {
         set((state) => {
-          const left = side === "left" ? button : state.mediaControlsLeft;
-          const right = side === "right" ? button : state.mediaControlsRight;
-          if (button === null || left !== right) {
-            return { mediaControlsLeft: left, mediaControlsRight: right };
-          }
-          return {
-            mediaControlsLeft: state.mediaControlsRight,
-            mediaControlsRight: state.mediaControlsLeft,
-          };
+          const [mediaControlsLeft, mediaControlsRight] = pickSlot(
+            [state.mediaControlsLeft, state.mediaControlsRight],
+            side === "left" ? "first" : "second",
+            button,
+          );
+          return { mediaControlsLeft, mediaControlsRight };
+        });
+      },
+      floatingPlayerAction1: "cast",
+      floatingPlayerAction2: "favorite",
+      setFloatingPlayerAction: (slot, action) => {
+        set((state) => {
+          const [floatingPlayerAction1, floatingPlayerAction2] = pickSlot(
+            [state.floatingPlayerAction1, state.floatingPlayerAction2],
+            slot === 1 ? "first" : "second",
+            action,
+          );
+          return { floatingPlayerAction1, floatingPlayerAction2 };
         });
       },
       queueSyncPriority: "off",

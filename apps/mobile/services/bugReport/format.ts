@@ -85,6 +85,8 @@ export const APP_SETTING_RULES: Record<AppSettingKey, FieldRule> = {
   showPlayerRating: "value",
   mediaControlsLeft: "value",
   mediaControlsRight: "value",
+  floatingPlayerAction1: "value",
+  floatingPlayerAction2: "value",
   queueSyncPriority: "value",
   radioBrowserEnabled: "value",
   hapticFeedbackEnabled: "value",
