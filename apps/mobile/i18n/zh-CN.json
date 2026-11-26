@@ -22,7 +22,8 @@
 				"becauseYouListened": "因为你听了 {{artist}}",
 				"becauseYouListenedFallback": "为您推荐",
 				"yourPlaylists": "歌单",
-				"starred": "收藏",
+				"starredAlbums": "Your favorite albums",
+				"starredSongs": "Your favorite songs",
 				"songsByGenre": "{{genre}} 歌曲",
 				"albumsByGenre": "{{genre}} 专辑",
 				"albumsByDecade": "{{decade}}年代专辑",
@@ -62,6 +63,7 @@
 					"frequent": "最常播放",
 					"random": "随机播放",
 					"leastPlayed": "尝试新功能",
+					"starred": "最喜欢的专辑",
 					"nowPlaying": "正在听"
 				}
 			},
@@ -1634,6 +1636,9 @@
 					"title": "更新",
 					"autoCheckLabel": "自动检查更新",
 					"autoCheckDescription": "启动时检查是否有新版本，如有新版本将通知您",
+					"notifyLabel": "Notify me about new versions",
+					"notifyDescription": "Get a notification as soon as a new version of Wavio is released, even when the app is closed",
+					"notifyPermissionDenied": "Notifications are turned off for Wavio. Allow them in your phone's settings to hear about new versions.",
 					"checkNowLabel": "检查是否有更新",
 					"checkNowDescription": "现在就查找更新版本吧",
 					"checkNowAction": "检查",
@@ -1854,6 +1859,21 @@
 						"favorite": "收藏",
 						"shuffle": "随机播放",
 						"repeat": "重复"
+					},
+					"floatingPlayerControlsLabel": "Mini player buttons",
+					"floatingPlayerControlsDescription": "Pick the two buttons shown before play/pause in the mini player. A button is hidden when it doesn't apply to what's playing: radio stations only keep cast, podcasts and audiobooks hide shuffle and repeat, and audiobooks hide favorite. Podcasts and audiobooks seek back 15 s and forward 30 s, like the full player.",
+					"floatingPlayerAction1Label": "First button",
+					"floatingPlayerAction2Label": "Second button",
+					"floatingPlayerActions": {
+						"none": "无",
+						"cast": "Cast",
+						"favorite": "收藏",
+						"shuffle": "随机播放",
+						"repeat": "重复",
+						"skipPrevious": "Previous",
+						"skipNext": "Next",
+						"seekBackward": "返回 10 秒前",
+						"seekForward": "快进 10 秒"
 					},
 					"waveformSeekbarLabel": "波形寻址条",
 					"waveformSeekbarDescription": "显示歌曲的波形，而非普通的进度条。每个波形会在歌曲开始后几秒钟内分析一次，之后会重复使用。流媒体歌曲会为此额外下载一份低质量副本，因此会消耗更多数据——但绝不会通过蜂窝网络下载。播客、广播以及时长超过15分钟的歌曲将跳过此步骤。",
@@ -2349,6 +2369,8 @@
 					"sourceUnavailable": "无法播放该音轨——无法访问该文件。请检查您的服务器是否已开启，并且是否处于同一网络中。",
 					"formatUnsupported": "该设备无法播放“{{track}} ”格式的音频。",
 					"remoteTrackRefused": "{{name}} 无法播放“{{track}}”。请选择另一首歌曲，或在此设备上播放。",
+					"remoteTailnetUnreachable": "{{name}} can't reach your server's Tailscale address. In the server settings, set its local network address as the server URL and the Tailscale one as the fallback server URL.",
+					"remoteRelayUnreached": "{{name}} couldn't connect to this phone to play “{{track}}”. Make sure both are on the same Wi-Fi network, and not on a guest network that keeps devices apart.",
 					"remoteLost": "已与 {{name}}失去联系。该设备已恢复播放功能。",
 					"allTracksHidden": "这里的每一首歌都是隐藏的，或者是您选择不播放的艺术家。",
 					"trackHidden": "这首歌是隐藏的，或者是由您选择不播放的艺术家隐藏的。"
@@ -2421,6 +2443,8 @@
 				"playbackSpeedNormal": "正常",
 				"seekBackward": "返回 {{seconds}} 秒",
 				"seekForward": "快进 {{seconds}} 秒",
+				"skipPrevious": "Previous",
+				"skipNext": "Next",
 				"jukebox": "点唱机",
 				"jukeboxOn": "开启",
 				"jukeboxOff": "关闭",
@@ -2449,6 +2473,10 @@
 				"outputAddRooms": "还可以继续玩",
 				"outputGroupVolume": "组交易量",
 				"outputGroupErrorMessage": "无法更改 {{name}} 上的组。",
+				"outputAirPlay": "AirPlay",
+				"outputAirPlayHint": "Speakers and TVs on your network",
+				"outputCastingUnavailable": "Chromecast and network speakers can't play this library from this device yet.",
+				"outputCastingUseAirPlay": "Use AirPlay to play it on a speaker or TV.",
 				"sleepTimerMinutes_other": "{{count}}分钟"
 			},
 			"shares": {
@@ -2540,7 +2568,18 @@
 				"installing": "打开安装程序…",
 				"errorDescription": "无法下载该更新。请检查您的网络连接并重试，或者从发布页面下载。",
 				"retry": "重试",
-				"openBrowser": "在浏览器中打开"
+				"openBrowser": "在浏览器中打开",
+				"notification": {
+					"title": "Wavio {{version}} is available",
+					"body": "Tap to see what's new and update",
+					"channelName": "App updates"
+				},
+				"notificationsPrompt": {
+					"title": "Hear about new versions?",
+					"description": "Wavio can send you a notification as soon as a new version is out, so you never miss a fix or a new feature. You can turn this off at any time in Settings → Updates.",
+					"enable": "Turn on",
+					"decline": "No thanks"
+				}
 			},
 			"shared": {
 				"sort": {

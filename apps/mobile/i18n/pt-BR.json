@@ -22,7 +22,8 @@
 				"becauseYouListened": "Porque você ouviu {{artist}}",
 				"becauseYouListenedFallback": "Recomendado para você",
 				"yourPlaylists": "Suas playlists",
-				"starred": "Seus favoritos",
+				"starredAlbums": "Your favorite albums",
+				"starredSongs": "Your favorite songs",
 				"songsByGenre": "{{genre}} músicas",
 				"albumsByGenre": "{{genre}} álbuns",
 				"albumsByDecade": "Álbuns da década de {{decade}}s",
@@ -62,6 +63,7 @@
 					"frequent": "Mais tocados",
 					"random": "Aleatório",
 					"leastPlayed": "Tente algo novo",
+					"starred": "Álbuns favoritos",
 					"nowPlaying": "Ouvindo agora"
 				}
 			},
@@ -1687,6 +1689,9 @@
 					"title": "Atualizações",
 					"autoCheckLabel": "Verificar atualizações automaticamente",
 					"autoCheckDescription": "Verificar se há uma nova versão ao iniciar o aplicativo e avisar quando houver uma disponível",
+					"notifyLabel": "Notify me about new versions",
+					"notifyDescription": "Get a notification as soon as a new version of Wavio is released, even when the app is closed",
+					"notifyPermissionDenied": "Notifications are turned off for Wavio. Allow them in your phone's settings to hear about new versions.",
 					"checkNowLabel": "Verifique se há atualizações",
 					"checkNowDescription": "Procure agora uma versão mais recente",
 					"checkNowAction": "Verificar",
@@ -1909,6 +1914,21 @@
 						"favorite": "Favorito",
 						"shuffle": "Reproduzir aleatoriamente",
 						"repeat": "Repetir"
+					},
+					"floatingPlayerControlsLabel": "Mini player buttons",
+					"floatingPlayerControlsDescription": "Pick the two buttons shown before play/pause in the mini player. A button is hidden when it doesn't apply to what's playing: radio stations only keep cast, podcasts and audiobooks hide shuffle and repeat, and audiobooks hide favorite. Podcasts and audiobooks seek back 15 s and forward 30 s, like the full player.",
+					"floatingPlayerAction1Label": "First button",
+					"floatingPlayerAction2Label": "Second button",
+					"floatingPlayerActions": {
+						"none": "Nenhum",
+						"cast": "Cast",
+						"favorite": "Favorito",
+						"shuffle": "Reproduzir aleatoriamente",
+						"repeat": "Repetir",
+						"skipPrevious": "Previous",
+						"skipNext": "Next",
+						"seekBackward": "Voltar 10 s",
+						"seekForward": "Avançar 10 s"
 					},
 					"waveformSeekbarLabel": "Barra de navegação pela forma de onda",
 					"waveformSeekbarDescription": "Exiba a forma de onda da faixa em vez de uma simples barra de progresso. Cada forma de onda é analisada uma vez, alguns segundos após o início da faixa, e depois reutilizada. Para isso, as faixas transmitidas baixam uma cópia adicional de baixa qualidade, o que consome mais dados — mas nunca pela rede móvel. Esse recurso é ignorado para podcasts, rádio e faixas com duração superior a 15 minutos.",
@@ -2419,6 +2439,8 @@
 					"sourceUnavailable": "Não foi possível reproduzir essa faixa — o arquivo não estava acessível. Verifique se o seu servidor está ligado e na mesma rede.",
 					"formatUnsupported": "Este aparelho não consegue reproduzir o formato de áudio “{{track}}”.",
 					"remoteTrackRefused": "{{name}} Não foi possível reproduzir “{{track}}”. Escolha outra faixa ou reproduza neste aparelho.",
+					"remoteTailnetUnreachable": "{{name}} can't reach your server's Tailscale address. In the server settings, set its local network address as the server URL and the Tailscale one as the fallback server URL.",
+					"remoteRelayUnreached": "{{name}} couldn't connect to this phone to play “{{track}}”. Make sure both are on the same Wi-Fi network, and not on a guest network that keeps devices apart.",
 					"remoteLost": "Perdeu contato com {{name}}. A reprodução voltou a funcionar neste dispositivo.",
 					"allTracksHidden": "Cada música aqui está escondida ou por um artista que você escolheu não tocar.",
 					"trackHidden": "Esta música está escondida ou por um artista que você escolheu não tocar."
@@ -2491,6 +2513,8 @@
 				"playbackSpeedNormal": "Normal",
 				"seekBackward": "Voltar {{seconds}} segundos",
 				"seekForward": "Avançar {{seconds}} segundos",
+				"skipPrevious": "Previous",
+				"skipNext": "Next",
 				"jukebox": "Jukebox",
 				"jukeboxOn": "Em",
 				"jukeboxOff": "Desligado",
@@ -2519,6 +2543,10 @@
 				"outputAddRooms": "Jogue também em",
 				"outputGroupVolume": "Volume do grupo",
 				"outputGroupErrorMessage": "Não foi possível alterar o grupo em {{name}}.",
+				"outputAirPlay": "AirPlay",
+				"outputAirPlayHint": "Speakers and TVs on your network",
+				"outputCastingUnavailable": "Chromecast and network speakers can't play this library from this device yet.",
+				"outputCastingUseAirPlay": "Use AirPlay to play it on a speaker or TV.",
 				"sleepTimerMinutes_one": "{{count}} minuto",
 				"sleepTimerMinutes_other": "{{count}} minutos"
 			},
@@ -2613,7 +2641,18 @@
 				"installing": "Abrindo o instalador…",
 				"errorDescription": "Não foi possível baixar a atualização. Verifique sua conexão e tente novamente, ou baixe-a na página de versões.",
 				"retry": "Tentar novamente",
-				"openBrowser": "Abrir no navegador"
+				"openBrowser": "Abrir no navegador",
+				"notification": {
+					"title": "Wavio {{version}} is available",
+					"body": "Tap to see what's new and update",
+					"channelName": "App updates"
+				},
+				"notificationsPrompt": {
+					"title": "Hear about new versions?",
+					"description": "Wavio can send you a notification as soon as a new version is out, so you never miss a fix or a new feature. You can turn this off at any time in Settings → Updates.",
+					"enable": "Turn on",
+					"decline": "No thanks"
+				}
 			},
 			"shared": {
 				"sort": {

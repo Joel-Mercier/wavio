@@ -22,7 +22,8 @@
 				"becauseYouListened": "Потому что ты прислушался к {{artist}}",
 				"becauseYouListenedFallback": "Рекомендуем вам",
 				"yourPlaylists": "Твои плейлисты",
-				"starred": "Твое избранное",
+				"starredAlbums": "Your favorite albums",
+				"starredSongs": "Your favorite songs",
 				"songsByGenre": "{{genre}} треки",
 				"albumsByGenre": "{{genre}} альбомы",
 				"albumsByDecade": "Альбомы из {{decade}}-х",
@@ -62,6 +63,7 @@
 					"frequent": "Популярные",
 					"random": "Вперемешку",
 					"leastPlayed": "Попробуйте что-то новое",
+					"starred": "Избранные альбомы",
 					"nowPlaying": "Сейчас играет"
 				}
 			},
@@ -1793,6 +1795,9 @@
 					"title": "Обновления",
 					"autoCheckLabel": "Проверять автоматически",
 					"autoCheckDescription": "Проверять обновления при запуске приложения",
+					"notifyLabel": "Notify me about new versions",
+					"notifyDescription": "Get a notification as soon as a new version of Wavio is released, even when the app is closed",
+					"notifyPermissionDenied": "Notifications are turned off for Wavio. Allow them in your phone's settings to hear about new versions.",
 					"checkNowLabel": "Проверить сейчас",
 					"checkNowDescription": "Поиск обновления вручную",
 					"checkNowAction": "Проверить",
@@ -2019,6 +2024,21 @@
 						"favorite": "Избранное",
 						"shuffle": "Перемешать",
 						"repeat": "Повторить"
+					},
+					"floatingPlayerControlsLabel": "Mini player buttons",
+					"floatingPlayerControlsDescription": "Pick the two buttons shown before play/pause in the mini player. A button is hidden when it doesn't apply to what's playing: radio stations only keep cast, podcasts and audiobooks hide shuffle and repeat, and audiobooks hide favorite. Podcasts and audiobooks seek back 15 s and forward 30 s, like the full player.",
+					"floatingPlayerAction1Label": "First button",
+					"floatingPlayerAction2Label": "Second button",
+					"floatingPlayerActions": {
+						"none": "Нет",
+						"cast": "Cast",
+						"favorite": "Избранное",
+						"shuffle": "Перемешать",
+						"repeat": "Повторить",
+						"skipPrevious": "Previous",
+						"skipNext": "Next",
+						"seekBackward": "Назад на 10 с",
+						"seekForward": "Перейти на 10 секунд вперед"
 					},
 					"waveformSeekbarLabel": "Полоса прокрутки формы сигнала",
 					"waveformSeekbarDescription": "Отображать график сигнала трека вместо обычной полосы прогресса. Каждый график сигнала анализируется один раз — через несколько секунд после начала воспроизведения трека — и затем используется повторно. Для потоковых треков в целях реализации этой функции загружается дополнительная копия низкого качества, поэтому при этом расходуется больше данных — но никогда через сотовую сеть. Эта функция не применяется к подкастам, радиопередачам и трекам продолжительностью более 15 минут.",
@@ -2559,6 +2579,8 @@
 					"sourceUnavailable": "Не удалось воспроизвести этот трек — файл недоступен. Убедитесь, что ваш сервер включен и находится в той же сети.",
 					"formatUnsupported": "Это устройство не поддерживает воспроизведение аудиоформата «{{track}}».",
 					"remoteTrackRefused": "{{name}} Не удалось воспроизвести «{{track}}». Выберите другой трек или воспроизведите его на этом устройстве.",
+					"remoteTailnetUnreachable": "{{name}} can't reach your server's Tailscale address. In the server settings, set its local network address as the server URL and the Tailscale one as the fallback server URL.",
+					"remoteRelayUnreached": "{{name}} couldn't connect to this phone to play “{{track}}”. Make sure both are on the same Wi-Fi network, and not on a guest network that keeps devices apart.",
 					"remoteLost": "Потеряна связь с {{name}}. На этом устройстве воспроизведение снова работает.",
 					"allTracksHidden": "Каждая песня здесь скрыта или у художника, которую вы выбрали не играть.",
 					"trackHidden": "Эта песня скрыта или исполнителя, которую вы выбрали не играть."
@@ -2631,6 +2653,8 @@
 				"playbackSpeedNormal": "Нормальный",
 				"seekBackward": "Назад {{seconds}} секунд",
 				"seekForward": "Переслать {{seconds}} секунд",
+				"skipPrevious": "Previous",
+				"skipNext": "Next",
 				"jukebox": "Jukebox",
 				"jukeboxOn": "Вкл.",
 				"jukeboxOff": "Выкл.",
@@ -2659,6 +2683,10 @@
 				"outputAddRooms": "Также играйте в",
 				"outputGroupVolume": "Объем группы",
 				"outputGroupErrorMessage": "Не удалось изменить группу на сайте {{name}}.",
+				"outputAirPlay": "AirPlay",
+				"outputAirPlayHint": "Speakers and TVs on your network",
+				"outputCastingUnavailable": "Chromecast and network speakers can't play this library from this device yet.",
+				"outputCastingUseAirPlay": "Use AirPlay to play it on a speaker or TV.",
 				"sleepTimerMinutes_one": "{{count}} минута",
 				"sleepTimerMinutes_few": "{{count}} минуты",
 				"sleepTimerMinutes_many": "{{count}} минут",
@@ -2759,7 +2787,18 @@
 				"installing": "Открываем установщик...…",
 				"errorDescription": "Не удалось загрузить обновление. Проверь соединение с интернетом и попробуй позже. Или скачай новую версию с Github.",
 				"retry": "Повторить",
-				"openBrowser": "Открыть в браузере"
+				"openBrowser": "Открыть в браузере",
+				"notification": {
+					"title": "Wavio {{version}} is available",
+					"body": "Tap to see what's new and update",
+					"channelName": "App updates"
+				},
+				"notificationsPrompt": {
+					"title": "Hear about new versions?",
+					"description": "Wavio can send you a notification as soon as a new version is out, so you never miss a fix or a new feature. You can turn this off at any time in Settings → Updates.",
+					"enable": "Turn on",
+					"decline": "No thanks"
+				}
 			},
 			"shared": {
 				"sort": {
